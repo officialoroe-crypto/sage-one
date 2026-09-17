@@ -26,8 +26,8 @@ class FakeScheduler:
     def __init__(self):
         self.submitted = []
 
-    def submit(self, fn, task_id, *, task_id=None):
-        identifier = task_id or task_id
+    def submit(self, fn, task_arg, *, task_id=None):
+        identifier = task_id or task_arg
         self.submitted.append(identifier)
         return identifier
 
