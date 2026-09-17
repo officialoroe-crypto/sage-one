@@ -1,43 +1,44 @@
 # SAGE ONE — TODO
 
-## NOW
+## COMPLETE CHECKPOINTS
 
 ### CI
-- [ ] Fix CI `PYTHONPATH` / repository-root import problem for top-level `execution`.
-- [ ] Run pytest after CI fix.
-- [ ] Confirm compilation + tests independently.
+- [x] Fix CI `PYTHONPATH` / repository-root import problem for top-level `execution`.
+- [x] Run pytest after CI fix.
+- [x] Confirm compilation + tests independently.
 
 ### Durable Worker
-- [ ] Inspect current task model.
-- [ ] Add atomic claiming if missing.
-- [ ] Add worker ownership.
-- [ ] Add lease timestamps.
-- [ ] Add heartbeat.
-- [ ] Add scheduled retry time.
-- [ ] Implement retry/backoff.
-- [ ] Implement lease-expiry recovery.
-- [ ] Ensure idempotent execution.
-- [ ] Add tests for competing workers.
-- [ ] Add tests for worker crash/lease expiry.
-- [ ] Add tests for retry behavior.
-
-## NEXT
+- [x] Inspect current task model.
+- [x] Add atomic claiming.
+- [x] Add worker ownership.
+- [x] Add lease timestamps.
+- [x] Add heartbeat.
+- [x] Add scheduled retry time.
+- [x] Implement retry/backoff.
+- [x] Implement lease-expiry recovery.
+- [x] Ensure worker-owned execution context is preserved.
+- [x] Add tests for competing workers.
+- [x] Add tests for worker crash/lease expiry.
+- [x] Add tests for retry behavior.
 
 ### Resource Protection
-- [ ] Identify every local CPU-heavy path.
-- [ ] Prevent automatic Ollama fallback for heavy tasks.
-- [ ] Add task classification: LIGHT / MEDIUM / HEAVY.
-- [ ] Add local resource monitoring.
-- [ ] Add local CPU guard.
-- [ ] Add graceful defer/pause behavior.
+- [x] Add task classification: LIGHT / MEDIUM / HEAVY.
+- [x] Add host CPU and memory monitoring.
+- [x] Add local CPU guard with conservative thresholds.
+- [x] Add graceful defer behavior when local resources are too busy.
+- [x] Prevent heavy work from starting locally above the protected CPU threshold.
+- [x] Add regression tests for resource protection.
+- [x] Keep automatic heavy local Ollama fallback disabled.
+
+## NOW
 
 ### Background Jobs
 - [ ] Create durable task API.
-- [ ] Create background worker process/service.
-- [ ] Persist task state.
+- [ ] Create background worker process/service entry point.
+- [ ] Persist task state through the existing durable worker lifecycle.
 - [ ] Allow user to query task status.
 - [ ] Store completed results.
-- [ ] Add failure states.
+- [ ] Add explicit failure states to the user-facing task API.
 - [ ] Add notification mechanism.
 
 ## RESEARCH OS
