@@ -10,21 +10,18 @@ from dev_agent.tools import WorkspaceTools
 SYSTEM_PROMPT = """
 You are SAGE ONE's Development Agent.
 
-Your job is to implement software changes in the SAGE ONE repository safely and
-completely. Inspect the repository before changing it. Prefer existing
-architecture and interfaces over inventing parallel systems. Make coherent
-multi-file changes when required.
+Your job is to implement software changes in the SAGE ONE repository safely and completely.
+Inspect the repository before changing it. Prefer existing architecture and interfaces over
+inventing parallel systems. Make coherent multi-file changes when required.
 
 Rules:
 - Capability does not equal permission.
 - Never access, print, modify, or commit secrets such as .env files.
-- Never run destructive shell commands, deployments, package publishing, or
-  remote Git operations.
+- Never run destructive shell commands, deployments, package publishing, or remote Git operations.
 - Use repository tools to inspect and edit files.
 - Use tests and static checks after changes.
-- If a required operation is outside your tools or permission boundary, stop
-  and report it rather than bypassing the boundary.
-- Do not claim success unless checks actually pass.
+- If a required operation is outside your tools or permission boundary, stop and report it.
+- Do not claim success unless the requested work and its checks actually succeeded.
 - Prefer complete, maintainable implementations over temporary patches.
 - Preserve backward compatibility unless the task explicitly requires a break.
 - At the end, summarize files changed, checks run, failures, and remaining work.
@@ -54,13 +51,18 @@ class DevelopmentAgent:
         tool = mapping.get(name)
         if tool is None:
             return {"success": False, "error": f"Unknown development tool: {name}"}
-        return tool(**arguments)
+        try:
+            return tool(**arguments)
+        except PermissionError as exc:
+            return {"success": False, "permission_denied": True, "error": str(exc)}
+        except Exception as exc:
+            return {"success": False, "error": f"Development tool failed: {exc}"}
 
     @staticmethod
     def tool_schema() -> list[dict[str, Any]]:
         return [
             {"type": "function", "function": {"name": "list_tree", "description": "List repository files.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "max_entries": {"type": "integer"}}, "required": []}}},
-            {"type": "function", "function": {"name": "read_file", "description": "Read a UTF-8 repository file.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "max_chars": {"type": "integer"}}, "required": ["path"]}}},
+            {"type": "function", "function": {"name": "read_file", "description": "Read a UTF-8 repository file that is not protected by policy.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "max_chars": {"type": "integer"}}, "required": ["path"]}}},
             {"type": "function", "function": {"name": "write_file", "description": "Create or replace an approved repository source/test file. Requires --apply.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]}}},
             {"type": "function", "function": {"name": "run_check", "description": "Run an approved non-destructive development check.", "parameters": {"type": "object", "properties": {"command": {"type": "string"}, "timeout": {"type": "integer"}}, "required": ["command"]}}},
             {"type": "function", "function": {"name": "git_status", "description": "Show working tree status.", "parameters": {"type": "object", "properties": {}, "required": []}}},
@@ -75,9 +77,11 @@ class DevelopmentAgent:
             tool_executor=self._tool_executor,
             max_iterations=max_iterations,
         )
+        response = (result.response or "").strip()
+        success = bool(response) and bool(result.provider) and bool(result.model)
         return {
-            "success": True,
-            "response": result.response,
+            "success": success,
+            "response": response,
             "provider": result.provider,
             "model": result.model,
             "interaction_id": result.interaction_id,
