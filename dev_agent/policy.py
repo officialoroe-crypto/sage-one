@@ -7,43 +7,20 @@ import shlex
 
 @dataclass(frozen=True)
 class AgentPolicy:
-    """Safety policy for the SAGE development agent.
-
-    The agent can edit source/tests and run non-destructive checks. Secrets,
-    git history mutation, deployment, package publishing, and arbitrary shell
-    commands are outside the default authority boundary.
-    """
+    """Safety policy for the SAGE development agent."""
 
     workspace: Path
     auto_write: bool = False
     allow_tests: bool = True
 
     writable_roots: tuple[str, ...] = (
-        "app",
-        "agents",
-        "brain",
-        "config",
-        "database",
-        "dev_agent",
-        "execution",
-        "memory",
-        "missions",
-        "permissions",
-        "projects",
-        "research",
-        "tasks",
-        "tools",
-        "web",
-        "tests",
-        "docs",
-        ".github",
+        "app", "agents", "brain", "config", "database", "dev_agent",
+        "execution", "memory", "missions", "permissions", "projects",
+        "research", "tasks", "tools", "web", "tests", "docs", ".github",
     )
 
     forbidden_names: tuple[str, ...] = (
-        ".env",
-        ".env.local",
-        ".env.production",
-        "credentials.json",
+        ".env", ".env.local", ".env.production", "credentials.json",
     )
 
     def resolve(self, relative_path: str) -> Path:
@@ -57,7 +34,7 @@ class AgentPolicy:
 
     def can_write(self, relative_path: str) -> bool:
         path = relative_path.replace("\\", "/").lstrip("/")
-        if not path or path.startswith(".git/") or path == ".git":
+        if not path or path == ".git" or path.startswith(".git/"):
             return False
         name = Path(path).name.lower()
         if name in {item.lower() for item in self.forbidden_names}:
@@ -70,11 +47,28 @@ class AgentPolicy:
 
     def validate_check_command(self, command: str) -> list[str]:
         parts = shlex.split(command, posix=False)
-        normalized = command.lower().replace("\\", "/")
-        blocked = ("git push", "git reset", "git clean", "git checkout", "git branch -d", "rmdir", "del /s", "format ")
-        if any(token in normalized for token in blocked):
-            raise PermissionError("Destructive or remote Git/shell operation is not allowed.")
-        allowed = {"python", "py", "pytest", "git"}
-        if not parts or parts[0].lower().replace(".exe", "") not in allowed:
-            raise PermissionError("Only approved development check commands are allowed.")
-        return parts
+        if not parts:
+            raise PermissionError("Empty development command is not allowed.")
+
+        normalized = command.lower().replace("\\", "/").strip()
+        executable = parts[0].lower().replace(".exe", "")
+
+        if executable in {"pytest"}:
+            return parts
+
+        if executable in {"python", "py"}:
+            if len(parts) >= 3 and parts[1] == "-m" and parts[2].lower() == "py_compile":
+                return parts
+            raise PermissionError("Python execution is restricted to py_compile checks.")
+
+        if executable == "git":
+            allowed_prefixes = (
+                "git status",
+                "git diff",
+                "git log",
+            )
+            if normalized.startswith(allowed_prefixes):
+                return parts
+            raise PermissionError("Git execution is restricted to read-only status/diff/log checks.")
+
+        raise PermissionError("Only approved non-destructive development checks are allowed.")
