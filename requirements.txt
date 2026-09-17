@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+python-dotenv
+google-genai
+groq
+openai
+ddgs
+trafilatura
+requests
+cerebras-cloud-sdk
+pytest
