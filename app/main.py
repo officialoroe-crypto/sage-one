@@ -20,6 +20,7 @@ from execution.trace import execution_trace
 from permissions.engine import permissions
 from tools.registry import registry
 from agents.manager import agents
+from tasks.engine import tasks
 
 
 # ============================================================
@@ -84,6 +85,15 @@ class MissionExecuteRequest(BaseModel):
 class TaskStatusRequest(BaseModel):
     result: Optional[str] = None
     error: Optional[str] = None
+
+
+class TaskCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(min_length=1, max_length=20000)
+    priority: int = Field(default=3, ge=1, le=5)
+    agent: str = Field(default="general", min_length=1, max_length=100)
+    session_id: Optional[str] = None
+    parent_task_id: Optional[str] = None
 
 
 # ============================================================
@@ -550,20 +560,54 @@ def audit_legacy():
 # TASKS
 # ============================================================
 
+@app.post("/tasks")
+def create_background_task(request: TaskCreateRequest):
+    task = tasks.create(
+        title=request.title,
+        description=request.description,
+        priority=request.priority,
+        agent=request.agent,
+        session_id=request.session_id,
+        parent_task_id=request.parent_task_id,
+    )
+    return {
+        "success": True,
+        "status": "queued",
+        "task": task,
+    }
+
+
 @app.get("/tasks")
-def get_tasks():
-    db = SessionLocal()
+def get_tasks(status: Optional[str] = None):
+    if status is not None and status not in tasks.VALID_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid task status")
 
-    try:
-        tasks = repository.get_tasks(db)
+    return {
+        "success": True,
+        "tasks": tasks.list(status=status),
+    }
 
-        return {
-            "success": True,
-            "tasks": _serialize(tasks),
-        }
 
-    finally:
-        db.close()
+@app.get("/tasks/{task_id}")
+def get_task(task_id: str):
+    task = tasks.get(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {
+        "success": True,
+        "task": task,
+    }
+
+
+@app.post("/tasks/{task_id}/cancel")
+def cancel_task(task_id: str):
+    task = tasks.cancel(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {
+        "success": True,
+        "task": task,
+    }
 
 
 # ============================================================
