@@ -86,6 +86,8 @@ class SageWorker:
                 goal=description,
                 session_id=session_id,
                 priority=priority,
+                task_id=task_id,
+                worker_id=self.worker_id,
             )
 
             if heartbeat_state['lost']:
