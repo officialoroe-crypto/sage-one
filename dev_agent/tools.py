@@ -27,6 +27,7 @@ class WorkspaceTools:
         return {"success": True, "entries": entries, "truncated": len(entries) >= max_entries}
 
     def read_file(self, path: str, max_chars: int = 50000) -> dict:
+        self.policy.assert_read_allowed(path)
         target = self.policy.resolve(path)
         if not target.is_file():
             return {"success": False, "error": f"File does not exist: {path}"}
@@ -45,14 +46,17 @@ class WorkspaceTools:
     def run_check(self, command: str, timeout: int = 120) -> dict:
         if not self.policy.allow_tests:
             return {"success": False, "error": "Test execution is disabled by policy."}
-        parts = self.policy.validate_check_command(command)
-        completed = subprocess.run(
-            parts,
-            cwd=self.workspace,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
+        try:
+            parts = self.policy.validate_check_command(command)
+            completed = subprocess.run(
+                parts,
+                cwd=self.workspace,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+        except (PermissionError, subprocess.TimeoutExpired, OSError) as exc:
+            return {"success": False, "error": str(exc)}
         return {
             "success": completed.returncode == 0,
             "returncode": completed.returncode,
