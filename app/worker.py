@@ -4,6 +4,8 @@ import time
 import uuid
 
 from app.orchestrator import orchestrator
+from execution.policy import classify_task, local_execution_allowed
+from execution.resource import resource_guard
 from tasks.engine import tasks
 
 
@@ -14,6 +16,7 @@ class SageWorker:
         self.lease_seconds = max(30, int(lease_seconds))
         self.heartbeat_interval = max(5, int(heartbeat_interval))
         self.retry_base_seconds = max(1, int(retry_base_seconds))
+        self.resource_guard = resource_guard
 
     @staticmethod
     def _default_worker_id():
@@ -27,20 +30,37 @@ class SageWorker:
                 session_id=session_id,
                 priority=priority,
             )
-            return {
-                'success': True,
-                'result': result,
-            }
+            return {'success': True, 'result': result}
         except Exception as error:
-            return {
-                'success': False,
-                'error': str(error),
-            }
+            return {'success': False, 'error': str(error)}
 
     def recover_expired_tasks(self):
         return tasks.recover_expired()
 
+    def _local_execution_allowed(self):
+        pending = tasks.list(status='pending')
+        if not pending:
+            return True, None
+
+        snapshot = self.resource_guard.snapshot()
+        task_class = classify_task(pending[0].get('description', ''))
+
+        if local_execution_allowed(task_class, snapshot.cpu_percent):
+            return True, None
+
+        return False, {
+            'status': 'deferred',
+            'reason': 'local_resource_protection',
+            'task_class': task_class.value,
+            'cpu_percent': snapshot.cpu_percent,
+            'resource_band': snapshot.band.value,
+        }
+
     def claim(self):
+        allowed, protection = self._local_execution_allowed()
+        if not allowed:
+            return protection
+
         return tasks.claim_next(
             worker_id=self.worker_id,
             lease_seconds=self.lease_seconds,
@@ -94,7 +114,6 @@ class SageWorker:
                 raise RuntimeError('Worker lost task ownership during execution.')
 
             return result
-
         finally:
             stop_event.set()
             heartbeat_thread.join(timeout=max(1, self.heartbeat_interval + 1))
@@ -102,14 +121,21 @@ class SageWorker:
     def run_once(self):
         self.recover_expired_tasks()
         task = self.claim()
+
         if not task:
             return None
+
+        if task.get('status') == 'deferred':
+            return {
+                'success': True,
+                'task': None,
+                **task,
+            }
 
         task_id = task['id']
 
         try:
             result = self.execute_task(task)
-
             completed = tasks.complete_claim(
                 task_id=task_id,
                 worker_id=self.worker_id,
@@ -123,10 +149,7 @@ class SageWorker:
                     'error': 'Worker lost task ownership before completion.',
                 }
 
-            return {
-                'success': True,
-                'task': completed,
-            }
+            return {'success': True, 'task': completed}
 
         except Exception as error:
             delay = self.retry_base_seconds * (2 ** max(0, task.get('retries', 0)))
@@ -145,7 +168,7 @@ class SageWorker:
     def run_forever(self, poll_interval=2.0):
         while True:
             result = self.run_once()
-            if result is None:
+            if result is None or result.get('status') == 'deferred':
                 time.sleep(max(0.1, poll_interval))
 
 
