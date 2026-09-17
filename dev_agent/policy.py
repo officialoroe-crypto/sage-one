@@ -32,12 +32,23 @@ class AgentPolicy:
             raise PermissionError("Path escapes the SAGE workspace.") from exc
         return candidate
 
-    def can_write(self, relative_path: str) -> bool:
+    def _is_forbidden(self, relative_path: str) -> bool:
         path = relative_path.replace("\\", "/").lstrip("/")
         if not path or path == ".git" or path.startswith(".git/"):
-            return False
+            return True
         name = Path(path).name.lower()
-        if name in {item.lower() for item in self.forbidden_names}:
+        return name in {item.lower() for item in self.forbidden_names}
+
+    def can_read(self, relative_path: str) -> bool:
+        return not self._is_forbidden(relative_path)
+
+    def assert_read_allowed(self, relative_path: str) -> None:
+        if not self.can_read(relative_path):
+            raise PermissionError(f"Reading '{relative_path}' is not permitted by the agent policy.")
+
+    def can_write(self, relative_path: str) -> bool:
+        path = relative_path.replace("\\", "/").lstrip("/")
+        if self._is_forbidden(path):
             return False
         return any(path == root or path.startswith(root + "/") for root in self.writable_roots)
 
@@ -53,7 +64,7 @@ class AgentPolicy:
         normalized = command.lower().replace("\\", "/").strip()
         executable = parts[0].lower().replace(".exe", "")
 
-        if executable in {"pytest"}:
+        if executable == "pytest":
             return parts
 
         if executable in {"python", "py"}:
