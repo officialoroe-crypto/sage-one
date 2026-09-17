@@ -1,7 +1,9 @@
 import time
+from typing import Any
 
 from brain.providers import ProviderResult
 
+from brain.providers.cerebras_provider import CerebrasProvider
 from brain.providers.groq_provider import GroqProvider
 from brain.providers.ollama_provider import OllamaProvider
 
@@ -12,7 +14,19 @@ class BrainRouter:
 
     def __init__(self):
 
+        # Ordered by preferred capability.
+        #
+        # Cerebras:
+        # strong reasoning + structured output + tools
+        #
+        # Groq:
+        # very fast + structured output + tools
+        #
+        # Ollama:
+        # local/private fallback
+
         self.providers = [
+            CerebrasProvider(),
             GroqProvider(),
             OllamaProvider(),
         ]
@@ -21,6 +35,8 @@ class BrainRouter:
             provider.name: {
                 "successes": 0,
                 "failures": 0,
+                "structured_successes": 0,
+                "structured_failures": 0,
                 "last_error": None,
                 "last_used": None,
                 "cooldown_until": 0.0,
@@ -28,7 +44,10 @@ class BrainRouter:
             for provider in self.providers
         }
 
-    def _is_in_cooldown(self, provider_name):
+    def _is_in_cooldown(
+        self,
+        provider_name: str,
+    ) -> bool:
 
         return (
             time.time()
@@ -37,21 +56,30 @@ class BrainRouter:
             ]["cooldown_until"]
         )
 
-    def _mark_success(self, provider_name):
+    def _mark_success(
+        self,
+        provider_name: str,
+        structured: bool = False,
+    ):
 
         health = self.provider_health[
             provider_name
         ]
 
         health["successes"] += 1
+
+        if structured:
+            health["structured_successes"] += 1
+
         health["last_used"] = time.time()
         health["last_error"] = None
         health["cooldown_until"] = 0.0
 
     def _mark_failure(
         self,
-        provider_name,
-        error
+        provider_name: str,
+        error: Exception,
+        structured: bool = False,
     ):
 
         health = self.provider_health[
@@ -59,6 +87,10 @@ class BrainRouter:
         ]
 
         health["failures"] += 1
+
+        if structured:
+            health["structured_failures"] += 1
+
         health["last_error"] = str(error)
 
         health["cooldown_until"] = (
@@ -66,34 +98,85 @@ class BrainRouter:
             + self.COOLDOWN_SECONDS
         )
 
+    def _validate_text(
+        self,
+        result: ProviderResult,
+    ) -> ProviderResult:
+
+        if not result.response:
+            raise RuntimeError(
+                f"{result.provider} returned empty response."
+            )
+
+        return result
+
+    def _validate_structured(
+        self,
+        result: ProviderResult,
+        schema: dict,
+    ) -> ProviderResult:
+
+        if not result.structured:
+            raise RuntimeError(
+                f"{result.provider} did not return structured output."
+            )
+
+        if not isinstance(
+            result.data,
+            dict,
+        ):
+            raise RuntimeError(
+                f"{result.provider} structured output is not an object."
+            )
+
+        required = schema.get(
+            "required",
+            [],
+        )
+
+        missing = [
+            field
+            for field in required
+            if field not in result.data
+        ]
+
+        if missing:
+            raise RuntimeError(
+                f"{result.provider} structured output "
+                f"is missing required fields: {missing}"
+            )
+
+        return result
+
     def think(
         self,
-        system_instruction,
-        user_message,
-        conversation=None
-    ):
+        system_instruction: str,
+        user_message: str,
+        conversation: list[dict] | None = None,
+    ) -> ProviderResult:
 
         errors = []
 
         for provider in self.providers:
+
+            if not provider.available():
+                continue
 
             if self._is_in_cooldown(
                 provider.name
             ):
                 continue
 
-            if not provider.available():
-                continue
-
             try:
 
                 result = provider.think(
-                    system_instruction=
-                        system_instruction,
-                    user_message=
-                        user_message,
-                    conversation=
-                        conversation
+                    system_instruction=system_instruction,
+                    user_message=user_message,
+                    conversation=conversation,
+                )
+
+                result = self._validate_text(
+                    result
                 )
 
                 self._mark_success(
@@ -106,70 +189,119 @@ class BrainRouter:
 
                 self._mark_failure(
                     provider.name,
-                    error
+                    error,
                 )
 
                 errors.append(
                     f"{provider.name}: {error}"
                 )
 
-        if not errors:
-
-            raise RuntimeError(
-                "No SAGE AI providers are "
-                "currently available."
-            )
-
         raise RuntimeError(
-            "All available SAGE AI providers failed.\n"
+            "All available SAGE providers failed.\n"
             + "\n".join(errors)
         )
 
-    def think_with_tools(
+    def think_structured(
         self,
-        system_instruction,
-        user_message,
-        tools,
-        tool_executor,
-        conversation=None,
-        max_iterations=4
-    ):
+        system_instruction: str,
+        user_message: str,
+        schema: dict,
+        schema_name: str,
+        conversation: list[dict] | None = None,
+    ) -> ProviderResult:
 
         errors = []
 
         for provider in self.providers:
+
+            if not provider.available():
+                continue
 
             if self._is_in_cooldown(
                 provider.name
             ):
                 continue
 
+            try:
+
+                result = provider.think_structured(
+                    system_instruction=system_instruction,
+                    user_message=user_message,
+                    schema=schema,
+                    schema_name=schema_name,
+                    conversation=conversation,
+                )
+
+                result = self._validate_structured(
+                    result,
+                    schema,
+                )
+
+                self._mark_success(
+                    provider.name,
+                    structured=True,
+                )
+
+                return result
+
+            except NotImplementedError:
+
+                errors.append(
+                    f"{provider.name}: structured output not implemented"
+                )
+
+            except Exception as error:
+
+                self._mark_failure(
+                    provider.name,
+                    error,
+                    structured=True,
+                )
+
+                errors.append(
+                    f"{provider.name}: {error}"
+                )
+
+        raise RuntimeError(
+            "All structured-output SAGE providers failed.\n"
+            + "\n".join(errors)
+        )
+
+    def think_with_tools(
+        self,
+        system_instruction: str,
+        user_message: str,
+        tools: list[dict],
+        tool_executor,
+        conversation: list[dict] | None = None,
+        max_iterations: int = 8,
+    ) -> ProviderResult:
+
+        errors = []
+
+        for provider in self.providers:
+
             if not provider.available():
                 continue
 
-            # Only providers implementing
-            # real tool calling are eligible.
-            if not hasattr(
-                provider,
-                "think_with_tools"
+            if self._is_in_cooldown(
+                provider.name
             ):
                 continue
 
             try:
 
                 result = provider.think_with_tools(
-                    system_instruction=
-                        system_instruction,
-                    user_message=
-                        user_message,
-                    tools=
-                        tools,
-                    tool_executor=
-                        tool_executor,
-                    conversation=
-                        conversation,
-                    max_iterations=
-                        max_iterations
+                    system_instruction=system_instruction,
+                    user_message=user_message,
+                    tools=tools,
+                    tool_executor=tool_executor,
+                    conversation=conversation,
+                    max_iterations=max_iterations,
+                )
+
+                result = self._validate_text(
+                    result
                 )
 
                 self._mark_success(
@@ -178,35 +310,29 @@ class BrainRouter:
 
                 return result
 
-            except NotImplementedError as error:
+            except NotImplementedError:
 
                 errors.append(
-                    f"{provider.name}: "
-                    f"tool calling not implemented"
+                    f"{provider.name}: tool calling not implemented"
                 )
-
-                continue
 
             except Exception as error:
 
                 self._mark_failure(
                     provider.name,
-                    error
+                    error,
                 )
 
                 errors.append(
                     f"{provider.name}: {error}"
                 )
 
-                continue
-
         raise RuntimeError(
-            "No SAGE providers with "
-            "tool-calling support are available.\n"
+            "All SAGE tool-capable providers failed.\n"
             + "\n".join(errors)
         )
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
 
         result = {}
 
@@ -215,22 +341,19 @@ class BrainRouter:
         ):
 
             result[provider_name] = {
-                "successes":
-                    health["successes"],
-
-                "failures":
-                    health["failures"],
-
-                "last_error":
-                    health["last_error"],
-
-                "last_used":
-                    health["last_used"],
-
-                "in_cooldown":
-                    self._is_in_cooldown(
-                        provider_name
-                    )
+                "successes": health["successes"],
+                "failures": health["failures"],
+                "structured_successes": health[
+                    "structured_successes"
+                ],
+                "structured_failures": health[
+                    "structured_failures"
+                ],
+                "last_error": health["last_error"],
+                "last_used": health["last_used"],
+                "in_cooldown": self._is_in_cooldown(
+                    provider_name
+                ),
             }
 
         return result
