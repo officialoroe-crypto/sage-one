@@ -40,7 +40,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: AgentScreen(api: api)));
     await tester.pump();
 
-    final runButton = find.text('RUN SYSTEM CHECK');
+    final runButton = find.byType(OutlinedButton);
     expect(runButton, findsOneWidget);
     await tester.tap(runButton);
     await tester.pump();
