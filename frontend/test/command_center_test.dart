@@ -35,7 +35,7 @@ void main() {
     expect(find.text('SAGE ONE'), findsOneWidget);
     expect(find.text('COMMAND CENTER'), findsOneWidget);
     expect(find.text('What are we building today?'), findsOneWidget);
-    expect(find.text('Research'), findsOneWidget);
-    expect(find.text('Tasks'), findsOneWidget);
+    expect(find.text('Search, read, cross-check'), findsOneWidget);
+    expect(find.text('Queued and running work'), findsOneWidget);
   });
 }
