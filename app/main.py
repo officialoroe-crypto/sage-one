@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import Any, Optional
 
@@ -299,21 +298,10 @@ def chat(request: ChatRequest):
 @app.post("/execute")
 def execute(request: ExecuteRequest):
     """
-    High-level execution endpoint.
+    High-level synchronous execution endpoint.
 
-    Flow:
-
-    goal
-      ↓
-    planner
-      ↓
-    mission
-      ↓
-    execution engine
-      ↓
-    verification
-      ↓
-    result
+    Use /execute/background for durable work that must survive the
+    HTTP request and be processed by the dedicated worker.
     """
 
     try:
@@ -361,44 +349,31 @@ def execute(request: ExecuteRequest):
 
 
 @app.post("/execute/background")
-async def execute_background(request: ExecuteRequest):
+def execute_background(request: ExecuteRequest):
+    """Queue goal execution as a durable task for the background worker.
 
-    async def runner():
-        try:
-            plan_result = planner.plan(
-                goal=request.goal,
-                session_id=request.session_id,
-                priority=3,
-            )
+    The HTTP process does not perform the AI work. The task is persisted
+    first, then the dedicated worker claims it, executes the goal, and stores
+    the final result or failure on the task record.
+    """
 
-            plan_result = _serialize(plan_result)
+    agent_name = agents.choose(request.goal)
+    if not agents.exists(agent_name):
+        agent_name = "general"
 
-            mission_id = None
-
-            if isinstance(plan_result, dict):
-                mission = plan_result.get("mission")
-
-                if isinstance(mission, dict):
-                    mission_id = mission.get("id")
-
-                if mission_id is None:
-                    mission_id = plan_result.get("mission_id")
-
-            if mission_id:
-                execution_engine.execute_mission(
-                    mission_id=mission_id,
-                    max_steps=request.max_steps,
-                )
-
-        except Exception:
-            pass
-
-    asyncio.create_task(runner())
+    task = tasks.create(
+        title=request.goal.strip()[:120],
+        description=request.goal.strip(),
+        priority=3,
+        agent=agent_name,
+        session_id=request.session_id,
+    )
 
     return {
         "success": True,
-        "status": "started",
-        "message": "Execution started in background.",
+        "status": "queued",
+        "message": "Execution queued for the durable background worker.",
+        "task": task,
     }
 
 
@@ -452,6 +427,21 @@ def add_memory(request: MemoryRequest):
 @app.get("/brain/health")
 def brain_health():
     return _serialize(router.health())
+
+
+@app.get("/brain/routing")
+def brain_routing(description: str):
+    """Explain which provider strategy SAGE would use for a task."""
+    try:
+        return {
+            "success": True,
+            "routing": _serialize(router.routing(description)),
+        }
+    except Exception as exc:
+        return {
+            "success": False,
+            "error": str(exc),
+        }
 
 
 # ============================================================
