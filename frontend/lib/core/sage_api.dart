@@ -27,6 +27,13 @@ class SageApi {
     return _decode(response);
   }
 
+  Future<List<dynamic>> tasks() async {
+    final response = await _client.get(Uri.parse('$baseUrl/tasks'));
+    final data = _decode(response);
+    final items = data['tasks'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
   Future<Map<String, dynamic>> task(String taskId) async {
     final response = await _client.get(Uri.parse('$baseUrl/tasks/$taskId'));
     return _decode(response);
