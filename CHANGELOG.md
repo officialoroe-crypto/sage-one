@@ -1,5 +1,14 @@
 # SAGE ONE — CHANGELOG
 
+## 2026-09-18 — Provider Routing v2
+- Added deterministic LIGHT / MEDIUM / HEAVY provider routing.
+- Made Groq the first cloud provider in automatic routing.
+- Kept Cerebras as secondary cloud fallback.
+- Restricted automatic Ollama use to light work with safe local resources.
+- Added explicit `auto`, `cloud`, and `local` routing modes.
+- Added CPU-aware routing decisions and routing diagnostics.
+- Added regression tests for routing and local CPU protection.
+
 ## 2026-09-17 — Background Task API
 - Added durable `POST /tasks` queue creation.
 - Added task listing with status filtering.
@@ -19,28 +28,19 @@
 - Web Reader / research synthesis work has progressed to reading multiple sources and producing evidence items.
 
 ### CI
-- Compilation succeeds.
-- Pytest currently fails because the top-level `execution` package cannot be imported.
-- Cause identified as CI not putting the repository root on `PYTHONPATH`.
-- Immediate next fix: CI import path.
+- GitHub-hosted CI compiles Python modules and runs the full pytest suite.
+- Repository-root import configuration is established in CI.
 
 ### Worker Architecture
-- Identified that the current worker needs stronger durability.
-- Required improvements documented:
-  - atomic claiming
-  - worker leases
-  - heartbeat
-  - retry/backoff
-  - crash recovery
-  - idempotency
+- Durable worker lifecycle implemented with atomic claiming, ownership, leases, heartbeats, retry/backoff and recovery.
+- Worker execution now passes ownership context into the orchestrator.
 
 ### Performance Architecture
-- Recent tests have pushed the laptop CPU to approximately 100%.
-- New architectural requirement established:
-  heavy AI/research must eventually run in cloud/background workers.
-- Local Ollama should not automatically become the fallback for heavy work.
-- SAGE should classify tasks as LIGHT / MEDIUM / HEAVY.
-- A local resource guard is planned.
+- Recent tests pushed the laptop CPU to approximately 100%.
+- Heavy AI/research work is therefore designed for cloud/background execution.
+- Local Ollama must not automatically become the fallback for heavy work.
+- SAGE classifies tasks as LIGHT / MEDIUM / HEAVY.
+- Local resource protection is active.
 
 ## Earlier Known Milestones
 
@@ -61,4 +61,4 @@
 
 ### Ollama
 - `llama3.2:3b` produced an empty summary / 0 claims during reliability testing.
-- This contributed to the decision to strengthen cloud provider routing and structured-output validation.
+- This contributed to restricting local Ollama to controlled light workloads.
