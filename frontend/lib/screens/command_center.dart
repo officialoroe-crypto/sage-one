@@ -64,7 +64,6 @@ class _CommandCenterState extends State<CommandCenter> {
   @override
   void dispose() {
     _prompt.dispose();
-    widget.api.dispose();
     super.dispose();
   }
 
@@ -96,15 +95,6 @@ class _CommandCenterState extends State<CommandCenter> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Sage'),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Research'),
-          NavigationDestination(icon: Icon(Icons.task_alt), label: 'Tasks'),
-          NavigationDestination(icon: Icon(Icons.folder_open), label: 'Projects'),
-        ],
       ),
     );
   }
