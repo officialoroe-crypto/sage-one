@@ -279,7 +279,7 @@ class _Empty extends StatelessWidget {
         const Icon(Icons.inbox_outlined),
         const SizedBox(width: 12),
         Expanded(child: Text(text)),
-        if (action != null) action!,
+        ...[if (action != null) action!],
       ]),
     ),
   );
