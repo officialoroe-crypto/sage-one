@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/sage_api.dart';
 
 class CommandCenter extends StatefulWidget {
-  const CommandCenter({required this.api, super.key});
+  const CommandCenter({required this.api, this.onNavigate, super.key});
 
   final SageApi api;
 
@@ -64,7 +64,6 @@ class _CommandCenterState extends State<CommandCenter> {
   @override
   void dispose() {
     _prompt.dispose();
-    widget.api.dispose();
     super.dispose();
   }
 
