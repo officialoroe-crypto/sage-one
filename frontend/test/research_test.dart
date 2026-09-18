@@ -37,7 +37,9 @@ void main() {
   testWidgets('Research screen queues and displays task result', (tester) async {
     final client = _ResearchApiClient();
     final api = SageApi(client: client);
-    await tester.pumpWidget(MaterialApp(home: ResearchScreen(api: api)));
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: ResearchScreen(api: api))),
+    );
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'Flutter reliability');
