@@ -226,7 +226,7 @@ class _CommandCenterState extends State<CommandCenter> {
                   const Spacer(),
                   Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 5),
-                  Text(subtitle, style: const TextStyle(color: Colors.white45, fontSize: 11, height: 1.3)),
+                  Text(subtitle, style: const TextStyle(color: Color.fromRGBO(255, 255, 255, 0.45), fontSize: 11, height: 1.3)),
                 ],
               ),
             ),
