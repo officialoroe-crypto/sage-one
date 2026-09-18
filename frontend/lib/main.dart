@@ -7,7 +7,9 @@ import 'theme/sage_theme.dart';
 void main() => runApp(const SageOneApp());
 
 class SageOneApp extends StatelessWidget {
-  const SageOneApp({super.key});
+  const SageOneApp({SageApi? api, super.key}) : _api = api;
+
+  final SageApi? _api;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +17,7 @@ class SageOneApp extends StatelessWidget {
       title: 'SAGE ONE',
       debugShowCheckedModeBanner: false,
       theme: SageTheme.dark(),
-      home: CommandCenter(api: SageApi()),
+      home: CommandCenter(api: _api ?? SageApi()),
     );
   }
 }
