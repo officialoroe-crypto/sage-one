@@ -185,7 +185,7 @@ class _TasksScreenState extends State<TasksScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             itemCount: _tasks.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final item = _tasks[index];
               final id = _taskId(item) ?? 'unknown';
