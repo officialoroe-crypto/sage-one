@@ -37,7 +37,7 @@ class _SageOneAppState extends State<SageOneApp> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      CommandCenter(api: _api, onNavigate: (value) => setState(() => _index = value)),
+      CommandCenter(api: _api),
       ResearchScreen(api: _api),
       TasksScreen(api: _api),
       ProjectsScreen(),
