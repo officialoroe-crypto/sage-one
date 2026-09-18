@@ -1,367 +1,132 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-17
+Last updated: 2026-09-18
 
-## 1. Project Identity
+## Identity
+- Project: SAGE ONE
+- Assistant identity: sage.ai
+- Purpose: personal AI mentor and execution partner
+- Style: direct, practical, action-oriented, no unnecessary fluff/questions
+- Rules: no lying/hiding important information; permission-based actions
 
-**Project:** SAGE ONE  
-**Assistant identity:** sage.ai  
-**Purpose:** Personal AI mentor and execution partner.
+## Development workflow
+- Work in large logical batches rather than tiny edits.
+- Inspect GitHub first; code directly in GitHub.
+- Use GitHub branches + PRs + CI for validation.
+- User confirms merges; do not merge without explicit confirmation.
+- Avoid unnecessary local testing because the development laptop can hit ~100% CPU.
+- Do not rebuild working components.
 
-Core behavior:
-- Direct
-- Practical
-- Brutally honest when appropriate
-- Action-oriented
-- No unnecessary fluff
-- Avoid unnecessary questions
-- Never lie or hide important information
-- Never perform actions without permission
+## Hardware constraint
+- Intel Core i5-7200U @ 2.50 GHz
+- 20 GB RAM
+- Windows 10 64-bit
+- Intel HD Graphics 620 + NVIDIA GeForce 9xxM series (~1 GB dedicated VRAM)
+- Laptop must remain usable during SAGE operation.
+- Heavy AI, research, synthesis, verification and long-running work should run cloud/background.
+- Local Ollama must never automatically take over heavy work.
 
-Preferred development workflow:
-- Work in bulk rather than tiny edits.
-- Prefer complete replacement files.
-- Give exact file paths.
-- Give exact commands to test.
-- Minimize repetitive manual editing.
-- Do not rebuild components that already work.
-
-## 2. Hardware / Resource Constraint
-
-Primary development laptop:
-- CPU: Intel Core i5-7200U @ 2.50 GHz
-- RAM: 20 GB
-- OS: Windows 10 64-bit / Windows 10 Home Single Language 22H2
-- GPU: Intel HD Graphics 620
-- Discrete GPU: NVIDIA GeForce 9xxM series, approximately 1 GB dedicated VRAM plus shared memory
-
-Critical architectural requirement:
-
-> SAGE must remain usable while working. Heavy AI, research, synthesis, verification and long-running tasks should eventually run in the cloud/background rather than consuming the laptop's CPU.
-
-Recent tests have caused approximately 100% CPU usage. This must be treated as an architectural problem, not merely a testing inconvenience.
-
-Long-term model:
-- Laptop/phone = UI, lightweight local agent, commands, local integrations.
-- Cloud = heavy AI inference, research, web processing, synthesis, verification and background workers.
-
-Local Ollama must not automatically take over heavy tasks when cloud providers fail.
-
-## 3. Current Development Environment
-
-Known setup:
+## Environment
+- Python 3.14.7
+- FastAPI 0.141.1
+- Uvicorn 0.52.4
 - Flutter stable 3.47.3
 - Android SDK 37.0.0
 - Chrome web
 - Visual Studio Build Tools 2026 18.10.0
-- Flutter doctor previously confirmed green
-- Python 3.14.7
-- FastAPI 0.141.1
-- Uvicorn 0.52.4
+- Backend: `C:\SageOne\Backend`
+- SAGE core: `C:\SageOne\sage_core`
+- Backend command:
+  `C:\SageOne\Backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010`
 
-Backend paths used during development:
-- `C:\SageOne\Backend`
-- `C:\SageOne\sage_core`
+## Research OS
+SEARCH → WEB READER → EXTRACTION → EVIDENCE → CROSS-CHECK → SYNTHESIS → CITATIONS → REPORT
+- Search is working and must not be rebuilt unless broken.
+- Previous test: 3 queries → 6 unique sources → 0 errors.
+- Web Reader/research synthesis has already produced evidence items from multiple sources.
 
-Known Uvicorn command:
-`C:\SageOne\Backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010`
-
-Earlier issues with paths/imports were resolved by creating:
-- `C:\SageOne\sage_core\app\main.py`
-- `C:\SageOne\sage_core\app\core.py`
-
-## 4. Research OS
-
-Intended pipeline:
-
-SEARCH
-↓
-WEB READER
-↓
-EXTRACTION
-↓
-EVIDENCE
-↓
-CROSS-CHECK
-↓
-SYNTHESIS
-↓
-CITATIONS
-↓
-REPORT
-
-### Search
-
-Search system is already working and should NOT be rebuilt unless inspection proves it is broken.
-
-Known working capabilities:
-- Multiple queries
-- Deduplication
-- Source IDs
-- URLs
-- Snippets
-- Provenance
-- Timestamps
-
-A previous test:
-- 3 queries
-- 6 unique sources
-- 0 errors
-
-### Web Reader
-
-Web Reader is under active development and should be continued from the existing implementation, not rebuilt.
-
-Previous synthesis testing successfully searched/read 6 sources and created 6 evidence items.
-
-## 5. Brain / AI Providers
-
-Cloud inference is preferred.
-
-Known provider work:
+## AI providers
+Implemented provider layer:
 - Groq
-- Gemini
+- Cerebras
 - Ollama
+- Gemini/OpenRouter configuration remains present but OpenRouter is intentionally deferred.
 
-Earlier Gemini issues:
-- `models/gemini-2.5-flash` was unavailable.
-- A newer model/API direction was indicated.
-- Gemini later hit free-tier quota:
-  `generate_content_free_tier_requests`, limit 20.
+Current strategy:
+- Groq is the first cloud provider.
+- Cerebras is the secondary cloud provider.
+- Ollama is local and controlled by resource/task policy.
+- Medium/heavy tasks are cloud-only in automatic routing.
+- Light tasks may use Ollama only when explicitly local or when the host is below the local CPU ceiling.
+- Provider cooldowns, health counters and structured-output validation exist.
+- Groq uses its OpenAI-compatible chat API and GPT-OSS model configuration.
+- Ollama uses its OpenAI-compatible local endpoint and `llama3.2:3b` by default.
 
-Ollama issue:
-- `llama3.2:3b` returned an empty summary and 0 claims.
+## Resource protection
+CPU policy:
+- SAFE <40%
+- BUSY 40–70%
+- HEAVY 70–85%
+- CRITICAL >=85%
 
-Architectural decision:
-- Do not use local Ollama as an automatic heavy-task fallback.
-- Prefer cloud provider fallback.
-- If cloud providers are unavailable, queue/defer or explicitly report failure instead of making the laptop unusable.
+Local execution policy:
+- Heavy local work is blocked at 50% CPU.
+- Local work is blocked at 70% CPU.
+- High CPU defers background work instead of consuming more CPU.
+- `psutil` is used for host resource monitoring.
 
-A previous Pylance warning:
-`C:\SageOne\sage_core\brain\router.py`
-reported that `Stream[InteractionSSEEvent]` has no attribute `id`.
+## Durable task system
+Current lifecycle:
+TASK → atomic claim → lease → heartbeat → execute → complete/retry/fail → lease recovery
 
-## 6. Durable Worker / Task System
-
-This is an active infrastructure track.
-
-Intended worker lifecycle:
-
-TASK
-↓
-atomic claim
-↓
-worker lease
-↓
-heartbeat
-↓
-execute
-├── success → completed
-├── retry → delayed/backoff
-└── exhausted → failed/dead
-↓
-lease recovery if worker crashes
-
-Required properties:
-- Atomic task claiming
-- Worker ownership
-- Leases
-- Heartbeats
-- Retry timing
-- Exponential/backoff retry strategy
-- Crash recovery
-- Idempotent execution
-
-Current known limitation:
-- The worker previously only listed pending tasks and dispatched them.
-- It did not yet properly implement atomic claiming, ownership, leases/heartbeats or persisted retry timing.
-- This could allow duplicate task pickup by multiple workers.
-
-Database task model was known to have:
-- status
-- retries
-- max_retries
-
-But it previously lacked sufficient:
+Implemented:
+- durable task model
 - worker ownership
-- lease state
+- lease expiry
 - heartbeat
-- scheduled retry fields
+- retry/backoff fields
+- crash/lease recovery
+- worker-owned completion/failure
+- `POST /tasks`
+- `GET /tasks`
+- `GET /tasks/{task_id}`
+- `POST /tasks/{task_id}/cancel`
+- `python -m app.background_worker`
+- local resource protection connected to worker
 
-## 7. Current CI Issue
+## Recent merged checkpoints
+- PR #3: fixed worker/orchestrator ownership context and added CI.
+- PR #5: added durable background task API and resource-protected background worker.
+- Current `main` checkpoint: commit `edd1acfb5b5bbebe5dbfe0a78c75c2bb62d101d6`.
 
-Most recent confirmed issue:
+## Current development batch
+Branch: `feature/provider-routing-v2`
 
-**CI compilation succeeds, but pytest cannot import the top-level `execution` package.**
+This batch combines multiple stages:
+1. Deterministic task classification/routing policy.
+2. Groq-first cloud routing.
+3. Controlled Ollama local routing.
+4. Explicit `auto`, `cloud`, and `local` routing modes.
+5. CPU-aware local eligibility.
+6. Provider routing health visibility.
+7. Regression tests for light/medium/heavy routing and CPU protection.
 
-Cause identified:
-- The CI workflow is not putting the repository root on `PYTHONPATH`.
+Configuration:
+- `SAGE_ROUTING_MODE=auto` by default.
+- `SAGE_PREFER_LOCAL=false` by default.
 
-Immediate next step:
-1. Fix CI import/path configuration.
-2. Run pytest.
-3. Only after that, continue durable worker hardening.
+## Next major tracks
+1. Finish and merge provider routing batch after CI passes and user confirmation.
+2. Connect heavy AI execution to durable background tasks.
+3. Improve research pipeline orchestration and evidence/citation persistence.
+4. Add notification/retrieval for completed background tasks.
+5. Strengthen memory integration.
+6. Continue toward mobile-first SAGE UI.
 
-Do NOT simply modify tests to make CI green.
+## Important known issues
+- Previous Gemini free-tier quota was exhausted during testing.
+- Previous Ollama `llama3.2:3b` research-style test produced empty summary/0 claims; local Ollama therefore remains restricted.
+- Previous Pylance warning involved `Stream[InteractionSSEEvent].id`; avoid treating static typing warnings as runtime facts without verification.
 
-## 8. Resource Management — Planned
-
-SAGE should eventually have a local resource manager.
-
-Initial conceptual levels:
-
-CPU:
-- SAFE: <40%
-- BUSY: 40–70%
-- HEAVY: 70–85%
-- CRITICAL: >85%
-
-RAM:
-- SAFE: <70%
-- BUSY: 70–85%
-- CRITICAL: >85%
-
-Initial desired policy:
-- Local CPU target: below approximately 50%
-- Local CPU hard ceiling: approximately 70%, subject to later testing
-
-At high CPU:
-- Reduce/pause local work.
-- Prefer cloud execution.
-- Avoid launching local AI inference.
-- Keep the computer usable.
-
-These are design targets, not yet implemented or final.
-
-## 9. Planned Task Classification
-
-SAGE should classify work:
-
-### LIGHT
-- Normal conversation
-- Quick calculations
-- Simple planning
-- Short answers
-
-→ Fast cloud execution or lightweight local processing.
-
-### MEDIUM
-- Coding
-- Analysis
-- Document processing
-- Moderate research
-
-→ Stronger cloud execution.
-
-### HEAVY
-- Deep research
-- Multi-source verification
-- Large documents
-- Long reasoning
-- Multi-agent tasks
-
-→ Background cloud worker.
-
-## 10. Background Task Architecture
-
-Target behavior:
-
-USER
-↓
-Create task
-↓
-Immediately acknowledge
-↓
-Background worker executes
-├── Search
-├── Read
-├── Extract
-├── Evidence
-├── Synthesis
-└── Verify
-↓
-Persist result
-↓
-Notify/retrieve result
-
-The user should be able to continue using the laptop while SAGE performs heavy work.
-
-## 11. Research Efficiency Rules
-
-Avoid unnecessarily processing huge payloads locally.
-
-Use:
-- Maximum source count
-- Maximum page size
-- Maximum extracted text
-- Maximum evidence items
-- Maximum context size
-- Maximum claims
-- Maximum reasoning/output length
-
-Independent research operations should eventually run concurrently in cloud workers where safe.
-
-Goal:
-- Faster
-- Cheaper
-- More reliable
-- Lower local CPU use
-
-## 12. Current Priority Order
-
-### Priority 1 — CI correctness
-Fix:
-`pytest cannot import top-level execution`
-
-### Priority 2 — Worker correctness
-Implement/harden:
-- Atomic claim
-- Lease
-- Heartbeat
-- Retry/backoff
-- Crash recovery
-- Idempotency
-
-### Priority 3 — Performance architecture
-Implement:
-- Task classification
-- Background jobs
-- Cloud workers
-- Local resource guard
-- No automatic heavy Ollama fallback
-
-### Priority 4 — Research OS expansion
-Continue:
-- Web Reader
-- Extraction
-- Evidence
-- Cross-check
-- Synthesis
-- Citations
-- Report generation
-
-Do not rebuild working Search.
-
-## 13. Current Known Issues
-
-- CI pytest import problem for top-level `execution`
-- Worker durability still needs hardening
-- Local tests can consume excessive CPU
-- Ollama fallback can be unsuitable for this laptop
-- Gemini free-tier quota has been reached in previous testing
-- Brain structured-output/reliability needs stronger validation/fallback handling
-- Previous Pylance warning regarding `Stream[InteractionSSEEvent].id`
-
-## 14. Development Rule
-
-Before changing anything:
-
-1. Inspect the current repository/files.
-2. Identify what already exists.
-3. Do not rebuild working components.
-4. Make the smallest architecturally correct change.
-5. Prefer complete replacement files.
-6. Test.
-7. Record the result in this document.
-
-This file is the continuity source for future ChatGPT development sessions.
+## Continuity rule
+This file is the continuity source for future SAGE ONE development sessions. Always inspect the actual GitHub repository and this state before making architectural changes.
