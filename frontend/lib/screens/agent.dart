@@ -129,6 +129,7 @@ class _AgentScreenState extends State<AgentScreen> {
             const _Capability(icon: Icons.memory, title: 'REMEMBER', detail: 'Build durable context over time'),
             const SizedBox(height: 10),
             OutlinedButton.icon(
+              key: const ValueKey<String>('agent-run-system-check'),
               onPressed: _running ? null : _runSystemCheck,
               icon: Icon(_running ? Icons.hourglass_top : Icons.play_arrow),
               label: Text(_running ? 'CHECK RUNNING…' : 'RUN SYSTEM CHECK'),
