@@ -56,7 +56,8 @@ void main() {
     expect(find.text('running • task-123'), findsOneWidget);
 
     await tester.tap(find.text('Research: Flutter reliability'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('STATUS  •  completed'), findsOneWidget);
     expect(find.text('Task ID'), findsOneWidget);
