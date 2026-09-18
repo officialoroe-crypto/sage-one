@@ -18,6 +18,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
   Timer? _poller;
   String _status = 'Ready for a research question';
   String? _taskId;
+  String? _taskStatus;
   String? _result;
   String? _error;
   bool _submitting = false;
@@ -30,6 +31,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
       _submitting = true;
       _status = 'Queueing research…';
       _taskId = null;
+      _taskStatus = null;
       _result = null;
       _error = null;
     });
@@ -39,6 +41,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
       if (!mounted) return;
       setState(() {
         _taskId = taskId?.toString();
+        _taskStatus = _taskId == null ? null : 'queued';
         _status = _taskId == null ? 'Research queued' : 'Research is running';
         _query.clear();
       });
@@ -66,10 +69,11 @@ class _ResearchScreenState extends State<ResearchScreen> {
     try {
       final task = await widget.api.task(taskId);
       if (!mounted) return;
-      final status = (task['status'] ?? 'unknown').toString();
+      final status = (task['status'] ?? 'unknown').toString().toLowerCase();
       final result = task['result'] ?? task['output'];
       final failure = task['error'] ?? task['failure_reason'];
       setState(() {
+        _taskStatus = status;
         _status = _friendlyStatus(status);
         _result = result?.toString();
         _error = failure?.toString();
@@ -81,15 +85,14 @@ class _ResearchScreenState extends State<ResearchScreen> {
   }
 
   bool _isTerminal(String status) {
-    final normalized = status.toLowerCase();
-    return normalized == 'completed' ||
-        normalized == 'failed' ||
-        normalized == 'cancelled' ||
-        normalized == 'canceled';
+    return status == 'completed' ||
+        status == 'failed' ||
+        status == 'cancelled' ||
+        status == 'canceled';
   }
 
   String _friendlyStatus(String status) {
-    switch (status.toLowerCase()) {
+    switch (status) {
       case 'queued':
         return 'Research queued';
       case 'claimed':
@@ -133,7 +136,8 @@ class _ResearchScreenState extends State<ResearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final active = _taskId != null && !_isTerminal(_status);
+    final active = _taskId != null &&
+        (_taskStatus == null || !_isTerminal(_taskStatus!));
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
