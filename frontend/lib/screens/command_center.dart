@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/sage_api.dart';
 
 class CommandCenter extends StatefulWidget {
-  const CommandCenter({required this.api, this.onNavigate, super.key});
+  const CommandCenter({required this.api, super.key});
 
   final SageApi api;
 
@@ -95,15 +95,6 @@ class _CommandCenterState extends State<CommandCenter> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Sage'),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Research'),
-          NavigationDestination(icon: Icon(Icons.task_alt), label: 'Tasks'),
-          NavigationDestination(icon: Icon(Icons.folder_open), label: 'Projects'),
-        ],
       ),
     );
   }
