@@ -17,15 +17,14 @@ from tools.registry import registry
 # ============================================================
 
 def sage_time() -> dict[str, Any]:
-    """
-    Return the current UTC timestamp.
-    """
 
     return {
         "success": True,
         "tool": "sage_time",
         "result": {
-            "utc_time": datetime.now(timezone.utc).isoformat()
+            "utc_time": datetime.now(
+                timezone.utc
+            ).isoformat()
         },
     }
 
@@ -35,9 +34,6 @@ def sage_time() -> dict[str, Any]:
 # ============================================================
 
 def sage_status() -> dict[str, Any]:
-    """
-    Return basic SAGE ONE runtime status.
-    """
 
     return {
         "success": True,
@@ -45,7 +41,9 @@ def sage_status() -> dict[str, Any]:
         "result": {
             "service": "SAGE ONE",
             "status": "operational",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(
+                timezone.utc
+            ).isoformat(),
         },
     }
 
@@ -58,11 +56,12 @@ def web_search(
     query: str,
     max_results: int = 5,
 ) -> dict[str, Any]:
-    """
-    Search the public web using DDGS.
-    """
 
-    if not isinstance(query, str) or not query.strip():
+    if not isinstance(
+        query,
+        str,
+    ) or not query.strip():
+
         return {
             "success": False,
             "query": query,
@@ -72,43 +71,69 @@ def web_search(
         }
 
     try:
+
         from ddgs import DDGS
 
-        limit = max(1, min(int(max_results), 10))
+        limit = max(
+            1,
+            min(
+                int(max_results),
+                10,
+            ),
+        )
 
         search_kwargs = {
             "query": query.strip(),
             "max_results": limit,
         }
 
-        raw_results = DDGS().text(**search_kwargs)
+        raw_results = DDGS().text(
+            **search_kwargs
+        )
 
         results = []
 
-        for rank, item in enumerate(raw_results or [], start=1):
+        for rank, item in enumerate(
+            raw_results or [],
+            start=1,
+        ):
+
             results.append(
                 {
                     "rank": rank,
-                    "title": item.get("title"),
-                    "url": item.get("href") or item.get("url"),
-                    "snippet": item.get("body") or item.get("snippet"),
+                    "title": item.get(
+                        "title"
+                    ),
+                    "url": (
+                        item.get("href")
+                        or item.get("url")
+                    ),
+                    "snippet": (
+                        item.get("body")
+                        or item.get("snippet")
+                    ),
                 }
             )
 
         return {
             "success": True,
             "query": query.strip(),
-            "result_count": len(results),
+            "result_count": len(
+                results
+            ),
             "results": results,
         }
 
     except Exception as exc:
+
         return {
             "success": False,
             "query": query,
             "result_count": 0,
             "results": [],
-            "error": f"Web search failed: {exc}",
+            "error": (
+                f"Web search failed: {exc}"
+            ),
         }
 
 
@@ -120,14 +145,9 @@ def web_read(
     url: str,
     max_chars: int = 100000,
 ) -> dict[str, Any]:
-    """
-    Read and extract meaningful content from a public webpage.
-
-    This tool retrieves evidence only.
-    It does not summarize, interpret, or make decisions.
-    """
 
     try:
+
         from web.reader import web_reader
 
         result = web_reader.read(
@@ -136,12 +156,17 @@ def web_read(
         )
 
         return {
-            "success": bool(result.get("success")),
+            "success": bool(
+                result.get(
+                    "success"
+                )
+            ),
             "tool": "web_read",
             "result": result,
         }
 
     except Exception as exc:
+
         return {
             "success": False,
             "tool": "web_read",
@@ -149,7 +174,9 @@ def web_read(
                 "success": False,
                 "url": url,
                 "content": "",
-                "error": f"Web reader failed: {exc}",
+                "error": (
+                    f"Web reader failed: {exc}"
+                ),
             },
         }
 
@@ -163,62 +190,109 @@ def research_web(
     max_queries: int = 5,
     max_results_per_query: int = 5,
 ):
-    """
-    Run the SAGE ONE research search layer.
-    """
 
-    from research.engine import research_engine
+    from research.engine import (
+        research_engine
+    )
 
     return research_engine.research(
         question=question,
         max_queries=max_queries,
-        max_results_per_query=max_results_per_query,
+        max_results_per_query=(
+            max_results_per_query
+        ),
     )
 
 
 # ============================================================
-# TOOL REGISTRATION
+# RESEARCH SYNTHESIS
+# ============================================================
+
+def research_synthesize(
+    question: str,
+    max_queries: int = 5,
+    max_results_per_query: int = 5,
+):
+
+    from research.synthesis import (
+        research_synthesis_engine
+    )
+
+    return (
+        research_synthesis_engine.synthesize(
+            question=question,
+            max_queries=max_queries,
+            max_results_per_query=(
+                max_results_per_query
+            ),
+        )
+    )
+
+
+# ============================================================
+# REGISTER TOOLS
 # ============================================================
 
 def register_builtin_tools():
-    """
-    Register all built-in SAGE ONE tools.
 
-    Safe against repeated initialization.
-    """
+    # --------------------------------------------------------
+    # TIME
+    # --------------------------------------------------------
 
-    if not registry.exists("sage_time"):
+    if not registry.exists(
+        "sage_time"
+    ):
+
         registry.register(
             name="sage_time",
-            description="Get the current UTC timestamp.",
+            description=(
+                "Get the current UTC timestamp."
+            ),
             capability="system.time",
             risk="low",
             permission="system.read",
             handler=sage_time,
             parameters={
-                "properties": {},
+                "properties": {}
             },
         )
 
-    if not registry.exists("sage_status"):
+    # --------------------------------------------------------
+    # STATUS
+    # --------------------------------------------------------
+
+    if not registry.exists(
+        "sage_status"
+    ):
+
         registry.register(
             name="sage_status",
-            description="Get the current SAGE ONE runtime status.",
+            description=(
+                "Get the current SAGE ONE runtime status."
+            ),
             capability="system.status",
             risk="low",
             permission="system.status",
             handler=sage_status,
             parameters={
-                "properties": {},
+                "properties": {}
             },
         )
 
-    if not registry.exists("web_search"):
+    # --------------------------------------------------------
+    # WEB SEARCH
+    # --------------------------------------------------------
+
+    if not registry.exists(
+        "web_search"
+    ):
+
         registry.register(
             name="web_search",
             description=(
-                "Search the public web and return ranked search results "
-                "with titles, URLs, and snippets."
+                "Search the public web and return "
+                "ranked search results with titles, "
+                "URLs, and snippets."
             ),
             capability="web.search",
             risk="low",
@@ -228,27 +302,39 @@ def register_builtin_tools():
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The web search query.",
+                        "description": (
+                            "The web search query."
+                        ),
                     },
                     "max_results": {
                         "type": "integer",
-                        "description": "Maximum number of results.",
+                        "description": (
+                            "Maximum number of results."
+                        ),
                         "minimum": 1,
                         "maximum": 10,
                     },
                 },
                 "required": [
-                    "query",
+                    "query"
                 ],
             },
         )
 
-    if not registry.exists("web_read"):
+    # --------------------------------------------------------
+    # WEB READ
+    # --------------------------------------------------------
+
+    if not registry.exists(
+        "web_read"
+    ):
+
         registry.register(
             name="web_read",
             description=(
-                "Open a public HTTP/HTTPS webpage and extract its "
-                "meaningful main content and metadata."
+                "Open a public HTTP/HTTPS webpage "
+                "and extract its meaningful main "
+                "content and metadata."
             ),
             capability="web.read",
             risk="low",
@@ -258,7 +344,9 @@ def register_builtin_tools():
                 "properties": {
                     "url": {
                         "type": "string",
-                        "description": "Public webpage URL to read.",
+                        "description": (
+                            "Public webpage URL to read."
+                        ),
                     },
                     "max_chars": {
                         "type": "integer",
@@ -270,17 +358,25 @@ def register_builtin_tools():
                     },
                 },
                 "required": [
-                    "url",
+                    "url"
                 ],
             },
         )
 
-    if not registry.exists("research_web"):
+    # --------------------------------------------------------
+    # RAW RESEARCH
+    # --------------------------------------------------------
+
+    if not registry.exists(
+        "research_web"
+    ):
+
         registry.register(
             name="research_web",
             description=(
-                "Research a question using multiple public web searches "
-                "and return deduplicated source evidence."
+                "Research a question using multiple "
+                "public web searches and return "
+                "deduplicated source evidence."
             ),
             capability="research.execute",
             risk="low",
@@ -290,28 +386,87 @@ def register_builtin_tools():
                 "properties": {
                     "question": {
                         "type": "string",
-                        "description": "Research question.",
+                        "description": (
+                            "Research question."
+                        ),
                     },
                     "max_queries": {
                         "type": "integer",
-                        "description": "Maximum search queries.",
+                        "description": (
+                            "Maximum search queries."
+                        ),
                         "minimum": 1,
                         "maximum": 10,
                     },
                     "max_results_per_query": {
                         "type": "integer",
                         "description": (
-                            "Maximum search results per query."
+                            "Maximum search results "
+                            "per query."
                         ),
                         "minimum": 1,
                         "maximum": 10,
                     },
                 },
                 "required": [
-                    "question",
+                    "question"
+                ],
+            },
+        )
+
+    # --------------------------------------------------------
+    # FULL RESEARCH + SYNTHESIS
+    # --------------------------------------------------------
+
+    if not registry.exists(
+        "research_synthesize"
+    ):
+
+        registry.register(
+            name="research_synthesize",
+            description=(
+                "Perform multi-source web research, "
+                "read the sources, build evidence, "
+                "cross-check claims, detect conflicts, "
+                "assign confidence, and produce a "
+                "citation-ready research report."
+            ),
+            capability="research.synthesize",
+            risk="low",
+            permission="research.execute",
+            handler=research_synthesize,
+            parameters={
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": (
+                            "Question that SAGE should research "
+                            "and synthesize."
+                        ),
+                    },
+                    "max_queries": {
+                        "type": "integer",
+                        "description": (
+                            "Maximum number of search queries."
+                        ),
+                        "minimum": 1,
+                        "maximum": 10,
+                    },
+                    "max_results_per_query": {
+                        "type": "integer",
+                        "description": (
+                            "Maximum results per search query."
+                        ),
+                        "minimum": 1,
+                        "maximum": 10,
+                    },
+                },
+                "required": [
+                    "question"
                 ],
             },
         )
 
 
+# Register immediately when imported.
 register_builtin_tools()

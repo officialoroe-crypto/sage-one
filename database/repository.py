@@ -279,6 +279,233 @@ class SageRepository:
         return task
 
     # ============================================================
+    # DURABLE WORKER / TASK LEASING
+    # ============================================================
+
+    def claim_next_task(
+        self,
+        db: DBSession,
+        worker_id: str,
+        lease_seconds: int = 120,
+    ) -> Task | None:
+        """Atomically claim the highest-priority eligible pending task."""
+
+        now = self._utc_now()
+        lease_seconds = max(30, int(lease_seconds))
+        lease_expires = now.timestamp() + lease_seconds
+        lease_time = datetime.fromtimestamp(
+            lease_expires,
+            tz=timezone.utc,
+        )
+
+        candidate = (
+            db.query(Task.id)
+            .filter(Task.status == 'pending')
+            .filter(
+                (Task.next_retry_at.is_(None))
+                | (Task.next_retry_at <= now)
+            )
+            .order_by(
+                Task.priority.asc(),
+                Task.created_at.asc(),
+            )
+            .first()
+        )
+
+        if not candidate:
+            return None
+
+        task_id = candidate[0]
+
+        updated = (
+            db.query(Task)
+            .filter(Task.id == task_id)
+            .filter(Task.status == 'pending')
+            .filter(
+                (Task.next_retry_at.is_(None))
+                | (Task.next_retry_at <= now)
+            )
+            .update(
+                {
+                    Task.status: 'running',
+                    Task.worker_id: worker_id,
+                    Task.lease_expires_at: lease_time,
+                    Task.heartbeat_at: now,
+                    Task.started_at: now,
+                    Task.updated_at: now,
+                },
+                synchronize_session=False,
+            )
+        )
+
+        if updated != 1:
+            db.rollback()
+            return None
+
+        db.commit()
+        return self.get_task(db, task_id)
+
+    def heartbeat_task(
+        self,
+        db: DBSession,
+        task_id: str,
+        worker_id: str,
+        lease_seconds: int = 120,
+    ) -> Task | None:
+        """Refresh a task lease only when this worker owns the task."""
+
+        now = self._utc_now()
+        lease_seconds = max(30, int(lease_seconds))
+        lease_expires = datetime.fromtimestamp(
+            now.timestamp() + lease_seconds,
+            tz=timezone.utc,
+        )
+
+        updated = (
+            db.query(Task)
+            .filter(Task.id == task_id)
+            .filter(Task.status == 'running')
+            .filter(Task.worker_id == worker_id)
+            .update(
+                {
+                    Task.lease_expires_at: lease_expires,
+                    Task.heartbeat_at: now,
+                    Task.updated_at: now,
+                },
+                synchronize_session=False,
+            )
+        )
+
+        if updated != 1:
+            db.rollback()
+            return None
+
+        db.commit()
+        return self.get_task(db, task_id)
+
+    def complete_task_claim(
+        self,
+        db: DBSession,
+        task_id: str,
+        worker_id: str,
+        result: str,
+    ) -> Task | None:
+        """Complete a task only when the supplied worker owns its lease."""
+
+        now = self._utc_now()
+
+        updated = (
+            db.query(Task)
+            .filter(Task.id == task_id)
+            .filter(Task.status == 'running')
+            .filter(Task.worker_id == worker_id)
+            .update(
+                {
+                    Task.status: 'completed',
+                    Task.progress: 100,
+                    Task.result: result,
+                    Task.error: None,
+                    Task.completed_at: now,
+                    Task.worker_id: None,
+                    Task.lease_expires_at: None,
+                    Task.heartbeat_at: None,
+                    Task.next_retry_at: None,
+                    Task.updated_at: now,
+                },
+                synchronize_session=False,
+            )
+        )
+
+        if updated != 1:
+            db.rollback()
+            return None
+
+        db.commit()
+        return self.get_task(db, task_id)
+
+    def fail_task_claim(
+        self,
+        db: DBSession,
+        task_id: str,
+        worker_id: str,
+        error: str,
+        retry_delay_seconds: int = 10,
+    ) -> Task | None:
+        """Fail/requeue a task only when the supplied worker owns it."""
+
+        task = (
+            db.query(Task)
+            .filter(Task.id == task_id)
+            .filter(Task.status == 'running')
+            .filter(Task.worker_id == worker_id)
+            .first()
+        )
+
+        if not task:
+            return None
+
+        now = self._utc_now()
+        new_retries = task.retries + 1
+
+        if new_retries < task.max_retries:
+            status = 'pending'
+            next_retry_at = datetime.fromtimestamp(
+                now.timestamp() + max(1, int(retry_delay_seconds)),
+                tz=timezone.utc,
+            )
+        else:
+            status = 'failed'
+            next_retry_at = None
+
+        task.status = status
+        task.retries = new_retries
+        task.error = str(error)
+        task.worker_id = None
+        task.lease_expires_at = None
+        task.heartbeat_at = None
+        task.next_retry_at = next_retry_at
+        task.updated_at = now
+
+        if status == 'failed':
+            task.completed_at = now
+
+        db.commit()
+        return task
+
+    def recover_expired_tasks(
+        self,
+        db: DBSession,
+    ) -> int:
+        """Return expired running tasks to the pending queue."""
+
+        now = self._utc_now()
+
+        expired = (
+            db.query(Task)
+            .filter(Task.status == 'running')
+            .filter(Task.lease_expires_at.is_not(None))
+            .filter(Task.lease_expires_at < now)
+            .all()
+        )
+
+        recovered = 0
+
+        for task in expired:
+            task.status = 'pending'
+            task.worker_id = None
+            task.lease_expires_at = None
+            task.heartbeat_at = None
+            task.next_retry_at = now
+            task.error = 'Worker lease expired; task returned to queue.'
+            task.updated_at = now
+            recovered += 1
+
+        if recovered:
+            db.commit()
+
+        return recovered
+
+    # ============================================================
     # ACTION / EXECUTION LEDGER
     # ============================================================
 

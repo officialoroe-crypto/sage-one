@@ -295,6 +295,29 @@ class Task(Base):
         nullable=False
     )
 
+    worker_id: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
+        index=True
+    )
+
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        index=True
+    )
+
+    heartbeat_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True
+    )
+
+    next_retry_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+        index=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: datetime.now(timezone.utc)

@@ -21,9 +21,10 @@ class SageOrchestrator:
         self,
         goal: str,
         session_id: str | None = None,
-        priority: int = 3
+        priority: int = 3,
+        task_id: str | None = None,
+        worker_id: str | None = None,
     ):
-
         if not goal or not goal.strip():
             raise ValueError(
                 "Goal cannot be empty."
@@ -45,29 +46,45 @@ class SageOrchestrator:
             agent_name = "general"
 
         # --------------------------------------
-        # 2. CREATE ROOT TASK
+        # 2. RESOLVE TASK
+        # --------------------------------------
+        #
+        # Direct mode:
+        #   Create and own the task through the
+        #   legacy task lifecycle.
+        #
+        # Worker mode:
+        #   Use the task already atomically claimed
+        #   by the durable worker.
+        #
+        # The worker-owned path NEVER creates a
+        # second root task.
         # --------------------------------------
 
-        root_task = tasks.create(
-            title=goal[:120],
-            description=goal,
-            priority=priority,
-            agent=agent_name,
-            session_id=session_id
+        worker_owned = (
+            task_id is not None
+            and worker_id is not None
         )
 
-        task_id = root_task["id"]
+        if worker_owned:
+            resolved_task_id = task_id
+        else:
+            root_task = tasks.create(
+                title=goal[:120],
+                description=goal,
+                priority=priority,
+                agent=agent_name,
+                session_id=session_id
+            )
+
+            resolved_task_id = root_task["id"]
+
+            tasks.start(
+                resolved_task_id
+            )
 
         # --------------------------------------
-        # 3. START TASK
-        # --------------------------------------
-
-        tasks.start(
-            task_id
-        )
-
-        # --------------------------------------
-        # 4. BUILD EXECUTION PLAN
+        # 3. BUILD EXECUTION PLAN
         # --------------------------------------
 
         plan = self.plan(
@@ -76,7 +93,7 @@ class SageOrchestrator:
         )
 
         # --------------------------------------
-        # 5. EXECUTE PLAN
+        # 4. EXECUTE PLAN
         # --------------------------------------
 
         results = []
@@ -99,10 +116,21 @@ class SageOrchestrator:
                 * 100
             )
 
-            tasks.progress(
-                task_id,
-                progress
-            )
+            if worker_owned:
+                progress_result = tasks.progress(
+                    resolved_task_id,
+                    progress
+                )
+
+                if progress_result is None:
+                    raise RuntimeError(
+                        "Worker lost task ownership during progress update."
+                    )
+            else:
+                tasks.progress(
+                    resolved_task_id,
+                    progress
+                )
 
             result = self.execute_step(
                 step=step,
@@ -115,14 +143,27 @@ class SageOrchestrator:
             )
 
             if not result["success"]:
+
+                if worker_owned:
+                    return {
+                        "success": False,
+                        "task_id": resolved_task_id,
+                        "agent": agent_name,
+                        "goal": goal,
+                        "plan": plan,
+                        "results": results,
+                        "error": result["error"],
+                        "worker_owned": True,
+                    }
+
                 tasks.fail(
-                    task_id,
+                    resolved_task_id,
                     result["error"]
                 )
 
                 return {
                     "success": False,
-                    "task_id": task_id,
+                    "task_id": resolved_task_id,
                     "agent": agent_name,
                     "goal": goal,
                     "plan": plan,
@@ -131,7 +172,7 @@ class SageOrchestrator:
                 }
 
         # --------------------------------------
-        # 6. VERIFY
+        # 5. VERIFY
         # --------------------------------------
 
         verification = self.verify(
@@ -140,7 +181,7 @@ class SageOrchestrator:
         )
 
         # --------------------------------------
-        # 7. COMPLETE TASK
+        # 6. FINAL SYNTHESIS
         # --------------------------------------
 
         final_result = self.summarize(
@@ -149,17 +190,58 @@ class SageOrchestrator:
             verification=verification
         )
 
+        # --------------------------------------
+        # 7. COMPLETE / FAIL TASK
+        # --------------------------------------
+
+        if worker_owned:
+            #
+            # IMPORTANT:
+            #
+            # The durable worker owns the database
+            # state transition. The orchestrator only
+            # returns the execution result.
+            #
+            return {
+                "success":
+                    verification["success"],
+
+                "task_id":
+                    resolved_task_id,
+
+                "agent":
+                    agent_name,
+
+                "goal":
+                    goal,
+
+                "plan":
+                    plan,
+
+                "results":
+                    results,
+
+                "verification":
+                    verification,
+
+                "final":
+                    final_result,
+
+                "worker_owned":
+                    True,
+            }
+
         if verification["success"]:
 
             tasks.complete(
-                task_id,
+                resolved_task_id,
                 final_result
             )
 
         else:
 
             tasks.fail(
-                task_id,
+                resolved_task_id,
                 verification["reason"]
             )
 
@@ -168,7 +250,7 @@ class SageOrchestrator:
                 verification["success"],
 
             "task_id":
-                task_id,
+                resolved_task_id,
 
             "agent":
                 agent_name,
@@ -518,8 +600,7 @@ class SageOrchestrator:
                     ),
                     user_message=(
                         f"GOAL:\n{goal}\n\n"
-                        f"REFINEMENT:\n"
-                        f"{description}"
+                        f"REFINEMENT:\n{description}"
                     )
                 )
 
