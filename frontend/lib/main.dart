@@ -40,7 +40,7 @@ class _SageOneAppState extends State<SageOneApp> {
       CommandCenter(api: _api),
       ResearchScreen(api: _api),
       TasksScreen(api: _api),
-      ProjectsScreen(),
+      const ProjectsScreen(),
       AgentScreen(api: _api),
     ];
     return MaterialApp(
