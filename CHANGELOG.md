@@ -1,5 +1,13 @@
 # SAGE ONE — CHANGELOG
 
+## 2026-09-17 — Background Task API
+- Added durable `POST /tasks` queue creation.
+- Added task listing with status filtering.
+- Added task lookup and cancellation endpoints.
+- Added standalone `python -m app.background_worker` entry point.
+- Reconnected the worker to local resource protection so busy CPU defers queued work.
+- Added regression coverage for the task API and resource-protection path.
+
 ## 2026-09-17
 
 ### Research OS

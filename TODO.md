@@ -33,12 +33,12 @@
 ## NOW
 
 ### Background Jobs
-- [ ] Create durable task API.
-- [ ] Create background worker process/service entry point.
-- [ ] Persist task state through the existing durable worker lifecycle.
-- [ ] Allow user to query task status.
-- [ ] Store completed results.
-- [ ] Add explicit failure states to the user-facing task API.
+- [x] Create durable task API.
+- [x] Create background worker process/service entry point.
+- [x] Persist task state through the existing durable worker lifecycle.
+- [x] Allow user to query task status.
+- [x] Store completed results.
+- [x] Add explicit failure states to the user-facing task API.
 - [ ] Add notification mechanism.
 
 ## RESEARCH OS
