@@ -48,7 +48,7 @@ class _SageOneAppState extends State<SageOneApp> {
       debugShowCheckedModeBanner: false,
       theme: SageTheme.dark(),
       home: Scaffold(
-        body: screens[_index],
+        body: IndexedStack(index: _index, children: screens),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: (value) => setState(() => _index = value),
