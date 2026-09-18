@@ -40,7 +40,10 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: AgentScreen(api: api)));
     await tester.pump();
 
-    final runButton = find.byKey(const ValueKey<String>('agent-run-system-check'));
+    final runButton = find.byKey(
+      const ValueKey<String>('agent-run-system-check'),
+    );
+    await tester.scrollUntilVisible(runButton, 500);
     expect(runButton, findsOneWidget);
     await tester.tap(runButton);
     await tester.pump();
