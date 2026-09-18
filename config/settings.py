@@ -44,5 +44,15 @@ class Settings:
         "llama3.2:3b",
     )
 
+    ROUTING_MODE = os.getenv(
+        "SAGE_ROUTING_MODE",
+        "auto",
+    )
+
+    PREFER_LOCAL = os.getenv(
+        "SAGE_PREFER_LOCAL",
+        "false",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
 
 settings = Settings()
