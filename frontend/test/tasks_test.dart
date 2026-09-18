@@ -59,7 +59,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('STATUS  •  completed'), findsOneWidget);
+    expect(find.text('Task detail'), findsOneWidget);
+    expect(find.text('Status'), findsOneWidget);
+    expect(find.text('completed'), findsOneWidget);
     expect(find.text('Task ID'), findsOneWidget);
     expect(find.text('Research completed.'), findsOneWidget);
   });
