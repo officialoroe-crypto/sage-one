@@ -1,8 +1,16 @@
 from app.main import app
 
 
+def _paths() -> set[str]:
+    return {
+        route.path
+        for route in app.routes
+        if hasattr(route, "path")
+    }
+
+
 def test_identity_and_world_routers_are_mounted_at_top_level():
-    paths = {route.path for route in app.routes}
+    paths = _paths()
 
     assert "/identity/google" in paths
     assert "/identity/me" in paths
@@ -16,7 +24,7 @@ def test_identity_and_world_routers_are_mounted_at_top_level():
 
 
 def test_identity_and_world_routes_are_not_nested_under_missions():
-    paths = {route.path for route in app.routes}
+    paths = _paths()
 
     assert "/missions/identity/google" not in paths
     assert "/missions/world/status" not in paths
