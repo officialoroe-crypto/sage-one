@@ -22,6 +22,8 @@ from agents.manager import agents
 from tasks.engine import tasks
 from notifications.service import list_notifications, mark_read, mark_all_read
 from missions.api import router as mission_api_router
+from identity.api import router as identity_api_router
+from world_intelligence.api import router as world_api_router
 
 
 # ============================================================
@@ -40,6 +42,8 @@ Base.metadata.create_all(bind=engine)
 # Mission progress/history/control endpoints are kept in their own router so
 # the mobile API surface can evolve without bloating this application module.
 app.include_router(mission_api_router)
+app.include_router(identity_api_router)
+app.include_router(world_api_router)
 
 
 # ============================================================
