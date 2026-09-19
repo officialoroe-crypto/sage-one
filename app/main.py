@@ -20,6 +20,7 @@ from permissions.engine import permissions
 from tools.registry import registry
 from agents.manager import agents
 from tasks.engine import tasks
+from notifications.service import list_notifications, mark_read, mark_all_read
 
 
 # ============================================================
@@ -921,6 +922,42 @@ def get_trace_summary(
         "summary": _serialize(
             trace.get("summary")
         ),
+    }
+
+
+# ============================================================
+# NOTIFICATIONS
+# ============================================================
+
+@app.get("/notifications")
+def get_notifications(
+    session_id: Optional[str] = None,
+    unread_only: bool = False,
+    limit: int = 50,
+):
+    return {
+        "success": True,
+        "notifications": list_notifications(
+            session_id=session_id,
+            unread_only=unread_only,
+            limit=limit,
+        ),
+    }
+
+
+@app.post("/notifications/{notification_id}/read")
+def read_notification(notification_id: str):
+    notification = mark_read(notification_id)
+    if notification is None:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"success": True, "notification": notification}
+
+
+@app.post("/notifications/read-all")
+def read_all_notifications(session_id: Optional[str] = None):
+    return {
+        "success": True,
+        "marked_read": mark_all_read(session_id=session_id),
     }
 
 
