@@ -13,9 +13,9 @@ Last updated: 2026-09-18
 - Work in large logical batches rather than tiny edits.
 - Inspect GitHub first; code directly in GitHub.
 - Use GitHub branches + PRs + CI for validation.
-- User confirms merges; do not merge without explicit confirmation.
-- Avoid unnecessary local testing because the development laptop can hit ~100% CPU.
+- Keep the laptop usable; avoid unnecessary local test runs.
 - Do not rebuild working components.
+- Heavy AI, research, synthesis and verification belong in durable background/cloud execution where possible.
 
 ## Hardware constraint
 - Intel Core i5-7200U @ 2.50 GHz
@@ -40,10 +40,22 @@ Last updated: 2026-09-18
   `C:\SageOne\Backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010`
 
 ## Research OS
+Target pipeline:
 SEARCH → WEB READER → EXTRACTION → EVIDENCE → CROSS-CHECK → SYNTHESIS → CITATIONS → REPORT
-- Search is working and must not be rebuilt unless broken.
-- Previous test: 3 queries → 6 unique sources → 0 errors.
-- Web Reader/research synthesis has already produced evidence items from multiple sources.
+
+Implemented foundation:
+- Search via registered `web_search` tool.
+- Web Reader via registered `web_read` tool.
+- URL normalization and duplicate-source suppression.
+- Source metadata and content hashing.
+- Evidence objects with stable evidence IDs.
+- Structured synthesis with source/evidence traceability.
+- Deterministic claim validation and verification.
+- Empty-evidence / empty-summary / zero-claim failure detection.
+- Research agent now executes the existing synthesis + verification pipeline inside the durable background worker.
+
+Known limitation:
+- Research result persistence is currently stored as the durable task result; a dedicated research artifact/evidence store is a future step.
 
 ## AI providers
 Implemented provider layer:
@@ -93,35 +105,31 @@ Implemented:
 - `POST /tasks/{task_id}/cancel`
 - `python -m app.background_worker`
 - local resource protection connected to worker
+- background execution endpoint queues durable work instead of doing inference in the HTTP request
+- research-agent tasks now use the real Research OS pipeline in the worker
 
 ## Recent merged checkpoints
-- PR #3: fixed worker/orchestrator ownership context and added CI.
-- PR #5: added durable background task API and resource-protected background worker.
-- Current `main` checkpoint: commit `edd1acfb5b5bbebe5dbfe0a78c75c2bb62d101d6`.
+- PR #12: hardened Flutter execution UX v1; merge commit `3d935ca9776c1b13253514b9e5cd2a3a2587e1bf`.
+- PR #13: hardened Flutter task execution UX v2; merge commit `36d7f121931530d18088ecb891d5c80ce845a9c7`.
+- CI run #85 passed before PR #13 merge.
 
 ## Current development batch
-Branch: `feature/provider-routing-v2`
+Branch: `feature/research-os-background-v1`
 
-This batch combines multiple stages:
-1. Deterministic task classification/routing policy.
-2. Groq-first cloud routing.
-3. Controlled Ollama local routing.
-4. Explicit `auto`, `cloud`, and `local` routing modes.
-5. CPU-aware local eligibility.
-6. Provider routing health visibility.
-7. Regression tests for light/medium/heavy routing and CPU protection.
-
-Configuration:
-- `SAGE_ROUTING_MODE=auto` by default.
-- `SAGE_PREFER_LOCAL=false` by default.
+This batch:
+1. Routes `research` durable tasks to the existing Research OS synthesis/verification engine.
+2. Keeps non-research agents on the existing orchestrator path.
+3. Adds regression coverage for research-vs-general worker routing.
+4. Reconciles project-state documentation with the actual merged architecture.
 
 ## Next major tracks
-1. Finish and merge provider routing batch after CI passes and user confirmation.
-2. Connect heavy AI execution to durable background tasks.
-3. Improve research pipeline orchestration and evidence/citation persistence.
-4. Add notification/retrieval for completed background tasks.
+1. Merge and verify the research background-worker batch after CI passes.
+2. Persist research artifacts/evidence/citations as first-class durable records.
+3. Add notification/retrieval for completed background tasks.
+4. Strengthen provider quota/health-aware fallback and retry policy.
 5. Strengthen memory integration.
 6. Continue toward mobile-first SAGE UI.
+7. Add permissions/security controls before exposing powerful computer/file operations.
 
 ## Important known issues
 - Previous Gemini free-tier quota was exhausted during testing.
