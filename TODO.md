@@ -105,10 +105,10 @@
 - [x] Avoid local heavy fallback.
 
 ### Next
-- [ ] Stronger quota awareness.
-- [ ] Provider health-aware fallback selection.
-- [ ] Better retry classification for transient vs permanent errors.
-- [ ] Durable provider telemetry.
+- [x] Stronger quota awareness.
+- [x] Provider health-aware fallback selection.
+- [x] Better retry classification for transient vs permanent errors.
+- [x] Durable provider telemetry.
 
 ## LATER
 
