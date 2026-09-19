@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.core import sage
 from brain.router import router
-from database.connection import SessionLocal
+from database.connection import SessionLocal, Base, engine
 from database import repository
 
 from missions.engine import mission_engine
@@ -32,6 +32,9 @@ app = FastAPI(
     version="6.0.0",
     description="SAGE ONE personal AI execution core",
 )
+
+# Ensure newly introduced durable tables exist when the API starts.
+Base.metadata.create_all(bind=engine)
 
 
 # ============================================================
