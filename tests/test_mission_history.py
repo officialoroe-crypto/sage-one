@@ -1,5 +1,5 @@
 from execution.progress import MissionProgress
-from missions.history import list_events
+from missions.history import latest_event, list_events
 
 
 def test_progress_events_are_persisted_and_ordered(tmp_path, monkeypatch):
@@ -41,6 +41,7 @@ def test_progress_events_are_persisted_and_ordered(tmp_path, monkeypatch):
     )
 
     events = list_events("mission-history-test")
+    latest = latest_event("mission-history-test")
 
     assert first["sequence"] == 1
     assert second["sequence"] == 2
@@ -49,4 +50,7 @@ def test_progress_events_are_persisted_and_ordered(tmp_path, monkeypatch):
     assert [event["sequence"] for event in events] == [1, 2, 3]
     assert events[1]["metadata"] == {}
     assert events[0]["metadata"] == {"source": "test"}
+    assert latest is not None
+    assert latest["sequence"] == 3
+    assert latest["event_type"] == "mission_resumed"
     assert all(event["id"] for event in events)
