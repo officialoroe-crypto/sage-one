@@ -467,18 +467,35 @@ def tool_schemas():
 @app.post("/tools/execute")
 def execute_tool(
     tool_name: str,
-    arguments: Optional[dict[str, Any]] = None,
+    arguments: Optional[str] = None,
 ):
     try:
+        parsed_arguments: dict[str, Any] = {}
+
+        if arguments:
+            decoded = json.loads(arguments)
+            if not isinstance(decoded, dict):
+                raise ValueError("Tool arguments must be a JSON object.")
+            parsed_arguments = decoded
+
         result = sage._execute_tool(
             tool_name,
-            arguments or {},
+            parsed_arguments,
         )
 
+        if isinstance(result, dict) and result.get("success") is True:
+            return {
+                "success": True,
+                "tool": tool_name,
+                "result": _serialize(result.get("result")),
+            }
+
         return {
-            "success": True,
+            "success": False,
             "tool": tool_name,
-            "result": _serialize(result),
+            "error": result.get("error", "Tool execution failed.")
+            if isinstance(result, dict)
+            else "Tool execution failed.",
         }
 
     except Exception as exc:
@@ -487,7 +504,6 @@ def execute_tool(
             "tool": tool_name,
             "error": str(exc),
         }
-
 
 # ============================================================
 # PERMISSIONS
