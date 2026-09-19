@@ -65,8 +65,8 @@
 - [x] Add mission cancellation/pause/resume semantics at the execution layer.
 - [x] Add deterministic retry/recovery strategies per task type.
 - [x] Add deterministic user-facing mission progress events.
-- [ ] Expose mission pause/resume/cancel controls through the HTTP/mobile API.
-- [ ] Persist richer execution events for long-term trace/history.
+- [x] Expose mission pause/resume/cancel controls through the HTTP/mobile API.
+- [x] Persist richer execution events for long-term trace/history.
 
 ## RESEARCH OS
 
@@ -114,7 +114,6 @@
 
 - [ ] Long-term memory architecture.
 - [ ] Mobile-first daily interface.
-- [ ] Desktop + mobile workflow.
 - [ ] Voice commands.
 - [ ] Computer control.
 - [ ] File operations.
