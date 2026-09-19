@@ -18,6 +18,7 @@ class Settings:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
     MODEL = os.getenv(
         "SAGE_MODEL",
