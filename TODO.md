@@ -86,7 +86,7 @@
 - [x] First-class persistent research artifacts.
 - [x] Persist source/evidence/claim/citation relationships.
 - [x] Citation-preserving report generation.
-- [ ] Parallel cloud research with bounded concurrency.
+- [x] Parallel cloud research with bounded concurrency.
 - [x] Research result retrieval independent of task-row size.
 
 ## BRAIN
