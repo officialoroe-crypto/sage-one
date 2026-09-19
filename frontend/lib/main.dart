@@ -93,13 +93,7 @@ class _SageOneAppState extends State<SageOneApp> {
           destinations: [
             NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Sage'),
             NavigationDestination(icon: Icon(Icons.search), label: 'Research'),
-            NavigationDestination(
-              icon: Badge(
-                isLabelVisible: _hasUnreadNotifications,
-                child: const Icon(Icons.task_alt),
-              ),
-              label: 'Tasks',
-            ),
+            const NavigationDestination(icon: Icon(Icons.task_alt), label: 'Tasks'),
             NavigationDestination(icon: Icon(Icons.folder_open), label: 'Projects'),
             NavigationDestination(icon: Icon(Icons.smart_toy_outlined), label: 'Agent'),
           ],
