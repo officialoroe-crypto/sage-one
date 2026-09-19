@@ -112,6 +112,15 @@ class MissionIntelligence:
             "max_retries": max_retries,
         }
 
+    def create_recovery_record(self, task: dict, strategy: dict) -> dict:
+        return mission_engine.create_recovery(
+            mission_id=task["mission_id"],
+            task_id=task["id"],
+            failed_attempt_id=None,
+            strategy=strategy["strategy"],
+            reason=strategy["reason"],
+        )
+
     @staticmethod
     def _verified_context(tasks: list[dict]) -> list[dict]:
         return [
