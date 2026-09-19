@@ -58,10 +58,15 @@ class ParallelMissionExecutor:
 
     @classmethod
     def _response(cls, status: str, success: bool, mission_id: str, history: list[dict], waves: int, **extra) -> dict:
+        mission = (
+            mission_engine.get_mission(mission_id)
+            if hasattr(mission_engine, "get_mission")
+            else {"id": mission_id, "status": status}
+        )
         payload = {
             "success": success,
             "status": status,
-            "mission": mission_engine.get_mission(mission_id),
+            "mission": mission,
             "summary": cls._summary(mission_id, history),
             "history": history,
             "waves": waves,
@@ -182,9 +187,6 @@ class ParallelMissionExecutor:
                         recovery=unrecoverable,
                     )
 
-                # Every failed task was safely reset to pending for another
-                # deterministic execution attempt. Do not mark the mission
-                # failed while recovery remains available.
                 continue
 
             control_status = self._control_status(mission_id)
