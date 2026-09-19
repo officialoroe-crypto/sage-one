@@ -4,8 +4,10 @@ import time
 import uuid
 
 from app.orchestrator import orchestrator
+from execution.engine import execution_engine
 from execution.policy import classify_task, local_execution_allowed
 from execution.resource import resource_guard
+from missions.planner import planner
 from research.persistence import research_persistence
 from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
@@ -64,7 +66,9 @@ class SageWorker:
         if not allowed:
             return protection
 
-        return tasks.claim_next(
+        # Only top-level tasks belong to the global durable worker queue.
+        # Mission child tasks are owned by their mission execution loop.
+        return tasks.claim_next_root(
             worker_id=self.worker_id,
             lease_seconds=self.lease_seconds,
         )
@@ -99,10 +103,9 @@ class SageWorker:
         session_id = task.get('session_id')
         priority = task.get('priority', 3)
 
-        # Research is a first-class durable workload. It runs the existing
-        # SEARCH -> READ -> EVIDENCE -> SYNTHESIS -> VERIFICATION pipeline
-        # in the worker, and persists the resulting report separately from
-        # the task row so large evidence/citation payloads do not inflate it.
+        # Research remains a first-class durable workload because its
+        # specialized pipeline persists a citation/evidence graph separately
+        # from the task row.
         if agent == 'research':
             result = research_synthesis_engine.synthesize(
                 question=description.removeprefix('Research:').strip(),
@@ -119,13 +122,32 @@ class SageWorker:
                 }
             return result
 
-        return orchestrator.execute_goal(
+        # All other durable goals use the mission planner + execution engine.
+        # This turns a high-level goal into real dependent tasks, gives each
+        # task tool access and verification, and keeps the whole mission under
+        # the root task's worker lease.
+        plan = planner.plan(
             goal=description,
             session_id=session_id,
             priority=priority,
-            task_id=task['id'],
-            worker_id=self.worker_id,
         )
+
+        mission = plan.get('mission', {})
+        mission_id = mission.get('id') if isinstance(mission, dict) else None
+        if not mission_id:
+            raise RuntimeError('Mission planner returned no mission ID.')
+
+        execution = execution_engine.execute_mission(
+            mission_id=mission_id,
+            max_steps=20,
+        )
+
+        return {
+            'success': execution.get('success', False),
+            'mission_id': mission_id,
+            'plan': plan,
+            'execution': execution,
+        }
 
     def execute_task(self, task):
         task_id = task['id']
@@ -139,6 +161,12 @@ class SageWorker:
 
             if heartbeat_state['lost']:
                 raise RuntimeError('Worker lost task ownership during execution.')
+
+            if isinstance(result, dict) and result.get('success') is False:
+                raise RuntimeError(
+                    result.get('error')
+                    or result.get('execution', {}).get('status', 'Mission execution failed.')
+                )
 
             return result
         finally:
