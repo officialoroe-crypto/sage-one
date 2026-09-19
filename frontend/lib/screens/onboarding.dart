@@ -116,10 +116,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
     try {
       await widget.identity.verifyPhoneOtp(challenge, code);
-      if (mounted) setState(() {
-        _step = 1;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _step = 1;
+          _error = null;
+        });
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
