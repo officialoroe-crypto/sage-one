@@ -40,9 +40,29 @@
 - [x] Queue background execution without performing inference in the HTTP request.
 - [x] Add Flutter task polling/detail/cancellation UX.
 - [x] Route research-agent tasks through the real Research OS pipeline.
+- [x] Route non-research durable goals through mission planning + tool execution + verification.
+- [x] Keep mission child tasks out of the global durable worker queue.
 - [x] Add durable in-app notification mechanism for completed/failed background tasks.
 - [x] Add notification list/read/read-all API endpoints.
 - [x] Add unread notification badge to the Flutter shell.
+
+## SAGE EXECUTION / AGENT LAYER
+
+### Foundation — COMPLETE
+- [x] Convert high-level goals into durable missions.
+- [x] Decompose missions into dependent executable tasks.
+- [x] Execute tasks through the real tool registry.
+- [x] Carry verified outputs forward as mission context.
+- [x] Verify task completion before satisfying dependencies.
+- [x] Run durable goals through the same mission execution path as synchronous execution.
+- [x] Protect mission child tasks from competing global workers.
+
+### Next
+- [ ] Parallelize independent mission tasks with bounded concurrency.
+- [ ] Add mission-level result synthesis from verified task outputs.
+- [ ] Add mission cancellation/pause/resume semantics.
+- [ ] Add deterministic retry/recovery strategies per task type.
+- [ ] Add richer execution trace and user-facing progress events.
 
 ## RESEARCH OS
 
