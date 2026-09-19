@@ -56,11 +56,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.initState();
     final profile = widget.initialProfile;
     if (profile != null) {
-      _nameController.text = '\${profile['name'] ?? ''}';
-      _phoneController.text = '\${profile['phone'] ?? ''}';
-      _addressController.text = '\${profile['address'] ?? ''}';
+      _nameController.text = profile['name']?.toString() ?? '';
+      _phoneController.text = profile['phone']?.toString() ?? '';
+      _addressController.text = profile['address']?.toString() ?? '';
       final age = profile['age'];
-      if (age != null) _ageController.text = '\$age';
+      if (age != null) _ageController.text = age.toString();
     }
   }
 
