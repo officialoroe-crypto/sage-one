@@ -22,7 +22,7 @@ class SageApi {
     final response = await _client.post(
       Uri.parse('$baseUrl/execute/background'),
       headers: {'content-type': 'application/json'},
-      body: jsonEncode({'prompt': prompt}),
+      body: jsonEncode({'goal': prompt}),
     );
     return _decode(response);
   }
@@ -43,6 +43,44 @@ class SageApi {
 
   Future<Map<String, dynamic>> task(String taskId) async {
     final response = await _client.get(Uri.parse('$baseUrl/tasks/$taskId'));
+    return _decode(response);
+  }
+
+  Future<List<dynamic>> researchHistory({String? sessionId, int limit = 20}) async {
+    final arguments = <String, dynamic>{'limit': limit};
+    if (sessionId != null && sessionId.isNotEmpty) {
+      arguments['session_id'] = sessionId;
+    }
+    final data = await _executeTool('research_list', arguments);
+    final items = data['result'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>?> research(String researchId) async {
+    final data = await _executeTool('research_get', {
+      'research_id': researchId,
+    });
+    final value = data['result'];
+    return value is Map<String, dynamic> ? value : null;
+  }
+
+  Future<Map<String, dynamic>?> researchForTask(String taskId) async {
+    final data = await _executeTool('research_by_task', {'task_id': taskId});
+    final value = data['result'];
+    return value is Map<String, dynamic> ? value : null;
+  }
+
+  Future<Map<String, dynamic>> _executeTool(
+    String toolName,
+    Map<String, dynamic> arguments,
+  ) async {
+    final uri = Uri.parse('$baseUrl/tools/execute').replace(
+      queryParameters: {
+        'tool_name': toolName,
+        'arguments': jsonEncode(arguments),
+      },
+    );
+    final response = await _client.post(uri);
     return _decode(response);
   }
 
