@@ -57,14 +57,15 @@
 - [x] Run durable goals through the same mission execution path as synchronous execution.
 - [x] Protect mission child tasks from competing global workers.
 
-### Next
+### Mission Intelligence — COMPLETE
 - [x] Parallelize independent mission tasks with bounded concurrency.
 - [x] Add dependency-aware execution waves.
 - [x] Add mission execution progress summary from verified task state.
-- [ ] Persist a final mission result synthesized from verified task outputs.
-- [ ] Add mission cancellation/pause/resume semantics.
-- [ ] Add deterministic retry/recovery strategies per task type.
-- [ ] Add richer execution trace and user-facing progress events.
+- [x] Persist a final mission result synthesized from verified task outputs.
+- [x] Add mission cancellation/pause/resume semantics at the execution layer.
+- [x] Add deterministic retry/recovery strategies per task type.
+- [ ] Expose mission pause/resume/cancel controls through the HTTP/mobile API.
+- [ ] Add richer durable execution trace and user-facing progress events.
 
 ## RESEARCH OS
 
