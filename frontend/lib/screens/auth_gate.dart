@@ -22,7 +22,6 @@ class _AuthGateState extends State<AuthGate> {
   late final IdentityClient _identity;
   Map<String, dynamic>? _profile;
   bool _loading = true;
-  String? _error;
 
   @override
   void initState() {
@@ -40,7 +39,6 @@ class _AuthGateState extends State<AuthGate> {
   Future<void> _restore() async {
     setState(() {
       _loading = true;
-      _error = null;
     });
 
     try {
