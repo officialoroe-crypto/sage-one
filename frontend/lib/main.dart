@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'core/sage_api.dart';
@@ -21,17 +23,47 @@ class SageOneApp extends StatefulWidget {
 class _SageOneAppState extends State<SageOneApp> {
   late final SageApi _api;
   int _index = 0;
+  bool _hasUnreadNotifications = false;
+  Timer? _notificationPoller;
 
   @override
   void initState() {
     super.initState();
     _api = widget._api ?? SageApi();
+    _refreshNotificationBadge();
+    _notificationPoller = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _refreshNotificationBadge(),
+    );
   }
 
   @override
   void dispose() {
+    _notificationPoller?.cancel();
     _api.dispose();
     super.dispose();
+  }
+
+
+  Future<void> _refreshNotificationBadge() async {
+    try {
+      final items = await _api.notifications(unreadOnly: true, limit: 1);
+      if (mounted) {
+        setState(() => _hasUnreadNotifications = items.isNotEmpty);
+      }
+    } catch (_) {
+      // Notification availability must never block the main navigation shell.
+    }
+  }
+
+  Future<void> _openTasks() async {
+    setState(() => _index = 2);
+    try {
+      await _api.markAllNotificationsRead();
+      if (mounted) setState(() => _hasUnreadNotifications = false);
+    } catch (_) {
+      // Keep the badge until the server confirms the read operation.
+    }
   }
 
   @override
@@ -51,11 +83,23 @@ class _SageOneAppState extends State<SageOneApp> {
         body: IndexedStack(index: _index, children: screens),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
-          onDestinationSelected: (value) => setState(() => _index = value),
+          onDestinationSelected: (value) {
+            if (value == 2) {
+              _openTasks();
+            } else {
+              setState(() => _index = value);
+            }
+          },
           destinations: const [
             NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Sage'),
             NavigationDestination(icon: Icon(Icons.search), label: 'Research'),
-            NavigationDestination(icon: Icon(Icons.task_alt), label: 'Tasks'),
+            NavigationDestination(
+              icon: Badge(
+                isLabelVisible: _hasUnreadNotifications,
+                child: const Icon(Icons.task_alt),
+              ),
+              label: 'Tasks',
+            ),
             NavigationDestination(icon: Icon(Icons.folder_open), label: 'Projects'),
             NavigationDestination(icon: Icon(Icons.smart_toy_outlined), label: 'Agent'),
           ],
