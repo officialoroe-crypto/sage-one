@@ -56,23 +56,30 @@ def append_event(
     mission_id: str,
     event: dict[str, Any],
 ) -> dict[str, Any]:
-    """Persist one normalized progress event and return it."""
+    """Persist one normalized event using the next durable mission sequence."""
 
     ensure_event_store()
 
     event_id = str(uuid.uuid4())
     created_at = str(event.get("created_at") or _now().isoformat())
-    sequence = int(event["sequence"])
-
-    payload = dict(event)
-    payload["mission_id"] = mission_id
-    payload["created_at"] = created_at
 
     with engine.begin() as connection:
+        next_sequence = connection.execute(
+            text(
+                """
+                SELECT COALESCE(MAX(sequence), 0) + 1
+                FROM mission_execution_events
+                WHERE mission_id = :mission_id
+                """
+            ),
+            {"mission_id": mission_id},
+        ).scalar_one()
+        sequence = int(next_sequence)
+
         connection.execute(
             text(
                 """
-                INSERT OR REPLACE INTO mission_execution_events
+                INSERT INTO mission_execution_events
                 (id, mission_id, sequence, event_type, status, message,
                  wave, task_ids, progress_percent, metadata, created_at)
                 VALUES
@@ -105,6 +112,10 @@ def append_event(
             },
         )
 
+    payload = dict(event)
+    payload["mission_id"] = mission_id
+    payload["created_at"] = created_at
+    payload["sequence"] = sequence
     payload["id"] = event_id
     return payload
 
@@ -114,7 +125,7 @@ def list_events(
     *,
     limit: int = 200,
 ) -> list[dict[str, Any]]:
-    """Return mission events in deterministic execution order."""
+    """Return mission events in deterministic durable execution order."""
 
     ensure_event_store()
     limit = max(1, min(int(limit), 1000))
