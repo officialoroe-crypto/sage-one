@@ -57,7 +57,7 @@
 - [x] Run durable goals through the same mission execution path as synchronous execution.
 - [x] Protect mission child tasks from competing global workers.
 
-### Mission Intelligence — COMPLETE
+### Mission Intelligence — IN PROGRESS
 - [x] Parallelize independent mission tasks with bounded concurrency.
 - [x] Add dependency-aware execution waves.
 - [x] Add mission execution progress summary from verified task state.
@@ -66,7 +66,7 @@
 - [x] Add deterministic retry/recovery strategies per task type.
 - [x] Add deterministic user-facing mission progress events.
 - [ ] Expose mission pause/resume/cancel controls through the HTTP/mobile API.
-- [ ] Persist richer execution events for long-term trace/history.
+- [x] Persist richer execution events for long-term trace/history.
 
 ## RESEARCH OS
 
@@ -114,7 +114,6 @@
 
 - [ ] Long-term memory architecture.
 - [ ] Mobile-first daily interface.
-- [ ] Desktop + mobile workflow.
 - [ ] Voice commands.
 - [ ] Computer control.
 - [ ] File operations.
