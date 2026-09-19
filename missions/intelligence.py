@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 from brain.router import router
 from database.connection import SessionLocal
-from database.models import Mission
+from database.models import Mission, Task
 from missions.engine import mission_engine
 
 
@@ -120,6 +120,27 @@ class MissionIntelligence:
             strategy=strategy["strategy"],
             reason=strategy["reason"],
         )
+
+    def prepare_retry(self, task_id: str, reason: str) -> dict:
+        """Reset a failed mission task into a durable pending retry state."""
+        with SessionLocal() as db:
+            task = db.query(Task).filter(Task.id == task_id).first()
+            if task is None:
+                raise ValueError(f"Task not found: {task_id}")
+            if task.retries >= task.max_retries:
+                raise ValueError(f"Task retry limit reached: {task_id}")
+
+            task.retries += 1
+            task.status = "pending"
+            task.progress = 0
+            task.verification_status = "pending"
+            task.error = str(reason)
+            task.next_retry_at = self.now()
+            task.updated_at = self.now()
+            task.completed_at = None
+            db.commit()
+            db.refresh(task)
+            return mission_engine.serialize_task(task)
 
     @staticmethod
     def _verified_context(tasks: list[dict]) -> list[dict]:
