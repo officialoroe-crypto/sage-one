@@ -110,9 +110,23 @@
 - [x] Better retry classification for transient vs permanent errors.
 - [x] Durable provider telemetry.
 
+## IDENTITY / ONBOARDING / MEMORY
+
+### Foundation — IN PROGRESS
+- [x] Add shared user profile persistence keyed by authenticated provider identity.
+- [x] Store onboarding profile fields: name, phone verification state, address, age, useful basics, help intent, and selected capabilities.
+- [x] Add stable multi-select onboarding capability catalog.
+- [x] Add user-scoped persistent memory with explicit classifications: fact, interest, inference, skill, skill evidence, goal, preference, experience.
+- [x] Support memory view/update/delete at the service layer with profile ownership checks.
+- [ ] Verify Google authentication tokens server-side.
+- [ ] Add real phone verification/OTP provider.
+- [ ] Expose secure authenticated onboarding/profile APIs.
+- [ ] Build first-run Flutter onboarding flow.
+- [ ] Add user-visible memory management UI.
+- [ ] Add consent-driven auto-learning pipeline on top of profile memory.
+
 ## LATER
 
-- [ ] Long-term memory architecture.
 - [ ] Mobile-first daily interface.
 - [ ] Voice commands.
 - [ ] Computer control.
