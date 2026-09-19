@@ -13,6 +13,7 @@ from database.models import (
     Memory,
     Task,
     ActionLog,
+    Notification,
 )
 
 
@@ -660,6 +661,85 @@ class SageRepository:
             .limit(limit)
             .all()
         )
+
+
+    # ============================================================
+    # NOTIFICATIONS
+    # ============================================================
+
+    def create_notification(
+        self,
+        db: DBSession,
+        title: str,
+        body: str,
+        notification_type: str = "task",
+        task_id: str | None = None,
+        session_id: str | None = None,
+    ) -> Notification:
+        notification = Notification(
+            id=str(uuid.uuid4()),
+            task_id=task_id,
+            session_id=session_id,
+            notification_type=notification_type,
+            title=title,
+            body=body,
+            created_at=self._utc_now(),
+        )
+        db.add(notification)
+        db.commit()
+        return notification
+
+    def get_notifications(
+        self,
+        db: DBSession,
+        session_id: str | None = None,
+        unread_only: bool = False,
+        limit: int = 50,
+    ) -> list[Notification]:
+        query = db.query(Notification)
+        if session_id:
+            query = query.filter(Notification.session_id == session_id)
+        if unread_only:
+            query = query.filter(Notification.read_at.is_(None))
+        return (
+            query
+            .order_by(Notification.created_at.desc())
+            .limit(max(1, min(limit, 200)))
+            .all()
+        )
+
+    def mark_notification_read(
+        self,
+        db: DBSession,
+        notification_id: str,
+    ) -> Notification | None:
+        notification = (
+            db.query(Notification)
+            .filter(Notification.id == notification_id)
+            .first()
+        )
+        if not notification:
+            return None
+        if notification.read_at is None:
+            notification.read_at = self._utc_now()
+            db.commit()
+        return notification
+
+    def mark_all_notifications_read(
+        self,
+        db: DBSession,
+        session_id: str | None = None,
+    ) -> int:
+        query = db.query(Notification).filter(Notification.read_at.is_(None))
+        if session_id:
+            query = query.filter(Notification.session_id == session_id)
+        notifications = query.all()
+        now = self._utc_now()
+        for notification in notifications:
+            notification.read_at = now
+        if notifications:
+            db.commit()
+        return len(notifications)
 
 
 # ================================================================

@@ -55,7 +55,7 @@ Implemented foundation:
 - Research agent now executes the existing synthesis + verification pipeline inside the durable background worker.
 
 Known limitation:
-- Research result persistence is currently stored as the durable task result; a dedicated research artifact/evidence store is a future step.
+- Research reports are persisted in the dedicated `research_records` store, with retrieval through the central tool registry and Flutter history/detail UI.
 
 ## AI providers
 Implemented provider layer:
@@ -109,27 +109,28 @@ Implemented:
 - research-agent tasks now use the real Research OS pipeline in the worker
 
 ## Recent merged checkpoints
-- PR #12: hardened Flutter execution UX v1; merge commit `3d935ca9776c1b13253514b9e5cd2a3a2587e1bf`.
 - PR #13: hardened Flutter task execution UX v2; merge commit `36d7f121931530d18088ecb891d5c80ce845a9c7`.
-- CI run #85 passed before PR #13 merge.
+- PR #14: Research OS runs through durable background workers; merge commit `7407d80ad6a00443c732583650000b87730cbc04`.
+- PR #15: durable research records and citation graphs; merge commit `23cc6be02d5835d9eaa3838c67b6d16dbe6146e5`.
+- PR #16: research retrieval API and persistent history UI; merge commit `48341ce1e1ef53ef0f5e4aa66aa5e92aa271eb68`.
+- PR #16 CI: Python 44 tests passed; Flutter analyze/tests passed.
 
 ## Current development batch
-Branch: `feature/research-os-background-v1`
+Branch: `feature/task-notifications-v1`
 
 This batch:
-1. Routes `research` durable tasks to the existing Research OS synthesis/verification engine.
-2. Keeps non-research agents on the existing orchestrator path.
-3. Adds regression coverage for research-vs-general worker routing.
-4. Reconciles project-state documentation with the actual merged architecture.
+1. Adds durable in-app notifications for terminal background-task completion/failure.
+2. Exposes notification list/read/read-all API endpoints.
+3. Adds a Flutter navigation badge for unread task notifications.
+4. Keeps notification failures isolated from task lifecycle completion/failure.
+5. Adds backend regression coverage for notification APIs.
 
 ## Next major tracks
-1. Merge and verify the research background-worker batch after CI passes.
-2. Persist research artifacts/evidence/citations as first-class durable records.
-3. Add notification/retrieval for completed background tasks.
-4. Strengthen provider quota/health-aware fallback and retry policy.
-5. Strengthen memory integration.
-6. Continue toward mobile-first SAGE UI.
-7. Add permissions/security controls before exposing powerful computer/file operations.
+1. Strengthen provider quota/health-aware fallback and retry policy.
+2. Improve Research OS source/citation presentation and source identity UI.
+3. Strengthen memory integration.
+4. Continue toward mobile-first SAGE UI polish.
+5. Add permissions/security controls before exposing powerful computer/file operations.
 
 ## Important known issues
 - Previous Gemini free-tier quota was exhausted during testing.
