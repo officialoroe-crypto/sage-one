@@ -176,5 +176,46 @@ def list_events(
 
 
 def latest_event(mission_id: str) -> dict[str, Any] | None:
-    events = list_events(mission_id, limit=1)
-    return events[0] if events else None
+    """Return the highest-sequence event for a mission."""
+    ensure_event_store()
+
+    with engine.begin() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT id, mission_id, sequence, event_type, status, message,
+                       wave, task_ids, progress_percent, metadata, created_at
+                FROM mission_execution_events
+                WHERE mission_id = :mission_id
+                ORDER BY sequence DESC
+                LIMIT 1
+                """
+            ),
+            {"mission_id": mission_id},
+        ).mappings().first()
+
+    if row is None:
+        return None
+
+    try:
+        task_ids = json.loads(row["task_ids"] or "[]")
+    except Exception:
+        task_ids = []
+    try:
+        metadata = json.loads(row["metadata"] or "{}")
+    except Exception:
+        metadata = {}
+
+    return {
+        "id": row["id"],
+        "mission_id": row["mission_id"],
+        "sequence": int(row["sequence"]),
+        "event_type": row["event_type"],
+        "status": row["status"],
+        "message": row["message"],
+        "wave": int(row["wave"]),
+        "task_ids": task_ids,
+        "progress_percent": round(float(row["progress_percent"]), 2),
+        "metadata": metadata,
+        "created_at": row["created_at"],
+    }
