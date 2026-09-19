@@ -58,8 +58,10 @@
 - [x] Protect mission child tasks from competing global workers.
 
 ### Next
-- [ ] Parallelize independent mission tasks with bounded concurrency.
-- [ ] Add mission-level result synthesis from verified task outputs.
+- [x] Parallelize independent mission tasks with bounded concurrency.
+- [x] Add dependency-aware execution waves.
+- [x] Add mission execution progress summary from verified task state.
+- [ ] Persist a final mission result synthesized from verified task outputs.
 - [ ] Add mission cancellation/pause/resume semantics.
 - [ ] Add deterministic retry/recovery strategies per task type.
 - [ ] Add richer execution trace and user-facing progress events.
