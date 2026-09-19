@@ -21,6 +21,7 @@ from tools.registry import registry
 from agents.manager import agents
 from tasks.engine import tasks
 from notifications.service import list_notifications, mark_read, mark_all_read
+from missions.api import router as mission_api_router
 
 
 # ============================================================
@@ -35,6 +36,10 @@ app = FastAPI(
 
 # Ensure newly introduced durable tables exist when the API starts.
 Base.metadata.create_all(bind=engine)
+
+# Mission progress/history/control endpoints are kept in their own router so
+# the mobile API surface can evolve without bloating this application module.
+app.include_router(mission_api_router)
 
 
 # ============================================================
