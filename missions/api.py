@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from missions.engine import mission_engine
-from missions.history import list_events
+from missions.history import append_event, list_events
 from missions.intelligence import mission_intelligence
 
 
@@ -31,11 +31,7 @@ def _progress(mission_id: str) -> dict:
     )
     running = sum(1 for task in tasks if task.get("status") == "running")
     failed = sum(1 for task in tasks if task.get("status") == "failed")
-    pending = sum(
-        1
-        for task in tasks
-        if task.get("status") == "pending"
-    )
+    pending = sum(1 for task in tasks if task.get("status") == "pending")
 
     percent = round((completed / total) * 100, 2) if total else 0.0
 
@@ -50,6 +46,34 @@ def _progress(mission_id: str) -> dict:
         "failed_tasks": failed,
         "current_task_id": mission.get("current_task_id"),
     }
+
+
+def _record_control_event(
+    mission_id: str,
+    *,
+    event_type: str,
+    status: str,
+    message: str,
+    metadata: dict | None = None,
+) -> dict:
+    """Record a mission control action without making history persistence fatal."""
+    progress = _progress(mission_id)
+    try:
+        return append_event(
+            mission_id=mission_id,
+            event={
+                "event_type": event_type,
+                "status": status,
+                "message": message,
+                "wave": 0,
+                "task_ids": [],
+                "progress_percent": progress["progress_percent"],
+                "metadata": metadata or {"source": "mission_api"},
+            },
+        )
+    except Exception:
+        # Mission control has already succeeded; history is observability.
+        return {}
 
 
 @router.get("/{mission_id}/progress")
@@ -77,6 +101,12 @@ def pause_mission(mission_id: str):
         mission = mission_intelligence.set_status(mission_id, "paused")
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    _record_control_event(
+        mission_id,
+        event_type="mission_paused",
+        status="paused",
+        message="Mission paused by user.",
+    )
     return {"success": True, "action": "pause", "mission": mission}
 
 
@@ -87,6 +117,12 @@ def resume_mission(mission_id: str):
         mission = mission_intelligence.set_status(mission_id, "resumed")
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    _record_control_event(
+        mission_id,
+        event_type="mission_resumed",
+        status="executing",
+        message="Mission resumed by user.",
+    )
     return {"success": True, "action": "resume", "mission": mission}
 
 
@@ -97,4 +133,10 @@ def cancel_mission(mission_id: str):
         mission = mission_intelligence.set_status(mission_id, "cancelled")
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    _record_control_event(
+        mission_id,
+        event_type="mission_cancelled",
+        status="cancelled",
+        message="Mission cancelled by user.",
+    )
     return {"success": True, "action": "cancel", "mission": mission}
