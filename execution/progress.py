@@ -58,6 +58,7 @@ class MissionProgress:
                     event=event,
                 )
                 event["id"] = persisted["id"]
+                event["sequence"] = persisted["sequence"]
             except Exception:
                 # Execution must remain independent from observability/history.
                 # The in-memory event is still available to the caller.
