@@ -1,6 +1,6 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-18
+Last updated: 2026-09-19
 
 ## Identity
 - Project: SAGE ONE
@@ -39,103 +39,66 @@ Last updated: 2026-09-18
 - Backend command:
   `C:\SageOne\Backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010`
 
-## Research OS
-Target pipeline:
-SEARCH → WEB READER → EXTRACTION → EVIDENCE → CROSS-CHECK → SYNTHESIS → CITATIONS → REPORT
+## Architecture implemented
+- Durable task lifecycle with atomic claim, lease, heartbeat, retry/backoff and crash recovery.
+- Resource-aware execution policy protecting the laptop from heavy local work.
+- Provider routing with Groq, Cerebras and controlled Ollama fallback.
+- Research OS with source reading, evidence, synthesis, verification and persistent research records.
+- Mission planner/executor with bounded parallel execution, progress history and pause/resume/cancel controls.
+- Durable task notifications and Flutter unread badge.
+- Authenticated identity/profile foundation with Google ID-token verification, phone OTP state machine, user-scoped memory and onboarding APIs.
+- Controlled SAGE World Intelligence for bounded public-world observation/learning and human-reviewed upgrade proposals.
 
-Implemented foundation:
-- Search via registered `web_search` tool.
-- Web Reader via registered `web_read` tool.
-- URL normalization and duplicate-source suppression.
-- Source metadata and content hashing.
-- Evidence objects with stable evidence IDs.
-- Structured synthesis with source/evidence traceability.
-- Deterministic claim validation and verification.
-- Empty-evidence / empty-summary / zero-claim failure detection.
-- Research agent now executes the existing synthesis + verification pipeline inside the durable background worker.
+## SAGE World Intelligence
+World Intelligence is system-level learning about the public world, separate from personal user memory.
 
-Known limitation:
-- Research reports are persisted in the dedicated `research_records` store, with retrieval through the central tool registry and Flutter history/detail UI.
+Loop:
+WORLD → DISCOVER → COLLECT SOURCES → VERIFY/CROSS-CHECK → EXTRACT KNOWLEDGE → UPDATE WORLD KNOWLEDGE → DETECT PATTERNS/OPPORTUNITIES → HELP USERS
 
-## AI providers
-Implemented provider layer:
-- Groq
-- Cerebras
-- Ollama
-- Gemini/OpenRouter configuration remains present but OpenRouter is intentionally deferred.
+Boundaries:
+- public sources only
+- bounded topics and research calls
+- source-traceable persisted knowledge/signals
+- upgrade proposals require human review
+- no self-modifying code
+- no permission/security changes
+- no financial/account/web-write authority
 
-Current strategy:
-- Groq is the first cloud provider.
-- Cerebras is the secondary cloud provider.
-- Ollama is local and controlled by resource/task policy.
-- Medium/heavy tasks are cloud-only in automatic routing.
-- Light tasks may use Ollama only when explicitly local or when the host is below the local CPU ceiling.
-- Provider cooldowns, health counters and structured-output validation exist.
-- Groq uses its OpenAI-compatible chat API and GPT-OSS model configuration.
-- Ollama uses its OpenAI-compatible local endpoint and `llama3.2:3b` by default.
+Default topics include current affairs, AI/technology, business, content trends, software/APIs and education.
 
-## Resource protection
-CPU policy:
-- SAFE <40%
-- BUSY 40–70%
-- HEAVY 70–85%
-- CRITICAL >=85%
+## Mobile integration batch
+Current branch: `feature/world-intelligence-v1`
 
-Local execution policy:
-- Heavy local work is blocked at 50% CPU.
-- Local work is blocked at 70% CPU.
-- High CPU defers background work instead of consuming more CPU.
-- `psutil` is used for host resource monitoring.
+Implemented in this batch:
+1. Top-level `/identity/*` and `/world/*` routers are mounted into `app.main` through a cloud-side one-time integration step.
+2. Flutter `SageApi` supports World Intelligence status, knowledge, due topics and bounded refresh.
+3. Added `WorldIntelligenceScreen` using the approved SAGE ONE visual direction: deep black, restrained blue/cyan/purple accents, readable status, source-oriented knowledge cards and recovery/error state.
+4. Added World Intelligence as a discoverable mobile navigation destination.
+5. Kept the Research OS, durable tasks, mission execution, permissions and personal memory architecture intact.
 
-## Durable task system
-Current lifecycle:
-TASK → atomic claim → lease → heartbeat → execute → complete/retry/fail → lease recovery
+## Approved visual system
+- Premium futuristic but restrained.
+- Deep/plain black foundation.
+- No cheap neon.
+- Extremely subtle typography glow.
+- SAGE Core/logo is the primary visual status element.
+- Recovery uses purple through light sky blue into stable state.
+- Research/source provenance is visible without dashboard clutter.
+- Evolution changes primarily the SAGE Core/logo treatment, voice visualizer, particles and small accents; background remains black.
+- SAGE Spark is the approved name for the internal credit concept.
+- Visual references are references for look/motion/hierarchy only; the written system specification remains the behavior source of truth.
 
-Implemented:
-- durable task model
-- worker ownership
-- lease expiry
-- heartbeat
-- retry/backoff fields
-- crash/lease recovery
-- worker-owned completion/failure
-- `POST /tasks`
-- `GET /tasks`
-- `GET /tasks/{task_id}`
-- `POST /tasks/{task_id}/cancel`
-- `python -m app.background_worker`
-- local resource protection connected to worker
-- background execution endpoint queues durable work instead of doing inference in the HTTP request
-- research-agent tasks now use the real Research OS pipeline in the worker
-
-## Recent merged checkpoints
-- PR #13: hardened Flutter task execution UX v2; merge commit `36d7f121931530d18088ecb891d5c80ce845a9c7`.
-- PR #14: Research OS runs through durable background workers; merge commit `7407d80ad6a00443c732583650000b87730cbc04`.
-- PR #15: durable research records and citation graphs; merge commit `23cc6be02d5835d9eaa3838c67b6d16dbe6146e5`.
-- PR #16: research retrieval API and persistent history UI; merge commit `48341ce1e1ef53ef0f5e4aa66aa5e92aa271eb68`.
-- PR #16 CI: Python 44 tests passed; Flutter analyze/tests passed.
-
-## Current development batch
-Branch: `feature/task-notifications-v1`
-
-This batch:
-1. Adds durable in-app notifications for terminal background-task completion/failure.
-2. Exposes notification list/read/read-all API endpoints.
-3. Adds a Flutter navigation badge for unread task notifications.
-4. Keeps notification failures isolated from task lifecycle completion/failure.
-5. Adds backend regression coverage for notification APIs.
+## Current validation state
+- Previous World Intelligence head passed SAGE CI run #160 before subsequent integration commits.
+- A new CI run is required after the latest branch commits; do not claim the current branch is green until verified.
 
 ## Next major tracks
-1. Strengthen provider quota/health-aware fallback and retry policy.
-2. Improve Research OS source/citation presentation and source identity UI.
-3. Strengthen memory integration.
-4. Continue toward mobile-first SAGE UI polish.
-5. Add permissions/security controls before exposing powerful computer/file operations.
-
-## Important known issues
-- Previous Gemini free-tier quota was exhausted during testing.
-- Previous Ollama `llama3.2:3b` research-style test produced empty summary/0 claims; local Ollama therefore remains restricted.
-- Previous Pylance warning involved `Stream[InteractionSSEEvent].id`; avoid treating static typing warnings as runtime facts without verification.
+1. Verify and merge the current World Intelligence/mobile integration checkpoint after CI.
+2. Build the first-run Flutter identity/onboarding flow around the existing Google + phone verification API contracts.
+3. Add World Intelligence source-quality/domain policy and durable scheduled refresh through the background automation layer.
+4. Add world-knowledge freshness/provenance UI and upgrade-proposal review UI.
+5. Continue mobile-first SAGE UI toward the approved reference direction.
+6. Add the dedicated Marketplace / Opportunities discovery area for jobs, rent, land/property and categories without cluttering the core command center.
 
 ## Continuity rule
 This file is the continuity source for future SAGE ONE development sessions. Always inspect the actual GitHub repository and this state before making architectural changes.
