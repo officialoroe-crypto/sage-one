@@ -118,9 +118,10 @@
 - [x] Add stable multi-select onboarding capability catalog.
 - [x] Add user-scoped persistent memory with explicit classifications: fact, interest, inference, skill, skill evidence, goal, preference, experience.
 - [x] Support memory view/update/delete at the service layer with profile ownership checks.
-- [ ] Verify Google authentication tokens server-side.
-- [ ] Add real phone verification/OTP provider.
-- [ ] Expose secure authenticated onboarding/profile APIs.
+- [x] Verify Google authentication tokens server-side against configured OAuth client ID.
+- [x] Add phone verification challenge state machine with expiry, attempt limits, identity binding, and SMS-provider abstraction.
+- [ ] Add production SMS/OTP provider.
+- [ ] Expose secure authenticated onboarding/profile APIs from the main FastAPI app.
 - [ ] Build first-run Flutter onboarding flow.
 - [ ] Add user-visible memory management UI.
 - [ ] Add consent-driven auto-learning pipeline on top of profile memory.
