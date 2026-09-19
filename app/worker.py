@@ -6,6 +6,7 @@ import uuid
 from app.orchestrator import orchestrator
 from execution.policy import classify_task, local_execution_allowed
 from execution.resource import resource_guard
+from research.persistence import research_persistence
 from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
 
@@ -99,11 +100,23 @@ class SageWorker:
 
         # Research is a first-class durable workload. It runs the existing
         # SEARCH -> READ -> EVIDENCE -> SYNTHESIS -> VERIFICATION pipeline
-        # in the worker rather than reducing research to generic LLM steps.
+        # in the worker, and persists the resulting report separately from
+        # the task row so large evidence/citation payloads do not inflate it.
         if agent == 'research':
-            return research_synthesis_engine.synthesize(
+            result = research_synthesis_engine.synthesize(
                 question=description.removeprefix('Research:').strip(),
             )
+            if result.get('success'):
+                persisted = research_persistence.save(
+                    result,
+                    task_id=task['id'],
+                    session_id=session_id,
+                )
+                result = {
+                    **result,
+                    'research_id': persisted['research_id'],
+                }
+            return result
 
         return orchestrator.execute_goal(
             goal=description,
