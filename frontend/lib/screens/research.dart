@@ -22,6 +22,27 @@ class _ResearchScreenState extends State<ResearchScreen> {
   String? _result;
   String? _error;
   bool _submitting = false;
+  bool _loadingHistory = false;
+  List<dynamic> _history = <dynamic>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    if (_loadingHistory) return;
+    setState(() => _loadingHistory = true);
+    try {
+      final history = await widget.api.researchHistory(limit: 30);
+      if (mounted) setState(() => _history = history);
+    } catch (_) {
+      // History is additive; a retrieval failure must not block new research.
+    } finally {
+      if (mounted) setState(() => _loadingHistory = false);
+    }
+  }
 
   Future<void> _submit() async {
     final value = _query.text.trim();
@@ -37,7 +58,8 @@ class _ResearchScreenState extends State<ResearchScreen> {
     });
     try {
       final response = await widget.api.submitBackground('Research: $value');
-      final taskId = response['task_id'] ?? response['id'];
+      final task = response['task'];
+      final taskId = task is Map ? task['id'] : response['task_id'] ?? response['id'];
       if (!mounted) return;
       setState(() {
         _taskId = taskId?.toString();
@@ -67,7 +89,8 @@ class _ResearchScreenState extends State<ResearchScreen> {
     final taskId = _taskId;
     if (taskId == null) return;
     try {
-      final task = await widget.api.task(taskId);
+      final taskResponse = await widget.api.task(taskId);
+      final task = taskResponse['task'] is Map ? taskResponse['task'] : taskResponse;
       if (!mounted) return;
       final status = (task['status'] ?? 'unknown').toString().toLowerCase();
       final result = task['result'] ?? task['output'];
@@ -78,7 +101,10 @@ class _ResearchScreenState extends State<ResearchScreen> {
         _result = result?.toString();
         _error = failure?.toString();
       });
-      if (_isTerminal(status)) _stopPolling();
+      if (_isTerminal(status)) {
+        _stopPolling();
+        await _loadHistory();
+      }
     } catch (_) {
       if (mounted) setState(() => _status = 'Waiting for Sage Core…');
     }
@@ -109,6 +135,36 @@ class _ResearchScreenState extends State<ResearchScreen> {
       default:
         return 'Research status: $status';
     }
+  }
+
+  Future<void> _openResearch(String researchId) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      final record = await widget.api.research(researchId);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      if (record == null) {
+        _showMessage('Research report is no longer available.');
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (_) => _ResearchDetail(record: record),
+      );
+    } catch (_) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        _showMessage('Could not retrieve the research report.');
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _cancel() async {
@@ -191,8 +247,137 @@ class _ResearchScreenState extends State<ResearchScreen> {
           const _Stage(label: 'READ + EXTRACT', detail: 'Capture useful evidence'),
           const _Stage(label: 'CROSS-CHECK', detail: 'Compare sources before synthesis'),
           const _Stage(label: 'SYNTHESIZE', detail: 'Produce a cited result'),
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              const Expanded(child: Text('RESEARCH HISTORY', style: TextStyle(fontSize: 11, letterSpacing: 1.8, fontWeight: FontWeight.w700))),
+              IconButton(onPressed: _loadingHistory ? null : _loadHistory, icon: const Icon(Icons.refresh, size: 19)),
+            ],
+          ),
+          if (_history.isEmpty && !_loadingHistory)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Text('Completed research will appear here.', style: TextStyle(color: Colors.white38)),
+            )
+          else
+            ..._history.map((item) => _HistoryTile(
+                  item: item,
+                  onTap: () {
+                    final id = item is Map ? item['research_id']?.toString() : null;
+                    if (id != null) _openResearch(id);
+                  },
+                )),
         ],
       ),
+    );
+  }
+}
+
+class _HistoryTile extends StatelessWidget {
+  const _HistoryTile({required this.item, required this.onTap});
+
+  final dynamic item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final map = item is Map ? item : <dynamic, dynamic>{};
+    final question = (map['question'] ?? 'Untitled research').toString();
+    final summary = (map['summary'] ?? '').toString();
+    final sources = (map['source_count'] ?? 0).toString();
+    final claims = (map['claim_count'] ?? 0).toString();
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(13),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(question, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
+            if (summary.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.35)),
+            ],
+            const SizedBox(height: 8),
+            Text('$sources sources  •  $claims claims', style: const TextStyle(color: Colors.white30, fontSize: 10, letterSpacing: .7)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResearchDetail extends StatelessWidget {
+  const _ResearchDetail({required this.record});
+
+  final Map<String, dynamic> record;
+
+  @override
+  Widget build(BuildContext context) {
+    final report = record['report'];
+    final reportMap = report is Map ? report : <dynamic, dynamic>{};
+    final summary = (reportMap['summary'] ?? record['summary'] ?? '').toString();
+    final findings = reportMap['key_findings'];
+    final claims = reportMap['claims'];
+    final sources = reportMap['sources'];
+    return AlertDialog(
+      title: const Text('Research report'),
+      content: SizedBox(
+        width: 600,
+        child: SingleChildScrollView(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(record['question']?.toString() ?? 'Research', style: const TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 14),
+            const Text('SUMMARY', style: TextStyle(fontSize: 10, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            Text(summary.isEmpty ? 'No summary stored.' : summary),
+            if (findings is List && findings.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              const Text('KEY FINDINGS', style: TextStyle(fontSize: 10, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              ...findings.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text('• ${item.toString()}'),
+                  )),
+            ],
+            if (claims is List && claims.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              const Text('CLAIMS + VERIFICATION', style: TextStyle(fontSize: 10, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              ...claims.map((item) => _ClaimRow(item: item)),
+            ],
+            if (sources is List && sources.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              const Text('SOURCES', style: TextStyle(fontSize: 10, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              ...sources.map((item) => Text(item.toString(), style: const TextStyle(color: Colors.white60, fontSize: 12))),
+            ],
+          ]),
+        ),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('CLOSE'))],
+    );
+  }
+}
+
+class _ClaimRow extends StatelessWidget {
+  const _ClaimRow({required this.item});
+
+  final dynamic item;
+
+  @override
+  Widget build(BuildContext context) {
+    final map = item is Map ? item : <dynamic, dynamic>{};
+    final claim = (map['claim'] ?? item.toString()).toString();
+    final status = (map['status'] ?? 'unknown').toString();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(claim),
+        const SizedBox(height: 3),
+        Text(status.toUpperCase(), style: const TextStyle(color: Colors.white38, fontSize: 9, letterSpacing: 1)),
+      ]),
     );
   }
 }
