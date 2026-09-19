@@ -170,7 +170,11 @@ class SageWorker:
             )
 
             if completed is not None:
-                create_task_notification(completed, success=True)
+                try:
+                    create_task_notification(completed, success=True)
+                except Exception:
+                    # Notification delivery must never turn a completed task into a failure.
+                    pass
 
             if completed is None:
                 return {
@@ -190,11 +194,15 @@ class SageWorker:
                 retry_delay_seconds=delay,
             )
             if failed is not None and failed.get('status') == 'failed':
-                create_task_notification(
-                    failed,
-                    success=False,
-                    body=f"{failed.get('title', 'Background task')} failed: {str(error)}",
-                )
+                try:
+                    create_task_notification(
+                        failed,
+                        success=False,
+                        body=f"{failed.get('title', 'Background task')} failed: {str(error)}",
+                    )
+                except Exception:
+                    # Notification delivery must never mask the terminal task failure.
+                    pass
             return {
                 'success': False,
                 'task': failed,
