@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'core/sage_api.dart';
-import 'core/identity_client.dart';
 import 'screens/agent.dart';
 import 'screens/auth_gate.dart';
 import 'screens/command_center.dart';
