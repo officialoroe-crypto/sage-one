@@ -145,3 +145,120 @@ registry.register(
         "properties": {"task_id": {"type": "string"}},
     },
 )
+
+
+# ------------------------------------------------------------
+# WORLD INTELLIGENCE TOOLS
+# ------------------------------------------------------------
+from world_intelligence import world_intelligence
+
+
+def _world_status():
+    return world_intelligence.status()
+
+
+def _world_observe(topic: str, max_queries: int = 3, max_results_per_query: int = 4):
+    return world_intelligence.observe(
+        topic=topic,
+        max_queries=max_queries,
+        max_results_per_query=max_results_per_query,
+    )
+
+
+def _world_learn(topic: str, max_queries: int = 3, max_results_per_query: int = 4):
+    return world_intelligence.learn(
+        topic=topic,
+        max_queries=max_queries,
+        max_results_per_query=max_results_per_query,
+    )
+
+
+def _world_due():
+    return {"success": True, "topics": world_intelligence.due()}
+
+
+def _world_upgrade_proposal(
+    title: str,
+    reason: str,
+    benefit: str,
+    evidence: list[str] | None = None,
+):
+    return world_intelligence.propose_upgrade(
+        title=title,
+        reason=reason,
+        benefit=benefit,
+        evidence=evidence,
+    )
+
+
+registry.register(
+    name="world_intelligence_status",
+    description="Inspect SAGE ONE public-world learning status and stale knowledge topics.",
+    capability="world.intelligence",
+    risk="low",
+    permission="world.read",
+    handler=_world_status,
+    parameters={"properties": {}},
+)
+
+registry.register(
+    name="world_observe",
+    description="Observe current public-world information using bounded web research without modifying SAGE.",
+    capability="world.observe",
+    risk="low",
+    permission="world.observe",
+    handler=_world_observe,
+    parameters={
+        "required": ["topic"],
+        "properties": {
+            "topic": {"type": "string"},
+            "max_queries": {"type": "integer", "minimum": 1, "maximum": 5},
+            "max_results_per_query": {"type": "integer", "minimum": 1, "maximum": 5},
+        },
+    },
+)
+
+registry.register(
+    name="world_learn",
+    description="Learn and persist source-backed public-world knowledge for SAGE ONE.",
+    capability="world.learn",
+    risk="low",
+    permission="world.learn",
+    handler=_world_learn,
+    parameters={
+        "required": ["topic"],
+        "properties": {
+            "topic": {"type": "string"},
+            "max_queries": {"type": "integer", "minimum": 1, "maximum": 5},
+            "max_results_per_query": {"type": "integer", "minimum": 1, "maximum": 5},
+        },
+    },
+)
+
+registry.register(
+    name="world_due",
+    description="List public-world knowledge topics that need a refresh.",
+    capability="world.intelligence",
+    risk="low",
+    permission="world.read",
+    handler=_world_due,
+    parameters={"properties": {}},
+)
+
+registry.register(
+    name="world_upgrade_proposal",
+    description="Create a human-reviewable proposal for a SAGE ONE capability improvement; never self-modifies code.",
+    capability="world.upgrade_proposal",
+    risk="medium",
+    permission="world.propose_upgrade",
+    handler=_world_upgrade_proposal,
+    parameters={
+        "required": ["title", "reason", "benefit"],
+        "properties": {
+            "title": {"type": "string"},
+            "reason": {"type": "string"},
+            "benefit": {"type": "string"},
+            "evidence": {"type": "array", "items": {"type": "string"}},
+        },
+    },
+)

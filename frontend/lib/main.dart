@@ -8,6 +8,7 @@ import 'screens/agent.dart';
 import 'screens/projects.dart';
 import 'screens/research.dart';
 import 'screens/tasks.dart';
+import 'screens/world_intelligence.dart';
 import 'theme/sage_theme.dart';
 
 void main() => runApp(const SageOneApp());
@@ -73,6 +74,7 @@ class _SageOneAppState extends State<SageOneApp> {
       TasksScreen(api: _api),
       const ProjectsScreen(),
       AgentScreen(api: _api),
+      WorldIntelligenceScreen(api: _api),
     ];
 
     return MaterialApp(
@@ -113,6 +115,10 @@ class _SageOneAppState extends State<SageOneApp> {
                 NavigationDestination(
                   icon: Icon(Icons.smart_toy_outlined),
                   label: 'Agent',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.public),
+                  label: 'World',
                 ),
               ],
             ),

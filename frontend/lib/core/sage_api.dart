@@ -46,7 +46,6 @@ class SageApi {
     return _decode(response);
   }
 
-
   Future<List<dynamic>> notifications({bool unreadOnly = false, int limit = 50}) async {
     final uri = Uri.parse('$baseUrl/notifications').replace(
       queryParameters: {
@@ -95,6 +94,34 @@ class SageApi {
     final data = await _executeTool('research_by_task', {'task_id': taskId});
     final value = data['result'];
     return value is Map<String, dynamic> ? value : null;
+  }
+
+  Future<Map<String, dynamic>> worldStatus() async {
+    return _decode(await _client.get(Uri.parse('$baseUrl/world/status')));
+  }
+
+  Future<List<dynamic>> worldKnowledge({int limit = 20}) async {
+    final uri = Uri.parse('$baseUrl/world/knowledge').replace(
+      queryParameters: {'limit': limit.toString()},
+    );
+    final data = _decode(await _client.get(uri));
+    final items = data['knowledge'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<List<dynamic>> worldDue() async {
+    final data = _decode(await _client.get(Uri.parse('$baseUrl/world/due')));
+    final items = data['topics'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> refreshWorld({List<String>? topics}) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/world/refresh'),
+      headers: {'content-type': 'application/json'},
+      body: jsonEncode({'topics': topics ?? <String>[]}),
+    );
+    return _decode(response);
   }
 
   Future<Map<String, dynamic>> _executeTool(
