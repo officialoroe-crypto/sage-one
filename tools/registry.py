@@ -109,7 +109,7 @@ registry.register(
     name="research_list",
     description="List durable research report records, newest first.",
     capability="research_retrieval",
-    risk="read_only",
+    risk="low",
     permission="research.read",
     handler=_research_list,
     parameters={
@@ -124,7 +124,7 @@ registry.register(
     name="research_get",
     description="Retrieve one complete durable research report including its evidence and citation graph.",
     capability="research_retrieval",
-    risk="read_only",
+    risk="low",
     permission="research.read",
     handler=_research_get,
     parameters={
@@ -137,7 +137,7 @@ registry.register(
     name="research_by_task",
     description="Retrieve the durable research report associated with a background task.",
     capability="research_retrieval",
-    risk="read_only",
+    risk="low",
     permission="research.read",
     handler=_research_by_task,
     parameters={
