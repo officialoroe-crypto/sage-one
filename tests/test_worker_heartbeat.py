@@ -49,7 +49,11 @@ def patch_mission_execution(monkeypatch, delay=0.20):
         return {'success': True, 'status': 'completed'}
 
     monkeypatch.setattr(worker_module.planner, 'plan', plan)
-    monkeypatch.setattr(worker_module.execution_engine, 'execute_mission', execute_mission)
+    monkeypatch.setattr(
+        worker_module.parallel_mission_executor,
+        'execute_mission',
+        execute_mission,
+    )
 
 
 def test_heartbeat_runs_during_long_execution(monkeypatch):
