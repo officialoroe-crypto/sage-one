@@ -30,8 +30,6 @@
 - [x] Add regression tests for resource protection.
 - [x] Keep automatic heavy local Ollama fallback disabled.
 
-## NOW
-
 ### Background Jobs
 - [x] Create durable task API.
 - [x] Create background worker process/service entry point.
@@ -39,29 +37,52 @@
 - [x] Allow user to query task status.
 - [x] Store completed results.
 - [x] Add explicit failure states to the user-facing task API.
+- [x] Queue background execution without performing inference in the HTTP request.
+- [x] Add Flutter task polling/detail/cancellation UX.
+- [x] Route research-agent tasks through the real Research OS pipeline.
 - [ ] Add notification mechanism.
 
 ## RESEARCH OS
 
-- [ ] Continue existing Web Reader.
-- [ ] Extraction layer.
-- [ ] Evidence objects.
-- [ ] Cross-checking.
-- [ ] Synthesis reliability.
-- [ ] Citation preservation.
-- [ ] Report generation.
-- [ ] Parallel cloud research.
+### Foundation — COMPLETE
+- [x] Search layer.
+- [x] Web Reader.
+- [x] URL normalization and duplicate-source suppression.
+- [x] Source metadata/content hashing.
+- [x] Evidence objects with stable IDs.
+- [x] Structured synthesis.
+- [x] Claim/source/evidence validation.
+- [x] Cross-check/verification layer.
+- [x] Empty-response and zero-claim detection.
+- [x] Durable worker execution for research tasks.
+
+### Next
+- [ ] First-class persistent research artifacts.
+- [ ] Persist source/evidence/claim/citation relationships.
+- [ ] Citation-preserving report generation.
+- [ ] Parallel cloud research with bounded concurrency.
+- [ ] Research result retrieval independent of task-row size.
 
 ## BRAIN
 
-- [ ] Strengthen provider routing.
-- [ ] Cloud-provider fallback.
-- [ ] Structured-output validation.
-- [ ] Empty-response detection.
-- [ ] Retry policy.
-- [ ] Provider health tracking.
-- [ ] Quota awareness.
-- [ ] Avoid local heavy fallback.
+### Foundation — COMPLETE
+- [x] Deterministic task classification/routing policy.
+- [x] Groq-first cloud routing.
+- [x] Cerebras secondary cloud routing.
+- [x] Controlled Ollama local routing.
+- [x] Explicit `auto`, `cloud`, and `local` routing modes.
+- [x] CPU-aware local eligibility.
+- [x] Provider health visibility.
+- [x] Structured-output validation.
+- [x] Empty-response detection.
+- [x] Retry/cooldown behavior.
+- [x] Avoid local heavy fallback.
+
+### Next
+- [ ] Stronger quota awareness.
+- [ ] Provider health-aware fallback selection.
+- [ ] Better retry classification for transient vs permanent errors.
+- [ ] Durable provider telemetry.
 
 ## LATER
 
