@@ -9,6 +9,7 @@ from execution.resource import resource_guard
 from research.persistence import research_persistence
 from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
+from notifications.service import create_task_notification
 
 
 class SageWorker:
@@ -168,6 +169,9 @@ class SageWorker:
                 result=str(result),
             )
 
+            if completed is not None:
+                create_task_notification(completed, success=True)
+
             if completed is None:
                 return {
                     'success': False,
@@ -185,6 +189,12 @@ class SageWorker:
                 error=str(error),
                 retry_delay_seconds=delay,
             )
+            if failed is not None and failed.get('status') == 'failed':
+                create_task_notification(
+                    failed,
+                    success=False,
+                    body=f"{failed.get('title', 'Background task')} failed: {str(error)}",
+                )
             return {
                 'success': False,
                 'task': failed,
