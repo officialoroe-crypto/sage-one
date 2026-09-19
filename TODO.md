@@ -40,7 +40,9 @@
 - [x] Queue background execution without performing inference in the HTTP request.
 - [x] Add Flutter task polling/detail/cancellation UX.
 - [x] Route research-agent tasks through the real Research OS pipeline.
-- [ ] Add notification mechanism.
+- [x] Add durable in-app notification mechanism for completed/failed background tasks.
+- [x] Add notification list/read/read-all API endpoints.
+- [x] Add unread notification badge to the Flutter shell.
 
 ## RESEARCH OS
 
@@ -57,11 +59,11 @@
 - [x] Durable worker execution for research tasks.
 
 ### Next
-- [ ] First-class persistent research artifacts.
-- [ ] Persist source/evidence/claim/citation relationships.
-- [ ] Citation-preserving report generation.
+- [x] First-class persistent research artifacts.
+- [x] Persist source/evidence/claim/citation relationships.
+- [x] Citation-preserving report generation.
 - [ ] Parallel cloud research with bounded concurrency.
-- [ ] Research result retrieval independent of task-row size.
+- [x] Research result retrieval independent of task-row size.
 
 ## BRAIN
 
