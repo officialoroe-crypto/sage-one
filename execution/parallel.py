@@ -2,7 +2,7 @@
 
 Mission child tasks are not placed on the global durable worker queue. This
 executor owns a mission's ready-task waves and runs independent tasks in
-parallel while respecting mission-level pause/cancel controls.
+parallel while respecting mission-level pause/cancel controls and recovery.
 """
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -74,8 +74,6 @@ class ParallelMissionExecutor:
         try:
             return mission_intelligence.get_status(mission_id)
         except Exception:
-            # Unit tests can provide an isolated mission-engine double without
-            # constructing the durable database used by MissionIntelligence.
             return None
 
     @staticmethod
@@ -145,6 +143,7 @@ class ParallelMissionExecutor:
                 result for result in wave_results if not result.get("success", False)
             ]
             if failed_results:
+                unrecoverable = []
                 for result in failed_results:
                     task_id = result.get("task_id")
                     if not task_id:
@@ -155,14 +154,38 @@ class ParallelMissionExecutor:
                     )
                     if task is None:
                         continue
-                    strategy = mission_intelligence.recovery_strategy(
-                        task,
-                        result.get("error", result.get("status", "task failure")),
-                    )
+                    error = result.get("error", result.get("status", "task failure"))
+                    strategy = mission_intelligence.recovery_strategy(task, error)
                     mission_intelligence.create_recovery_record(task, strategy)
 
-                mission_engine.refresh_mission_status(mission_id)
-                return self._response("task_failed", False, mission_id, history, waves)
+                    if strategy["retryable"]:
+                        try:
+                            mission_intelligence.prepare_retry(task_id, error)
+                            continue
+                        except Exception as retry_error:
+                            unrecoverable.append(
+                                {"task_id": task_id, "error": str(retry_error)}
+                            )
+                    else:
+                        unrecoverable.append(
+                            {"task_id": task_id, "error": str(error)}
+                        )
+
+                if unrecoverable:
+                    mission_engine.refresh_mission_status(mission_id)
+                    return self._response(
+                        "task_failed",
+                        False,
+                        mission_id,
+                        history,
+                        waves,
+                        recovery=unrecoverable,
+                    )
+
+                # Every failed task was safely reset to pending for another
+                # deterministic execution attempt. Do not mark the mission
+                # failed while recovery remains available.
+                continue
 
             control_status = self._control_status(mission_id)
             if control_status == "paused":
