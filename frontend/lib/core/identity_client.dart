@@ -18,15 +18,29 @@ class IdentityClient {
             );
 
   static const _tokenKey = 'sage.google.id_token';
+  static const _googleServerClientId = String.fromEnvironment(
+    'SAGE_GOOGLE_SERVER_CLIENT_ID',
+  );
 
   final http.Client _client;
   final FlutterSecureStorage _storage;
   final String baseUrl;
+  bool _googleInitialized = false;
 
   Future<String?> token() => _storage.read(key: _tokenKey);
 
+  Future<void> _initializeGoogle() async {
+    if (_googleInitialized) return;
+    await GoogleSignIn.instance.initialize(
+      serverClientId:
+          _googleServerClientId.isEmpty ? null : _googleServerClientId,
+    );
+    _googleInitialized = true;
+  }
+
   Future<void> signOut() async {
     try {
+      await _initializeGoogle();
       await GoogleSignIn.instance.signOut();
     } finally {
       await _storage.delete(key: _tokenKey);
@@ -34,6 +48,7 @@ class IdentityClient {
   }
 
   Future<Map<String, dynamic>> signInWithGoogle() async {
+    await _initializeGoogle();
     final account = await GoogleSignIn.instance.authenticate();
     final authentication = account.authentication;
     final idToken = authentication.idToken;
@@ -124,7 +139,7 @@ class IdentityClient {
     };
 
     final uri = Uri.parse('$baseUrl$path');
-    final response;
+    final http.Response response;
     switch (method) {
       case 'GET':
         response = await _client.get(uri, headers: headers);
