@@ -16,6 +16,7 @@ __all__ = [
     "ExecutionMode",
     "ExecutionModeRouter",
     "ExecutionScheduler",
+    "MissionProgress",
     "ParallelMissionExecutor",
     "ResourceBand",
     "ResourceGuard",
@@ -49,6 +50,7 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "ExecutionScheduler": ("execution.scheduler", "ExecutionScheduler"),
     "ScheduledTask": ("execution.scheduler", "ScheduledTask"),
     "scheduler": ("execution.scheduler", "scheduler"),
+    "MissionProgress": ("execution.progress", "MissionProgress"),
     "ParallelMissionExecutor": ("execution.parallel", "ParallelMissionExecutor"),
     "parallel_mission_executor": ("execution.parallel", "parallel_mission_executor"),
 }
