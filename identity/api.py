@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,9 +12,13 @@ from identity.auth import authenticate_request, get_or_create_authenticated_prof
 from identity.memory import add_memory, delete_memory, list_memory, update_memory
 from identity.onboarding import capability_catalog, validate_capabilities
 from identity.otp import otp_manager
-from identity.profile import mark_phone_verified, upsert_profile
+from identity.profile import SessionLocal, UserProfile, mark_phone_verified, upsert_profile
 
 router = APIRouter(prefix="/identity", tags=["identity"])
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str = Field(min_length=1, max_length=10000)
 
 
 class PhoneRequest(BaseModel):
@@ -22,7 +27,7 @@ class PhoneRequest(BaseModel):
 
 class OTPVerifyRequest(BaseModel):
     challenge_id: str = Field(min_length=1, max_length=200)
-    code: str = Field(min_length=6, max_length=6)
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
 class OnboardingRequest(BaseModel):
@@ -59,15 +64,11 @@ def _profile_from_claims(claims: dict[str, Any]) -> dict[str, Any]:
 
 
 @router.post("/google")
-def google_login(payload: dict[str, str]):
-    """Verify a Google ID token and establish the SAGE profile record.
+def google_login(request: GoogleLoginRequest):
+    """Verify a Google ID token server-side and create/update its SAGE profile."""
+    from identity.auth import verify_google_id_token
 
-    SAGE does not issue or persist a second credential here. The mobile client
-    keeps its normal Google credential and presents the ID token to protected
-    SAGE endpoints until a dedicated SAGE session/token layer is introduced.
-    """
-    token = payload.get("id_token", "")
-    claims = authenticate_google_token(token)
+    claims = verify_google_id_token(request.id_token)
     profile = _profile_from_claims(claims)
     return {
         "success": True,
@@ -80,12 +81,6 @@ def google_login(payload: dict[str, str]):
         "profile": profile,
         "onboarding_required": not profile["onboarding_completed"],
     }
-
-
-def authenticate_google_token(token: str) -> dict[str, Any]:
-    from identity.auth import verify_google_id_token
-
-    return verify_google_id_token(token)
 
 
 @router.get("/me")
@@ -108,6 +103,8 @@ def complete_onboarding(
 
     if not profile["phone_verified"]:
         raise HTTPException(status_code=409, detail="Phone verification is required before onboarding can be completed.")
+    if profile["phone"] != request.phone:
+        raise HTTPException(status_code=409, detail="The verified phone number must match onboarding.")
 
     updated = upsert_profile(
         auth_provider=claims["auth_provider"],
@@ -123,8 +120,6 @@ def complete_onboarding(
         memory_consent=request.memory_consent,
     )
 
-    # Onboarding fields are user-provided profile data. We only persist a
-    # compact memory entry when the user explicitly grants memory consent.
     if request.memory_consent:
         add_memory(
             profile_id=updated["id"],
@@ -136,11 +131,6 @@ def complete_onboarding(
             confirmed=True,
         )
 
-    from identity.profile import SessionLocal, UserProfile
-    from datetime import datetime, timezone
-
-    # Keep completion state in the same transaction boundary as the profile
-    # update without expanding the profile service API surface.
     with SessionLocal() as db:
         row = (
             db.query(UserProfile)
@@ -150,6 +140,8 @@ def complete_onboarding(
             )
             .first()
         )
+        if row is None:
+            raise HTTPException(status_code=500, detail="Authenticated profile disappeared during onboarding.")
         row.onboarding_completed = 1
         row.updated_at = datetime.now(timezone.utc)
         db.commit()
@@ -166,7 +158,8 @@ def send_phone_otp(
     request: PhoneRequest,
     claims: dict[str, Any] = Depends(authenticate_request),
 ):
-    challenge, _ = otp_manager.create_challenge(request.phone)
+    owner_key = f"google:{claims['auth_subject']}"
+    challenge = otp_manager.create_challenge(owner_key, request.phone)
     upsert_profile(
         auth_provider=claims["auth_provider"],
         auth_subject=claims["auth_subject"],
@@ -185,10 +178,14 @@ def verify_phone_otp(
     request: OTPVerifyRequest,
     claims: dict[str, Any] = Depends(authenticate_request),
 ):
-    if not otp_manager.verify(request.challenge_id, request.code):
+    owner_key = f"google:{claims['auth_subject']}"
+    challenge_phone = otp_manager.challenge_phone(owner_key, request.challenge_id)
+    profile = _profile_from_claims(claims)
+    if challenge_phone is None or challenge_phone != profile["phone"]:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification challenge.")
+    if not otp_manager.verify(owner_key, request.challenge_id, request.code):
         raise HTTPException(status_code=400, detail="Invalid or expired verification code.")
 
-    profile = _profile_from_claims(claims)
     updated = mark_phone_verified(claims["auth_provider"], claims["auth_subject"])
     return {"success": True, "phone_verified": True, "profile": updated}
 
@@ -226,8 +223,7 @@ def edit_profile_memory(
     claims: dict[str, Any] = Depends(authenticate_request),
 ):
     profile = _profile_from_claims(claims)
-    updates = request.model_dump(exclude_unset=True)
-    updated = update_memory(memory_id, profile["id"], **updates)
+    updated = update_memory(memory_id, profile["id"], **request.model_dump(exclude_unset=True))
     if updated is None:
         raise HTTPException(status_code=404, detail="Memory not found.")
     return {"success": True, "memory": updated}
