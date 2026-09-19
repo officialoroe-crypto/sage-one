@@ -44,7 +44,6 @@ def test_parallel_research_limits_read_concurrency_and_applies_results_determini
     peak = 0
     lock = threading.Lock()
 
-    sources, _ = engine._collect_sources([], 2)
     sources = [
         engine._source_from_search_item(
             {"title": f"source-{index}", "snippet": "snippet", "rank": index + 1},
