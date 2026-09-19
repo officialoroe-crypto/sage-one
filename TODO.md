@@ -126,6 +126,23 @@
 - [ ] Add user-visible memory management UI.
 - [ ] Add consent-driven auto-learning pipeline on top of profile memory.
 
+## SAGE WORLD INTELLIGENCE
+
+### Controlled public-world learning
+- [x] Add separate system-level world intelligence engine.
+- [x] Grant bounded permissions for public-world reading/observation/learning.
+- [x] Keep public-world knowledge separate from user personal memory.
+- [x] Store source-traceable world knowledge and public-world signals.
+- [x] Add bounded default topics covering current affairs, AI/technology, business, content trends, software/APIs, and education.
+- [x] Add stale-knowledge detection and refresh readiness.
+- [x] Add human-reviewable SAGE upgrade proposals.
+- [x] Explicitly prevent self-modification through world learning.
+- [x] Register world intelligence as reusable SAGE tools.
+- [x] Add regression coverage for permissions, status, and upgrade proposals.
+- [ ] Add durable scheduled world refresh through the background automation layer.
+- [ ] Add source-quality/domain policies for world refresh.
+- [ ] Add world-knowledge UI and freshness indicators in Flutter.
+
 ## LATER
 
 - [ ] Mobile-first daily interface.
