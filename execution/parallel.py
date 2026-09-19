@@ -8,6 +8,7 @@ parallel while respecting mission-level pause/cancel controls and recovery.
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from execution.engine import ExecutionEngine
+from execution.progress import MissionProgress
 from missions.engine import mission_engine
 from missions.intelligence import mission_intelligence
 
@@ -57,7 +58,16 @@ class ParallelMissionExecutor:
         }
 
     @classmethod
-    def _response(cls, status: str, success: bool, mission_id: str, history: list[dict], waves: int, **extra) -> dict:
+    def _response(
+        cls,
+        status: str,
+        success: bool,
+        mission_id: str,
+        history: list[dict],
+        waves: int,
+        events: list[dict] | None = None,
+        **extra,
+    ) -> dict:
         mission = (
             mission_engine.get_mission(mission_id)
             if hasattr(mission_engine, "get_mission")
@@ -70,6 +80,7 @@ class ParallelMissionExecutor:
             "summary": cls._summary(mission_id, history),
             "history": history,
             "waves": waves,
+            "events": events or [],
         }
         payload.update(extra)
         return payload
@@ -91,32 +102,58 @@ class ParallelMissionExecutor:
     def execute_mission(self, mission_id: str, max_steps: int = 20) -> dict:
         history: list[dict] = []
         waves = 0
+        progress = MissionProgress(mission_id)
+        progress.emit(
+            "mission_started",
+            "executing",
+            "Mission execution started.",
+        )
 
         while len(history) < max_steps:
             control_status = self._control_status(mission_id)
             if control_status == "paused":
-                return self._response("paused", True, mission_id, history, waves)
+                progress.emit("mission_paused", "paused", "Mission paused; no new task wave will start.", wave=waves)
+                return self._response("paused", True, mission_id, history, waves, progress.snapshot())
             if control_status == "cancelled":
-                return self._response("cancelled", False, mission_id, history, waves)
+                progress.emit("mission_cancelled", "cancelled", "Mission cancelled; no new task wave will start.", wave=waves)
+                return self._response("cancelled", False, mission_id, history, waves, progress.snapshot())
 
             mission = mission_engine.refresh_mission_status(mission_id)
 
             if mission["status"] == "completed":
+                progress.emit(
+                    "mission_completed",
+                    "completed",
+                    "All mission tasks are verified.",
+                    wave=waves,
+                    progress_percent=100,
+                )
                 synthesis = self._synthesize(mission_id)
                 extra = {"synthesis": synthesis} if synthesis is not None else {}
-                return self._response("completed", True, mission_id, history, waves, **extra)
+                return self._response("completed", True, mission_id, history, waves, progress.snapshot(), **extra)
 
             if mission["status"] == "failed":
-                return self._response("failed", False, mission_id, history, waves)
+                progress.emit("mission_failed", "failed", "Mission reached a failed state.", wave=waves)
+                return self._response("failed", False, mission_id, history, waves, progress.snapshot())
 
             ready = mission_engine.get_ready_tasks(mission_id)
             if not ready:
                 mission = mission_engine.refresh_mission_status(mission_id)
-                return self._response("blocked", False, mission_id, history, waves)
+                progress.emit("mission_blocked", "blocked", "No executable task is currently ready.", wave=waves)
+                return self._response("blocked", False, mission_id, history, waves, progress.snapshot())
 
             remaining = max_steps - len(history)
             batch = ready[: min(self.max_parallel, remaining)]
             waves += 1
+            task_ids = [task["id"] for task in batch]
+            progress.emit(
+                "wave_started",
+                "executing",
+                f"Starting execution wave {waves}.",
+                wave=waves,
+                task_ids=task_ids,
+                progress_percent=self._summary(mission_id, history)["progress_percent"],
+            )
 
             with ThreadPoolExecutor(
                 max_workers=len(batch),
@@ -143,6 +180,15 @@ class ParallelMissionExecutor:
 
             wave_results.sort(key=lambda item: item.get("task_id", ""))
             history.extend(wave_results)
+            summary = self._summary(mission_id, history)
+            progress.emit(
+                "wave_completed",
+                "executing",
+                f"Execution wave {waves} completed.",
+                wave=waves,
+                task_ids=task_ids,
+                progress_percent=summary["progress_percent"],
+            )
 
             failed_results = [
                 result for result in wave_results if not result.get("success", False)
@@ -162,10 +208,26 @@ class ParallelMissionExecutor:
                     error = result.get("error", result.get("status", "task failure"))
                     strategy = mission_intelligence.recovery_strategy(task, error)
                     mission_intelligence.create_recovery_record(task, strategy)
+                    progress.emit(
+                        "task_recovery_planned",
+                        "recovering",
+                        f"Recovery strategy selected for task {task_id}: {strategy['strategy']}.",
+                        wave=waves,
+                        task_ids=[task_id],
+                        progress_percent=summary["progress_percent"],
+                    )
 
                     if strategy["retryable"]:
                         try:
                             mission_intelligence.prepare_retry(task_id, error)
+                            progress.emit(
+                                "task_retry_scheduled",
+                                "recovering",
+                                f"Task {task_id} reset for another execution attempt.",
+                                wave=waves,
+                                task_ids=[task_id],
+                                progress_percent=summary["progress_percent"],
+                            )
                             continue
                         except Exception as retry_error:
                             unrecoverable.append(
@@ -178,12 +240,21 @@ class ParallelMissionExecutor:
 
                 if unrecoverable:
                     mission_engine.refresh_mission_status(mission_id)
+                    progress.emit(
+                        "mission_failed",
+                        "failed",
+                        "At least one failed task could not be recovered.",
+                        wave=waves,
+                        task_ids=[item["task_id"] for item in unrecoverable],
+                        progress_percent=summary["progress_percent"],
+                    )
                     return self._response(
                         "task_failed",
                         False,
                         mission_id,
                         history,
                         waves,
+                        progress.snapshot(),
                         recovery=unrecoverable,
                     )
 
@@ -191,12 +262,15 @@ class ParallelMissionExecutor:
 
             control_status = self._control_status(mission_id)
             if control_status == "paused":
-                return self._response("paused", True, mission_id, history, waves)
+                progress.emit("mission_paused", "paused", "Mission paused after the active wave finished.", wave=waves, progress_percent=summary["progress_percent"])
+                return self._response("paused", True, mission_id, history, waves, progress.snapshot())
             if control_status == "cancelled":
-                return self._response("cancelled", False, mission_id, history, waves)
+                progress.emit("mission_cancelled", "cancelled", "Mission cancelled after the active wave finished.", wave=waves, progress_percent=summary["progress_percent"])
+                return self._response("cancelled", False, mission_id, history, waves, progress.snapshot())
 
         mission_engine.refresh_mission_status(mission_id)
-        return self._response("max_steps_reached", False, mission_id, history, waves)
+        progress.emit("max_steps_reached", "blocked", "Mission execution reached its step budget.", wave=waves)
+        return self._response("max_steps_reached", False, mission_id, history, waves, progress.snapshot())
 
 
 parallel_mission_executor = ParallelMissionExecutor()
