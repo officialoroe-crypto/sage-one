@@ -46,6 +46,33 @@ class SageApi {
     return _decode(response);
   }
 
+
+  Future<List<dynamic>> notifications({bool unreadOnly = false, int limit = 50}) async {
+    final uri = Uri.parse('$baseUrl/notifications').replace(
+      queryParameters: {
+        'unread_only': unreadOnly.toString(),
+        'limit': limit.toString(),
+      },
+    );
+    final data = _decode(await _client.get(uri));
+    final items = data['notifications'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> markNotificationRead(String notificationId) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/notifications/$notificationId/read'),
+    );
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> markAllNotificationsRead() async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/notifications/read-all'),
+    );
+    return _decode(response);
+  }
+
   Future<List<dynamic>> researchHistory({String? sessionId, int limit = 20}) async {
     final arguments = <String, dynamic>{'limit': limit};
     if (sessionId != null && sessionId.isNotEmpty) {
