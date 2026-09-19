@@ -6,6 +6,7 @@ import uuid
 from app.orchestrator import orchestrator
 from execution.policy import classify_task, local_execution_allowed
 from execution.resource import resource_guard
+from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
 
 
@@ -90,25 +91,37 @@ class SageWorker:
         thread.start()
         return stop_event, thread, state
 
-    def execute_task(self, task):
+    def _execute_task_payload(self, task):
         description = task['description']
+        agent = task.get('agent', 'general')
         session_id = task.get('session_id')
         priority = task.get('priority', 3)
-        task_id = task['id']
 
+        # Research is a first-class durable workload. It runs the existing
+        # SEARCH -> READ -> EVIDENCE -> SYNTHESIS -> VERIFICATION pipeline
+        # in the worker rather than reducing research to generic LLM steps.
+        if agent == 'research':
+            return research_synthesis_engine.synthesize(
+                question=description.removeprefix('Research:').strip(),
+            )
+
+        return orchestrator.execute_goal(
+            goal=description,
+            session_id=session_id,
+            priority=priority,
+            task_id=task['id'],
+            worker_id=self.worker_id,
+        )
+
+    def execute_task(self, task):
+        task_id = task['id']
         stop_event, heartbeat_thread, heartbeat_state = self._start_heartbeat(task_id)
 
         try:
             if heartbeat_state['lost']:
                 raise RuntimeError('Worker lost task ownership before execution started.')
 
-            result = orchestrator.execute_goal(
-                goal=description,
-                session_id=session_id,
-                priority=priority,
-                task_id=task_id,
-                worker_id=self.worker_id,
-            )
+            result = self._execute_task_payload(task)
 
             if heartbeat_state['lost']:
                 raise RuntimeError('Worker lost task ownership during execution.')
