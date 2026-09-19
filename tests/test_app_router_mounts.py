@@ -11,15 +11,15 @@ def test_identity_and_world_router_definitions_exist():
     identity_paths = {route.path for route in identity_router.routes}
     world_paths = {route.path for route in world_router.routes}
 
-    assert "/identity/google" in {f"/identity{path}" for path in identity_paths}
-    assert "/identity/me" in {f"/identity{path}" for path in identity_paths}
-    assert "/identity/onboarding" in {f"/identity{path}" for path in identity_paths}
-    assert "/identity/phone/send" in {f"/identity{path}" for path in identity_paths}
-    assert "/identity/phone/verify" in {f"/identity{path}" for path in identity_paths}
-    assert "/world/status" in {f"/world{path}" for path in world_paths}
-    assert "/world/knowledge" in {f"/world{path}" for path in world_paths}
-    assert "/world/due" in {f"/world{path}" for path in world_paths}
-    assert "/world/refresh" in {f"/world{path}" for path in world_paths}
+    assert "/identity/google" in identity_paths
+    assert "/identity/me" in identity_paths
+    assert "/identity/onboarding" in identity_paths
+    assert "/identity/phone/send" in identity_paths
+    assert "/identity/phone/verify" in identity_paths
+    assert "/world/status" in world_paths
+    assert "/world/knowledge" in world_paths
+    assert "/world/due" in world_paths
+    assert "/world/refresh" in world_paths
 
 
 def test_app_keeps_mission_routes_separate_from_identity_and_world():
