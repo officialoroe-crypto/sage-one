@@ -7,8 +7,6 @@ from fastapi import APIRouter, HTTPException, Query
 from missions.engine import mission_engine
 from missions.history import append_event, list_events
 from missions.intelligence import mission_intelligence
-from identity.api import router as identity_api_router
-from world_intelligence.api import router as world_api_router
 
 
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -142,10 +140,3 @@ def cancel_mission(mission_id: str):
         message="Mission cancelled by user.",
     )
     return {"success": True, "action": "cancel", "mission": mission}
-
-
-# These routers are mounted here because app.main already includes this
-# stable mission API router. This keeps the top-level app module small while
-# exposing identity/onboarding and world-intelligence endpoints together.
-router.include_router(identity_api_router)
-router.include_router(world_api_router)
