@@ -1,15 +1,15 @@
 """Dependency-aware parallel mission execution.
 
-Mission child tasks are not placed on the global durable worker queue.  This
+Mission child tasks are not placed on the global durable worker queue. This
 executor owns a mission's ready-task waves and runs independent tasks in
-parallel while asking the mission engine for a fresh dependency-aware ready
-set after every wave.
+parallel while respecting mission-level pause/cancel controls.
 """
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from execution.engine import ExecutionEngine
 from missions.engine import mission_engine
+from missions.intelligence import mission_intelligence
 
 
 class ParallelMissionExecutor:
@@ -20,9 +20,6 @@ class ParallelMissionExecutor:
         self.engine_factory = engine_factory
 
     def _execute_task(self, task_id: str):
-        # ExecutionEngine keeps per-run evidence on the instance.  A separate
-        # engine per child task prevents concurrent tasks from sharing that
-        # mutable evidence buffer.
         engine = self.engine_factory()
         return engine.execute_task(task_id)
 
@@ -59,44 +56,45 @@ class ParallelMissionExecutor:
             "history_count": len(history),
         }
 
+    @classmethod
+    def _response(cls, status: str, success: bool, mission_id: str, history: list[dict], waves: int, **extra) -> dict:
+        payload = {
+            "success": success,
+            "status": status,
+            "mission": mission_engine.get_mission(mission_id),
+            "summary": cls._summary(mission_id, history),
+            "history": history,
+            "waves": waves,
+        }
+        payload.update(extra)
+        return payload
+
     def execute_mission(self, mission_id: str, max_steps: int = 20) -> dict:
         history: list[dict] = []
         waves = 0
 
         while len(history) < max_steps:
+            control_status = mission_intelligence.get_status(mission_id)
+            if control_status == "paused":
+                return self._response("paused", True, mission_id, history, waves)
+            if control_status == "cancelled":
+                return self._response("cancelled", False, mission_id, history, waves)
+
             mission = mission_engine.refresh_mission_status(mission_id)
 
             if mission["status"] == "completed":
-                return {
-                    "success": True,
-                    "status": "completed",
-                    "mission": mission,
-                    "summary": self._summary(mission_id, history),
-                    "history": history,
-                    "waves": waves,
-                }
+                synthesis = mission_intelligence.synthesize(mission_id)
+                return self._response(
+                    "completed", True, mission_id, history, waves, synthesis=synthesis
+                )
 
             if mission["status"] == "failed":
-                return {
-                    "success": False,
-                    "status": "failed",
-                    "mission": mission,
-                    "summary": self._summary(mission_id, history),
-                    "history": history,
-                    "waves": waves,
-                }
+                return self._response("failed", False, mission_id, history, waves)
 
             ready = mission_engine.get_ready_tasks(mission_id)
             if not ready:
                 mission = mission_engine.refresh_mission_status(mission_id)
-                return {
-                    "success": False,
-                    "status": "blocked",
-                    "mission": mission,
-                    "summary": self._summary(mission_id, history),
-                    "history": history,
-                    "waves": waves,
-                }
+                return self._response("blocked", False, mission_id, history, waves)
 
             remaining = max_steps - len(history)
             batch = ready[: min(self.max_parallel, remaining)]
@@ -113,34 +111,52 @@ class ParallelMissionExecutor:
 
                 wave_results = []
                 for future in as_completed(futures):
-                    task_result = future.result()
+                    task_id = futures[future]
+                    try:
+                        task_result = future.result()
+                    except Exception as error:
+                        task_result = {
+                            "success": False,
+                            "task_id": task_id,
+                            "status": "exception",
+                            "error": str(error),
+                        }
                     wave_results.append(task_result)
 
-            # Keep output deterministic for callers even though execution is
-            # concurrent.
             wave_results.sort(key=lambda item: item.get("task_id", ""))
             history.extend(wave_results)
 
-            if any(not result.get("success", False) for result in wave_results):
+            failed_results = [
+                result for result in wave_results if not result.get("success", False)
+            ]
+            if failed_results:
+                for result in failed_results:
+                    task_id = result.get("task_id")
+                    if not task_id:
+                        continue
+                    task = next(
+                        (item for item in mission_engine.get_tasks(mission_id) if item["id"] == task_id),
+                        None,
+                    )
+                    if task is None:
+                        continue
+                    strategy = mission_intelligence.recovery_strategy(
+                        task,
+                        result.get("error", result.get("status", "task failure")),
+                    )
+                    mission_intelligence.create_recovery_record(task, strategy)
+
                 mission = mission_engine.refresh_mission_status(mission_id)
-                return {
-                    "success": False,
-                    "status": "task_failed",
-                    "mission": mission,
-                    "summary": self._summary(mission_id, history),
-                    "history": history,
-                    "waves": waves,
-                }
+                return self._response("task_failed", False, mission_id, history, waves)
+
+            control_status = mission_intelligence.get_status(mission_id)
+            if control_status == "paused":
+                return self._response("paused", True, mission_id, history, waves)
+            if control_status == "cancelled":
+                return self._response("cancelled", False, mission_id, history, waves)
 
         mission = mission_engine.refresh_mission_status(mission_id)
-        return {
-            "success": False,
-            "status": "max_steps_reached",
-            "mission": mission,
-            "summary": self._summary(mission_id, history),
-            "history": history,
-            "waves": waves,
-        }
+        return self._response("max_steps_reached", False, mission_id, history, waves)
 
 
 parallel_mission_executor = ParallelMissionExecutor()
