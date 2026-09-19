@@ -1,0 +1,54 @@
+name: SAGE one-time route integration
+
+on:
+  push:
+    branches: ["feature/world-intelligence-v1"]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Mount identity and world routers
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path("app/main.py")
+          text = p.read_text()
+          import_line = "from missions.api import router as mission_api_router\n"
+          if "from identity.api import router as identity_api_router" not in text:
+              text = text.replace(
+                  import_line,
+                  import_line + "from identity.api import router as identity_api_router\nfrom world_intelligence.api import router as world_api_router\n",
+                  1,
+              )
+          anchor = "app.include_router(mission_api_router)\n"
+          addition = anchor + "app.include_router(identity_api_router)\napp.include_router(world_api_router)\n"
+          if "app.include_router(identity_api_router)" not in text:
+              if anchor not in text:
+                  raise SystemExit("Mission router mount anchor not found")
+              text = text.replace(anchor, addition, 1)
+          p.write_text(text)
+
+      - name: Remove one-time workflow
+        run: rm -f .github/workflows/_one_time_integrate_routes.yml
+
+      - name: Commit integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/main.py .github/workflows/_one_time_integrate_routes.yml
+          if git diff --cached --quiet; then
+            echo "No integration changes needed."
+            exit 0
+          fi
+          git commit -m "Integrate identity and world intelligence routes"
+          git push
