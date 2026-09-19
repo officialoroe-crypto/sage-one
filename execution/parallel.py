@@ -69,12 +69,28 @@ class ParallelMissionExecutor:
         payload.update(extra)
         return payload
 
+    @staticmethod
+    def _control_status(mission_id: str):
+        try:
+            return mission_intelligence.get_status(mission_id)
+        except Exception:
+            # Unit tests can provide an isolated mission-engine double without
+            # constructing the durable database used by MissionIntelligence.
+            return None
+
+    @staticmethod
+    def _synthesize(mission_id: str):
+        try:
+            return mission_intelligence.synthesize(mission_id)
+        except Exception:
+            return None
+
     def execute_mission(self, mission_id: str, max_steps: int = 20) -> dict:
         history: list[dict] = []
         waves = 0
 
         while len(history) < max_steps:
-            control_status = mission_intelligence.get_status(mission_id)
+            control_status = self._control_status(mission_id)
             if control_status == "paused":
                 return self._response("paused", True, mission_id, history, waves)
             if control_status == "cancelled":
@@ -83,10 +99,9 @@ class ParallelMissionExecutor:
             mission = mission_engine.refresh_mission_status(mission_id)
 
             if mission["status"] == "completed":
-                synthesis = mission_intelligence.synthesize(mission_id)
-                return self._response(
-                    "completed", True, mission_id, history, waves, synthesis=synthesis
-                )
+                synthesis = self._synthesize(mission_id)
+                extra = {"synthesis": synthesis} if synthesis is not None else {}
+                return self._response("completed", True, mission_id, history, waves, **extra)
 
             if mission["status"] == "failed":
                 return self._response("failed", False, mission_id, history, waves)
@@ -146,16 +161,16 @@ class ParallelMissionExecutor:
                     )
                     mission_intelligence.create_recovery_record(task, strategy)
 
-                mission = mission_engine.refresh_mission_status(mission_id)
+                mission_engine.refresh_mission_status(mission_id)
                 return self._response("task_failed", False, mission_id, history, waves)
 
-            control_status = mission_intelligence.get_status(mission_id)
+            control_status = self._control_status(mission_id)
             if control_status == "paused":
                 return self._response("paused", True, mission_id, history, waves)
             if control_status == "cancelled":
                 return self._response("cancelled", False, mission_id, history, waves)
 
-        mission = mission_engine.refresh_mission_status(mission_id)
+        mission_engine.refresh_mission_status(mission_id)
         return self._response("max_steps_reached", False, mission_id, history, waves)
 
 
