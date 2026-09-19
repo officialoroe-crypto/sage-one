@@ -49,6 +49,21 @@ def test_mission_router_exposes_control_and_history_routes():
     assert ("/missions/{mission_id}/cancel", ("POST",)) in paths
 
 
+def test_mission_api_router_is_registered_in_fastapi_app():
+    from app.main import app
+
+    registered = {
+        (route.path, tuple(sorted(route.methods or [])))
+        for route in app.routes
+    }
+
+    assert ("/missions/{mission_id}/progress", ("GET",)) in registered
+    assert ("/missions/{mission_id}/events", ("GET",)) in registered
+    assert ("/missions/{mission_id}/pause", ("POST",)) in registered
+    assert ("/missions/{mission_id}/resume", ("POST",)) in registered
+    assert ("/missions/{mission_id}/cancel", ("POST",)) in registered
+
+
 def test_progress_summary_uses_verified_task_completion(monkeypatch):
     monkeypatch.setattr(api, "mission_engine", FakeMissionEngine())
 
