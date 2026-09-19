@@ -64,8 +64,9 @@
 - [x] Persist a final mission result synthesized from verified task outputs.
 - [x] Add mission cancellation/pause/resume semantics at the execution layer.
 - [x] Add deterministic retry/recovery strategies per task type.
+- [x] Add deterministic user-facing mission progress events.
 - [ ] Expose mission pause/resume/cancel controls through the HTTP/mobile API.
-- [ ] Add richer durable execution trace and user-facing progress events.
+- [ ] Persist richer execution events for long-term trace/history.
 
 ## RESEARCH OS
 
