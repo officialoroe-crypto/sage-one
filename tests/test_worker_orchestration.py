@@ -9,15 +9,15 @@ def fresh_db():
     Base.metadata.create_all(bind=engine)
 
 
-def test_worker_passes_claimed_task_ownership_to_orchestrator(monkeypatch):
+def test_worker_routes_non_research_goal_through_mission_planner(monkeypatch):
     fresh_db()
 
     db = SessionLocal()
     try:
         task = repository.create_task(
             db=db,
-            title='Orchestration test',
-            description='Execute this task',
+            title='Agent execution test',
+            description='Execute this high-level goal',
             priority=1,
             max_retries=3,
         )
@@ -26,7 +26,7 @@ def test_worker_passes_claimed_task_ownership_to_orchestrator(monkeypatch):
         db.close()
 
     worker = SageWorker(
-        worker_id='worker-orchestration',
+        worker_id='worker-agent-execution',
         lease_seconds=30,
         heartbeat_interval=30,
     )
@@ -37,21 +37,71 @@ def test_worker_passes_claimed_task_ownership_to_orchestrator(monkeypatch):
 
     captured = {}
 
-    def fake_execute_goal(**kwargs):
-        captured.update(kwargs)
-        return {
-            'success': True,
-            'task_id': kwargs['task_id'],
-            'worker_owned': True,
-        }
+    def fake_plan(**kwargs):
+        captured['plan'] = kwargs
+        return {'mission': {'id': 'mission-123'}}
 
-    monkeypatch.setattr(worker_module.orchestrator, 'execute_goal', fake_execute_goal)
+    def fake_execute_mission(**kwargs):
+        captured['execution'] = kwargs
+        return {'success': True, 'status': 'completed'}
+
+    monkeypatch.setattr(worker_module.planner, 'plan', fake_plan)
+    monkeypatch.setattr(worker_module.execution_engine, 'execute_mission', fake_execute_mission)
 
     result = worker.execute_task(claimed)
 
-    assert result['task_id'] == task_id
-    assert captured['task_id'] == task_id
-    assert captured['worker_id'] == worker.worker_id
-    assert captured['goal'] == claimed['description']
-    assert captured['session_id'] == claimed.get('session_id')
-    assert captured['priority'] == claimed.get('priority', 3)
+    assert result['success'] is True
+    assert result['mission_id'] == 'mission-123'
+    assert captured['plan']['goal'] == claimed['description']
+    assert captured['plan']['session_id'] == claimed.get('session_id')
+    assert captured['plan']['priority'] == claimed.get('priority', 3)
+    assert captured['execution']['mission_id'] == 'mission-123'
+    assert captured['execution']['max_steps'] == 20
+
+
+def test_worker_does_not_claim_mission_child_tasks():
+    fresh_db()
+
+    db = SessionLocal()
+    try:
+        child = repository.create_task(
+            db=db,
+            title='Mission child',
+            description='Owned by mission',
+            priority=1,
+            max_retries=3,
+        )
+        child.mission_id = 'mission-child-1'
+        db.commit()
+
+        root = repository.create_task(
+            db=db,
+            title='Root task',
+            description='Global durable goal',
+            priority=2,
+            max_retries=3,
+        )
+        root_id = root.id
+        child_id = child.id
+    finally:
+        db.close()
+
+    worker = SageWorker(
+        worker_id='worker-root-only',
+        lease_seconds=30,
+        heartbeat_interval=30,
+    )
+
+    claimed = worker.claim()
+    assert claimed is not None
+    assert claimed['id'] == root_id
+    assert claimed['mission_id'] is None
+
+    db = SessionLocal()
+    try:
+        child_after = repository.get_task(db, child_id)
+        assert child_after is not None
+        assert child_after.status == 'pending'
+        assert child_after.worker_id is None
+    finally:
+        db.close()

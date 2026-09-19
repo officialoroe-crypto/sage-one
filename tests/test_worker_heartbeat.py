@@ -40,6 +40,18 @@ def make_worker_task(worker_id):
     return worker, claimed
 
 
+def patch_mission_execution(monkeypatch, delay=0.20):
+    def plan(**kwargs):
+        return {'mission': {'id': 'mission-heartbeat'}}
+
+    def execute_mission(**kwargs):
+        time.sleep(delay)
+        return {'success': True, 'status': 'completed'}
+
+    monkeypatch.setattr(worker_module.planner, 'plan', plan)
+    monkeypatch.setattr(worker_module.execution_engine, 'execute_mission', execute_mission)
+
+
 def test_heartbeat_runs_during_long_execution(monkeypatch):
     fresh_db()
     worker, task = make_worker_task('worker-heartbeat')
@@ -52,16 +64,12 @@ def test_heartbeat_runs_during_long_execution(monkeypatch):
         return original_heartbeat(*args, **kwargs)
 
     monkeypatch.setattr(worker_module.tasks, 'heartbeat', heartbeat)
-
-    def slow_goal(**kwargs):
-        time.sleep(0.20)
-        return 'completed'
-
-    monkeypatch.setattr(worker_module.orchestrator, 'execute_goal', slow_goal)
+    patch_mission_execution(monkeypatch)
 
     result = worker.execute_task(task)
 
-    assert result == 'completed'
+    assert result['success'] is True
+    assert result['mission_id'] == 'mission-heartbeat'
     assert len(heartbeat_calls) >= 2
 
 
@@ -77,12 +85,7 @@ def test_worker_detects_lost_ownership_during_execution(monkeypatch):
         return None
 
     monkeypatch.setattr(worker_module.tasks, 'heartbeat', lost_heartbeat)
-
-    def slow_goal(**kwargs):
-        time.sleep(0.12)
-        return 'completed'
-
-    monkeypatch.setattr(worker_module.orchestrator, 'execute_goal', slow_goal)
+    patch_mission_execution(monkeypatch, delay=0.12)
 
     with pytest.raises(RuntimeError, match='lost task ownership'):
         worker.execute_task(task)

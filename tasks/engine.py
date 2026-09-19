@@ -73,6 +73,79 @@ class TaskEngine:
         finally:
             db.close()
 
+    def claim_next_root(
+        self,
+        worker_id: str,
+        lease_seconds: int = 120,
+    ):
+        """Atomically claim only top-level durable tasks.
+
+        Mission child tasks are executed by their owning mission execution
+        loop. They must not enter the global worker queue and race another
+        worker against the mission that owns them.
+        """
+        from database.models import Task
+
+        now = datetime.now(timezone.utc)
+        lease_seconds = max(30, int(lease_seconds))
+        lease_time = datetime.fromtimestamp(
+            now.timestamp() + lease_seconds,
+            tz=timezone.utc,
+        )
+
+        db = SessionLocal()
+        try:
+            candidate = (
+                db.query(Task.id)
+                .filter(Task.status == "pending")
+                .filter(Task.mission_id.is_(None))
+                .filter(
+                    (Task.next_retry_at.is_(None))
+                    | (Task.next_retry_at <= now)
+                )
+                .order_by(
+                    Task.priority.asc(),
+                    Task.created_at.asc(),
+                )
+                .first()
+            )
+
+            if not candidate:
+                return None
+
+            task_id = candidate[0]
+            updated = (
+                db.query(Task)
+                .filter(Task.id == task_id)
+                .filter(Task.status == "pending")
+                .filter(Task.mission_id.is_(None))
+                .filter(
+                    (Task.next_retry_at.is_(None))
+                    | (Task.next_retry_at <= now)
+                )
+                .update(
+                    {
+                        Task.status: "running",
+                        Task.worker_id: worker_id,
+                        Task.lease_expires_at: lease_time,
+                        Task.heartbeat_at: now,
+                        Task.started_at: now,
+                        Task.updated_at: now,
+                    },
+                    synchronize_session=False,
+                )
+            )
+
+            if updated != 1:
+                db.rollback()
+                return None
+
+            db.commit()
+            task = repository.get_task(db, task_id)
+            return self.serialize(task) if task else None
+        finally:
+            db.close()
+
     def heartbeat(
         self,
         task_id: str,

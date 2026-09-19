@@ -40,17 +40,19 @@ def test_research_agent_uses_research_pipeline(monkeypatch):
     }
 
 
-def test_non_research_agent_keeps_orchestrator_path(monkeypatch):
+def test_non_research_agent_uses_mission_execution_path(monkeypatch):
     captured = {}
 
-    def execute_goal(**kwargs):
-        captured.update(kwargs)
-        return {'success': True, 'final': 'done'}
+    def plan(**kwargs):
+        captured['plan'] = kwargs
+        return {'mission': {'id': 'mission-general-1'}}
 
-    monkeypatch.setattr(
-        'app.worker.orchestrator.execute_goal',
-        execute_goal,
-    )
+    def execute_mission(**kwargs):
+        captured['execution'] = kwargs
+        return {'success': True, 'status': 'completed'}
+
+    monkeypatch.setattr('app.worker.planner.plan', plan)
+    monkeypatch.setattr('app.worker.execution_engine.execute_mission', execute_mission)
 
     worker = SageWorker(worker_id='test-worker')
     result = worker._execute_task_payload({
@@ -62,10 +64,13 @@ def test_non_research_agent_keeps_orchestrator_path(monkeypatch):
     })
 
     assert result['success'] is True
-    assert captured == {
+    assert result['mission_id'] == 'mission-general-1'
+    assert captured['plan'] == {
         'goal': 'Plan my next action',
         'session_id': 'session-1',
         'priority': 4,
-        'task_id': 'general-task-1',
-        'worker_id': 'test-worker',
+    }
+    assert captured['execution'] == {
+        'mission_id': 'mission-general-1',
+        'max_steps': 20,
     }
