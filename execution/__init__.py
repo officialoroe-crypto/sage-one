@@ -45,6 +45,7 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "ResourceBand": ("execution.resource", "ResourceBand"),
     "ResourceGuard": ("execution.resource", "ResourceGuard"),
     "ResourceSnapshot": ("execution.resource", "ResourceSnapshot"),
+    "resource_guard": ("execution.resource", "resource_guard"),
     "ExecutionScheduler": ("execution.scheduler", "ExecutionScheduler"),
     "ScheduledTask": ("execution.scheduler", "ScheduledTask"),
     "scheduler": ("execution.scheduler", "scheduler"),
