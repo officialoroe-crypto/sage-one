@@ -1,19 +1,26 @@
-"""User-facing mission progress events.
+"""User-facing and durable mission progress events."""
 
-Events are intentionally lightweight and execution-scoped. Durable task and
-mission tables remain the source of truth; callers can surface these events in
-mobile/desktop clients or bridge them to a persistent event store later.
-"""
+from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
+
+from missions.history import append_event
 
 
 class MissionProgress:
-    """Collect deterministic progress events for one mission execution."""
+    """Collect deterministic progress events for one mission execution.
 
-    def __init__(self, mission_id: str):
+    Events are retained in memory for the current execution and persisted to
+    the durable mission history store as they are emitted. Persistence is
+    intentionally best-effort: a history-store failure must not break the
+    underlying mission execution path.
+    """
+
+    def __init__(self, mission_id: str, *, persist: bool = True):
         self.mission_id = mission_id
-        self._events: list[dict] = []
+        self.persist = persist
+        self._events: list[dict[str, Any]] = []
 
     @staticmethod
     def _now():
@@ -28,8 +35,9 @@ class MissionProgress:
         wave: int = 0,
         task_ids: list[str] | None = None,
         progress_percent: float = 0,
-    ) -> dict:
-        event = {
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        event: dict[str, Any] = {
             "sequence": len(self._events) + 1,
             "mission_id": self.mission_id,
             "event_type": event_type,
@@ -38,10 +46,24 @@ class MissionProgress:
             "wave": wave,
             "task_ids": sorted(task_ids or []),
             "progress_percent": round(float(progress_percent), 2),
+            "metadata": metadata or {},
             "created_at": self._now(),
         }
         self._events.append(event)
+
+        if self.persist:
+            try:
+                persisted = append_event(
+                    mission_id=self.mission_id,
+                    event=event,
+                )
+                event["id"] = persisted["id"]
+            except Exception:
+                # Execution must remain independent from observability/history.
+                # The in-memory event is still available to the caller.
+                pass
+
         return event
 
-    def snapshot(self) -> list[dict]:
+    def snapshot(self) -> list[dict[str, Any]]:
         return list(self._events)
