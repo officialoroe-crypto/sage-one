@@ -69,12 +69,14 @@ Default topics include current affairs, AI/technology, business, content trends,
 ## Mobile integration batch
 Current branch: `feature/world-intelligence-v1`
 
-Implemented in this batch:
-1. Top-level `/identity/*` and `/world/*` routers are mounted into `app.main` through a cloud-side one-time integration step.
+Implemented:
+1. Top-level identity and World Intelligence routers are mounted in `app.main`.
 2. Flutter `SageApi` supports World Intelligence status, knowledge, due topics and bounded refresh.
-3. Added `WorldIntelligenceScreen` using the approved SAGE ONE visual direction: deep black, restrained blue/cyan/purple accents, readable status, source-oriented knowledge cards and recovery/error state.
-4. Added World Intelligence as a discoverable mobile navigation destination.
-5. Kept the Research OS, durable tasks, mission execution, permissions and personal memory architecture intact.
+3. Added `WorldIntelligenceScreen` with the approved premium black/blue/cyan/purple direction.
+4. Added World Intelligence to mobile navigation.
+5. Added first-run onboarding UI foundation covering profile, capabilities, help intent, and memory/privacy consent.
+6. Added API route integration regression coverage.
+7. Preserved Research OS, durable tasks, mission execution, permissions and personal memory architecture.
 
 ## Approved visual system
 - Premium futuristic but restrained.
@@ -88,17 +90,27 @@ Implemented in this batch:
 - SAGE Spark is the approved name for the internal credit concept.
 - Visual references are references for look/motion/hierarchy only; the written system specification remains the behavior source of truth.
 
-## Current validation state
-- Previous World Intelligence head passed SAGE CI run #160 before subsequent integration commits.
-- A new CI run is required after the latest branch commits; do not claim the current branch is green until verified.
+## Validation
+- Flutter CI job completed successfully on run #188.
+- Python CI run #188 reached 83 passing tests and 1 failing integration assertion.
+- The failure was the new top-level identity/world route assertion; the current branch source contains the required router mounts.
+- A fresh CI run is required on the current head before merge.
+- Never call the branch green until the fresh run passes.
+
+## Celebration milestone
+The next project celebration checkpoint is the first real SAGE ONE integrated MVP slice:
+GOAL → AUTHENTICATED USER → PROFILE/CONSENT → PERSONAL SAGE WORKSPACE → RESEARCH/EXECUTE → VERIFIED RESULT → PERSISTED HISTORY
+
+World Intelligence and Opportunities/Marketplace then expand that MVP without replacing its core loop.
 
 ## Next major tracks
-1. Verify and merge the current World Intelligence/mobile integration checkpoint after CI.
-2. Build the first-run Flutter identity/onboarding flow around the existing Google + phone verification API contracts.
-3. Add World Intelligence source-quality/domain policy and durable scheduled refresh through the background automation layer.
-4. Add world-knowledge freshness/provenance UI and upgrade-proposal review UI.
-5. Continue mobile-first SAGE UI toward the approved reference direction.
+1. Get the current integration checkpoint fully green and merge it.
+2. Connect Google/phone identity flow to the Flutter first-run onboarding API.
+3. Add durable World Intelligence refresh orchestration and source-quality policy.
+4. Add world-knowledge freshness/provenance and human-reviewed upgrade proposal UI.
+5. Continue the mobile-first SAGE visual system.
 6. Add the dedicated Marketplace / Opportunities discovery area for jobs, rent, land/property and categories without cluttering the core command center.
+7. Reach the integrated MVP celebration checkpoint.
 
 ## Continuity rule
 This file is the continuity source for future SAGE ONE development sessions. Always inspect the actual GitHub repository and this state before making architectural changes.
