@@ -4,10 +4,9 @@ from missions.history import list_events
 
 def test_progress_events_are_persisted_and_ordered(tmp_path, monkeypatch):
     from missions import history
-
-    database_url = f"sqlite:///{tmp_path / 'history.db'}"
     from sqlalchemy import create_engine
 
+    database_url = f"sqlite:///{tmp_path / 'history.db'}"
     test_engine = create_engine(
         database_url,
         connect_args={"check_same_thread": False},
@@ -31,12 +30,23 @@ def test_progress_events_are_persisted_and_ordered(tmp_path, monkeypatch):
         progress_percent=50,
     )
 
+    # A fresh progress collector must continue durable mission ordering rather
+    # than replacing earlier events with its own in-memory sequence starting at 1.
+    resumed = MissionProgress("mission-history-test")
+    third = resumed.emit(
+        "mission_resumed",
+        "executing",
+        "Mission resumed.",
+        progress_percent=50,
+    )
+
     events = list_events("mission-history-test")
 
     assert first["sequence"] == 1
     assert second["sequence"] == 2
+    assert third["sequence"] == 3
     assert second["task_ids"] == ["a", "b"]
-    assert [event["sequence"] for event in events] == [1, 2]
+    assert [event["sequence"] for event in events] == [1, 2, 3]
     assert events[1]["metadata"] == {}
     assert events[0]["metadata"] == {"source": "test"}
     assert all(event["id"] for event in events)
