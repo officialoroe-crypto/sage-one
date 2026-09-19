@@ -40,7 +40,7 @@ def test_research_agent_uses_research_pipeline(monkeypatch):
     }
 
 
-def test_non_research_agent_uses_mission_execution_path(monkeypatch):
+def test_non_research_agent_uses_parallel_mission_execution_path(monkeypatch):
     captured = {}
 
     def plan(**kwargs):
@@ -52,7 +52,10 @@ def test_non_research_agent_uses_mission_execution_path(monkeypatch):
         return {'success': True, 'status': 'completed'}
 
     monkeypatch.setattr('app.worker.planner.plan', plan)
-    monkeypatch.setattr('app.worker.execution_engine.execute_mission', execute_mission)
+    monkeypatch.setattr(
+        'app.worker.parallel_mission_executor.execute_mission',
+        execute_mission,
+    )
 
     worker = SageWorker(worker_id='test-worker')
     result = worker._execute_task_payload({

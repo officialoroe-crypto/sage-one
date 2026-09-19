@@ -46,7 +46,11 @@ def test_worker_routes_non_research_goal_through_mission_planner(monkeypatch):
         return {'success': True, 'status': 'completed'}
 
     monkeypatch.setattr(worker_module.planner, 'plan', fake_plan)
-    monkeypatch.setattr(worker_module.execution_engine, 'execute_mission', fake_execute_mission)
+    monkeypatch.setattr(
+        worker_module.parallel_mission_executor,
+        'execute_mission',
+        fake_execute_mission,
+    )
 
     result = worker.execute_task(claimed)
 

@@ -16,6 +16,7 @@ __all__ = [
     "ExecutionMode",
     "ExecutionModeRouter",
     "ExecutionScheduler",
+    "ParallelMissionExecutor",
     "ResourceBand",
     "ResourceGuard",
     "ResourceSnapshot",
@@ -25,6 +26,7 @@ __all__ = [
     "execution_engine",
     "local_execution_allowed",
     "mode_router",
+    "parallel_mission_executor",
     "resource_guard",
     "scheduler",
 ]
@@ -47,6 +49,8 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "ExecutionScheduler": ("execution.scheduler", "ExecutionScheduler"),
     "ScheduledTask": ("execution.scheduler", "ScheduledTask"),
     "scheduler": ("execution.scheduler", "scheduler"),
+    "ParallelMissionExecutor": ("execution.parallel", "ParallelMissionExecutor"),
+    "parallel_mission_executor": ("execution.parallel", "parallel_mission_executor"),
 }
 
 _execution_engine: Any | None = None
@@ -71,7 +75,5 @@ def __getattr__(name: str) -> Any:
     module = __import__(module_name, fromlist=[attribute_name])
     value = getattr(module, attribute_name)
 
-    # Cache normal exports on the package after first resolution.  This keeps
-    # repeated imports cheap while retaining the cycle-safe initialization.
     globals()[name] = value
     return value

@@ -5,6 +5,7 @@ import uuid
 
 from app.orchestrator import orchestrator
 from execution.engine import execution_engine
+from execution.parallel import parallel_mission_executor
 from execution.policy import classify_task, local_execution_allowed
 from execution.resource import resource_guard
 from missions.planner import planner
@@ -122,10 +123,9 @@ class SageWorker:
                 }
             return result
 
-        # All other durable goals use the mission planner + execution engine.
-        # This turns a high-level goal into real dependent tasks, gives each
-        # task tool access and verification, and keeps the whole mission under
-        # the root task's worker lease.
+        # All other durable goals use the mission planner + dependency-aware
+        # execution engine. Independent child tasks may execute concurrently;
+        # dependent tasks are held until the next ready-task wave.
         plan = planner.plan(
             goal=description,
             session_id=session_id,
@@ -137,7 +137,7 @@ class SageWorker:
         if not mission_id:
             raise RuntimeError('Mission planner returned no mission ID.')
 
-        execution = execution_engine.execute_mission(
+        execution = parallel_mission_executor.execute_mission(
             mission_id=mission_id,
             max_steps=20,
         )
