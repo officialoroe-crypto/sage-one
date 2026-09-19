@@ -90,7 +90,7 @@ class _SageOneAppState extends State<SageOneApp> {
               setState(() => _index = value);
             }
           },
-          destinations: const [
+          destinations: [
             NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Sage'),
             NavigationDestination(icon: Icon(Icons.search), label: 'Research'),
             NavigationDestination(
