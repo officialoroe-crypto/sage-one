@@ -1,7 +1,7 @@
 name: sage_one
 description: SAGE ONE mobile command center.
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.1.0+2
 
 environment:
   sdk: '>=3.9.0 <4.0.0'
@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   http: ^1.5.0
   cupertino_icons: ^1.0.8
+  google_sign_in: ^7.1.1
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:
