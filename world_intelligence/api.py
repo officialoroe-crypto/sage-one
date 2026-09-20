@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from world_intelligence.engine import world_intelligence
+from tasks.engine import tasks
 
 
 router = APIRouter(prefix="/world", tags=["world-intelligence"])
@@ -37,9 +38,38 @@ def world_due():
 
 @router.post("/refresh")
 def world_refresh(request: WorldRefreshRequest):
+    """Queue a durable bounded world refresh instead of doing AI work in HTTP."""
     try:
         topics = request.topics or None
-        return world_intelligence.refresh(topics)
+        selected = list(topics or world_intelligence.DEFAULT_TOPICS)[:world_intelligence.MAX_TOPICS_PER_REFRESH]
+        description = "Refresh SAGE World Intelligence: " + " | ".join(selected)
+
+        existing = tasks.list()
+        for item in existing:
+            if (
+                item.get("agent") == "world"
+                and item.get("status") in {"pending", "running"}
+                and item.get("description") == description
+            ):
+                return {
+                    "success": True,
+                    "status": "already_queued",
+                    "task": item,
+                    "topics": selected,
+                }
+
+        task = tasks.create(
+            title="World Intelligence Refresh",
+            description=description,
+            priority=4,
+            agent="world",
+        )
+        return {
+            "success": True,
+            "status": "queued",
+            "task": task,
+            "topics": selected,
+        }
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     except Exception as exc:
