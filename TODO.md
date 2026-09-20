@@ -139,7 +139,8 @@
 - [x] Explicitly prevent self-modification through world learning.
 - [x] Register world intelligence as reusable SAGE tools.
 - [x] Add regression coverage for permissions, status, and upgrade proposals.
-- [ ] Add durable scheduled world refresh through the background automation layer.
+- [x] Add durable World Intelligence refresh task type and queue endpoint.
+- [ ] Add durable scheduled world refresh trigger through the background automation layer.
 - [ ] Add source-quality/domain policies for world refresh.
 - [ ] Add world-knowledge UI and freshness indicators in Flutter.
 
