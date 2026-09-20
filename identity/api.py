@@ -8,6 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from config.settings import settings
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from identity.memory import add_memory, delete_memory, list_memory, update_memory
 from identity.onboarding import capability_catalog, validate_capabilities
@@ -61,6 +62,14 @@ class MemoryUpdateRequest(BaseModel):
 
 def _profile_from_claims(claims: dict[str, Any]) -> dict[str, Any]:
     return get_or_create_authenticated_profile(claims)
+
+
+@router.get("/config")
+def identity_config():
+    """Return non-secret client configuration needed by web authentication."""
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Google authentication is not configured.")
+    return {"success": True, "google_client_id": settings.GOOGLE_CLIENT_ID}
 
 
 @router.post("/google")
