@@ -105,6 +105,14 @@ GOAL → AUTHENTICATED USER → PROFILE/CONSENT → PERSONAL SAGE WORKSPACE → 
 
 World Intelligence and Opportunities/Marketplace then expand that MVP without replacing its core loop.
 
+## SAGE Owner Authority / God Mode
+- Pre-launch development requirement: the configured SAGE owner has ultimate authority over SAGE's internal development state.
+- Local Developer Mode is an explicit owner session; no SMS/OTP is required for local development identity.
+- Owner controls include Spark balance set/reset, Evolution achievement/tier/stage set/reset, and a dedicated Owner Audit Log.
+- Every owner economy mutation is recorded with action, target, reason, amount and timestamp.
+- God Mode scope is explicitly internal SAGE development/testing. It does not create external account, payment, destructive, or third-party authority.
+- Production owner identity can be bound explicitly with `SAGE_OWNER_AUTH_SUBJECT`; Developer Mode remains localhost-only.
+
 ## Next major tracks
 1. Keep the integrated main branch green through GitHub CI after each logical batch.
 2. Connect Google/phone identity flow fully through the Flutter first-run onboarding API and production SMS provider.
