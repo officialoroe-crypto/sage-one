@@ -3,7 +3,7 @@ name: SAGE ONE Web Preview
 on:
   workflow_dispatch:
   push:
-    branches: [feature/sage-one-ui-v1]
+    branches: [feature/sage-one-ui-v1, feature/dev-mode-local]
   pull_request:
     branches: [main]
 
