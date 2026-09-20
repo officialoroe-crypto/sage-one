@@ -1,6 +1,7 @@
 from app.main import app
 from identity.api import router as identity_router
 from world_intelligence.api import router as world_router
+from economy.api import router as economy_router
 
 
 def _paths() -> set[str]:
@@ -16,6 +17,7 @@ def test_identity_and_world_router_definitions_exist():
     assert "/identity/onboarding" in identity_paths
     assert "/identity/phone/send" in identity_paths
     assert "/identity/phone/verify" in identity_paths
+    assert "/economy/owner/status" in {route.path for route in economy_router.routes}
     assert "/world/status" in world_paths
     assert "/world/knowledge" in world_paths
     assert "/world/due" in world_paths
@@ -30,6 +32,7 @@ def test_identity_and_world_routers_are_mounted_on_app():
     assert "/identity/onboarding" in paths
     assert "/identity/phone/send" in paths
     assert "/identity/phone/verify" in paths
+    assert "/economy/owner/status" in paths
     assert "/world/status" in paths
     assert "/world/knowledge" in paths
     assert "/world/due" in paths
