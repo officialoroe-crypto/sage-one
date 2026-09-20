@@ -18,7 +18,7 @@ from identity.profile import SessionLocal, UserProfile, mark_phone_verified, ups
 router = APIRouter(prefix="/identity", tags=["identity"])
 
 class DeveloperLoginRequest(BaseModel):
-    phone: str = Field(min_length=5, max_length=30)
+    phone: str = Field(default="local-owner", min_length=5, max_length=30)
 
 class GoogleLoginRequest(BaseModel):
     id_token: str = Field(min_length=1, max_length=10000)
@@ -73,13 +73,13 @@ def developer_login(request: Request, payload: DeveloperLoginRequest):
         phone=payload.phone.strip(),
     )
     profile = mark_phone_verified(claims["auth_provider"], claims["auth_subject"])
-    return {"success": True, "developer_mode": True, "token": token, "profile": profile}
+    return {"success": True, "developer_mode": True, "owner_mode": True, "token": token, "profile": profile}
 
 @router.get("/config")
 def identity_config():
     if not settings.GOOGLE_CLIENT_ID and not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=503, detail="Google authentication is not configured and Developer Mode is disabled.")
-    return {"success": True, "google_client_id": settings.GOOGLE_CLIENT_ID, "developer_mode": settings.DEVELOPER_MODE}
+    return {"success": True, "google_client_id": settings.GOOGLE_CLIENT_ID, "developer_mode": settings.DEVELOPER_MODE, "owner_mode_available": settings.DEVELOPER_MODE or bool(settings.OWNER_AUTH_SUBJECT)}
 
 @router.post("/google")
 def google_login(request: GoogleLoginRequest):
@@ -93,6 +93,7 @@ def google_login(request: GoogleLoginRequest):
             "subject": claims["auth_subject"],
             "email": claims.get("email"),
             "email_verified": claims.get("email_verified", False),
+            "owner_mode": claims.get("owner_mode", False),
         },
         "profile": profile,
         "onboarding_required": not profile["onboarding_completed"],
@@ -100,7 +101,7 @@ def google_login(request: GoogleLoginRequest):
 
 @router.get("/me")
 def get_me(claims: dict[str, Any] = Depends(authenticate_request)):
-    return {"success": True, "profile": _profile_from_claims(claims)}
+    return {"success": True, "profile": _profile_from_claims(claims), "owner_mode": claims.get("owner_mode", False)}
 
 @router.get("/onboarding/options")
 def onboarding_options():
