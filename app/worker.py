@@ -12,6 +12,7 @@ from missions.planner import planner
 from research.persistence import research_persistence
 from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
+from world_intelligence.engine import world_intelligence
 from notifications.service import create_task_notification
 
 
@@ -103,6 +104,11 @@ class SageWorker:
         agent = task.get('agent', 'general')
         session_id = task.get('session_id')
         priority = task.get('priority', 3)
+
+        # World Intelligence refreshes are durable background work. The worker
+        # owns the task lease while the bounded public-world refresh executes.
+        if agent == 'world':
+            return world_intelligence.refresh()
 
         # Research remains a first-class durable workload because its
         # specialized pipeline persists a citation/evidence graph separately
