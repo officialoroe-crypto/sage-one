@@ -18,7 +18,7 @@ from identity.profile import SessionLocal, UserProfile, mark_phone_verified, ups
 router = APIRouter(prefix="/identity", tags=["identity"])
 
 class DeveloperLoginRequest(BaseModel):
-    phone: str = Field(default="local-owner", min_length=5, max_length=30)
+    label: str = Field(default="local-owner", max_length=100)
 
 class GoogleLoginRequest(BaseModel):
     id_token: str = Field(min_length=1, max_length=10000)
@@ -65,14 +65,8 @@ def developer_login(request: Request, payload: DeveloperLoginRequest):
         raise HTTPException(status_code=404, detail="Developer mode is disabled.")
     if not request.client or request.client.host not in {"127.0.0.1", "::1", "localhost"}:
         raise HTTPException(status_code=403, detail="Developer login is localhost-only.")
-    token, claims = create_developer_session(payload.phone)
+    token, claims = create_developer_session(payload.label)
     profile = get_or_create_authenticated_profile(claims)
-    upsert_profile(
-        auth_provider=claims["auth_provider"],
-        auth_subject=claims["auth_subject"],
-        phone=payload.phone.strip(),
-    )
-    profile = mark_phone_verified(claims["auth_provider"], claims["auth_subject"])
     return {"success": True, "developer_mode": True, "owner_mode": True, "token": token, "profile": profile}
 
 @router.get("/config")
@@ -86,22 +80,11 @@ def google_login(request: GoogleLoginRequest):
     from identity.auth import verify_google_id_token
     claims = verify_google_id_token(request.id_token)
     profile = _profile_from_claims(claims)
-    return {
-        "success": True,
-        "identity": {
-            "provider": "google",
-            "subject": claims["auth_subject"],
-            "email": claims.get("email"),
-            "email_verified": claims.get("email_verified", False),
-            "owner_mode": claims.get("owner_mode", False),
-        },
-        "profile": profile,
-        "onboarding_required": not profile["onboarding_completed"],
-    }
+    return {"success": True, "identity": {"provider": "google", "subject": claims["auth_subject"], "email": claims.get("email"), "email_verified": claims.get("email_verified", False), "owner_mode": claims.get("owner_mode", False)}, "profile": profile, "onboarding_required": not profile["onboarding_completed"]}
 
 @router.get("/me")
 def get_me(claims: dict[str, Any] = Depends(authenticate_request)):
-    return {"success": True, "profile": _profile_from_claims(claims), "owner_mode": claims.get("owner_mode", False)}
+    return {"success": True, "profile": _profile_from_claims(claims), "owner_mode": claims.get("owner_mode", False), "developer_mode": claims.get("developer_mode", False), "developer_label": claims.get("developer_label")}
 
 @router.get("/onboarding/options")
 def onboarding_options():
@@ -115,34 +98,11 @@ def complete_onboarding(request: OnboardingRequest, claims: dict[str, Any] = Dep
         raise HTTPException(status_code=409, detail="Phone verification is required before onboarding can be completed.")
     if profile["phone"] != request.phone:
         raise HTTPException(status_code=409, detail="The verified phone number must match onboarding.")
-    updated = upsert_profile(
-        auth_provider=claims["auth_provider"],
-        auth_subject=claims["auth_subject"],
-        email=claims.get("email"),
-        name=request.name,
-        phone=request.phone,
-        address=request.address,
-        age=request.age,
-        basic_info=request.basic_info,
-        help_intent=request.help_intent,
-        capabilities=capabilities,
-        memory_consent=request.memory_consent,
-    )
+    updated = upsert_profile(auth_provider=claims["auth_provider"], auth_subject=claims["auth_subject"], email=claims.get("email"), name=request.name, phone=request.phone, address=request.address, age=request.age, basic_info=request.basic_info, help_intent=request.help_intent, capabilities=capabilities, memory_consent=request.memory_consent)
     if request.memory_consent:
-        add_memory(
-            profile_id=updated["id"],
-            memory_type="preference",
-            content=f"SAGE onboarding capabilities: {', '.join(capabilities) if capabilities else 'none selected'}",
-            importance=0.7,
-            confidence=1.0,
-            source="onboarding",
-            confirmed=True,
-        )
+        add_memory(profile_id=updated["id"], memory_type="preference", content=f"SAGE onboarding capabilities: {', '.join(capabilities) if capabilities else 'none selected'}", importance=0.7, confidence=1.0, source="onboarding", confirmed=True)
     with SessionLocal() as db:
-        row = db.query(UserProfile).filter(
-            UserProfile.auth_provider == claims["auth_provider"],
-            UserProfile.auth_subject == claims["auth_subject"],
-        ).first()
+        row = db.query(UserProfile).filter(UserProfile.auth_provider == claims["auth_provider"], UserProfile.auth_subject == claims["auth_subject"]).first()
         if row is None:
             raise HTTPException(status_code=500, detail="Authenticated profile disappeared during onboarding.")
         row.onboarding_completed = 1
@@ -154,17 +114,8 @@ def complete_onboarding(request: OnboardingRequest, claims: dict[str, Any] = Dep
 def send_phone_otp(request: PhoneRequest, claims: dict[str, Any] = Depends(authenticate_request)):
     owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     challenge = otp_manager.create_challenge(owner_key, request.phone)
-    upsert_profile(
-        auth_provider=claims["auth_provider"],
-        auth_subject=claims["auth_subject"],
-        phone=request.phone,
-    )
-    return {
-        "success": True,
-        "challenge_id": challenge.challenge_id,
-        "expires_at": challenge.expires_at,
-        "delivery": "sms_provider" if otp_manager.provider is not None else "not_configured",
-    }
+    upsert_profile(auth_provider=claims["auth_provider"], auth_subject=claims["auth_subject"], phone=request.phone)
+    return {"success": True, "challenge_id": challenge.challenge_id, "expires_at": challenge.expires_at, "delivery": "sms_provider" if otp_manager.provider is not None else "not_configured"}
 
 @router.post("/phone/verify")
 def verify_phone_otp(request: OTPVerifyRequest, claims: dict[str, Any] = Depends(authenticate_request)):
@@ -186,15 +137,7 @@ def get_profile_memory(claims: dict[str, Any] = Depends(authenticate_request)):
 @router.post("/memory")
 def create_profile_memory(request: MemoryCreateRequest, claims: dict[str, Any] = Depends(authenticate_request)):
     profile = _profile_from_claims(claims)
-    return {"success": True, "memory": add_memory(
-        profile_id=profile["id"],
-        memory_type=request.memory_type,
-        content=request.content,
-        importance=request.importance,
-        confidence=request.confidence,
-        source=request.source,
-        confirmed=request.confirmed,
-    )}
+    return {"success": True, "memory": add_memory(profile_id=profile["id"], memory_type=request.memory_type, content=request.content, importance=request.importance, confidence=request.confidence, source=request.source, confirmed=request.confirmed)}
 
 @router.patch("/memory/{memory_id}")
 def edit_profile_memory(memory_id: str, request: MemoryUpdateRequest, claims: dict[str, Any] = Depends(authenticate_request)):

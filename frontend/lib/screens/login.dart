@@ -21,8 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _webReady = false;
   bool _developerMode = false;
-  final _phoneController = TextEditingController();
-  String? _error;
+    String? _error;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;
 
   @override
@@ -73,14 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _developerLogin() async {
-    final phone = _phoneController.text.trim();
-    if (phone.length < 5) {
-      setState(() => _error = 'Enter your phone number.');
-      return;
-    }
     setState(() { _loading = true; _error = null; });
     try {
-      final result = await widget.identity.devLogin(phone);
+      final result = await widget.identity.devLogin();
       if (mounted) widget.onSignedIn(result);
     } catch (error) {
       if (mounted) setState(() => _error = _friendlyError(error));
@@ -110,8 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _authSubscription?.cancel();
-    _phoneController.dispose();
-    super.dispose();
+      super.dispose();
   }
 
   @override
@@ -142,31 +135,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text('More than an AI.\nIt’s your edge.', textAlign: TextAlign.center, style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70, height: 1.45)),
                   const SizedBox(height: 42),
                   if (_developerMode) ...[
-                    TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: 'Developer phone number',
-                        hintText: '+977 98XXXXXXXX',
-                        prefixIcon: const Icon(Icons.phone_outlined),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(.06),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity, height: 54,
                       child: FilledButton.icon(
                         onPressed: _loading ? null : _developerLogin,
-                        icon: const Icon(Icons.terminal),
-                        label: Text(_loading ? 'Opening SAGE…' : 'Enter Developer Mode'),
+                        icon: _loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.bolt),
+                        label: Text(_loading ? 'Opening SAGE…' : 'Enter SAGE Owner Mode'),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text('Local developer mode • phone required • Google bypassed', textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 11)),
-                  ] else if (kIsWeb)
+                    const Text('Local-only developer access • no Google • no SMS • no OTP', textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 11)),
+                                    ] else if (kIsWeb)
                     SizedBox(
                       width: double.infinity, height: 48,
                       child: _webReady ? buildGoogleWebButton() : const Center(child: CircularProgressIndicator()),

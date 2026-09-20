@@ -99,6 +99,7 @@ class _SageOneShellState extends State<SageOneShell> {
       const ProjectsScreen(),
       AgentScreen(api: _api),
       WorldIntelligenceScreen(api: _api),
+      OwnerConsoleScreen(api: _api),
     ];
 
     return Scaffold(
@@ -139,6 +140,10 @@ class _SageOneShellState extends State<SageOneShell> {
               NavigationDestination(
                 icon: Icon(Icons.public),
                 label: 'World',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.admin_panel_settings_outlined),
+                label: 'Owner',
               ),
             ],
           ),
