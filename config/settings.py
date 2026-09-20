@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ENV_FILE = Path("C:/SageOne/Backend/.env")
+ENV_FILE = Path("C:/SageSage/Backend/.env")
 load_dotenv(ENV_FILE)
 
 
@@ -19,12 +19,6 @@ class Settings:
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-
-    # Developer mode is deliberately opt-in and only usable from localhost.
-    # It is intended for local SAGE development when OAuth is unavailable.
-    DEVELOPER_MODE = os.getenv("SAGE_DEV_MODE", "false").strip().lower() in {
-        "1", "true", "yes", "on"
-    }
 
     MODEL = os.getenv(
         "SAGE_MODEL",
