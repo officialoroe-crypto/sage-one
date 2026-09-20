@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from database.connection import SessionLocal
-from economy.service import get_evolution, get_wallet, record_achievement, snapshot, spend_sparks, grant_sparks
+from economy.service import get_evolution, record_achievement, snapshot, spend_sparks, grant_sparks
 from identity.auth import authenticate_request
 
 router = APIRouter(prefix="/economy", tags=["economy"])
