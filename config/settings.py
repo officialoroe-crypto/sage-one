@@ -20,6 +20,12 @@ class Settings:
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
+    # Developer mode is deliberately opt-in and only usable from localhost.
+    # It is intended for local SAGE development when OAuth is unavailable.
+    DEVELOPER_MODE = os.getenv("SAGE_DEV_MODE", "false").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+
     MODEL = os.getenv(
         "SAGE_MODEL",
         "gemini-3.6-flash",
