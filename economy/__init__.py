@@ -1,1 +1,1 @@
-"""SAGE Spark and Evolution economy domain."""
+"""SAGE Spark and Evolution foundation."""
