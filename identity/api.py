@@ -76,6 +76,12 @@ def developer_login(request: Request, payload: DeveloperLoginRequest):
         raise HTTPException(status_code=403, detail="Developer login is localhost-only.")
     token, claims = create_developer_session(payload.phone)
     profile = get_or_create_authenticated_profile(claims)
+    profile = upsert_profile(
+        auth_provider=claims["auth_provider"],
+        auth_subject=claims["auth_subject"],
+        phone=payload.phone.strip(),
+    )
+    profile = mark_phone_verified(claims["auth_provider"], claims["auth_subject"])
     return {"success": True, "developer_mode": True, "token": token, "profile": profile}
 
 
@@ -189,7 +195,7 @@ def send_phone_otp(
     request: PhoneRequest,
     claims: dict[str, Any] = Depends(authenticate_request),
 ):
-    owner_key = f"google:{claims['auth_subject']}"
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     challenge = otp_manager.create_challenge(owner_key, request.phone)
     upsert_profile(
         auth_provider=claims["auth_provider"],
