@@ -18,7 +18,7 @@ class IdentityClient {
               defaultValue: 'http://localhost:8010',
             );
 
-  static const _tokenKey = 'sage.google.id_token';
+  static const _tokenKey = 'sage.identity.token';
   static const _googleServerClientId = String.fromEnvironment(
     'SAGE_GOOGLE_SERVER_CLIENT_ID',
   );
@@ -27,6 +27,15 @@ class IdentityClient {
   final FlutterSecureStorage _storage;
   final String baseUrl;
   bool _googleInitialized = false;
+  bool _developerMode = false;
+
+  bool get developerMode => _developerMode;
+
+  Future<void> loadConfig() async {
+    final response = await _client.get(Uri.parse('$baseUrl/identity/config'));
+    final data = _decode(response);
+    _developerMode = data['developer_mode'] == true;
+  }
 
   Stream<GoogleSignInAuthenticationEvent> get authenticationEvents =>
       GoogleSignIn.instance.authenticationEvents;
@@ -43,6 +52,7 @@ class IdentityClient {
     if (kIsWeb) {
       final response = await _client.get(Uri.parse('$baseUrl/identity/config'));
       final data = _decode(response);
+      _developerMode = data['developer_mode'] == true;
       final configuredClientId = data['google_client_id'];
       if (configuredClientId is! String || configuredClientId.isEmpty) {
         throw Exception('Google web client ID is not configured on SAGE.');
@@ -65,6 +75,21 @@ class IdentityClient {
     } finally {
       await _storage.delete(key: _tokenKey);
     }
+  }
+
+  Future<Map<String, dynamic>> devLogin(String phone) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/identity/dev-login'),
+      headers: {'content-type': 'application/json'},
+      body: jsonEncode({'phone': phone.trim()}),
+    );
+    final data = _decode(response);
+    final token = data['token'];
+    if (token is! String || token.isEmpty) {
+      throw Exception('Developer session token was not returned.');
+    }
+    await _storage.write(key: _tokenKey, value: token);
+    return data;
   }
 
   Future<Map<String, dynamic>> signInWithGoogle() async {
