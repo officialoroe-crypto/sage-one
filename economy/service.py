@@ -37,6 +37,33 @@ def _tier_for(achievement: int) -> tuple[str, str]:
     return "Bronze", "LOW"
 
 
+def evolution_progress(achievement: int) -> dict:
+    current_threshold, _ = EVOLUTION_TIERS[0]
+    next_tier: str | None = None
+    next_threshold: int | None = None
+    for index, (threshold, tier) in enumerate(EVOLUTION_TIERS):
+        if achievement >= threshold:
+            current_threshold = threshold
+            if index + 1 < len(EVOLUTION_TIERS):
+                next_threshold, next_tier = EVOLUTION_TIERS[index + 1]
+            break
+    if next_threshold is None:
+        return {
+            "current_threshold": current_threshold,
+            "next_threshold": None,
+            "next_tier": None,
+            "ratio": 1.0,
+        }
+    span = next_threshold - current_threshold
+    ratio = (achievement - current_threshold) / span if span else 1.0
+    return {
+        "current_threshold": current_threshold,
+        "next_threshold": next_threshold,
+        "next_tier": next_tier,
+        "ratio": max(0.0, min(1.0, ratio)),
+    }
+
+
 def get_wallet(db: Session, owner_key: str) -> SparkWallet:
     wallet = db.get(SparkWallet, owner_key)
     if wallet is None:
@@ -145,6 +172,7 @@ def snapshot(db: Session, owner_key: str) -> dict:
             "lifetime_achievement": evolution.lifetime_achievement,
             "tier": evolution.tier,
             "stage": evolution.stage,
+            "progress": evolution_progress(evolution.lifetime_achievement),
         },
         "ledger": [
             {
