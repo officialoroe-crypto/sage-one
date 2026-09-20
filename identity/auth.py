@@ -21,13 +21,13 @@ def _is_local_request(request: Request) -> bool:
     return host in {"127.0.0.1", "::1", "localhost"}
 
 
-def create_developer_session(phone: str) -> tuple[str, dict[str, Any]]:
+def create_developer_session(phone: str = "local-owner") -> tuple[str, dict[str, Any]]:
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=404, detail="Developer mode is disabled.")
 
-    normalized_phone = phone.strip()
+    normalized_phone = phone.strip() or "local-owner"
     if len(normalized_phone) < 5:
-        raise HTTPException(status_code=422, detail="A valid phone number is required.")
+        raise HTTPException(status_code=422, detail="Developer identity is invalid.")
 
     subject = hashlib.sha256(normalized_phone.encode()).hexdigest()
     claims = {
@@ -38,6 +38,7 @@ def create_developer_session(phone: str) -> tuple[str, dict[str, Any]]:
         "email_verified": False,
         "name": "SAGE Developer",
         "developer_mode": True,
+        "owner_mode": True,
     }
     token = f"sage-dev-{secrets.token_urlsafe(32)}"
     _DEV_SESSIONS[token] = claims
@@ -69,6 +70,7 @@ def verify_google_id_token(raw_token: str) -> dict[str, Any]:
         "email_verified": bool(claims.get("email_verified")),
         "name": claims.get("name"),
         "picture": claims.get("picture"),
+        "owner_mode": bool(settings.OWNER_AUTH_SUBJECT and str(subject) == settings.OWNER_AUTH_SUBJECT),
     }
 
 
