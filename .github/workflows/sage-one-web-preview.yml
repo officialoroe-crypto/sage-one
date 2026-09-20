@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: [feature/sage-one-ui-v1]
+  pull_request:
+    branches: [main]
 
 jobs:
   build-web:
