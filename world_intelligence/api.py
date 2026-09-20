@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from world_intelligence.engine import DEFAULT_TOPICS, world_intelligence
 from tasks.engine import tasks
+from permissions.engine import permissions
 
 
 router = APIRouter(prefix="/world", tags=["world-intelligence"])
@@ -40,6 +41,9 @@ def world_due():
 def world_refresh(request: WorldRefreshRequest):
     """Queue a durable bounded world refresh instead of doing AI work in HTTP."""
     try:
+        decision = permissions.check("world.learn", risk="low", owner_authorized=True)
+        if not decision.allowed:
+            raise PermissionError(decision.reason)
         topics = request.topics or None
         selected = list(topics or DEFAULT_TOPICS)[:world_intelligence.MAX_TOPICS_PER_REFRESH]
         description = "Refresh SAGE World Intelligence: " + " | ".join(selected)
