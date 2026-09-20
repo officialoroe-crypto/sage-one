@@ -24,6 +24,7 @@ from notifications.service import list_notifications, mark_read, mark_all_read
 from missions.api import router as mission_api_router
 from identity.api import router as identity_api_router
 from world_intelligence.api import router as world_api_router
+from economy.api import router as economy_api_router
 
 
 # ============================================================
@@ -44,6 +45,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(mission_api_router)
 app.include_router(identity_api_router)
 app.include_router(world_api_router)
+app.include_router(economy_api_router)
 
 
 # ============================================================
