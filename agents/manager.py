@@ -29,6 +29,21 @@ class AgentManager:
                 preferred_tools=[]
             ),
 
+            "world": AgentDefinition(
+                name="world",
+                description=(
+                    "Maintains bounded public-world intelligence refreshes."
+                ),
+                capabilities=[
+                    "world_intelligence",
+                    "public_source_refresh",
+                    "knowledge_update",
+                ],
+                preferred_tools=[
+                    "world_refresh",
+                ]
+            ),
+
             "research": AgentDefinition(
                 name="research",
                 description=(
@@ -113,6 +128,18 @@ class AgentManager:
     ):
 
         text = task_description.lower()
+
+        if any(
+            word in text
+            for word in [
+                "world intelligence",
+                "world refresh",
+                "refresh world knowledge",
+                "public-world refresh",
+            ]
+        ):
+
+            return "world"
 
         if any(
             word in text
