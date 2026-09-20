@@ -6,6 +6,7 @@ from identity.onboarding import capability_catalog
 def test_identity_api_contract_has_onboarding_and_memory_endpoints():
     paths = {(route.path, tuple(sorted(route.methods or []))) for route in api.router.routes}
 
+    assert ("/identity/config", ("GET",)) in paths
     assert ("/identity/google", ("POST",)) in paths
     assert ("/identity/me", ("GET",)) in paths
     assert ("/identity/onboarding/options", ("GET",)) in paths
