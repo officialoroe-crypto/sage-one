@@ -29,14 +29,14 @@ class _EconomyScreenState extends State<EconomyScreen> {
       _error = null;
     });
     try {
-      final results = await Future.wait([
+      final results = await Future.wait<dynamic>([
         widget.api.economyMe(),
         widget.api.premiumWorkCosts(),
       ]);
       if (!mounted) return;
       setState(() {
-        _data = Map<String, dynamic>.from(results[0]);
-        _costs = List<dynamic>.from(results[1]);
+        _data = Map<String, dynamic>.from(results[0] as Map);
+        _costs = List<dynamic>.from(results[1] as Iterable);
         _loading = false;
       });
     } catch (error) {
