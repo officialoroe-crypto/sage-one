@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -7,10 +8,12 @@ class SageApi {
   SageApi({http.Client? client, String? baseUrl, FlutterSecureStorage? storage})
       : _client = client ?? http.Client(),
         _storage = storage ?? const FlutterSecureStorage(),
-        baseUrl = baseUrl ?? const String.fromEnvironment(
-          'SAGE_API_URL',
-          defaultValue: 'http://10.0.2.2:8010',
-        );
+        baseUrl = baseUrl ?? _defaultBaseUrl();
+
+  static String _defaultBaseUrl() {
+    if (kIsWeb) return 'http://localhost:8010';
+    return 'http://10.0.2.2:8010';
+  }
 
   final http.Client _client;
   final FlutterSecureStorage _storage;
@@ -38,9 +41,7 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>> cancelTask(String taskId) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/tasks/$taskId/cancel'),
-    );
+    final response = await _client.post(Uri.parse('$baseUrl/tasks/$taskId/cancel'));
     return _decode(response);
   }
 
@@ -69,9 +70,7 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>> markAllNotificationsRead() async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/notifications/read-all'),
-    );
+    final response = await _client.post(Uri.parse('$baseUrl/notifications/read-all'));
     return _decode(response);
   }
 
@@ -86,9 +85,7 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>?> research(String researchId) async {
-    final data = await _executeTool('research_get', {
-      'research_id': researchId,
-    });
+    final data = await _executeTool('research_get', {'research_id': researchId});
     final value = data['result'];
     return value is Map<String, dynamic> ? value : null;
   }
@@ -164,11 +161,14 @@ class SageApi {
   }
 
   Map<String, dynamic> _decode(http.Response response) {
-    final body = response.body.isEmpty
+    final decoded = response.body.isEmpty
         ? <String, dynamic>{}
-        : jsonDecode(response.body) as Map<String, dynamic>;
+        : jsonDecode(response.body);
+    final body = decoded is Map
+        ? Map<String, dynamic>.from(decoded)
+        : <String, dynamic>{'data': decoded};
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(body['detail'] ?? 'SAGE API request failed');
+      throw Exception(body['detail'] ?? body['error'] ?? 'SAGE API request failed');
     }
     return body;
   }

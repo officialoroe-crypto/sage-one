@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.core import sage
@@ -35,6 +37,27 @@ app = FastAPI(
     title="SAGE ONE",
     version="6.0.0",
     description="SAGE ONE personal AI execution core",
+)
+
+
+def _cors_origins() -> list[str]:
+    configured = os.getenv("SAGE_CORS_ORIGINS", "")
+    if configured.strip():
+        return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+    return [
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:7357",
+        "http://127.0.0.1:7357",
+    ]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Ensure newly introduced durable tables exist when the API starts.
