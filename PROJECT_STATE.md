@@ -1,6 +1,6 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-19
+Last updated: 2026-09-20
 
 ## Identity
 - Project: SAGE ONE
@@ -47,7 +47,9 @@ Last updated: 2026-09-19
 - Mission planner/executor with bounded parallel execution, progress history and pause/resume/cancel controls.
 - Durable task notifications and Flutter unread badge.
 - Authenticated identity/profile foundation with Google ID-token verification, phone OTP state machine, user-scoped memory and onboarding APIs.
+- Controlled localhost-only Developer Mode with phone-bound developer sessions, provider-aware profile ownership, and Flutter/web entry flow; disabled by default.
 - Controlled SAGE World Intelligence for bounded public-world observation/learning and human-reviewed upgrade proposals.
+- World Intelligence refreshes can now be queued as durable worker tasks instead of performing AI work inside the HTTP request.
 
 ## SAGE World Intelligence
 World Intelligence is system-level learning about the public world, separate from personal user memory.
@@ -104,9 +106,9 @@ GOAL → AUTHENTICATED USER → PROFILE/CONSENT → PERSONAL SAGE WORKSPACE → 
 World Intelligence and Opportunities/Marketplace then expand that MVP without replacing its core loop.
 
 ## Next major tracks
-1. Get the current integration checkpoint fully green and merge it.
-2. Connect Google/phone identity flow to the Flutter first-run onboarding API.
-3. Add durable World Intelligence refresh orchestration and source-quality policy.
+1. Keep the integrated main branch green through GitHub CI after each logical batch.
+2. Connect Google/phone identity flow fully through the Flutter first-run onboarding API and production SMS provider.
+3. Add durable scheduled World Intelligence refresh triggering and source-quality policy.
 4. Add world-knowledge freshness/provenance and human-reviewed upgrade proposal UI.
 5. Continue the mobile-first SAGE visual system.
 6. Add the dedicated Marketplace / Opportunities discovery area for jobs, rent, land/property and categories without cluttering the core command center.
