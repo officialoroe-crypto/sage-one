@@ -22,6 +22,20 @@ def test_identity_and_world_router_definitions_exist():
     assert "/world/refresh" in world_paths
 
 
+def test_identity_and_world_routers_are_mounted_on_app():
+    paths = _paths()
+
+    assert "/identity/google" in paths
+    assert "/identity/me" in paths
+    assert "/identity/onboarding" in paths
+    assert "/identity/phone/send" in paths
+    assert "/identity/phone/verify" in paths
+    assert "/world/status" in paths
+    assert "/world/knowledge" in paths
+    assert "/world/due" in paths
+    assert "/world/refresh" in paths
+
+
 def test_app_keeps_mission_routes_separate_from_identity_and_world():
     paths = _paths()
     assert "/missions/identity/google" not in paths
