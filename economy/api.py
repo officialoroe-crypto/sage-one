@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from database.connection import SessionLocal
+from economy.achievements import record_verified_achievement
 from economy.costs import cost_catalog
 from economy.service import get_evolution, grant_sparks, record_achievement, snapshot, spend_sparks
 from identity.auth import authenticate_request
@@ -22,6 +23,14 @@ class SparkAmountRequest(BaseModel):
 class AchievementRequest(BaseModel):
     amount: int = Field(gt=0, le=1_000_000_000)
     reason: str = Field(min_length=1, max_length=200)
+
+
+class VerifiedAchievementRequest(BaseModel):
+    amount: int = Field(gt=0, le=1_000_000_000)
+    reason: str = Field(min_length=1, max_length=200)
+    source_type: str = Field(min_length=1, max_length=100)
+    source_id: str = Field(min_length=1, max_length=200)
+    evidence: dict = Field(min_length=1)
 
 
 def _owner(claims: dict) -> str:
@@ -70,6 +79,44 @@ def evolution_achievement(request: AchievementRequest, claims: dict = Depends(au
                 "stage": profile.stage,
             },
         }
+
+
+@router.post("/evolution/verified-achievement")
+def verified_evolution_achievement(
+    request: VerifiedAchievementRequest,
+    claims: dict = Depends(authenticate_request),
+):
+    try:
+        with SessionLocal() as db:
+            event, created = record_verified_achievement(
+                db,
+                _owner(claims),
+                request.amount,
+                request.reason,
+                request.source_type,
+                request.source_id,
+                request.evidence,
+            )
+            profile = get_evolution(db, _owner(claims))
+            return {
+                "success": True,
+                "created": created,
+                "event": {
+                    "id": event.id,
+                    "source_type": event.source_type,
+                    "source_id": event.source_id,
+                    "amount": event.amount,
+                    "verification_status": event.verification_status,
+                    "created_at": event.created_at.isoformat(),
+                },
+                "evolution": {
+                    "lifetime_achievement": profile.lifetime_achievement,
+                    "tier": profile.tier,
+                    "stage": profile.stage,
+                },
+            }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/evolution")
