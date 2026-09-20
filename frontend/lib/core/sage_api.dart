@@ -124,6 +124,23 @@ class SageApi {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> ownerStatus() async => _authorizedGet('/economy/owner/status');
+
+  Future<List<dynamic>> ownerAudit({int limit = 100}) async {
+    final data = await _authorizedGet('/economy/owner/audit?limit=$limit');
+    final items = data['events'] ?? const [];
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> ownerSetSpark(int amount, String reason) async =>
+      _authorizedPost('/economy/owner/spark/set', {'amount': amount, 'reason': reason});
+  Future<Map<String, dynamic>> ownerResetSpark(String reason) async =>
+      _authorizedPost('/economy/owner/spark/reset', {'reason': reason});
+  Future<Map<String, dynamic>> ownerSetEvolution(int achievement, String tier, String stage, String reason) async =>
+      _authorizedPost('/economy/owner/evolution/set', {'lifetime_achievement': achievement, 'tier': tier, 'stage': stage, 'reason': reason});
+  Future<Map<String, dynamic>> ownerResetEvolution(String reason) async =>
+      _authorizedPost('/economy/owner/evolution/reset', {'reason': reason});
+
   Future<Map<String, dynamic>> economyMe() async {
     return _authorizedGet('/economy/me');
   }
@@ -134,8 +151,15 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<Map<String, dynamic>> _authorizedPost(String path, Map<String, dynamic> body) async {
+    final token = await _storage.read(key: 'sage.google.id_token') ?? await _storage.read(key: 'sage.identity.token');
+    if (token == null || token.isEmpty) throw Exception('SAGE identity session is missing. Sign in again.');
+    final response = await _client.post(Uri.parse('$baseUrl$path'), headers: {'authorization': 'Bearer $token', 'content-type': 'application/json'}, body: jsonEncode(body));
+    return _decode(response);
+  }
+
   Future<Map<String, dynamic>> _authorizedGet(String path) async {
-    final token = await _storage.read(key: 'sage.google.id_token');
+    final token = await _storage.read(key: 'sage.google.id_token') ?? await _storage.read(key: 'sage.identity.token');
     if (token == null || token.isEmpty) {
       throw Exception('SAGE identity session is missing. Sign in again.');
     }
