@@ -35,8 +35,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
       ]);
       if (!mounted) return;
       setState(() {
-        _data = results[0];
-        _costs = results[1];
+        _data = Map<String, dynamic>.from(results[0]),
+        _costs = List<dynamic>.from(results[1]),
         _loading = false;
       });
     } catch (error) {
@@ -67,9 +67,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SAGE Spark'),
-        actions: [
-          IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
-        ],
+        actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))],
       ),
       body: RefreshIndicator(
         onRefresh: _load,
@@ -92,7 +90,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             const _SectionTitle('Spark history'),
             const SizedBox(height: 10),
             if (ledger.isEmpty)
-              const Text('No Spark activity yet.', style: TextStyle(color: Colors.white45))
+              const Text('No Spark activity yet.', style: TextStyle(color: Colors.white54))
             else
               ...ledger.map((entry) => _LedgerTile(entry: Map<String, dynamic>.from(entry as Map))),
           ],
@@ -210,7 +208,7 @@ class _CostTile extends StatelessWidget {
         child: ListTile(
           leading: const Icon(Icons.bolt_outlined, color: Color(0xFFB99CFF)),
           title: Text(item['name']?.toString() ?? 'Premium work'),
-          subtitle: Text(item['description']?.toString() ?? '', style: const TextStyle(color: Colors.white45)),
+          subtitle: Text(item['description']?.toString() ?? '', style: const TextStyle(color: Colors.white54)),
           trailing: Text('${item['spark_cost'] ?? 0} ✦', style: const TextStyle(fontWeight: FontWeight.w800)),
         ),
       );
@@ -228,7 +226,10 @@ class _LedgerTile extends StatelessWidget {
       leading: Icon(delta >= 0 ? Icons.south_west : Icons.north_east, size: 19),
       title: Text(entry['reason']?.toString() ?? 'Spark activity'),
       subtitle: Text(entry['created_at']?.toString() ?? '', style: const TextStyle(color: Colors.white30, fontSize: 10)),
-      trailing: Text('${delta >= 0 ? '+' : ''}$delta', style: TextStyle(fontWeight: FontWeight.w800, color: delta >= 0 ? const Color(0xFFE7C76A) : Colors.white70)),
+      trailing: Text(
+        '${delta >= 0 ? '+' : ''}$delta',
+        style: TextStyle(fontWeight: FontWeight.w800, color: delta >= 0 ? const Color(0xFFE7C76A) : Colors.white70),
+      ),
     );
   }
 }
@@ -253,7 +254,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 12),
             const Text('SAGE Spark is unavailable right now', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white45, fontSize: 11)),
+            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 11)),
             const SizedBox(height: 16),
             OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
           ]),
