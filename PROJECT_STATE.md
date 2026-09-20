@@ -47,7 +47,7 @@ Last updated: 2026-09-20
 - Mission planner/executor with bounded parallel execution, progress history and pause/resume/cancel controls.
 - Durable task notifications and Flutter unread badge.
 - Authenticated identity/profile foundation with Google ID-token verification, phone OTP state machine, user-scoped memory and onboarding APIs.
-- Controlled localhost-only Developer Mode with phone-bound developer sessions, provider-aware profile ownership, and Flutter/web entry flow; disabled by default.
+- Controlled localhost-only Developer Mode with phone-free owner sessions, provider-aware profile ownership, and Flutter/web entry flow; disabled by default.
 - Controlled SAGE World Intelligence for bounded public-world observation/learning and human-reviewed upgrade proposals.
 - World Intelligence refreshes can now be queued as durable worker tasks instead of performing AI work inside the HTTP request.
 
@@ -107,11 +107,16 @@ World Intelligence and Opportunities/Marketplace then expand that MVP without re
 
 ## SAGE Owner Authority / God Mode
 - Pre-launch development requirement: the configured SAGE owner has ultimate authority over SAGE's internal development state.
-- Local Developer Mode is an explicit owner session; no SMS/OTP is required for local development identity.
+- Local Developer Mode is an explicit owner session; no phone, SMS, or OTP is required for local development identity.
 - Owner controls include Spark balance set/reset, Evolution achievement/tier/stage set/reset, and a dedicated Owner Audit Log.
 - Every owner economy mutation is recorded with action, target, reason, amount and timestamp.
 - God Mode scope is explicitly internal SAGE development/testing. It does not create external account, payment, destructive, or third-party authority.
 - Production owner identity can be bound explicitly with `SAGE_OWNER_AUTH_SUBJECT`; Developer Mode remains localhost-only.
+
+## Owner Console
+- Flutter Owner Console exposes God Mode status, Spark set/reset, Evolution simulation/set/reset, and the Owner Audit Log.
+- Local Developer Mode enters directly into Owner Mode with no phone field and no OTP dependency.
+- Owner controls remain authenticated, localhost-only in Developer Mode, and internal to SAGE development.
 
 ## Next major tracks
 1. Keep the integrated main branch green through GitHub CI after each logical batch.
