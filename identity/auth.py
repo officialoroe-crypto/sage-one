@@ -21,22 +21,22 @@ def _is_local_request(request: Request) -> bool:
     return host in {"127.0.0.1", "::1", "localhost"}
 
 
-def create_developer_session(phone: str = "local-owner") -> tuple[str, dict[str, Any]]:
+def create_developer_session(label: str = "local-owner") -> tuple[str, dict[str, Any]]:
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=404, detail="Developer mode is disabled.")
 
-    normalized_phone = phone.strip() or "local-owner"
-    if len(normalized_phone) < 5:
+    normalized_label = label.strip() or "local-owner"
+    if len(normalized_label) > 100:
         raise HTTPException(status_code=422, detail="Developer identity is invalid.")
 
-    subject = hashlib.sha256(normalized_phone.encode()).hexdigest()
+    subject = hashlib.sha256(normalized_label.encode()).hexdigest()
     claims = {
         "auth_provider": "developer",
         "auth_subject": f"dev:{subject}",
-        "phone": normalized_phone,
+        "developer_label": normalized_label,
         "email": None,
         "email_verified": False,
-        "name": "SAGE Developer",
+        "name": "SAGE Owner",
         "developer_mode": True,
         "owner_mode": True,
     }
