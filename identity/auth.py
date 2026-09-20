@@ -1,12 +1,9 @@
-"""Trusted Google identity verification for SAGE ONE.
-
-The client may present a Google ID token, but SAGE never trusts the decoded
-client payload. Verification happens server-side against Google's published
-signing keys and the configured OAuth client ID.
-"""
+"""Trusted identity verification for SAGE ONE."""
 
 from __future__ import annotations
 
+import hashlib
+import secrets
 from typing import Any
 
 from fastapi import HTTPException, Request
@@ -15,6 +12,36 @@ from google.oauth2 import id_token
 
 from config.settings import settings
 from identity.profile import get_profile, upsert_profile
+
+_DEV_SESSIONS: dict[str, dict[str, Any]] = {}
+
+
+def _is_local_request(request: Request) -> bool:
+    host = request.client.host if request.client else None
+    return host in {"127.0.0.1", "::1", "localhost"}
+
+
+def create_developer_session(phone: str) -> tuple[str, dict[str, Any]]:
+    if not settings.DEVELOPER_MODE:
+        raise HTTPException(status_code=404, detail="Developer mode is disabled.")
+
+    normalized_phone = phone.strip()
+    if len(normalized_phone) < 5:
+        raise HTTPException(status_code=422, detail="A valid phone number is required.")
+
+    subject = hashlib.sha256(normalized_phone.encode()).hexdigest()
+    claims = {
+        "auth_provider": "developer",
+        "auth_subject": f"dev:{subject}",
+        "phone": normalized_phone,
+        "email": None,
+        "email_verified": False,
+        "name": "SAGE Developer",
+        "developer_mode": True,
+    }
+    token = f"sage-dev-{secrets.token_urlsafe(32)}"
+    _DEV_SESSIONS[token] = claims
+    return token, claims
 
 
 def verify_google_id_token(raw_token: str) -> dict[str, Any]:
@@ -25,9 +52,7 @@ def verify_google_id_token(raw_token: str) -> dict[str, Any]:
 
     try:
         claims = id_token.verify_oauth2_token(
-            raw_token.strip(),
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
+            raw_token.strip(), google_requests.Request(), settings.GOOGLE_CLIENT_ID
         )
     except ValueError as exc:
         raise HTTPException(status_code=401, detail="Invalid Google ID token.") from exc
@@ -51,15 +76,22 @@ def authenticate_request(request: Request) -> dict[str, Any]:
     header = request.headers.get("Authorization", "")
     scheme, _, token = header.partition(" ")
     if scheme.lower() != "bearer" or not token:
-        raise HTTPException(status_code=401, detail="Bearer Google ID token required.")
+        raise HTTPException(status_code=401, detail="Bearer identity token required.")
+
+    if token.startswith("sage-dev-"):
+        if not settings.DEVELOPER_MODE or not _is_local_request(request):
+            raise HTTPException(status_code=401, detail="Developer session is not available here.")
+        claims = _DEV_SESSIONS.get(token)
+        if claims is None:
+            raise HTTPException(status_code=401, detail="Developer session expired. Sign in again.")
+        return claims
+
     return verify_google_id_token(token)
 
 
 def get_or_create_authenticated_profile(claims: dict[str, Any]) -> dict[str, Any]:
     existing = get_profile(claims["auth_provider"], claims["auth_subject"])
     if existing:
-        # Refresh trusted Google display claims, but never overwrite user-entered
-        # onboarding fields such as address, age, or phone.
         return upsert_profile(
             auth_provider=claims["auth_provider"],
             auth_subject=claims["auth_subject"],
