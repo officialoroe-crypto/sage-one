@@ -8,6 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = Path("C:/SageOne/Backend/.env")
 load_dotenv(ENV_FILE)
 
+
 class Settings:
     APP_NAME = "SAGE ONE"
     ENVIRONMENT = os.getenv("SAGE_ENV", "development")
@@ -21,6 +22,7 @@ class Settings:
     DEVELOPER_MODE = os.getenv("SAGE_DEV_MODE", "false").strip().lower() in {
         "1", "true", "yes", "on"
     }
+    OWNER_AUTH_SUBJECT = os.getenv("SAGE_OWNER_AUTH_SUBJECT")
 
     MODEL = os.getenv("SAGE_MODEL", "gemini-3.6-flash")
     GROQ_MODEL = os.getenv("SAGE_GROQ_MODEL", "openai/gpt-oss-20b")
@@ -31,5 +33,6 @@ class Settings:
     PREFER_LOCAL = os.getenv("SAGE_PREFER_LOCAL", "false").strip().lower() in {
         "1", "true", "yes", "on"
     }
+
 
 settings = Settings()
