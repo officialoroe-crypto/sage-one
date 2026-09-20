@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +15,7 @@ class IdentityClient {
         baseUrl = baseUrl ??
             const String.fromEnvironment(
               'SAGE_API_URL',
-              defaultValue: 'http://10.0.2.2:8010',
+              defaultValue: 'http://localhost:8010',
             );
 
   static const _tokenKey = 'sage.google.id_token';
@@ -27,20 +28,39 @@ class IdentityClient {
   final String baseUrl;
   bool _googleInitialized = false;
 
+  Stream<GoogleSignInAuthenticationEvent> get authenticationEvents =>
+      GoogleSignIn.instance.authenticationEvents;
+
   Future<String?> token() => _storage.read(key: _tokenKey);
 
-  Future<void> _initializeGoogle() async {
+  Future<void> initializeGoogle() async {
     if (_googleInitialized) return;
+
+    String? clientId;
+    String? serverClientId =
+        _googleServerClientId.isEmpty ? null : _googleServerClientId;
+
+    if (kIsWeb) {
+      final response = await _client.get(Uri.parse('$baseUrl/identity/config'));
+      final data = _decode(response);
+      final configuredClientId = data['google_client_id'];
+      if (configuredClientId is! String || configuredClientId.isEmpty) {
+        throw Exception('Google web client ID is not configured on SAGE.');
+      }
+      clientId = configuredClientId;
+      serverClientId ??= configuredClientId;
+    }
+
     await GoogleSignIn.instance.initialize(
-      serverClientId:
-          _googleServerClientId.isEmpty ? null : _googleServerClientId,
+      clientId: clientId,
+      serverClientId: serverClientId,
     );
     _googleInitialized = true;
   }
 
   Future<void> signOut() async {
     try {
-      await _initializeGoogle();
+      await initializeGoogle();
       await GoogleSignIn.instance.signOut();
     } finally {
       await _storage.delete(key: _tokenKey);
@@ -48,10 +68,20 @@ class IdentityClient {
   }
 
   Future<Map<String, dynamic>> signInWithGoogle() async {
-    await _initializeGoogle();
+    await initializeGoogle();
+
+    if (!GoogleSignIn.instance.supportsAuthenticate()) {
+      throw Exception('Use the Google sign-in button on web.');
+    }
+
     final account = await GoogleSignIn.instance.authenticate();
-    final authentication = account.authentication;
-    final idToken = authentication.idToken;
+    return signInWithGoogleAccount(account);
+  }
+
+  Future<Map<String, dynamic>> signInWithGoogleAccount(
+    GoogleSignInAccount account,
+  ) async {
+    final idToken = account.authentication.idToken;
 
     if (idToken == null || idToken.isEmpty) {
       throw Exception('Google did not return an ID token.');
