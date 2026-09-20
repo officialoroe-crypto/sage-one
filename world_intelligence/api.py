@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from world_intelligence.engine import world_intelligence
+from world_intelligence.engine import DEFAULT_TOPICS, world_intelligence
 from tasks.engine import tasks
 
 
@@ -41,7 +41,7 @@ def world_refresh(request: WorldRefreshRequest):
     """Queue a durable bounded world refresh instead of doing AI work in HTTP."""
     try:
         topics = request.topics or None
-        selected = list(topics or world_intelligence.DEFAULT_TOPICS)[:world_intelligence.MAX_TOPICS_PER_REFRESH]
+        selected = list(topics or DEFAULT_TOPICS)[:world_intelligence.MAX_TOPICS_PER_REFRESH]
         description = "Refresh SAGE World Intelligence: " + " | ".join(selected)
 
         existing = tasks.list()
