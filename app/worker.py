@@ -108,7 +108,10 @@ class SageWorker:
         # World Intelligence refreshes are durable background work. The worker
         # owns the task lease while the bounded public-world refresh executes.
         if agent == 'world':
-            return world_intelligence.refresh()
+            prefix = 'Refresh SAGE World Intelligence:'
+            requested = description.removeprefix(prefix).strip()
+            topics = [item.strip() for item in requested.split('|') if item.strip()]
+            return world_intelligence.refresh(topics or None)
 
         # Research remains a first-class durable workload because its
         # specialized pipeline persists a citation/evidence graph separately
