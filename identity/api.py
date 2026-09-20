@@ -5,17 +5,21 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from config.settings import settings
-from identity.auth import authenticate_request, get_or_create_authenticated_profile
+from identity.auth import authenticate_request, create_developer_session, get_or_create_authenticated_profile
 from identity.memory import add_memory, delete_memory, list_memory, update_memory
 from identity.onboarding import capability_catalog, validate_capabilities
 from identity.otp import otp_manager
 from identity.profile import SessionLocal, UserProfile, mark_phone_verified, upsert_profile
 
 router = APIRouter(prefix="/identity", tags=["identity"])
+
+
+class DeveloperLoginRequest(BaseModel):
+    phone: str = Field(min_length=5, max_length=30)
 
 
 class GoogleLoginRequest(BaseModel):
@@ -62,6 +66,17 @@ class MemoryUpdateRequest(BaseModel):
 
 def _profile_from_claims(claims: dict[str, Any]) -> dict[str, Any]:
     return get_or_create_authenticated_profile(claims)
+
+
+@router.post("/dev-login")
+def developer_login(request: Request, payload: DeveloperLoginRequest):
+    if not settings.DEVELOPER_MODE:
+        raise HTTPException(status_code=404, detail="Developer mode is disabled.")
+    if not request.client or request.client.host not in {"127.0.0.1", "::1", "localhost"}:
+        raise HTTPException(status_code=403, detail="Developer login is localhost-only.")
+    token, claims = create_developer_session(payload.phone)
+    profile = get_or_create_authenticated_profile(claims)
+    return {"success": True, "developer_mode": True, "token": token, "profile": profile}
 
 
 @router.get("/config")
