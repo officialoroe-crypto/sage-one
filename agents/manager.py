@@ -39,9 +39,7 @@ class AgentManager:
                     "public_source_refresh",
                     "knowledge_update",
                 ],
-                preferred_tools=[
-                    "world_refresh",
-                ]
+                preferred_tools=[]
             ),
 
             "research": AgentDefinition(
