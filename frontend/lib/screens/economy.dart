@@ -35,8 +35,8 @@ class _EconomyScreenState extends State<EconomyScreen> {
       ]);
       if (!mounted) return;
       setState(() {
-        _data = Map<String, dynamic>.from(results[0]),
-        _costs = List<dynamic>.from(results[1]),
+        _data = Map<String, dynamic>.from(results[0]);
+        _costs = List<dynamic>.from(results[1]);
         _loading = false;
       });
     } catch (error) {
