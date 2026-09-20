@@ -10,6 +10,7 @@ import 'screens/projects.dart';
 import 'screens/research.dart';
 import 'screens/tasks.dart';
 import 'screens/world_intelligence.dart';
+import 'screens/owner_console.dart';
 import 'theme/sage_theme.dart';
 
 void main() => runApp(const SageOneApp());
