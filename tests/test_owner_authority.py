@@ -58,3 +58,14 @@ def test_owner_reset_controls_internal_state(tmp_path):
         assert profile.lifetime_achievement == 0
         assert profile.tier == "Bronze"
         assert db.query(OwnerAuditEvent).filter(OwnerAuditEvent.owner_key == owner).count() == 4
+
+
+def test_developer_identity_has_no_phone_or_otp_dependency(monkeypatch):
+    from config.settings import settings
+    import identity.auth as auth
+    monkeypatch.setattr(settings, "DEVELOPER_MODE", True)
+    token, claims = auth.create_developer_session()
+    assert token.startswith("sage-dev-")
+    assert claims["owner_mode"] is True
+    assert claims["developer_mode"] is True
+    assert "phone" not in claims
