@@ -81,10 +81,17 @@ def developer_login(request: Request, payload: DeveloperLoginRequest):
 
 @router.get("/config")
 def identity_config():
-    """Return non-secret client configuration needed by web authentication."""
-    if not settings.GOOGLE_CLIENT_ID:
-        raise HTTPException(status_code=503, detail="Google authentication is not configured.")
-    return {"success": True, "google_client_id": settings.GOOGLE_CLIENT_ID}
+    """Return non-secret client configuration needed by authentication."""
+    if not settings.GOOGLE_CLIENT_ID and not settings.DEVELOPER_MODE:
+        raise HTTPException(
+            status_code=503,
+            detail="Google authentication is not configured and Developer Mode is disabled.",
+        )
+    return {
+        "success": True,
+        "google_client_id": settings.GOOGLE_CLIENT_ID,
+        "developer_mode": settings.DEVELOPER_MODE,
+    }
 
 
 @router.post("/google")
