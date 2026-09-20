@@ -46,6 +46,7 @@ def evolution_progress(achievement: int) -> dict:
             current_threshold = threshold
             if index + 1 < len(EVOLUTION_TIERS):
                 next_threshold, next_tier = EVOLUTION_TIERS[index + 1]
+        else:
             break
     if next_threshold is None:
         return {
