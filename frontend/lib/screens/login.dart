@@ -24,14 +24,27 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _webReady = false;
+  bool _developerMode = false;
+  final _phoneController = TextEditingController();
   String? _error;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) {
-      _prepareWebGoogle();
+    _loadIdentityConfig();
+  }
+
+  Future<void> _loadIdentityConfig() async {
+    try {
+      await widget.identity.loadConfig();
+      if (!mounted) return;
+      setState(() => _developerMode = widget.identity.developerMode);
+      if (kIsWeb && !_developerMode) {
+        await _prepareWebGoogle();
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = _friendlyError(error));
     }
   }
 
@@ -72,6 +85,26 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) setState(() => _error = _friendlyError(error));
   }
 
+  Future<void> _developerLogin() async {
+    final phone = _phoneController.text.trim();
+    if (phone.length < 5) {
+      setState(() => _error = 'Enter your phone number.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final result = await widget.identity.devLogin(phone);
+      if (mounted) widget.onSignedIn(result);
+    } catch (error) {
+      if (mounted) setState(() => _error = _friendlyError(error));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _google() async {
     if (kIsWeb) return;
 
@@ -99,6 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -160,7 +194,39 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 42),
-                  if (kIsWeb)
+                  if (_developerMode) ...[
+                    TextField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Developer phone number',
+                        hintText: '+977 98XXXXXXXX',
+                        prefixIcon: const Icon(Icons.phone_outlined),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(.06),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: FilledButton.icon(
+                        onPressed: _loading ? null : _developerLogin,
+                        icon: const Icon(Icons.terminal),
+                        label: Text(_loading ? 'Opening SAGE…' : 'Enter Developer Mode'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Local developer mode • phone required • Google bypassed',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white38, fontSize: 11),
+                    ),
+                  ] else if (kIsWeb)
                     SizedBox(
                       width: double.infinity,
                       height: 48,
@@ -187,7 +253,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   const SizedBox(height: 18),
-                  const Text(
+                  if (!_developerMode)
+                    const Text(
                     'Your Google ID token is verified by SAGE on the server.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
