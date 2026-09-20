@@ -1,16 +1,19 @@
 import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class SageApi {
-  SageApi({http.Client? client, String? baseUrl})
+  SageApi({http.Client? client, String? baseUrl, FlutterSecureStorage? storage})
       : _client = client ?? http.Client(),
+        _storage = storage ?? const FlutterSecureStorage(),
         baseUrl = baseUrl ?? const String.fromEnvironment(
           'SAGE_API_URL',
           defaultValue: 'http://10.0.2.2:8010',
         );
 
   final http.Client _client;
+  final FlutterSecureStorage _storage;
   final String baseUrl;
 
   Future<Map<String, dynamic>> routing() async {
@@ -120,6 +123,28 @@ class SageApi {
       Uri.parse('$baseUrl/world/refresh'),
       headers: {'content-type': 'application/json'},
       body: jsonEncode({'topics': topics ?? <String>[]}),
+    );
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> economyMe() async {
+    return _authorizedGet('/economy/me');
+  }
+
+  Future<List<dynamic>> premiumWorkCosts() async {
+    final data = await _authorizedGet('/economy/costs');
+    final items = data['costs'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> _authorizedGet(String path) async {
+    final token = await _storage.read(key: 'sage.google.id_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('SAGE identity session is missing. Sign in again.');
+    }
+    final response = await _client.get(
+      Uri.parse('$baseUrl$path'),
+      headers: {'authorization': 'Bearer $token'},
     );
     return _decode(response);
   }

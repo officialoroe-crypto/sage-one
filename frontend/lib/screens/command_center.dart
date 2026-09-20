@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
+import 'economy.dart';
 
 class CommandCenter extends StatefulWidget {
   const CommandCenter({required this.api, super.key});
@@ -59,6 +60,12 @@ class _CommandCenterState extends State<CommandCenter> {
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  void _openEconomy() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => EconomyScreen(api: widget.api)),
+    );
   }
 
   @override
@@ -121,6 +128,11 @@ class _CommandCenterState extends State<CommandCenter> {
               Text('COMMAND CENTER', style: TextStyle(fontSize: 9, letterSpacing: 2.2, color: Colors.white54)),
             ],
           ),
+        ),
+        IconButton(
+          tooltip: 'SAGE Spark & Evolution',
+          onPressed: _openEconomy,
+          icon: const Icon(Icons.auto_awesome_outlined),
         ),
         const CircleAvatar(
           radius: 18,

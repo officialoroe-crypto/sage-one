@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from database.connection import SessionLocal
-from economy.service import get_evolution, record_achievement, snapshot, spend_sparks, grant_sparks
+from economy.costs import cost_catalog
+from economy.service import get_evolution, grant_sparks, record_achievement, snapshot, spend_sparks
 from identity.auth import authenticate_request
 
 router = APIRouter(prefix="/economy", tags=["economy"])
@@ -31,6 +32,13 @@ def _owner(claims: dict) -> str:
 def economy_me(claims: dict = Depends(authenticate_request)):
     with SessionLocal() as db:
         return {"success": True, **snapshot(db, _owner(claims))}
+
+
+@router.get("/costs")
+def economy_costs(claims: dict = Depends(authenticate_request)):
+    # Authentication keeps the catalog consistent with the user-scoped economy surface.
+    _owner(claims)
+    return {"success": True, "costs": cost_catalog()}
 
 
 @router.post("/spark/grant")
