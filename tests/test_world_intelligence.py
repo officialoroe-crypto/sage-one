@@ -34,3 +34,25 @@ def test_world_upgrade_proposal_requires_review():
 
     proposals = world_intelligence.list_upgrade_proposals(limit=10)
     assert any(item["id"] == result["proposal"]["id"] for item in proposals)
+
+
+def test_world_refresh_api_queues_durable_worker_task(monkeypatch):
+    from world_intelligence import api
+
+    created = {}
+
+    class FakeTasks:
+        def list(self):
+            return []
+
+        def create(self, **kwargs):
+            created.update(kwargs)
+            return {"id": "task-world-test", **kwargs}
+
+    monkeypatch.setattr(api, "tasks", FakeTasks())
+    response = api.world_refresh(api.WorldRefreshRequest(topics=["AI"]))
+
+    assert response["success"] is True
+    assert response["status"] == "queued"
+    assert response["task"]["agent"] == "world"
+    assert created["priority"] == 4
