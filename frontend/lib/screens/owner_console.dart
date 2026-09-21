@@ -71,7 +71,13 @@ class _OwnerConsoleScreenState extends State<OwnerConsoleScreen> with SingleTick
   String _tierFor(int achievement) {
     const thresholds = <int, String>{0:'Bronze',1000:'Silver',5000:'Gold',25000:'Platinum',100000:'Jade',250000:'Ruby',500000:'Sapphire',1000000:'Emerald',2500000:'Diamond Sovereign',5000000:'Black Opal Realm',10000000:'Painite Core',25000000:'Void Matter',100000000:'Californium Overlord'};
     var result = 'Bronze';
-    for (final entry in thresholds.entries) { if (achievement >= entry.key) result = entry.value; else break; }
+    for (final entry in thresholds.entries) {
+      if (achievement >= entry.key) {
+        result = entry.value;
+      } else {
+        break;
+      }
+    }
     return result;
   }
 
@@ -103,7 +109,7 @@ class _OwnerConsoleScreenState extends State<OwnerConsoleScreen> with SingleTick
         ])),
         const SizedBox(height:14),
         _Card(title:'Evolution simulation',child:Column(children:[
-          _Value('Persisted',evo['tier'].toString()+' • '+evo['lifetime_achievement'].toString()+' achievement'),
+          _Value('Persisted','${evo['tier'] ?? 'Bronze'} • ${evo['lifetime_achievement'] ?? 0} achievement'),
           const SizedBox(height:12),
           if (_simulation != null) AnimatedBuilder(animation:_evolutionController,builder:(context,_){
             final from=Map<String,dynamic>.from(_simulation!['from']??{});
@@ -111,7 +117,7 @@ class _OwnerConsoleScreenState extends State<OwnerConsoleScreen> with SingleTick
             final startValue=((from['lifetime_achievement'] as num?)?.toDouble()??0);
             final endValue=((to['lifetime_achievement'] as num?)?.toDouble()??startValue);
             final value=(startValue+(endValue-startValue)*_evolutionController.value).round();
-            return AnimatedContainer(duration:const Duration(milliseconds:120),padding:const EdgeInsets.all(18),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),border:Border.all(color:_simulating?const Color(0xFFE7C76A):Colors.white10),boxShadow:_simulating?const [BoxShadow(blurRadius:24,spreadRadius:1,color:Color(0x55E7C76A))]:const []),child:Column(children:[const Icon(Icons.auto_awesome,size:30),const SizedBox(height:8),Text(_tierFor(value),style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)),const SizedBox(height:4),Text(value.toString()+' achievement',style:const TextStyle(color:Colors.white70)),const SizedBox(height:12),LinearProgressIndicator(value:_evolutionController.value,minHeight:7),const SizedBox(height:8),Text(_simulating?'EVOLUTION IN PROGRESS':'SIMULATION COMPLETE • DATABASE UNCHANGED',style:const TextStyle(color:Colors.white54,fontSize:9,letterSpacing:1.1))]));
+            return AnimatedContainer(duration:const Duration(milliseconds:120),padding:const EdgeInsets.all(18),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),border:Border.all(color:_simulating?const Color(0xFFE7C76A):Colors.white10),boxShadow:_simulating?const [BoxShadow(blurRadius:24,spreadRadius:1,color:Color(0x55E7C76A))]:const []),child:Column(children:[const Icon(Icons.auto_awesome,size:30),const SizedBox(height:8),Text(_tierFor(value),style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)),const SizedBox(height:4),Text('$value achievement',style:const TextStyle(color:Colors.white70)),const SizedBox(height:12),LinearProgressIndicator(value:_evolutionController.value,minHeight:7),const SizedBox(height:8),Text(_simulating?'EVOLUTION IN PROGRESS':'SIMULATION COMPLETE • DATABASE UNCHANGED',style:const TextStyle(color:Colors.white54,fontSize:9,letterSpacing:1.1))]));
           }),
           if (_simulation != null) const SizedBox(height:14),
           TextField(controller:_achievement,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Target achievement')),
