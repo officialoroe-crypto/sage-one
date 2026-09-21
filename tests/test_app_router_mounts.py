@@ -26,6 +26,8 @@ def test_identity_and_world_router_definitions_exist():
 
 def test_identity_and_world_routers_are_mounted_on_app():
     paths = _paths()
+    print("DEBUG_APP_PATHS", sorted(paths))
+    print("DEBUG_IDENTITY_PATHS", sorted(route.path for route in identity_router.routes))
 
     assert "/identity/google" in paths
     assert "/identity/me" in paths
