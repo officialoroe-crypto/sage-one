@@ -49,6 +49,7 @@ def _cors_origins() -> list[str]:
         "http://127.0.0.1:8080",
         "http://localhost:7357",
         "http://127.0.0.1:7357",
+        "https://officialoroe-crypto.github.io",
     ]
 
 
