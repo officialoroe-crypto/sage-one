@@ -141,15 +141,23 @@ def spend_sparks(
     return entry
 
 
-def record_achievement(db: Session, owner_key: str, amount: int, reason: str) -> EvolutionProfile:
+def record_achievement(
+    db: Session,
+    owner_key: str,
+    amount: int,
+    reason: str,
+    *,
+    commit: bool = True,
+) -> EvolutionProfile:
     if amount <= 0:
         raise ValueError("Achievement amount must be positive")
     profile = get_evolution(db, owner_key)
     profile.lifetime_achievement += amount
     profile.tier, profile.stage = _tier_for(profile.lifetime_achievement)
     profile.updated_at = _now()
-    db.commit()
-    db.refresh(profile)
+    if commit:
+        db.commit()
+        db.refresh(profile)
     return profile
 
 
@@ -190,12 +198,6 @@ def snapshot(db: Session, owner_key: str) -> dict:
 
 
 def evolution_simulation(db: Session, owner_key: str, target_achievement: int, duration_ms: int = 3000) -> dict:
-    """Build a non-mutating Evolution animation plan for Owner/God Mode.
-
-    The real Evolution rules remain authoritative: tier and stage are derived
-    from achievement thresholds. This endpoint only describes what the UI
-    should animate; it never changes the persisted profile.
-    """
     if target_achievement < 0:
         raise ValueError("Simulation achievement cannot be negative")
     duration_ms = max(500, min(int(duration_ms), 30_000))
