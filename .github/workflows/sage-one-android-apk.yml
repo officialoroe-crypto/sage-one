@@ -17,6 +17,8 @@ jobs:
         with:
           flutter-version: '3.47.3'
           channel: stable
+      - name: Generate Android platform files
+        run: flutter create --platforms=android --org com.sageone --project-name sage_one --no-pub .
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
