@@ -5,8 +5,15 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ENV_FILE = Path("C:/SageOne/Backend/.env")
-load_dotenv(ENV_FILE)
+ENV_FILE = Path(os.getenv("SAGE_ENV_FILE", str(BASE_DIR / ".env")))
+# Keep legacy local installs working without making the old Backend folder a
+# hidden dependency of the canonical SAGE ONE repository.
+if ENV_FILE.exists():
+    load_dotenv(ENV_FILE)
+else:
+    legacy_env = Path("C:/SageOne/Backend/.env")
+    if legacy_env.exists():
+        load_dotenv(legacy_env)
 
 
 class Settings:
@@ -24,7 +31,7 @@ class Settings:
     }
     OWNER_AUTH_SUBJECT = os.getenv("SAGE_OWNER_AUTH_SUBJECT")
 
-    MODEL = os.getenv("SAGE_MODEL", "gemini-3.6-flash")
+    MODEL = os.getenv("SAGE_MODEL", "gemini-3.8-flash")
     GROQ_MODEL = os.getenv("SAGE_GROQ_MODEL", "openai/gpt-oss-20b")
     CEREBRAS_MODEL = os.getenv("CEREBRAS_MODEL", "gpt-oss-120b")
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434/v1")
