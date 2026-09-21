@@ -4,7 +4,7 @@ from app.worker import SageWorker
 
 
 class FakeProvider(BaseProvider):
-    name = "fake"
+    name = "groq"
     model = "fake-model"
 
     def available(self) -> bool:
@@ -37,7 +37,7 @@ def test_brain_router_can_produce_a_real_provider_result(monkeypatch):
 
     result = router.think("You are SAGE.", "Say hello.")
 
-    assert result.provider == "fake"
+    assert result.provider == "groq"
     assert result.model == "fake-model"
     assert result.response == "SAGE test response"
     assert result.interaction_id == "fake-1"
