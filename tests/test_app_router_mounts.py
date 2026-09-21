@@ -28,6 +28,10 @@ def test_identity_and_world_routers_are_mounted_on_app():
     paths = _paths()
     print("DEBUG_APP_PATHS", sorted(paths))
     print("DEBUG_IDENTITY_PATHS", sorted(route.path for route in identity_router.routes))
+    before = len(app.routes)
+    app.include_router(identity_router)
+    after = len(app.routes)
+    print("DEBUG_REINCLUDE", before, after, sorted(route.path for route in app.routes if route.path.startswith("/identity")))
 
     assert "/identity/google" in paths
     assert "/identity/me" in paths
