@@ -4,6 +4,15 @@ import '../core/identity_client.dart';
 import 'login.dart';
 import 'onboarding.dart';
 
+bool shouldRequireOnboarding(
+  Map<String, dynamic> profile, {
+  required bool developerMode,
+  required bool ownerMode,
+}) {
+  if (developerMode || ownerMode) return false;
+  return profile['onboarding_completed'] != true;
+}
+
 class AuthGate extends StatefulWidget {
   const AuthGate({
     required this.childBuilder,
@@ -21,6 +30,8 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   late final IdentityClient _identity;
   Map<String, dynamic>? _profile;
+  bool _developerMode = false;
+  bool _ownerMode = false;
   bool _loading = true;
 
   @override
@@ -56,6 +67,8 @@ class _AuthGateState extends State<AuthGate> {
         _profile = profile is Map
             ? Map<String, dynamic>.from(profile)
             : null;
+        _developerMode = result['developer_mode'] == true;
+        _ownerMode = result['owner_mode'] == true;
         _loading = false;
       });
     } catch (_) {
@@ -63,6 +76,8 @@ class _AuthGateState extends State<AuthGate> {
       if (mounted) {
         setState(() {
           _profile = null;
+          _developerMode = false;
+          _ownerMode = false;
           _loading = false;
         });
       }
@@ -75,6 +90,8 @@ class _AuthGateState extends State<AuthGate> {
       _profile = profile is Map
           ? Map<String, dynamic>.from(profile)
           : <String, dynamic>{};
+      _developerMode = result['developer_mode'] == true;
+      _ownerMode = result['owner_mode'] == true;
       _loading = false;
     });
   }
@@ -99,7 +116,11 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
-    final onboardingRequired = _profile!['onboarding_completed'] != true;
+    final onboardingRequired = shouldRequireOnboarding(
+      _profile!,
+      developerMode: _developerMode,
+      ownerMode: _ownerMode,
+    );
     if (onboardingRequired) {
       return OnboardingScreen(
         identity: _identity,
