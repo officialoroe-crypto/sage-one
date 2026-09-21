@@ -90,7 +90,7 @@ def decide_routing(
         return RoutingDecision(
             task_class=task_class,
             mode=routing_mode,
-            provider_order=("groq", "cerebras"),
+            provider_order=("groq", "cerebras", "gemini"),
             local_allowed=False,
             reason="Explicit cloud mode; local inference is disabled.",
         )
@@ -108,7 +108,7 @@ def decide_routing(
         return RoutingDecision(
             task_class=task_class,
             mode=routing_mode,
-            provider_order=("ollama", "groq", "cerebras"),
+            provider_order=("ollama", "groq", "cerebras", "gemini"),
             local_allowed=True,
             reason="Local preference enabled and host CPU is below the local ceiling.",
         )
@@ -117,7 +117,7 @@ def decide_routing(
         return RoutingDecision(
             task_class=task_class,
             mode=routing_mode,
-            provider_order=("groq", "cerebras", "ollama"),
+            provider_order=("groq", "cerebras", "gemini", "ollama"),
             local_allowed=True,
             reason="Cloud-first light work with safe local fallback available.",
         )
