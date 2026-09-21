@@ -99,7 +99,7 @@ def decide_routing(
         return RoutingDecision(
             task_class=task_class,
             mode=routing_mode,
-            provider_order=("groq", "cerebras"),
+            provider_order=("groq", "cerebras", "gemini"),
             local_allowed=False,
             reason="Medium/heavy work is cloud-first and never falls back to local Ollama.",
         )
@@ -125,7 +125,7 @@ def decide_routing(
     return RoutingDecision(
         task_class=task_class,
         mode=routing_mode,
-        provider_order=("groq", "cerebras"),
+        provider_order=("groq", "cerebras", "gemini"),
         local_allowed=False,
         reason="Local resource state is unknown or above the safe ceiling; use cloud only.",
     )
