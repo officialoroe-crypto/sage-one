@@ -1,13 +1,15 @@
-import pytest
-
 from database.connection import Base, SessionLocal, engine
 from economy.achievements import record_verified_achievement
 from economy.service import get_evolution
 
 
-def test_verified_achievement_updates_evolution_atomically():
+def _reset_database() -> None:
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+
+
+def test_verified_achievement_updates_evolution_atomically():
+    _reset_database()
 
     with SessionLocal() as db:
         event, created = record_verified_achievement(
