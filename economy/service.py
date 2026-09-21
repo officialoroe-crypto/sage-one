@@ -141,14 +141,22 @@ def spend_sparks(
     return entry
 
 
-def record_achievement(db: Session, owner_key: str, amount: int, reason: str) -> EvolutionProfile:
+def record_achievement(
+    db: Session,
+    owner_key: str,
+    amount: int,
+    reason: str,
+    *,
+    commit: bool = True,
+) -> EvolutionProfile:
     if amount <= 0:
         raise ValueError("Achievement amount must be positive")
     profile = get_evolution(db, owner_key)
     profile.lifetime_achievement += amount
     profile.tier, profile.stage = _tier_for(profile.lifetime_achievement)
     profile.updated_at = _now()
-    db.commit()
+    if commit:
+        db.commit()
     db.refresh(profile)
     return profile
 
