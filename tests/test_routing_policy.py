@@ -28,7 +28,7 @@ def test_medium_tasks_do_not_fall_back_to_ollama():
         snapshot(20.0),
     )
     assert decision.task_class is TaskClass.MEDIUM
-    assert decision.provider_order == ("groq", "cerebras")
+    assert decision.provider_order == ("groq", "cerebras", "gemini")
     assert not decision.local_allowed
 
 
