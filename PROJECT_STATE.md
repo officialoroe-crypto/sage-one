@@ -41,8 +41,9 @@ Last updated: 2026-09-20
 
 ## Architecture implemented
 - Durable task lifecycle with atomic claim, lease, heartbeat, retry/backoff and crash recovery.
+- Application-managed durable worker lifecycle: FastAPI starts/stops the worker and exposes `/worker/health`; queued tasks are no longer left pending without an executor.
 - Resource-aware execution policy protecting the laptop from heavy local work.
-- Provider routing with Groq, Cerebras and controlled Ollama fallback.
+- Provider routing with Groq, Cerebras, Gemini (Google OpenAI-compatible API) and controlled Ollama fallback.
 - Research OS with source reading, evidence, synthesis, verification and persistent research records.
 - Mission planner/executor with bounded parallel execution, progress history and pause/resume/cancel controls.
 - Durable task notifications and Flutter unread badge.
@@ -114,9 +115,15 @@ World Intelligence and Opportunities/Marketplace then expand that MVP without re
 - Production owner identity can be bound explicitly with `SAGE_OWNER_AUTH_SUBJECT`; Developer Mode remains localhost-only.
 
 ## Owner Console
-- Flutter Owner Console exposes God Mode status, Spark set/reset, Evolution simulation/set/reset, and the Owner Audit Log.
+- Flutter Owner Console exposes God Mode status, Spark set/reset, non-mutating Evolution simulation with real animation, Evolution apply/reset, and the Owner Audit Log.
 - Local Developer Mode enters directly into Owner Mode with no phone field and no OTP dependency.
 - Owner controls remain authenticated, localhost-only in Developer Mode, and internal to SAGE development.
+
+## Execution + Evolution recovery track
+- Root cause found: durable tasks were being persisted correctly but no application lifecycle started `SageWorker`, so `/execute/background` could queue work indefinitely.
+- Command Center now receives the nested durable task ID and polls the real task record until terminal state.
+- Owner/God Mode Evolution simulation is explicitly non-mutating: backend returns authoritative thresholds/milestones and Flutter animates the transition; APPLY remains the mutation path.
+- Gemini is now a real cloud provider fallback instead of an unused configuration value.
 
 ## Next major tracks
 1. Keep the integrated main branch green through GitHub CI after each logical batch.

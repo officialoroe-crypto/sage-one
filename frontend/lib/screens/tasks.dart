@@ -155,6 +155,7 @@ class _TasksScreenState extends State<TasksScreen> {
       case 'canceled':
         return Icons.cancel_outlined;
       case 'queued':
+      case 'pending':
         return Icons.schedule;
       case 'running':
       case 'claimed':
@@ -192,6 +193,7 @@ class _TasksScreenState extends State<TasksScreen> {
               final status = _taskStatus(item);
               final canCancel = {
                 'queued',
+                'pending',
                 'running',
                 'claimed',
                 'processing',

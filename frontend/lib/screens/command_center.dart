@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
@@ -17,11 +19,27 @@ class _CommandCenterState extends State<CommandCenter> {
   String _status = 'Ready';
   String _provider = 'Cloud routing';
   bool _sending = false;
+  String? _taskId;
+  String? _result;
+  Timer? _poller;
+  String _worker = 'Checking worker…';
 
   @override
   void initState() {
     super.initState();
     _loadRouting();
+    _loadWorker();
+  }
+
+  Future<void> _loadWorker() async {
+    try {
+      final data = await widget.api.workerHealth();
+      final worker = Map<String, dynamic>.from(data['worker'] ?? {});
+      if (!mounted) return;
+      setState(() => _worker = worker['running'] == true ? 'Worker online' : 'Worker offline');
+    } catch (_) {
+      if (mounted) setState(() => _worker = 'Worker unavailable');
+    }
   }
 
   Future<void> _loadRouting() async {
@@ -48,9 +66,11 @@ class _CommandCenterState extends State<CommandCenter> {
       final taskId = result['task_id'] ?? result['id'];
       if (!mounted) return;
       setState(() {
-        _status = taskId == null ? 'Accepted' : 'Task $taskId';
+        _taskId = taskId?.toString();
+        _status = _taskId == null ? 'Accepted' : 'Queued • $_taskId';
         _prompt.clear();
       });
+      if (_taskId != null) _startPolling();
     } catch (error) {
       if (!mounted) return;
       setState(() => _status = 'Connection error');
@@ -62,16 +82,42 @@ class _CommandCenterState extends State<CommandCenter> {
     }
   }
 
-  void _openEconomy() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => EconomyScreen(api: widget.api)),
-    );
+  void _startPolling() {
+    _poller?.cancel();
+    _poller = Timer.periodic(const Duration(seconds: 3), (_) => _refreshTask());
+    _refreshTask();
+  }
+
+  Future<void> _refreshTask() async {
+    final taskId = _taskId;
+    if (taskId == null) return;
+    try {
+      final task = await widget.api.task(taskId);
+      if (!mounted) return;
+      final status = (task['status'] ?? 'unknown').toString().toLowerCase();
+      final value = task['result'] ?? task['error'];
+      setState(() {
+        _status = 'Task ${status.toUpperCase()} • $taskId';
+        _result = value?.toString();
+        _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
+      });
+      if (!_sending) _poller?.cancel();
+    } catch (_) {
+      if (mounted) setState(() => _status = 'Waiting for Sage Core…');
+    }
   }
 
   @override
   void dispose() {
+    _poller?.cancel();
     _prompt.dispose();
     super.dispose();
+  }
+
+  void _openEconomy() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => EconomyScreen(api: widget.api)),
+    );
   }
 
   @override
@@ -191,7 +237,11 @@ class _CommandCenterState extends State<CommandCenter> {
           ],
         ),
         const SizedBox(height: 8),
-        Text('ROUTER  •  $_provider', style: const TextStyle(color: Colors.white30, fontSize: 9, letterSpacing: 1.2)),
+        Text('ROUTER  •  $_provider  •  $_worker', style: const TextStyle(color: Colors.white30, fontSize: 9, letterSpacing: 1.2)),
+        if (_result != null && _result!.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Card(child: Padding(padding: const EdgeInsets.all(12), child: SelectableText(_result!, style: const TextStyle(color: Colors.white70, height: 1.4)))),
+        ],
       ],
     );
   }

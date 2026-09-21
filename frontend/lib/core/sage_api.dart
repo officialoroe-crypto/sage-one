@@ -30,7 +30,20 @@ class SageApi {
       headers: {'content-type': 'application/json'},
       body: jsonEncode({'goal': prompt}),
     );
-    return _decode(response);
+    final data = _decode(response);
+    final task = data['task'];
+    if (task is Map) {
+      data['task_id'] = task['id'] ?? task['task_id'];
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> workerHealth() async {
+    return _decode(await _client.get(Uri.parse('$baseUrl/worker/health')));
+  }
+
+  Future<Map<String, dynamic>> brainHealth() async {
+    return _decode(await _client.get(Uri.parse('$baseUrl/brain/health')));
   }
 
   Future<List<dynamic>> tasks() async {
@@ -138,6 +151,8 @@ class SageApi {
       _authorizedPost('/economy/owner/spark/reset', {'reason': reason});
   Future<Map<String, dynamic>> ownerSetEvolution(int achievement, String tier, String stage, String reason) async =>
       _authorizedPost('/economy/owner/evolution/set', {'lifetime_achievement': achievement, 'tier': tier, 'stage': stage, 'reason': reason});
+  Future<Map<String, dynamic>> ownerSimulateEvolution(int achievement, {int durationMs = 3000}) async =>
+      _authorizedPost('/economy/owner/evolution/simulate', {'target_achievement': achievement, 'duration_ms': durationMs});
   Future<Map<String, dynamic>> ownerResetEvolution(String reason) async =>
       _authorizedPost('/economy/owner/evolution/reset', {'reason': reason});
 
