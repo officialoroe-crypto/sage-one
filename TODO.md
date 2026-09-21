@@ -81,6 +81,7 @@
 - [x] Cross-check/verification layer.
 - [x] Empty-response and zero-claim detection.
 - [x] Durable worker execution for research tasks.
+- [x] Start/stop the durable worker from the FastAPI application lifecycle and expose worker health.
 
 ### Next
 - [x] First-class persistent research artifacts.
@@ -95,6 +96,7 @@
 - [x] Deterministic task classification/routing policy.
 - [x] Groq-first cloud routing.
 - [x] Cerebras secondary cloud routing.
+- [x] Gemini cloud fallback through Google's OpenAI-compatible API.
 - [x] Controlled Ollama local routing.
 - [x] Explicit `auto`, `cloud`, and `local` routing modes.
 - [x] CPU-aware local eligibility.
@@ -154,3 +156,10 @@
 - [ ] Scheduled/background automation.
 - [ ] Security/permission layer.
 - [ ] Public-release preparation.
+
+
+## EVOLUTION / GOD MODE TESTING
+- [x] Add non-mutating Evolution simulation API using the authoritative achievement thresholds.
+- [x] Animate Evolution simulation in Owner/God Mode without mutating persisted Evolution state.
+- [x] Keep APPLY and RESET as explicit mutation controls.
+- [ ] Add automated visual regression coverage for Evolution animation milestones.
