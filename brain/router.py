@@ -4,6 +4,7 @@ from typing import Any
 from brain.providers import ProviderResult
 from brain.providers.cerebras_provider import CerebrasProvider
 from brain.providers.groq_provider import GroqProvider
+from brain.providers.gemini_provider import GeminiProvider
 from brain.providers.ollama_provider import OllamaProvider
 from brain.provider_resilience import classify_error, cooldown_for, record_telemetry
 from brain.routing_policy import decide_routing
@@ -18,6 +19,7 @@ class BrainRouter:
         self.providers = [
             GroqProvider(),
             CerebrasProvider(),
+            GeminiProvider(),
             OllamaProvider(),
         ]
         self.provider_by_name = {
