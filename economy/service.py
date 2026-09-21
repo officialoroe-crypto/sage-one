@@ -187,3 +187,47 @@ def snapshot(db: Session, owner_key: str) -> dict:
             for entry in entries
         ],
     }
+
+
+def evolution_simulation(db: Session, owner_key: str, target_achievement: int, duration_ms: int = 3000) -> dict:
+    """Build a non-mutating Evolution animation plan for Owner/God Mode.
+
+    The real Evolution rules remain authoritative: tier and stage are derived
+    from achievement thresholds. This endpoint only describes what the UI
+    should animate; it never changes the persisted profile.
+    """
+    if target_achievement < 0:
+        raise ValueError("Simulation achievement cannot be negative")
+    duration_ms = max(500, min(int(duration_ms), 30_000))
+    profile = get_evolution(db, owner_key)
+    start = profile.lifetime_achievement
+    target_tier, target_stage = _tier_for(target_achievement)
+    start_tier, start_stage = _tier_for(start)
+    low, high = sorted((start, target_achievement))
+    milestones = [
+        {"achievement": threshold, "tier": tier}
+        for threshold, tier in EVOLUTION_TIERS
+        if low < threshold <= high
+    ]
+    if target_achievement < start:
+        milestones = list(reversed(milestones))
+
+    return {
+        "simulation": True,
+        "mutated": False,
+        "duration_ms": duration_ms,
+        "direction": "up" if target_achievement >= start else "down",
+        "from": {
+            "lifetime_achievement": start,
+            "tier": start_tier,
+            "stage": start_stage,
+            "progress": evolution_progress(start),
+        },
+        "to": {
+            "lifetime_achievement": target_achievement,
+            "tier": target_tier,
+            "stage": target_stage,
+            "progress": evolution_progress(target_achievement),
+        },
+        "milestones": milestones,
+    }
