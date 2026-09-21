@@ -95,6 +95,10 @@ def record_verified_achievement(
             raise
         return existing, False
 
-    record_achievement(db, owner_key, amount, reason)
+    # Keep the immutable evidence event and Evolution increment in one transaction.
+    # record_achievement normally commits for standalone callers, but settlement
+    # must not leave one side persisted if the other side fails.
+    record_achievement(db, owner_key, amount, reason, commit=False)
+    db.commit()
     db.refresh(event)
     return event, True
