@@ -41,7 +41,7 @@ def test_light_auto_mode_is_cloud_first_when_cpu_is_safe():
 
 def test_busy_cpu_removes_ollama_from_auto_route():
     decision = decide_routing("say hello", snapshot(75.0))
-    assert decision.provider_order == ("groq", "cerebras")
+    assert decision.provider_order == ("groq", "cerebras", "gemini")
     assert not decision.local_allowed
 
 
@@ -59,7 +59,7 @@ def test_explicit_local_mode_requires_light_work_and_safe_cpu():
 def test_explicit_cloud_mode_never_uses_local_provider():
     decision = decide_routing("say hello", snapshot(10.0), mode="cloud")
     assert decision.mode is RoutingMode.CLOUD
-    assert decision.provider_order == ("groq", "cerebras")
+    assert decision.provider_order == ("groq", "cerebras", "gemini")
     assert not decision.local_allowed
 
 
