@@ -5,7 +5,9 @@ from economy.api import router as economy_router
 
 
 def _paths() -> set[str]:
-    return {route.path for route in app.routes if hasattr(route, "path")}
+    # FastAPI 0.141+ stores included routers as internal wrapper objects.
+    # OpenAPI exposes the actual mounted endpoint paths consistently.
+    return set(app.openapi().get("paths", {}))
 
 
 def test_identity_and_world_router_definitions_exist():
