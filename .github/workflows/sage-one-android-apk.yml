@@ -19,6 +19,8 @@ jobs:
           channel: stable
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.sageone --project-name sage_one --no-pub .
+      - name: Remove generated Flutter sample test
+        run: rm -f test/widget_test.dart
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
