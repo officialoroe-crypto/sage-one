@@ -10,7 +10,7 @@ from database.connection import SessionLocal
 from economy.achievements import record_verified_achievement
 from economy.costs import cost_catalog
 from economy.owner import owner_audit, reset_evolution, reset_spark, set_evolution, set_spark
-from economy.service import get_evolution, grant_sparks, record_achievement, snapshot, spend_sparks
+from economy.service import get_evolution, grant_sparks, record_achievement, snapshot, spend_sparks, evolution_simulation
 from identity.auth import authenticate_request
 
 router = APIRouter(prefix="/economy", tags=["economy"])
@@ -43,6 +43,10 @@ class OwnerEvolutionRequest(BaseModel):
 
 class OwnerResetRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=200)
+
+class OwnerEvolutionSimulationRequest(BaseModel):
+    target_achievement: int = Field(ge=0, le=2_147_483_647)
+    duration_ms: int = Field(default=3000, ge=500, le=30_000)
 
 
 def _owner(claims: dict) -> str:
@@ -139,6 +143,12 @@ def owner_evolution_set(request: OwnerEvolutionRequest, claims: dict = Depends(a
     with SessionLocal() as db:
         profile = set_evolution(db, owner, request.lifetime_achievement, request.tier, request.stage, request.reason)
         return {"success": True, "evolution": {"lifetime_achievement": profile.lifetime_achievement, "tier": profile.tier, "stage": profile.stage}}
+
+@router.post("/owner/evolution/simulate")
+def owner_evolution_simulate(request: OwnerEvolutionSimulationRequest, claims: dict = Depends(authenticate_request)):
+    owner = _require_owner(claims)
+    with SessionLocal() as db:
+        return {"success": True, **evolution_simulation(db, owner, request.target_achievement, request.duration_ms)}
 
 @router.post("/owner/evolution/reset")
 def owner_evolution_reset(request: OwnerResetRequest, claims: dict = Depends(authenticate_request)):
