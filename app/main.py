@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Any, Optional
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,16 +28,27 @@ from missions.api import router as mission_api_router
 from identity.api import router as identity_api_router
 from world_intelligence.api import router as world_api_router
 from economy.api import router as economy_api_router
+from app.worker_service import worker_service
 
 
 # ============================================================
 # APP
 # ============================================================
 
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    worker_service.start()
+    try:
+        yield
+    finally:
+        worker_service.stop()
+
+
 app = FastAPI(
     title="SAGE ONE",
     version="6.0.0",
     description="SAGE ONE personal AI execution core",
+    lifespan=_lifespan,
 )
 
 
@@ -202,6 +214,11 @@ def root():
         "execution": "enabled",
         "trace": "enabled",
     }
+
+
+@app.get("/worker/health")
+def worker_health():
+    return {"success": True, "worker": worker_service.health()}
 
 
 @app.get("/orchestrator")
