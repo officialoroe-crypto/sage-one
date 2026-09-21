@@ -47,11 +47,8 @@ def record_verified_achievement(
     source_id: str,
     evidence: dict,
 ) -> tuple[VerifiedAchievementEvent, bool]:
-    """Record one verified achievement exactly once.
+    """Record one verified achievement exactly once."""
 
-    Returns (event, created). Retries for the same owner/source are idempotent
-    and never increase Evolution twice.
-    """
     if amount <= 0:
         raise ValueError("Achievement amount must be positive")
     if not source_type.strip() or not source_id.strip():
@@ -59,6 +56,8 @@ def record_verified_achievement(
     if not isinstance(evidence, dict) or not evidence:
         raise ValueError("Verified achievements require evidence")
 
+    source_type = source_type.strip()
+    source_id = source_id.strip()
     existing = db.scalar(
         select(VerifiedAchievementEvent).where(
             VerifiedAchievementEvent.owner_key == owner_key,
@@ -71,8 +70,8 @@ def record_verified_achievement(
 
     event = VerifiedAchievementEvent(
         owner_key=owner_key,
-        source_type=source_type.strip(),
-        source_id=source_id.strip(),
+        source_type=source_type,
+        source_id=source_id,
         amount=amount,
         reason=reason.strip(),
         evidence_json=json.dumps(evidence, ensure_ascii=False, sort_keys=True),
@@ -81,20 +80,22 @@ def record_verified_achievement(
     db.add(event)
 
     try:
+        # Flush only: keep the event and Evolution mutation in the same transaction.
         db.flush()
+        record_achievement(db, owner_key, amount, reason, commit=False)
+        db.commit()
     except IntegrityError:
         db.rollback()
         existing = db.scalar(
             select(VerifiedAchievementEvent).where(
                 VerifiedAchievementEvent.owner_key == owner_key,
-                VerifiedAchievementEvent.source_type == source_type.strip(),
-                VerifiedAchievementEvent.source_id == source_id.strip(),
+                VerifiedAchievementEvent.source_type == source_type,
+                VerifiedAchievementEvent.source_id == source_id,
             )
         )
         if existing is None:
             raise
         return existing, False
 
-    record_achievement(db, owner_key, amount, reason)
     db.refresh(event)
     return event, True
