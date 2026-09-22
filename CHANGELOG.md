@@ -1,5 +1,10 @@
 # SAGE ONE — CHANGELOG
 
+## 2026-09-21 — Full Code Audit
+- Hardened verified-achievement settlement rollback so any post-flush failure rolls back the entire transaction.
+- Removed duplicate atomic-settlement regression coverage and an accidental empty root file.
+- Added explicit regression coverage proving a failed settlement leaves both the evidence event and Evolution state unchanged.
+
 ## 2026-09-18 — Provider Routing v2
 - Added deterministic LIGHT / MEDIUM / HEAVY provider routing.
 - Made Groq the first cloud provider in automatic routing.
