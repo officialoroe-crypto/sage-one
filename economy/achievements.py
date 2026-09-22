@@ -46,6 +46,8 @@ def record_verified_achievement(
     source_type: str,
     source_id: str,
     evidence: dict,
+    *,
+    commit: bool = True,
 ) -> tuple[VerifiedAchievementEvent, bool]:
     """Record one verified achievement exactly once and atomically."""
 
@@ -83,7 +85,8 @@ def record_verified_achievement(
         # Flush only: keep the event and Evolution mutation in one transaction.
         db.flush()
         record_achievement(db, owner_key, amount, reason, commit=False)
-        db.commit()
+        if commit:
+            db.commit()
     except IntegrityError:
         db.rollback()
         existing = db.scalar(
@@ -102,5 +105,6 @@ def record_verified_achievement(
         db.rollback()
         raise
 
-    db.refresh(event)
+    if commit:
+        db.refresh(event)
     return event, True
