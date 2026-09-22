@@ -1,10 +1,8 @@
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database.connection import Base
-from economy.models import EvolutionProfile, SparkWallet
 from economy.owner import OwnerAuditEvent
 
 
@@ -20,7 +18,6 @@ def test_owner_controls_are_available_in_developer_mode(monkeypatch, tmp_path):
     monkeypatch.setattr(settings, "DEVELOPER_MODE", True)
 
     token, claims = auth.create_developer_session("local-owner")
-    client = TestClient(api.router)
     # Router-level TestClient cannot apply FastAPI dependency injection by itself;
     # verify the owner claim produced by the controlled local session directly.
     assert claims["owner_mode"] is True

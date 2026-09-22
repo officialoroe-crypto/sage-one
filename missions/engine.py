@@ -14,7 +14,6 @@ from database.models import (
     RecoveryAttempt,
 )
 
-from database.repository import repository
 
 
 class MissionEngine:

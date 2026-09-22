@@ -4,7 +4,6 @@ import time
 import uuid
 
 from app.orchestrator import orchestrator
-from execution.engine import execution_engine
 from execution.parallel import parallel_mission_executor
 from execution.policy import classify_task, local_execution_allowed
 from execution.resource import resource_guard

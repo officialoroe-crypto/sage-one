@@ -477,7 +477,7 @@ class SageRepository:
         self,
         db: DBSession,
     ) -> int:
-        """Return expired running tasks to the pending queue."""
+        """Recover expired leases while respecting the task retry budget."""
 
         now = self._utc_now()
 
@@ -492,12 +492,20 @@ class SageRepository:
         recovered = 0
 
         for task in expired:
-            task.status = 'pending'
+            task.retries += 1
             task.worker_id = None
             task.lease_expires_at = None
             task.heartbeat_at = None
-            task.next_retry_at = now
-            task.error = 'Worker lease expired; task returned to queue.'
+            task.error = 'Worker lease expired; task ownership was lost.'
+
+            if task.retries >= task.max_retries:
+                task.status = 'failed'
+                task.next_retry_at = None
+                task.completed_at = now
+            else:
+                task.status = 'pending'
+                task.next_retry_at = now
+
             task.updated_at = now
             recovered += 1
 
