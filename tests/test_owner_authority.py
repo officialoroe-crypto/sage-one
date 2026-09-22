@@ -110,3 +110,23 @@ def test_global_permission_controls_require_owner_authority():
                 "owner_mode": False,
             }
         )
+
+def test_permission_endpoint_rejects_non_owner(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app.main import _require_owner, app
+    from config.settings import settings
+
+    monkeypatch.setattr(settings, "DEVELOPER_MODE", True)
+    app.dependency_overrides[_require_owner] = lambda: (_ for _ in ()).throw(
+        Exception("SAGE Owner Authority is required.")
+    )
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/permissions",
+                json={"permission": "web.write", "allowed": True},
+            )
+        assert response.status_code == 500
+    finally:
+        app.dependency_overrides.pop(_require_owner, None)
