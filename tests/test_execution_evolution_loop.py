@@ -9,11 +9,20 @@ def test_worker_lifecycle_endpoint_exists(monkeypatch):
         "enabled": True,
         "running": True,
         "worker_id": "test-worker",
+        "last_result": {"task": "private-output"},
+        "last_error": "private-error",
     })
     with TestClient(app) as client:
         response = client.get("/worker/health")
     assert response.status_code == 200
-    assert response.json()["worker"]["running"] is True
+    assert response.json()["worker"] == {
+        "enabled": True,
+        "running": True,
+    }
+
+    details = client.get("/worker/health/details")
+    assert details.status_code == 200
+    assert details.json()["worker"]["last_result"] == {"task": "private-output"}
 
 
 def test_evolution_simulation_is_non_mutating(monkeypatch):
