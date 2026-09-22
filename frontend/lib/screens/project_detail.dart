@@ -27,6 +27,75 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     _load();
   }
 
+  Future<void> _addAsset() async {
+    if (_projectId.isEmpty) return;
+    final name = TextEditingController();
+    var assetType = 'image';
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Add workflow asset'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: name,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Asset name'),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: assetType,
+                decoration: const InputDecoration(labelText: 'Type'),
+                items: const [
+                  DropdownMenuItem(value: 'idea', child: Text('Idea')),
+                  DropdownMenuItem(value: 'script', child: Text('Script')),
+                  DropdownMenuItem(value: 'audio', child: Text('Audio')),
+                  DropdownMenuItem(value: 'image', child: Text('Image')),
+                  DropdownMenuItem(value: 'video', child: Text('Video')),
+                  DropdownMenuItem(value: 'edit', child: Text('Edit')),
+                  DropdownMenuItem(value: 'thumbnail', child: Text('Thumbnail')),
+                  DropdownMenuItem(value: 'caption', child: Text('Caption')),
+                ],
+                onChanged: (value) => setDialogState(() => assetType = value ?? 'image'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final value = name.text.trim();
+                if (value.isEmpty) return;
+                try {
+                  await widget.api.createWorkflowAsset(
+                    projectId: _projectId,
+                    name: value,
+                    assetType: assetType,
+                  );
+                  if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                } catch (error) {
+                  if (dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      SnackBar(content: Text(error.toString())),
+                    );
+                  }
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+    name.dispose();
+    if (created == true && mounted) await _load();
+  }
+
   Future<void> _load() async {
     if (_projectId.isEmpty) {
       setState(() {
@@ -71,6 +140,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       appBar: AppBar(
         title: const Text('PROJECT'),
         actions: [
+          IconButton(
+            tooltip: 'Add asset',
+            onPressed: _loading ? null : _addAsset,
+            icon: const Icon(Icons.add_box_outlined),
+          ),
           IconButton(
             tooltip: 'Refresh',
             onPressed: _loading ? null : _load,
