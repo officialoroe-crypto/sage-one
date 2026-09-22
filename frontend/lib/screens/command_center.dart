@@ -176,7 +176,7 @@ class _CommandCenterState extends State<CommandCenter> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('SAGE ONE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.6)),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text('PERSONAL AI • EXECUTION PARTNER', style: TextStyle(fontSize: 8, letterSpacing: 1.2, color: SageTheme.textSecondary)),
             ],
           ),
