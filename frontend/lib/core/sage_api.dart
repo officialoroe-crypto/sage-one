@@ -16,6 +16,8 @@ class SageApi {
         baseUrl = baseUrl ?? _defaultBaseUrl();
 
   static String _defaultBaseUrl() {
+    const configured = String.fromEnvironment('SAGE_API_URL');
+    if (configured.isNotEmpty) return configured;
     if (kIsWeb) return 'http://localhost:8010';
     return 'http://10.0.2.2:8010';
   }
