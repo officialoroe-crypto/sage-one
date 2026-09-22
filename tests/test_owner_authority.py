@@ -98,3 +98,36 @@ def test_direct_economy_mutations_require_owner_mode():
                 "owner_mode": False,
             }
         )
+
+def test_global_permission_controls_require_owner_authority():
+    from app.main import _require_owner
+
+    with pytest.raises(Exception, match="Owner Authority"):
+        _require_owner(
+            {
+                "auth_provider": "google",
+                "auth_subject": "normal-user",
+                "owner_mode": False,
+            }
+        )
+
+def test_permission_endpoint_rejects_non_owner(monkeypatch):
+    from fastapi import HTTPException
+    from fastapi.testclient import TestClient
+
+    from app.main import _require_owner, app
+    from config.settings import settings
+
+    monkeypatch.setattr(settings, "DEVELOPER_MODE", True)
+    app.dependency_overrides[_require_owner] = lambda: (_ for _ in ()).throw(
+        HTTPException(status_code=403, detail="SAGE Owner Authority is required.")
+    )
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                "/permissions",
+                json={"permission": "web.write", "allowed": True},
+            )
+        assert response.status_code == 403
+    finally:
+        app.dependency_overrides.pop(_require_owner, None)

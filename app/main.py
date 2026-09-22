@@ -71,6 +71,13 @@ def _require_api_access(request: Request) -> None:
     authenticate_request(request)
 
 
+def _require_owner(claims: dict[str, Any] = Depends(authenticate_request)) -> dict[str, Any]:
+    """Require the authenticated SAGE owner for global control-plane mutations."""
+    if not claims.get("owner_mode", False):
+        raise HTTPException(status_code=403, detail="SAGE Owner Authority is required.")
+    return claims
+
+
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
     worker_service.start()
@@ -617,7 +624,7 @@ def execute_tool(
 # ============================================================
 
 @app.get("/permissions")
-def get_permissions():
+def get_permissions(_claims: dict[str, Any] = Depends(_require_owner)):
     return {
         "success": True,
         "permissions": _serialize(
@@ -627,8 +634,10 @@ def get_permissions():
 
 
 @app.post("/permissions")
-def set_permission(request: PermissionRequest):
-
+def set_permission(
+    request: PermissionRequest,
+    _claims: dict[str, Any] = Depends(_require_owner),
+):
     permissions.set_permission(
         request.permission,
         request.allowed,
@@ -662,7 +671,7 @@ def audit():
 
 
 @app.get("/audit/legacy")
-def audit_legacy():
+def audit_legacy(_claims: dict[str, Any] = Depends(_require_owner)):
     return {
         "success": True,
         "audit": _serialize(permissions.audit()),
