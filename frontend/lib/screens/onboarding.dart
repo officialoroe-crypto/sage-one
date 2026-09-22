@@ -237,7 +237,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             decoration: BoxDecoration(
               color: SageTheme.surface,
               shape: BoxShape.circle,
-              border: Border.all(color: SageTheme.cyan.withAlpha(90)),
+              border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.35)),
             ),
             child: const Icon(Icons.auto_awesome, size: 18, color: SageTheme.cyan),
           ),
@@ -276,7 +276,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               decoration: BoxDecoration(
                 color: index <= _step
                     ? SageTheme.cyan
-                    : Colors.white.withAlpha(18),
+                    : Colors.white.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
@@ -394,7 +394,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             decoration: BoxDecoration(
               color: SageTheme.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: SageTheme.cyan.withAlpha(45)),
+              border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.18)),
             ),
             child: Text(
               _delivery == 'not_configured'
