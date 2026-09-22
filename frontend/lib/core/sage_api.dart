@@ -168,8 +168,15 @@ class SageApi {
   }
 
   Future<String?> _identityToken() async {
-    final token = await _storage.read(key: 'sage.google.id_token') ??
-        await _storage.read(key: 'sage.identity.token');
+    String? token;
+    try {
+      token = await _storage.read(key: 'sage.google.id_token') ??
+          await _storage.read(key: 'sage.identity.token');
+    } catch (_) {
+      // Flutter widget tests and first-run local development may not have a
+      // platform secure-storage implementation available yet.
+      token = null;
+    }
     if (token != null && token.isNotEmpty) {
       return token;
     }
