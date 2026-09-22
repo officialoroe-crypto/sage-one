@@ -174,7 +174,7 @@ class SageApi {
   }
 
   Future<String?> _identityToken() async {
-    if (_authToken != null && _authToken!.isNotEmpty) {
+    if (_authToken != null && _authToken.isNotEmpty) {
       return _authToken;
     }
 
