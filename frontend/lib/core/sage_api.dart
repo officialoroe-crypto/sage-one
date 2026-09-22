@@ -195,6 +195,20 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<Map<String, dynamic>> createWorkflowRelation({
+    required String projectId,
+    required String sourceAssetId,
+    required String targetAssetId,
+    required String relationType,
+    Map<String, dynamic>? metadata,
+  }) async =>
+      _authorizedPost('/workflow/projects/$projectId/relations', {
+        'source_asset_id': sourceAssetId,
+        'target_asset_id': targetAssetId,
+        'relation_type': relationType,
+        'metadata': metadata ?? <String, dynamic>{},
+      });
+
   Future<List<dynamic>> workflowDefinitions(String projectId) async {
     final data = await _authorizedGet('/workflow/projects/$projectId/workflows');
     final items = data['workflows'] ?? data['items'] ?? data;
