@@ -12,6 +12,13 @@
 8. Test after meaningful changes.
 9. Record important state changes in `PROJECT_STATE.md`.
 10. Keep `CHANGELOG.md` updated for major milestones.
+11. Before calling a feature complete:
+    - trace the full request/auth/execution/result flow
+    - identify why it works and what can break
+    - verify refresh/restart behavior
+    - verify failure/retry behavior
+    - run the relevant tests and deployment checks
+    - only then mark the feature complete
 
 ## Resource Rules
 
