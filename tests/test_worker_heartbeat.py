@@ -1,3 +1,4 @@
+import threading
 import time
 
 import pytest
@@ -40,12 +41,15 @@ def make_worker_task(worker_id):
     return worker, claimed
 
 
-def patch_mission_execution(monkeypatch, delay=0.20):
+def patch_mission_execution(monkeypatch, delay=0.20, execution_gate=None):
     def plan(**kwargs):
         return {'mission': {'id': 'mission-heartbeat'}}
 
     def execute_mission(**kwargs):
-        time.sleep(delay)
+        if execution_gate is not None:
+            assert execution_gate.wait(timeout=2.0), 'heartbeat thread did not run twice'
+        else:
+            time.sleep(delay)
         return {'success': True, 'status': 'completed'}
 
     monkeypatch.setattr(worker_module.planner, 'plan', plan)
@@ -61,14 +65,17 @@ def test_heartbeat_runs_during_long_execution(monkeypatch):
     worker, task = make_worker_task('worker-heartbeat')
 
     heartbeat_calls = []
+    second_heartbeat = threading.Event()
     original_heartbeat = worker_module.tasks.heartbeat
 
     def heartbeat(*args, **kwargs):
         heartbeat_calls.append(kwargs)
+        if len(heartbeat_calls) >= 2:
+            second_heartbeat.set()
         return original_heartbeat(*args, **kwargs)
 
     monkeypatch.setattr(worker_module.tasks, 'heartbeat', heartbeat)
-    patch_mission_execution(monkeypatch)
+    patch_mission_execution(monkeypatch, execution_gate=second_heartbeat)
 
     result = worker.execute_task(task)
 
