@@ -226,8 +226,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             title: Text(_value(workflow, 'name', 'Workflow'),
                 style: const TextStyle(fontWeight: FontWeight.w700)),
             subtitle: Text(
-              '\${_value(workflow, 'workflow_type', 'workflow')} • '
-              '\${_value(workflow, 'current_stage', 'not started')}',
+              '${_value(workflow, 'workflow_type', 'workflow')} • '
+              '${_value(workflow, 'current_stage', 'not started')}',
             ),
           ),
           if (workflow != _workflows.last) const Divider(height: 1),
@@ -252,8 +252,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             title: Text(_value(asset, 'name', 'Asset'),
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(
-              '\${_value(asset, 'asset_type', 'asset')} • '
-              '\${_value(asset, 'status', 'draft')}',
+              '${_value(asset, 'asset_type', 'asset')} • '
+              '${_value(asset, 'status', 'draft')}',
             ),
           ),
           if (asset != _assets.last) const Divider(height: 1),
@@ -279,8 +279,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
             ),
             subtitle: Text(
-              '\${_value(relation, 'source_asset_id', 'source')} → '
-              '\${_value(relation, 'target_asset_id', 'target')}',
+              '${_value(relation, 'source_asset_id', 'source')} → '
+              '${_value(relation, 'target_asset_id', 'target')}',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
