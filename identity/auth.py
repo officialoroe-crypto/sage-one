@@ -63,6 +63,18 @@ def verify_google_id_token(raw_token: str) -> dict[str, Any]:
     if not subject or issuer not in {"accounts.google.com", "https://accounts.google.com"}:
         raise HTTPException(status_code=401, detail="Invalid Google identity claims.")
 
+    if settings.ENVIRONMENT == "production":
+        if not settings.OWNER_AUTH_SUBJECT:
+            raise HTTPException(
+                status_code=503,
+                detail="Production owner identity is not configured.",
+            )
+        if str(subject) != settings.OWNER_AUTH_SUBJECT:
+            raise HTTPException(
+                status_code=403,
+                detail="This SAGE ONE deployment is restricted to its configured owner.",
+            )
+
     return {
         "auth_provider": "google",
         "auth_subject": str(subject),
