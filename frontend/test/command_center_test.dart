@@ -35,6 +35,9 @@ void main() {
     expect(find.text('SAGE ONE'), findsOneWidget);
     expect(find.text('COMMAND CENTER'), findsOneWidget);
     expect(find.text('What are we executing today?'), findsOneWidget);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -520));
+    await tester.pump();
     expect(find.text('Search + verify'), findsOneWidget);
     expect(find.text('Build content'), findsOneWidget);
   });
