@@ -20,16 +20,11 @@ class SageApi {
   final String baseUrl;
 
   Future<Map<String, dynamic>> routing() async {
-    final response = await _client.get(Uri.parse('$baseUrl/brain/routing'));
-    return _decode(response);
+    return _authorizedGet('/brain/routing');
   }
 
   Future<Map<String, dynamic>> submitBackground(String prompt) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/execute/background'),
-      headers: {'content-type': 'application/json'},
-      body: jsonEncode({'goal': prompt}),
-    );
+    final response = await _authorizedPost('/execute/background', {'goal': prompt});
     final data = _decode(response);
     final task = data['task'];
     if (task is Map) {
@@ -39,28 +34,25 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>> workerHealth() async {
-    return _decode(await _client.get(Uri.parse('$baseUrl/worker/health')));
+    return _authorizedGet('/worker/health');
   }
 
   Future<Map<String, dynamic>> brainHealth() async {
-    return _decode(await _client.get(Uri.parse('$baseUrl/brain/health')));
+    return _authorizedGet('/brain/health');
   }
 
   Future<List<dynamic>> tasks() async {
-    final response = await _client.get(Uri.parse('$baseUrl/tasks'));
-    final data = _decode(response);
+    final data = await _authorizedGet('/tasks');
     final items = data['tasks'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
   }
 
   Future<Map<String, dynamic>> cancelTask(String taskId) async {
-    final response = await _client.post(Uri.parse('$baseUrl/tasks/$taskId/cancel'));
-    return _decode(response);
+    return _authorizedPost('/tasks/$taskId/cancel', <String, dynamic>{});
   }
 
   Future<Map<String, dynamic>> task(String taskId) async {
-    final response = await _client.get(Uri.parse('$baseUrl/tasks/$taskId'));
-    return _decode(response);
+    return _authorizedGet('/tasks/$taskId');
   }
 
   Future<List<dynamic>> notifications({bool unreadOnly = false, int limit = 50}) async {
@@ -70,21 +62,17 @@ class SageApi {
         'limit': limit.toString(),
       },
     );
-    final data = _decode(await _client.get(uri));
+    final data = await _authorizedGetUri(uri);
     final items = data['notifications'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
   }
 
   Future<Map<String, dynamic>> markNotificationRead(String notificationId) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/notifications/$notificationId/read'),
-    );
-    return _decode(response);
+    return _authorizedPost('/notifications/$notificationId/read', <String, dynamic>{});
   }
 
   Future<Map<String, dynamic>> markAllNotificationsRead() async {
-    final response = await _client.post(Uri.parse('$baseUrl/notifications/read-all'));
-    return _decode(response);
+    return _authorizedPost('/notifications/read-all', <String, dynamic>{});
   }
 
   Future<List<dynamic>> researchHistory({String? sessionId, int limit = 20}) async {
@@ -110,7 +98,7 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>> worldStatus() async {
-    return _decode(await _client.get(Uri.parse('$baseUrl/world/status')));
+    return _authorizedGet('/world/status');
   }
 
   Future<List<dynamic>> worldKnowledge({int limit = 20}) async {
@@ -123,18 +111,13 @@ class SageApi {
   }
 
   Future<List<dynamic>> worldDue() async {
-    final data = _decode(await _client.get(Uri.parse('$baseUrl/world/due')));
+    final data = await _authorizedGet('/world/due');
     final items = data['topics'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
   }
 
   Future<Map<String, dynamic>> refreshWorld({List<String>? topics}) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/world/refresh'),
-      headers: {'content-type': 'application/json'},
-      body: jsonEncode({'topics': topics ?? <String>[]}),
-    );
-    return _decode(response);
+    return _authorizedPost('/world/refresh', {'topics': topics ?? <String>[]});
   }
 
   Future<Map<String, dynamic>> ownerStatus() async => _authorizedGet('/economy/owner/status');
@@ -166,20 +149,39 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
-  Future<Map<String, dynamic>> _authorizedPost(String path, Map<String, dynamic> body) async {
-    final token = await _storage.read(key: 'sage.google.id_token') ?? await _storage.read(key: 'sage.identity.token');
-    if (token == null || token.isEmpty) throw Exception('SAGE identity session is missing. Sign in again.');
-    final response = await _client.post(Uri.parse('$baseUrl$path'), headers: {'authorization': 'Bearer $token', 'content-type': 'application/json'}, body: jsonEncode(body));
+  Future<Map<String, dynamic>> _authorizedPost(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final token = await _identityToken();
+    final response = await _client.post(
+      Uri.parse('$baseUrl$path'),
+      headers: {
+        'authorization': 'Bearer $token',
+        'content-type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
     return _decode(response);
   }
 
-  Future<Map<String, dynamic>> _authorizedGet(String path) async {
-    final token = await _storage.read(key: 'sage.google.id_token') ?? await _storage.read(key: 'sage.identity.token');
+  Future<String> _identityToken() async {
+    final token = await _storage.read(key: 'sage.google.id_token') ??
+        await _storage.read(key: 'sage.identity.token');
     if (token == null || token.isEmpty) {
       throw Exception('SAGE identity session is missing. Sign in again.');
     }
+    return token;
+  }
+
+  Future<Map<String, dynamic>> _authorizedGet(String path) async {
+    return _authorizedGetUri(Uri.parse('$baseUrl$path'));
+  }
+
+  Future<Map<String, dynamic>> _authorizedGetUri(Uri uri) async {
+    final token = await _identityToken();
     final response = await _client.get(
-      Uri.parse('$baseUrl$path'),
+      uri,
       headers: {'authorization': 'Bearer $token'},
     );
     return _decode(response);
@@ -195,7 +197,11 @@ class SageApi {
         'arguments': jsonEncode(arguments),
       },
     );
-    final response = await _client.post(uri);
+    final token = await _identityToken();
+    final response = await _client.post(
+      uri,
+      headers: {'authorization': 'Bearer $token'},
+    );
     return _decode(response);
   }
 
