@@ -124,7 +124,7 @@
 - [x] Add phone verification challenge state machine with expiry, attempt limits, identity binding, and SMS-provider abstraction.
 - [ ] Add production SMS/OTP provider.
 - [x] Expose secure authenticated onboarding/profile APIs through the mounted identity router.
-- [ ] Build first-run Flutter onboarding flow.
+- [x] Build first-run Flutter onboarding flow.
 - [ ] Add user-visible memory management UI.
 - [ ] Add consent-driven auto-learning pipeline on top of profile memory.
 
@@ -146,9 +146,16 @@
 - [ ] Add source-quality/domain policies for world refresh.
 - [ ] Add world-knowledge UI and freshness indicators in Flutter.
 
+## SAGE WORKFLOW
+- [x] Define SAGE WORKFLOW connective architecture and content/asset/publishing model.
+- [ ] Add persistent project graph and asset relationships.
+- [ ] Build Create around persistent Content Projects.
+- [ ] Build permissioned publishing adapters.
+- [ ] Add analytics → improve feedback loop.
+
 ## LATER
 
-- [ ] Mobile-first daily interface.
+- [~] Mobile-first daily interface — Figma foundation + Command Center V1 in progress.
 - [ ] Voice commands.
 - [ ] Computer control.
 - [ ] File operations.
