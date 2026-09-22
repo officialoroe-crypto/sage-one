@@ -22,8 +22,12 @@ def _request(path: str, host: str = "127.0.0.1") -> Request:
 def test_main_api_requires_identity_when_developer_mode_is_disabled(monkeypatch):
     monkeypatch.setattr(settings, "DEVELOPER_MODE", False)
     client = TestClient(app)
-
-    response = client.get("/orchestrator")
+    override = app.dependency_overrides.pop(_require_api_access, None)
+    try:
+        response = client.get("/orchestrator")
+    finally:
+        if override is not None:
+            app.dependency_overrides[_require_api_access] = override
 
     assert response.status_code == 401
 
