@@ -166,16 +166,25 @@
 
 
 ## AUDIT — CURRENT REMAINING WORK
-- [x] Audit all Python source files for syntax/lint and high-risk patterns.
-- [x] Audit all Flutter/Dart source files with analyzer/tests and targeted async/resource checks.
-- [x] Verify atomic verified-achievement settlement.
+- [x] Run Python compileall + Ruff unused-import checks across the full backend/test source set.
+- [x] Run the complete Python test suite on audited batches.
+- [x] Run Flutter analyzer + Flutter tests on audited batches.
+- [x] Verify the Google/developer authentication gate after refresh/restart scenarios covered by tests.
+- [x] Verify atomic verified-achievement settlement and idempotent replay.
+- [x] Wire verified mission-task results into Evolution settlement.
+- [x] Make mission task start + ExecutionAttempt creation atomic.
 - [x] Restrict global permission mutation to SAGE Owner Authority.
 - [x] Redact private worker results from public worker health.
 - [x] Prevent accidental multi-user production deployments by requiring the configured owner identity.
+- [x] Fix Flutter/backend onboarding capability ID mismatch.
+- [x] Fix Command Center provider-routing display contract.
+- [x] Harden Web Reader redirect handling against SSRF.
+- [x] Declare the Web Reader extraction dependency.
 - [x] Make the Android development build configurable for the Huawei P40 USB/ADB workflow.
-- [x] Make the worker heartbeat regression test deterministic after a real main-branch CI failure.
 - [ ] Add production SMS provider.
 - [ ] Add Google-token/session refresh handling for long-lived authenticated sessions.
 - [ ] Wire Spark costs into the premium-work execution settlement path.
+- [ ] Add scheduled World Intelligence refresh triggering.
+- [ ] Add source-quality/domain policy for World Intelligence refresh.
 - [ ] Add full multi-tenant data ownership if SAGE ONE is ever offered as a shared public service.
 - [ ] Add automated visual regression coverage for Evolution animation milestones.
