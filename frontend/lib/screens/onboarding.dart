@@ -36,19 +36,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _delivery;
   final Set<String> _capabilities = <String>{};
 
-  static const _capabilityOptions = <String>[
-    'Content Creation',
-    'Video Editing',
-    'Photo Editing',
-    'Social Media',
-    'Videography',
-    'Branding',
-    'Marketing',
-    'Business',
-    'Technology',
-    'Learning',
-    'Music',
-    'Other',
+  // Keep the UI contract aligned with identity/onboarding.py. The backend
+  // stores stable capability IDs, while the UI displays human-friendly labels.
+  static const _capabilityOptions = <Map<String, String>>[
+    {'id': 'personal_mentor', 'label': 'Personal mentor'},
+    {'id': 'learning', 'label': 'Learn & improve skills'},
+    {'id': 'research', 'label': 'Research & find information'},
+    {'id': 'work', 'label': 'Find work & opportunities'},
+    {'id': 'business', 'label': 'Business, marketing & sales'},
+    {'id': 'content', 'label': 'Content, video & creative work'},
+    {'id': 'planning', 'label': 'Plan goals & execute tasks'},
+    {'id': 'productivity', 'label': 'Organize life & productivity'},
   ];
 
   @override
@@ -382,16 +380,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _capabilityOptions.map((value) {
-              final selected = _capabilities.contains(value);
+            children: _capabilityOptions.map((option) {
+              final id = option['id']!;
+              final label = option['label']!;
+              final selected = _capabilities.contains(id);
               return FilterChip(
                 selected: selected,
-                label: Text(value),
+                label: Text(label),
                 onSelected: (enabled) => setState(() {
                   if (enabled) {
-                    _capabilities.add(value);
+                    _capabilities.add(id);
                   } else {
-                    _capabilities.remove(value);
+                    _capabilities.remove(id);
                   }
                 }),
               );
