@@ -255,6 +255,20 @@ def root():
 
 @app.get("/worker/health")
 def worker_health():
+    """Return liveness-only worker state; never expose task output publicly."""
+    health = worker_service.health()
+    return {
+        "success": True,
+        "worker": {
+            "enabled": health["enabled"],
+            "running": health["running"],
+        },
+    }
+
+
+@app.get("/worker/health/details")
+def worker_health_details():
+    """Authenticated diagnostic worker state for the SAGE UI/developer console."""
     return {"success": True, "worker": worker_service.health()}
 
 
