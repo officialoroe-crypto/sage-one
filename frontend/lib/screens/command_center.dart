@@ -165,8 +165,8 @@ class _CommandCenterState extends State<CommandCenter> {
           decoration: BoxDecoration(
             color: SageTheme.surface,
             shape: BoxShape.circle,
-            border: Border.all(color: SageTheme.cyan.withAlpha(100)),
-            boxShadow: [BoxShadow(color: SageTheme.cyan.withAlpha(35), blurRadius: 18)],
+            border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.39)),
+            boxShadow: [BoxShadow(color: SageTheme.cyan.withValues(alpha: 0.14), blurRadius: 18)],
           ),
           child: const Icon(Icons.auto_awesome, size: 19, color: SageTheme.cyan),
         ),
@@ -190,9 +190,9 @@ class _CommandCenterState extends State<CommandCenter> {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: Colors.white.withAlpha(8),
+            color: Colors.white.withValues(alpha: 0.03),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withAlpha(18)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
           ),
           child: const Icon(Icons.person_outline, size: 19),
         ),
@@ -204,9 +204,9 @@ class _CommandCenterState extends State<CommandCenter> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
       decoration: BoxDecoration(
-        color: SageTheme.surface.withAlpha(180),
+        color: SageTheme.surface.withValues(alpha: 0.71),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: SageTheme.cyan.withAlpha(45)),
+        border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.18)),
       ),
       child: Column(
         children: [
@@ -341,7 +341,7 @@ class _ActionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: SageTheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent.withAlpha(100)),
+        border: Border.all(color: accent.withValues(alpha: 0.39)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,14 +382,14 @@ class _SageCorePainter extends CustomPainter {
 
     final halo = Paint()
       ..shader = RadialGradient(
-        colors: [SageTheme.cyan.withAlpha(65), SageTheme.blue.withAlpha(22), Colors.transparent],
+        colors: [SageTheme.cyan.withValues(alpha: 0.25), SageTheme.blue.withValues(alpha: 0.09), Colors.transparent],
       ).createShader(Rect.fromCircle(center: c, radius: 105));
     canvas.drawCircle(c, 105, halo);
 
     final ring = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4
-      ..color = SageTheme.cyan.withAlpha(150);
+      ..color = SageTheme.cyan.withValues(alpha: 0.59);
     canvas.drawCircle(c, 76, ring);
 
     canvas.save();
@@ -402,12 +402,12 @@ class _SageCorePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.4
-        ..color = SageTheme.violet.withAlpha(155),
+        ..color = SageTheme.violet.withValues(alpha: 0.61),
     );
     canvas.restore();
 
     canvas.drawCircle(c + const Offset(62, -30), 6, Paint()..color = SageTheme.gold);
-    canvas.drawCircle(c + const Offset(62, -30), 12, Paint()..color = SageTheme.gold.withAlpha(30));
+    canvas.drawCircle(c + const Offset(62, -30), 12, Paint()..color = SageTheme.gold.withValues(alpha: 0.12));
 
     canvas.drawCircle(
       c,
@@ -415,7 +415,7 @@ class _SageCorePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = Colors.white.withAlpha(35),
+        ..color = Colors.white.withValues(alpha: 0.14),
     );
   }
 
