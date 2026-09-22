@@ -61,8 +61,8 @@ def test_web_reader_follows_safe_redirects_after_validation(monkeypatch):
         return FakeResponse(
             status_code=200,
             url=url,
-            headers={"content-type": "text/plain; charset=utf-8"},
-            chunks=[b"SAGE public content"],
+            headers={"content-type": "text/html; charset=utf-8"},
+            chunks=[b"<html><body><article>SAGE public content</article></body></html>"],
         )
 
     monkeypatch.setattr("web.reader.requests.get", fake_get)
