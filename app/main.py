@@ -5,7 +5,7 @@ import os
 from typing import Any, Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -29,11 +29,47 @@ from identity.api import router as identity_api_router
 from world_intelligence.api import router as world_api_router
 from economy.api import router as economy_api_router
 from app.worker_service import worker_service
+from config.settings import settings
+from identity.auth import authenticate_request
 
 
 # ============================================================
 # APP
 # ============================================================
+
+# ============================================================
+# API ACCESS BOUNDARY
+# ============================================================
+
+_PUBLIC_PATHS = {
+    "/",
+    "/health",
+    "/worker/health",
+    "/identity/config",
+    "/identity/dev-login",
+    "/identity/google",
+    "/identity/onboarding/options",
+}
+
+
+def _require_api_access(request: Request) -> None:
+    """Protect the main API while preserving explicit local Developer Mode.
+
+    Developer Mode is a documented localhost-only development boundary. Outside
+    that mode, main application routes require a verified identity token.
+    Identity and economy routers keep their own endpoint-specific dependencies.
+    """
+    path = request.url.path
+    if request.method == "OPTIONS" or path in _PUBLIC_PATHS:
+        return
+    if path.startswith("/identity/") or path.startswith("/economy/"):
+        return
+    if settings.DEVELOPER_MODE:
+        client_host = request.client.host if request.client else None
+        if client_host in {"127.0.0.1", "::1", "localhost"}:
+            return
+    authenticate_request(request)
+
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
@@ -45,6 +81,7 @@ async def _lifespan(_app: FastAPI):
 
 
 app = FastAPI(
+    dependencies=[Depends(_require_api_access)],
     title="SAGE ONE",
     version="6.0.0",
     description="SAGE ONE personal AI execution core",
