@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
 Last updated: 2026-09-22
-Current main: 3894c5418ac333dd32b78b0ecba17277478e263e
+Current main: 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd
 
 ## Identity
 - Project: SAGE ONE
@@ -44,12 +44,14 @@ Implemented:
 - Local phone-free Developer Mode and SAGE Owner Authority/God Mode.
 - Owner Spark/Evolution controls and audit log.
 - Non-mutating Evolution simulation with authoritative thresholds and Flutter animation.
-- Verified mission-task results now settle into Evolution atomically and idempotently.
+- Verified mission-task results settle into Evolution atomically and idempotently.
 - Web Reader redirect validation prevents automatic redirect-based private-network SSRF.
 - Web Reader extraction dependency is declared explicitly.
-- Flutter onboarding capability IDs now match the backend's stable capability contract.
-- Command Center routing display now consumes the backend routing shape.
+- Flutter onboarding capability IDs match the backend stable capability contract.
+- Command Center routing display consumes the backend routing shape.
 - World Intelligence status UI correctly represents self-modification as blocked.
+- Spark grants and spends now use idempotent references and atomic SQL balance mutations.
+- Android APK workflow accepts a device-reachable backend URL through workflow dispatch or the repository variable.
 
 ## Owner / God Mode
 - Local Developer Mode is localhost-only and requires no phone/SMS/OTP.
@@ -66,6 +68,15 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Task verification and Evolution settlement are committed in one database transaction.
 - Failed settlement rolls the verification transaction back.
 
+## Spark economy
+- Spark is an internal platform credit, not cash.
+- Premium work has a stable cost catalogue.
+- Grant/spend operations reject non-positive amounts.
+- Repeated operations with the same owner-scoped reference are idempotent.
+- Reusing a reference with a different amount is rejected.
+- Spending uses an atomic SQL balance >= amount update, preventing read/check/write overdraw races.
+- Premium execution charging/refund orchestration is still separate work and is not falsely marked complete.
+
 ## Web Reader security
 - Only HTTP/HTTPS URLs are accepted.
 - Local/private/link-local/multicast/reserved/unspecified targets are blocked.
@@ -76,20 +87,17 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Current dependency: trafilatura 2.2.0.
 
 ## Validation status
-Recent logical batches were validated through GitHub Actions:
-- Evolution settlement: SAGE CI green.
-- Flutter routing/status fixes: SAGE CI green.
-- Web Reader security/dependency batch: SAGE CI green after regression correction.
-- Mission task start atomicity: SAGE CI green.
-- Flutter analyzer/tests passed on the recent batches.
-
-Android APK and GitHub Pages workflows were previously green on main and remain covered by the Flutter source validation. A fresh Pages/APK workflow run should still be checked after the next release-affecting main push.
+- SAGE CI passed on the final audit-hardening PR after the Android workflow and Spark changes.
+- Python job passed.
+- Flutter analyzer/tests passed.
+- The hardening PR was merged to main as 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd.
+- Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
 ## Remaining real-world blockers
 These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
-3. Spark cost charging/refund settlement for premium execution.
+3. Premium execution Spark charge/refund orchestration.
 4. Scheduled World Intelligence refresh trigger and source-quality policy.
 5. User-visible memory management and consent-driven auto-learning UX.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
