@@ -5,8 +5,6 @@ import uuid
 
 from app.orchestrator import orchestrator
 from execution.parallel import parallel_mission_executor
-from execution.policy import classify_task, local_execution_allowed
-from execution.resource import resource_guard
 from missions.planner import planner
 from research.persistence import research_persistence
 from research.synthesis import research_synthesis_engine
@@ -22,7 +20,6 @@ class SageWorker:
         self.lease_seconds = max(30, int(lease_seconds))
         self.heartbeat_interval = max(5, int(heartbeat_interval))
         self.retry_base_seconds = max(1, int(retry_base_seconds))
-        self.resource_guard = resource_guard
 
     @staticmethod
     def _default_worker_id():
@@ -44,23 +41,13 @@ class SageWorker:
         return tasks.recover_expired()
 
     def _local_execution_allowed(self):
-        pending = tasks.list(status='pending')
-        if not pending:
-            return True, None
+        """Do not block cloud-backed durable work on local CPU pressure.
 
-        snapshot = self.resource_guard.snapshot()
-        task_class = classify_task(pending[0].get('description', ''))
-
-        if local_execution_allowed(task_class, snapshot.cpu_percent):
-            return True, None
-
-        return False, {
-            'status': 'deferred',
-            'reason': 'local_resource_protection',
-            'task_class': task_class.value,
-            'cpu_percent': snapshot.cpu_percent,
-            'resource_band': snapshot.band.value,
-        }
+        Provider routing owns local-resource protection. Medium/heavy work is
+        cloud-first, and light work can fall back to cloud when local Ollama
+        is not allowed. Blocking the queue here would stall both paths.
+        """
+        return True, None
 
     def claim(self):
         allowed, protection = self._local_execution_allowed()
