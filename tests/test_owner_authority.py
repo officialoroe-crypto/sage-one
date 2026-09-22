@@ -4,7 +4,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database.connection import Base
-from economy.models import EvolutionProfile, SparkWallet
 from economy.owner import OwnerAuditEvent
 
 
