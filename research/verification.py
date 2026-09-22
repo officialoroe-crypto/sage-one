@@ -167,7 +167,6 @@ class ResearchVerifier:
         claim: str,
         evidence_text: str,
     ) -> bool:
-        claim_lower = claim.lower()
         evidence_lower = evidence_text.lower()
 
         contradiction_patterns = [
