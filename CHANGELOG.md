@@ -1,5 +1,15 @@
 # SAGE ONE — CHANGELOG
 
+## 2026-09-22 — Full Repository Audit / Security Hardening
+- Audited all Python and Flutter/Dart source files in the current repository tree with CI compilation, linting, tests, and targeted source scans.
+- Made verified Evolution settlement transactional and idempotent.
+- Restricted global permission mutations and legacy permission audit access to SAGE Owner Authority.
+- Redacted task results/errors from the public worker health endpoint and added authenticated diagnostics.
+- Enforced a configured single-owner boundary for production deployments.
+- Added a Huawei P40 development APK path using a configurable SAGE API endpoint and documented ADB reverse networking.
+- Fixed a real main-branch heartbeat test failure by removing scheduler timing dependence from the regression test.
+- Current remaining production items are tracked in `TODO.md`: SMS provider, long-lived Google session refresh, Spark settlement integration, and future multi-tenant isolation.
+
 ## 2026-09-21 — Full Code Audit
 - Hardened verified-achievement settlement rollback so any post-flush failure rolls back the entire transaction.
 - Removed duplicate atomic-settlement regression coverage and an accidental empty root file.
