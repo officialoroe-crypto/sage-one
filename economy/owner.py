@@ -35,6 +35,8 @@ def record_owner_audit(
     reason: str,
     amount: int | None = None,
     details: dict | None = None,
+    *,
+    commit: bool = True,
 ) -> OwnerAuditEvent:
     event = OwnerAuditEvent(
         owner_key=owner_key,
@@ -45,8 +47,9 @@ def record_owner_audit(
         details_json=json.dumps(details or {}, ensure_ascii=False, sort_keys=True),
     )
     db.add(event)
-    db.commit()
-    db.refresh(event)
+    if commit:
+        db.commit()
+        db.refresh(event)
     return event
 
 
@@ -80,9 +83,9 @@ def reset_spark(db: Session, owner_key: str, reason: str) -> SparkWallet:
     wallet.lifetime_earned = 0
     wallet.lifetime_spent = 0
     wallet.updated_at = datetime.now(timezone.utc)
+    record_owner_audit(db, owner_key, "reset", "spark", reason, commit=False)
     db.commit()
     db.refresh(wallet)
-    record_owner_audit(db, owner_key, "reset", "spark", reason)
     return wallet
 
 
@@ -93,9 +96,9 @@ def set_spark(db: Session, owner_key: str, amount: int, reason: str) -> SparkWal
         db.add(wallet)
     wallet.balance = amount
     wallet.updated_at = datetime.now(timezone.utc)
+    record_owner_audit(db, owner_key, "set", "spark", reason, amount=amount, commit=False)
     db.commit()
     db.refresh(wallet)
-    record_owner_audit(db, owner_key, "set", "spark", reason, amount=amount)
     return wallet
 
 
@@ -108,25 +111,40 @@ def reset_evolution(db: Session, owner_key: str, reason: str) -> EvolutionProfil
     profile.tier = "Bronze"
     profile.stage = "LOW"
     profile.updated_at = datetime.now(timezone.utc)
+    record_owner_audit(db, owner_key, "reset", "evolution", reason, commit=False)
     db.commit()
     db.refresh(profile)
-    record_owner_audit(db, owner_key, "reset", "evolution", reason)
     return profile
 
 
-def set_evolution(db: Session, owner_key: str, achievement: int, tier: str, stage: str, reason: str) -> EvolutionProfile:
+def set_evolution(
+    db: Session,
+    owner_key: str,
+    achievement: int,
+    tier: str,
+    stage: str,
+    reason: str,
+) -> EvolutionProfile:
+    tier = tier.strip()
+    stage = stage.strip()
     profile = db.get(EvolutionProfile, owner_key)
     if profile is None:
         profile = EvolutionProfile(owner_key=owner_key)
         db.add(profile)
     profile.lifetime_achievement = achievement
-    profile.tier = tier.strip()
-    profile.stage = stage.strip()
+    profile.tier = tier
+    profile.stage = stage
     profile.updated_at = datetime.now(timezone.utc)
+    record_owner_audit(
+        db,
+        owner_key,
+        "set",
+        "evolution",
+        reason,
+        amount=achievement,
+        details={"tier": tier, "stage": stage},
+        commit=False,
+    )
     db.commit()
     db.refresh(profile)
-    record_owner_audit(
-        db, owner_key, "set", "evolution", reason, amount=achievement,
-        details={"tier": tier.strip(), "stage": stage.strip()},
-    )
     return profile
