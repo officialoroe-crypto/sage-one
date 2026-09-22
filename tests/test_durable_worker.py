@@ -148,9 +148,9 @@ def test_failure_schedules_retry():
         db.close()
 
 
-def test_expired_lease_is_recovered():
+def test_expired_lease_is_recovered_with_retry_budget():
     fresh_db()
-    task_id = make_task()
+    task_id = make_task(max_retries=2)
 
     db = SessionLocal()
     try:
@@ -159,13 +159,27 @@ def test_expired_lease_is_recovered():
         db.commit()
 
         recovered = repository.recover_expired_tasks(db)
-        assert recovered >= 1
+        assert recovered == 1
 
         task = repository.get_task(db, task_id)
         assert task.status == 'pending'
+        assert task.retries == 1
         assert task.worker_id is None
         assert task.lease_expires_at is None
         assert task.heartbeat_at is None
         assert task.next_retry_at is not None
+
+        claimed_again = repository.claim_next_task(db, 'worker-b', lease_seconds=120)
+        claimed_again.lease_expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        db.commit()
+
+        repository.recover_expired_tasks(db)
+        exhausted = repository.get_task(db, task_id)
+        assert exhausted.status == 'failed'
+        assert exhausted.retries == 2
+        assert exhausted.worker_id is None
+        assert exhausted.lease_expires_at is None
+        assert exhausted.next_retry_at is None
+        assert exhausted.completed_at is not None
     finally:
         db.close()
