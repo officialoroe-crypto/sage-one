@@ -19,7 +19,12 @@ class GeminiProvider(BaseProvider):
         self.model = os.getenv("SAGE_GEMINI_MODEL", settings.MODEL)
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
         self.client = (
-            OpenAI(api_key=self.api_key, base_url=self.base_url, timeout=90.0)
+            OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+                timeout=90.0,
+                default_headers={"x-goog-api-client": "sage-one/0.1.0"},
+            )
             if self.api_key
             else None
         )
