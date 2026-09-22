@@ -179,7 +179,7 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
           const SizedBox(height: 14),
           _statusRow('Public-world learning', learning, Colors.cyanAccent),
           _statusRow('Source-traceable knowledge', true, Colors.greenAccent),
-          _statusRow('Self-modification', !selfModification, Colors.purpleAccent),
+          _statusRow('Self-modification blocked', !selfModification, Colors.purpleAccent),
           _statusRow('Human review for upgrades', true, Colors.amberAccent),
         ],
       ),
