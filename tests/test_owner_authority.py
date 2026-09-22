@@ -98,3 +98,15 @@ def test_direct_economy_mutations_require_owner_mode():
                 "owner_mode": False,
             }
         )
+
+def test_global_permission_controls_require_owner_authority():
+    from app.main import _require_owner
+
+    with pytest.raises(Exception, match="Owner Authority"):
+        _require_owner(
+            {
+                "auth_provider": "google",
+                "auth_subject": "normal-user",
+                "owner_mode": False,
+            }
+        )
