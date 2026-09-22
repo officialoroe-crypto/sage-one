@@ -28,7 +28,17 @@ class SageApi {
   final String baseUrl;
 
   Future<Map<String, dynamic>> routing() async {
-    return _authorizedGet('/brain/routing');
+    final data = await _authorizedGet('/brain/routing');
+    final routing = data['routing'];
+    if (routing is Map) {
+      final normalized = Map<String, dynamic>.from(routing);
+      final order = normalized['provider_order'];
+      if (order is List && order.isNotEmpty) {
+        normalized['provider'] = order.first.toString();
+      }
+      data['routing'] = normalized;
+    }
+    return data;
   }
 
   Future<Map<String, dynamic>> submitBackground(String prompt) async {
