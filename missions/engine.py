@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime, timezone
 
 from database.connection import SessionLocal
+from config.settings import settings
+from economy.achievements import VERIFIED_TASK_ACHIEVEMENT, record_verified_achievement
 
 from database.models import (
     Mission,
@@ -514,13 +516,53 @@ class MissionEngine:
 
                 criterion.verified_at = self.now()
 
+            achievement = None
+
+            if passed:
+                # SAGE ONE is currently a single-owner deployment. The owner
+                # identity is therefore deployment-scoped rather than stored
+                # on every task row. This keeps the verified-result settlement
+                # durable without pretending the current schema is multi-tenant.
+                owner_key = (
+                    f"google:{settings.OWNER_AUTH_SUBJECT}"
+                    if settings.OWNER_AUTH_SUBJECT
+                    else "developer:local-owner"
+                )
+
+                achievement_event, achievement_created = (
+                    record_verified_achievement(
+                        db,
+                        owner_key,
+                        VERIFIED_TASK_ACHIEVEMENT,
+                        f"Verified mission task: {task.title}",
+                        "mission_task",
+                        task_id,
+                        {
+                            "task_id": task_id,
+                            "verification_status": "verified",
+                            "verification_evidence": evidence,
+                            "result": task.result,
+                        },
+                        commit=False,
+                    )
+                )
+
+                achievement = {
+                    "event_id": achievement_event.id,
+                    "created": achievement_created,
+                    "amount": achievement_event.amount,
+                    "owner_key": owner_key,
+                }
+
             db.commit()
 
             db.refresh(task)
 
-            return self.serialize_task(
-                task
-            )
+            result = self.serialize_task(task)
+            if achievement is not None:
+                result["achievement"] = achievement
+
+            return result
 
     # ============================================================
     # ADD VERIFICATION CRITERION
