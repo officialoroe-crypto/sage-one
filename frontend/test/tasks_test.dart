@@ -45,7 +45,7 @@ class _TasksApiClient extends http.BaseClient {
 void main() {
   testWidgets('Tasks screen renders durable task and opens detail',
       (tester) async {
-    final api = SageApi(client: _TasksApiClient());
+    final api = SageApi(client: _TasksApiClient(), authToken: 'test-token');
     await tester.pumpWidget(
       MaterialApp(home: TasksScreen(api: api)),
     );
