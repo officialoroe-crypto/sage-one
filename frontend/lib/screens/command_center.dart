@@ -7,8 +7,9 @@ import '../theme/sage_theme.dart';
 import 'economy.dart';
 
 class CommandCenter extends StatefulWidget {
-  const CommandCenter({required this.api, super.key});
+  const CommandCenter({required this.api, this.onCreate, super.key});
   final SageApi api;
+  final VoidCallback? onCreate;
 
   @override
   State<CommandCenter> createState() => _CommandCenterState();
@@ -314,6 +315,7 @@ class _CommandCenterState extends State<CommandCenter> {
             child: _ActionCard(
               title: modules[i].$1,
               subtitle: modules[i].$3,
+              onTap: modules[i].$1 == 'CREATE' ? widget.onCreate : null,
               icon: modules[i].$2,
               accent: modules[i].$4,
             ),
@@ -326,17 +328,21 @@ class _CommandCenterState extends State<CommandCenter> {
 }
 
 class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.title, required this.subtitle, required this.icon, required this.accent});
+  const _ActionCard({required this.title, required this.subtitle, required this.icon, required this.accent, this.onTap});
 
   final String title;
   final String subtitle;
   final IconData icon;
   final Color accent;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 118,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        height: 118,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: SageTheme.surface,
@@ -352,6 +358,7 @@ class _ActionCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(subtitle, style: const TextStyle(fontSize: 9, color: SageTheme.textSecondary)),
         ],
+        ),
       ),
     );
   }
