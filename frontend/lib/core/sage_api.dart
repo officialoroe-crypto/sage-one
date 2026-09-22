@@ -137,6 +137,63 @@ class SageApi {
     return _authorizedPost('/world/refresh', {'topics': topics ?? <String>[]});
   }
 
+
+  Future<List<dynamic>> workflowWorkspaces() async {
+    final data = await _authorizedGet('/workflow/workspaces');
+    final items = data['workspaces'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createWorkflowWorkspace({
+    required String name,
+    required String slug,
+    String workspaceType = 'personal',
+    Map<String, dynamic>? metadata,
+  }) async {
+    return _authorizedPost('/workflow/workspaces', {
+      'name': name,
+      'slug': slug,
+      'workspace_type': workspaceType,
+      'metadata': metadata ?? <String, dynamic>{},
+    });
+  }
+
+  Future<List<dynamic>> workflowProjects(String workspaceId) async {
+    final data = await _authorizedGet('/workflow/workspaces/$workspaceId/projects');
+    final items = data['projects'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createWorkflowProject({
+    required String workspaceId,
+    required String name,
+    required String projectType,
+    String? description,
+    Map<String, dynamic>? metadata,
+  }) async {
+    return _authorizedPost('/workflow/workspaces/$workspaceId/projects', {
+      'name': name,
+      'project_type': projectType,
+      'description': description,
+      'metadata': metadata ?? <String, dynamic>{},
+    });
+  }
+
+  Future<Map<String, dynamic>> createWorkflow({
+    required String projectId,
+    required String name,
+    required String workflowType,
+    required Map<String, dynamic> definition,
+    String? currentStage,
+  }) async {
+    return _authorizedPost('/workflow/projects/$projectId/workflows', {
+      'name': name,
+      'workflow_type': workflowType,
+      'current_stage': currentStage,
+      'definition': definition,
+    });
+  }
+
   Future<Map<String, dynamic>> ownerStatus() async => _authorizedGet('/economy/owner/status');
 
   Future<List<dynamic>> ownerAudit({int limit = 100}) async {
