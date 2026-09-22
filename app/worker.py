@@ -45,23 +45,14 @@ class SageWorker:
         return tasks.recover_expired()
 
     def _local_execution_allowed(self):
-        pending = tasks.list(status='pending')
-        if not pending:
-            return True, None
+        """Let the provider router enforce local CPU protection.
 
-        snapshot = self.resource_guard.snapshot()
-        task_class = classify_task(pending[0].get('description', ''))
-
-        if local_execution_allowed(task_class, snapshot.cpu_percent):
-            return True, None
-
-        return False, {
-            'status': 'deferred',
-            'reason': 'local_resource_protection',
-            'task_class': task_class.value,
-            'cpu_percent': snapshot.cpu_percent,
-            'resource_band': snapshot.band.value,
-        }
+        The durable worker itself may run cloud-backed work even when the host
+        CPU is busy. Medium/heavy work is explicitly cloud-first, and the
+        provider router excludes local Ollama when resources are constrained.
+        Blocking the durable queue here would otherwise stall cloud work.
+        """
+        return True, None
 
     def claim(self):
         allowed, protection = self._local_execution_allowed()
