@@ -165,6 +165,30 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<Map<String, dynamic>> createWorkflowAsset({
+    required String projectId,
+    required String name,
+    required String assetType,
+    String? parentAssetId,
+    String status = 'draft',
+    String? path,
+    String? uri,
+    String? mimeType,
+    String? checksum,
+    Map<String, dynamic>? metadata,
+  }) async =>
+      _authorizedPost('/workflow/projects/$projectId/assets', {
+        'name': name,
+        'asset_type': assetType,
+        'parent_asset_id': parentAssetId,
+        'status': status,
+        'path': path,
+        'uri': uri,
+        'mime_type': mimeType,
+        'checksum': checksum,
+        'metadata': metadata ?? <String, dynamic>{},
+      });
+
   Future<List<dynamic>> workflowRelations(String projectId) async {
     final data = await _authorizedGet('/workflow/projects/$projectId/relations');
     final items = data['relations'] ?? data['items'] ?? data;
