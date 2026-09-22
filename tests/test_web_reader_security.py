@@ -1,8 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
-
-import pytest
-
 from web.reader import WebReader
 
 
