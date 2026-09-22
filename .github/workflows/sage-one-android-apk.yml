@@ -2,6 +2,12 @@ name: SAGE ONE Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      api_url:
+        description: "SAGE backend URL reachable from the Android device"
+        required: false
+        default: "http://127.0.0.1:8010"
+        type: string
   push:
     branches: [main]
 
@@ -11,6 +17,8 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://127.0.0.1:8010' }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -24,10 +32,10 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
-      - name: Build Huawei development APK
-        run: flutter build apk --release --dart-define=SAGE_API_URL=http://127.0.0.1:8010
+      - name: Build Android APK
+        run: flutter build apk --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
       - uses: actions/upload-artifact@v4
         with:
-          name: sage-one-huawei-dev-apk
+          name: sage-one-android-apk
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
