@@ -24,8 +24,7 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>> submitBackground(String prompt) async {
-    final response = await _authorizedPost('/execute/background', {'goal': prompt});
-    final data = _decode(response);
+    final data = await _authorizedPost('/execute/background', {'goal': prompt});
     final task = data['task'];
     if (task is Map) {
       data['task_id'] = task['id'] ?? task['task_id'];
