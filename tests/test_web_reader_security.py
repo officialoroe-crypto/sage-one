@@ -68,11 +68,11 @@ def test_web_reader_follows_safe_redirects_after_validation(monkeypatch):
     monkeypatch.setattr("web.reader.requests.get", fake_get)
     monkeypatch.setattr(reader, "_validate_url", lambda url: (True, ""))
 
-    result = reader.read("https://public.example/start")
+    response = reader._download("https://public.example/start")
 
-    assert result["success"] is True
-    assert result["final_url"] == "https://public.example/article"
-    assert result["content"] == "SAGE public content"
+    assert response.url == "https://public.example/article"
+    assert response._sage_content_bytes.startswith(b"<html>")
+    response.close()
     assert calls == [
         "https://public.example/start",
         "https://public.example/article",
