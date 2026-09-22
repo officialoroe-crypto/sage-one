@@ -37,3 +37,71 @@ def test_otp_expiry_rejects_challenge():
 
     assert manager.challenge_phone("google:user-1", challenge.challenge_id) is None
     assert manager.verify("google:user-1", challenge.challenge_id, "000000") is False
+
+def test_production_google_auth_requires_configured_owner(monkeypatch):
+    from identity.auth import verify_google_id_token
+    from config.settings import settings
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", "client-id")
+    monkeypatch.setattr(settings, "OWNER_AUTH_SUBJECT", None)
+
+    monkeypatch.setattr(
+        "identity.auth.id_token.verify_oauth2_token",
+        lambda *args, **kwargs: {
+            "sub": "google-user",
+            "iss": "accounts.google.com",
+            "email": "owner@example.com",
+            "email_verified": True,
+        },
+    )
+
+    import pytest
+    with pytest.raises(Exception, match="owner identity"):
+        verify_google_id_token("test-token")
+
+
+def test_production_google_auth_rejects_non_owner(monkeypatch):
+    from identity.auth import verify_google_id_token
+    from config.settings import settings
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", "client-id")
+    monkeypatch.setattr(settings, "OWNER_AUTH_SUBJECT", "configured-owner")
+
+    monkeypatch.setattr(
+        "identity.auth.id_token.verify_oauth2_token",
+        lambda *args, **kwargs: {
+            "sub": "different-user",
+            "iss": "accounts.google.com",
+            "email": "other@example.com",
+            "email_verified": True,
+        },
+    )
+
+    import pytest
+    with pytest.raises(Exception, match="restricted to its configured owner"):
+        verify_google_id_token("test-token")
+
+
+def test_production_google_auth_accepts_configured_owner(monkeypatch):
+    from identity.auth import verify_google_id_token
+    from config.settings import settings
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "GOOGLE_CLIENT_ID", "client-id")
+    monkeypatch.setattr(settings, "OWNER_AUTH_SUBJECT", "configured-owner")
+
+    monkeypatch.setattr(
+        "identity.auth.id_token.verify_oauth2_token",
+        lambda *args, **kwargs: {
+            "sub": "configured-owner",
+            "iss": "accounts.google.com",
+            "email": "owner@example.com",
+            "email_verified": True,
+        },
+    )
+
+    claims = verify_google_id_token("test-token")
+    assert claims["auth_subject"] == "configured-owner"
+    assert claims["owner_mode"] is True
