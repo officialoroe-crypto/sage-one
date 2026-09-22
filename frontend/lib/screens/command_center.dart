@@ -47,7 +47,7 @@ class _CommandCenterState extends State<CommandCenter> {
       final data = await widget.api.routing();
       final routing = data['routing'];
       final provider = routing is Map
-          ? routing['provider'] ?? routing['provider_order']?.firstOrNull
+          ? routing['provider']
           : data['provider'] ?? data['selected_provider'];
       if (!mounted) return;
       setState(() => _provider = provider?.toString() ?? 'Auto routing');
