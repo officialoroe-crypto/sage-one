@@ -9,13 +9,7 @@ from config.settings import settings
 from database.connection import SessionLocal
 from economy.achievements import record_verified_achievement
 from economy.costs import cost_catalog
-from economy.owner import (
-    owner_audit,
-    reset_evolution,
-    reset_spark,
-    set_evolution,
-    set_spark,
-)
+from economy.owner import owner_audit, reset_evolution, reset_spark, set_evolution, set_spark
 from economy.service import evolution_simulation, get_evolution, grant_sparks, snapshot, spend_sparks
 from identity.auth import authenticate_request
 
@@ -146,8 +140,9 @@ def evolution_achievement(
     request: VerifiedAchievementRequest,
     claims: dict = Depends(authenticate_request),
 ):
-    # Keep the legacy route name for compatibility, but require the same
-    # evidence-backed settlement contract as the canonical verified route.
+    # This compatibility/test route is owner-only. Real users must receive
+    # Evolution through the internal verified-result settlement pipeline.
+    _require_owner(claims)
     try:
         return _record_verified(request, claims)
     except ValueError as exc:
@@ -159,6 +154,9 @@ def verified_evolution_achievement(
     request: VerifiedAchievementRequest,
     claims: dict = Depends(authenticate_request),
 ):
+    # This endpoint is a controlled development/testing hook, not a public
+    # self-award API. Production settlement should be invoked internally.
+    _require_owner(claims)
     try:
         return _record_verified(request, claims)
     except ValueError as exc:
