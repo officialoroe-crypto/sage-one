@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from economy.models import EvolutionProfile, SparkLedgerEntry, SparkWallet
@@ -49,12 +49,7 @@ def evolution_progress(achievement: int) -> dict:
         else:
             break
     if next_threshold is None:
-        return {
-            "current_threshold": current_threshold,
-            "next_threshold": None,
-            "next_tier": None,
-            "ratio": 1.0,
-        }
+        return {"current_threshold": current_threshold, "next_threshold": None, "next_tier": None, "ratio": 1.0}
     span = next_threshold - current_threshold
     ratio = (achievement - current_threshold) / span if span else 1.0
     return {
@@ -83,6 +78,28 @@ def get_evolution(db: Session, owner_key: str) -> EvolutionProfile:
     return profile
 
 
+def _existing_reference(db: Session, owner_key: str, reference: str | None) -> SparkLedgerEntry | None:
+    if not reference:
+        return None
+    return db.scalar(
+        select(SparkLedgerEntry)
+        .where(
+            SparkLedgerEntry.owner_key == owner_key,
+            SparkLedgerEntry.reference == reference,
+        )
+        .order_by(SparkLedgerEntry.created_at.asc())
+    )
+
+
+def _validate_replay(entry: SparkLedgerEntry, amount: int, is_spend: bool) -> SparkLedgerEntry:
+    expected_delta = -amount if is_spend else amount
+    if entry.delta != expected_delta:
+        raise ValueError(
+            f"Spark reference '{entry.reference}' was already used with a different amount."
+        )
+    return entry
+
+
 def grant_sparks(
     db: Session,
     owner_key: str,
@@ -93,10 +110,27 @@ def grant_sparks(
 ) -> SparkLedgerEntry:
     if amount <= 0:
         raise ValueError("Spark grant amount must be positive")
+
+    existing = _existing_reference(db, owner_key, reference)
+    if existing is not None:
+        return _validate_replay(existing, amount, is_spend=False)
+
     wallet = get_wallet(db, owner_key)
-    wallet.balance += amount
-    wallet.lifetime_earned += amount
-    wallet.updated_at = _now()
+    now = _now()
+
+    # Atomic increment prevents lost updates when multiple grants arrive together.
+    db.execute(
+        update(SparkWallet)
+        .where(SparkWallet.owner_key == owner_key)
+        .values(
+            balance=SparkWallet.balance + amount,
+            lifetime_earned=SparkWallet.lifetime_earned + amount,
+            updated_at=now,
+        )
+    )
+    db.flush()
+    db.refresh(wallet)
+
     entry = SparkLedgerEntry(
         owner_key=owner_key,
         delta=amount,
@@ -121,12 +155,35 @@ def spend_sparks(
 ) -> SparkLedgerEntry:
     if amount <= 0:
         raise ValueError("Spark spend amount must be positive")
+
+    existing = _existing_reference(db, owner_key, reference)
+    if existing is not None:
+        return _validate_replay(existing, amount, is_spend=True)
+
     wallet = get_wallet(db, owner_key)
-    if wallet.balance < amount:
+    now = _now()
+
+    # The balance check and debit happen in one SQL UPDATE. This avoids the
+    # read/check/write race that could allow concurrent spends to overdraw.
+    result = db.execute(
+        update(SparkWallet)
+        .where(
+            SparkWallet.owner_key == owner_key,
+            SparkWallet.balance >= amount,
+        )
+        .values(
+            balance=SparkWallet.balance - amount,
+            lifetime_spent=SparkWallet.lifetime_spent + amount,
+            updated_at=now,
+        )
+    )
+    if result.rowcount != 1:
+        db.rollback()
         raise ValueError("Insufficient SAGE Spark balance")
-    wallet.balance -= amount
-    wallet.lifetime_spent += amount
-    wallet.updated_at = _now()
+
+    db.flush()
+    db.refresh(wallet)
+
     entry = SparkLedgerEntry(
         owner_key=owner_key,
         delta=-amount,
