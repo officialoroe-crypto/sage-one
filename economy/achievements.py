@@ -12,6 +12,9 @@ from database.connection import Base
 from economy.service import record_achievement
 
 
+VERIFIED_TASK_ACHIEVEMENT = 100
+
+
 class VerifiedAchievementEvent(Base):
     """Immutable-ish owner-scoped record of a verified achievement outcome."""
 
