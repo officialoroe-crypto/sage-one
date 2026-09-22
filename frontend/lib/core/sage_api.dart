@@ -5,9 +5,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class SageApi {
-  SageApi({http.Client? client, String? baseUrl, FlutterSecureStorage? storage})
-      : _client = client ?? http.Client(),
+  SageApi({
+    http.Client? client,
+    String? baseUrl,
+    FlutterSecureStorage? storage,
+    String? authToken,
+  })  : _client = client ?? http.Client(),
         _storage = storage ?? const FlutterSecureStorage(),
+        _authToken = authToken,
         baseUrl = baseUrl ?? _defaultBaseUrl();
 
   static String _defaultBaseUrl() {
@@ -17,6 +22,7 @@ class SageApi {
 
   final http.Client _client;
   final FlutterSecureStorage _storage;
+  final String? _authToken;
   final String baseUrl;
 
   Future<Map<String, dynamic>> routing() async {
@@ -168,6 +174,10 @@ class SageApi {
   }
 
   Future<String?> _identityToken() async {
+    if (_authToken != null && _authToken!.isNotEmpty) {
+      return _authToken;
+    }
+
     String? token;
     try {
       token = await _storage.read(key: 'sage.google.id_token') ??
