@@ -64,6 +64,13 @@ Figma defines the visual contract. Flutter implements the approved contract. Do 
 
 When the canonical logo asset is available to Figma, replace only the temporary orbital-mark placeholder; do not alter the approved logo artwork.
 
+## Latest build batch
+
+- Figma onboarding frames added: Splash, Welcome, Profile Setup, Memory & Privacy.
+- Flutter onboarding implementation now uses the SAGE cinematic theme and preserves the existing identity/OTP/memory-consent contract.
+- Added onboarding gate regression tests.
+- SAGE WORKFLOW architecture specification added at `docs/architecture/SAGE_WORKFLOW.md`.
+
 ## Next synchronized build batch
 
 1. Finish the mobile foundation and reusable visual components.
