@@ -73,7 +73,7 @@ class _CommandCenterState extends State<CommandCenter> {
 
       setState(() {
         _taskId = taskId?.toString();
-        _status = _taskId == null ? 'Accepted' : 'Queued • ' + _taskId!;
+        _status = _taskId == null ? 'Accepted' : 'Queued • $_taskId!';
         _prompt.clear();
       });
 
@@ -104,7 +104,7 @@ class _CommandCenterState extends State<CommandCenter> {
       final value = task['result'] ?? task['error'];
 
       setState(() {
-        _status = 'Task ' + status.toUpperCase() + ' • ' + taskId;
+        _status = 'Task ${status.toUpperCase()} • $taskId';
         _result = value?.toString();
         _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
       });
@@ -176,7 +176,7 @@ class _CommandCenterState extends State<CommandCenter> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('SAGE ONE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.6)),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text('PERSONAL AI • EXECUTION PARTNER', style: TextStyle(fontSize: 8, letterSpacing: 1.2, color: SageTheme.textSecondary)),
             ],
           ),
