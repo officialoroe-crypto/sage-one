@@ -309,15 +309,15 @@ class MissionEngine:
                     f"{task.status}"
                 )
 
+            now = self.now()
             task.status = "running"
-            task.started_at = self.now()
-            task.updated_at = self.now()
+            task.started_at = now
+            task.updated_at = now
             task.progress = 0
 
-            db.commit()
-
-            db.refresh(task)
-
+            # Task state and its execution attempt are one state transition.
+            # Commit them together so a failure cannot leave a running task
+            # without a durable attempt record.
             attempt = ExecutionAttempt(
                 id=str(uuid.uuid4()),
                 mission_id=task.mission_id,
@@ -325,11 +325,14 @@ class MissionEngine:
                 attempt_number=task.retries + 1,
                 status="running",
                 agent=task.agent,
-                created_at=self.now(),
+                created_at=now,
             )
 
             db.add(attempt)
             db.commit()
+
+            db.refresh(task)
+            db.refresh(attempt)
 
             return {
                 "task": self.serialize_task(task),
