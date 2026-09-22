@@ -81,3 +81,11 @@ When the canonical logo asset is available to Figma, replace only the temporary 
 6. Connect existing backend capabilities to the new UI without changing backend contracts unnecessarily.
 7. Add focused Flutter tests and let GitHub Actions perform the heavy validation.
 8. Update this document and PROJECT_STATE.md after each coherent batch.
+
+
+## Persistent SAGE WORKFLOW graph foundation
+
+- Added profile-scoped Workspace, Project, Asset, AssetRelation, and Workflow persistence.
+- Added authenticated workflow graph API under /workflow.
+- Added repository tests for ownership isolation and relation validation.
+- Create/publish/analytics orchestration remains separate from this persistence layer.
