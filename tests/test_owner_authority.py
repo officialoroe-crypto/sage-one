@@ -19,7 +19,6 @@ def test_owner_controls_are_available_in_developer_mode(monkeypatch, tmp_path):
     monkeypatch.setattr(settings, "DEVELOPER_MODE", True)
 
     token, claims = auth.create_developer_session("local-owner")
-    client = TestClient(api.router)
     # Router-level TestClient cannot apply FastAPI dependency injection by itself;
     # verify the owner claim produced by the controlled local session directly.
     assert claims["owner_mode"] is True
