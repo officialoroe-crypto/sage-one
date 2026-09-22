@@ -123,7 +123,7 @@
 - [x] Verify Google authentication tokens server-side against configured OAuth client ID.
 - [x] Add phone verification challenge state machine with expiry, attempt limits, identity binding, and SMS-provider abstraction.
 - [ ] Add production SMS/OTP provider.
-- [ ] Expose secure authenticated onboarding/profile APIs from the main FastAPI app.
+- [x] Expose secure authenticated onboarding/profile APIs through the mounted identity router.
 - [ ] Build first-run Flutter onboarding flow.
 - [ ] Add user-visible memory management UI.
 - [ ] Add consent-driven auto-learning pipeline on top of profile memory.
@@ -154,7 +154,7 @@
 - [ ] File operations.
 - [ ] External API integrations.
 - [ ] Scheduled/background automation.
-- [ ] Security/permission layer.
+- [x] Security/permission control plane for global owner mutations; production owner identity boundary is enforced.
 - [ ] Public-release preparation.
 
 
@@ -162,4 +162,20 @@
 - [x] Add non-mutating Evolution simulation API using the authoritative achievement thresholds.
 - [x] Animate Evolution simulation in Owner/God Mode without mutating persisted Evolution state.
 - [x] Keep APPLY and RESET as explicit mutation controls.
+- [ ] Add automated visual regression coverage for Evolution animation milestones.
+
+
+## AUDIT — CURRENT REMAINING WORK
+- [x] Audit all Python source files for syntax/lint and high-risk patterns.
+- [x] Audit all Flutter/Dart source files with analyzer/tests and targeted async/resource checks.
+- [x] Verify atomic verified-achievement settlement.
+- [x] Restrict global permission mutation to SAGE Owner Authority.
+- [x] Redact private worker results from public worker health.
+- [x] Prevent accidental multi-user production deployments by requiring the configured owner identity.
+- [x] Make the Android development build configurable for the Huawei P40 USB/ADB workflow.
+- [x] Make the worker heartbeat regression test deterministic after a real main-branch CI failure.
+- [ ] Add production SMS provider.
+- [ ] Add Google-token/session refresh handling for long-lived authenticated sessions.
+- [ ] Wire Spark costs into the premium-work execution settlement path.
+- [ ] Add full multi-tenant data ownership if SAGE ONE is ever offered as a shared public service.
 - [ ] Add automated visual regression coverage for Evolution animation milestones.
