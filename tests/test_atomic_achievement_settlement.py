@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from database.connection import Base, SessionLocal, engine
 from economy import achievements
 from economy.achievements import VerifiedAchievementEvent, record_verified_achievement
@@ -66,7 +68,7 @@ def test_verified_achievement_rolls_back_event_and_evolution_on_failure(monkeypa
 
     with SessionLocal() as db:
         assert db.scalar(
-            __import__("sqlalchemy").select(VerifiedAchievementEvent).where(
+            select(VerifiedAchievementEvent).where(
                 VerifiedAchievementEvent.owner_key == "test-owner",
                 VerifiedAchievementEvent.source_id == "mission-rollback",
             )
