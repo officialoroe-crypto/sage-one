@@ -153,24 +153,34 @@ class SageApi {
     Map<String, dynamic> body,
   ) async {
     final token = await _identityToken();
+    final headers = <String, String>{
+      'content-type': 'application/json',
+    };
+    if (token != null) {
+      headers['authorization'] = 'Bearer $token';
+    }
     final response = await _client.post(
       Uri.parse('$baseUrl$path'),
-      headers: {
-        'authorization': 'Bearer $token',
-        'content-type': 'application/json',
-      },
+      headers: headers,
       body: jsonEncode(body),
     );
     return _decode(response);
   }
 
-  Future<String> _identityToken() async {
+  Future<String?> _identityToken() async {
     final token = await _storage.read(key: 'sage.google.id_token') ??
         await _storage.read(key: 'sage.identity.token');
-    if (token == null || token.isEmpty) {
-      throw Exception('SAGE identity session is missing. Sign in again.');
+    if (token != null && token.isNotEmpty) {
+      return token;
     }
-    return token;
+
+    final host = Uri.parse(baseUrl).host;
+    if (host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2') {
+      // Explicit local Developer Mode can run without a persisted token.
+      return null;
+    }
+
+    throw Exception('SAGE identity session is missing. Sign in again.');
   }
 
   Future<Map<String, dynamic>> _authorizedGet(String path) async {
@@ -179,10 +189,11 @@ class SageApi {
 
   Future<Map<String, dynamic>> _authorizedGetUri(Uri uri) async {
     final token = await _identityToken();
-    final response = await _client.get(
-      uri,
-      headers: {'authorization': 'Bearer $token'},
-    );
+    final headers = <String, String>{};
+    if (token != null) {
+      headers['authorization'] = 'Bearer $token';
+    }
+    final response = await _client.get(uri, headers: headers);
     return _decode(response);
   }
 
@@ -197,10 +208,11 @@ class SageApi {
       },
     );
     final token = await _identityToken();
-    final response = await _client.post(
-      uri,
-      headers: {'authorization': 'Bearer $token'},
-    );
+    final headers = <String, String>{};
+    if (token != null) {
+      headers['authorization'] = 'Bearer $token';
+    }
+    final response = await _client.post(uri, headers: headers);
     return _decode(response);
   }
 
