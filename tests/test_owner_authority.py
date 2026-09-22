@@ -33,10 +33,20 @@ def test_owner_spark_and_evolution_controls_are_audited(tmp_path):
     Session = sessionmaker(bind=engine)
     owner = "developer:owner"
     with Session() as db:
-        from economy.owner import set_spark, set_evolution
+        from economy.owner import set_evolution, set_spark
+
         wallet = set_spark(db, owner, 1_000_000, "god mode stress test")
-        profile = set_evolution(db, owner, 5_000_000, "Black Opal Realm", "LOW", "evolution simulation")
-        events = db.query(OwnerAuditEvent).filter(OwnerAuditEvent.owner_key == owner).all()
+        profile = set_evolution(
+            db,
+            owner,
+            5_000_000,
+            "Black Opal Realm",
+            "LOW",
+            "evolution simulation",
+        )
+        events = db.query(OwnerAuditEvent).filter(
+            OwnerAuditEvent.owner_key == owner
+        ).all()
         assert wallet.balance == 1_000_000
         assert profile.lifetime_achievement == 5_000_000
         assert profile.tier == "Black Opal Realm"
@@ -49,7 +59,13 @@ def test_owner_reset_controls_internal_state(tmp_path):
     Session = sessionmaker(bind=engine)
     owner = "developer:owner"
     with Session() as db:
-        from economy.owner import set_spark, set_evolution, reset_spark, reset_evolution
+        from economy.owner import (
+            reset_evolution,
+            reset_spark,
+            set_evolution,
+            set_spark,
+        )
+
         set_spark(db, owner, 500, "seed")
         set_evolution(db, owner, 1_000, "Silver", "LOW", "seed")
         wallet = reset_spark(db, owner, "reset test")
@@ -57,15 +73,31 @@ def test_owner_reset_controls_internal_state(tmp_path):
         assert wallet.balance == 0
         assert profile.lifetime_achievement == 0
         assert profile.tier == "Bronze"
-        assert db.query(OwnerAuditEvent).filter(OwnerAuditEvent.owner_key == owner).count() == 4
+        assert db.query(OwnerAuditEvent).filter(
+            OwnerAuditEvent.owner_key == owner
+        ).count() == 4
 
 
 def test_developer_identity_has_no_phone_or_otp_dependency(monkeypatch):
     from config.settings import settings
     import identity.auth as auth
+
     monkeypatch.setattr(settings, "DEVELOPER_MODE", True)
     token, claims = auth.create_developer_session()
     assert token.startswith("sage-dev-")
     assert claims["owner_mode"] is True
     assert claims["developer_mode"] is True
     assert "phone" not in claims
+
+
+def test_direct_economy_mutations_require_owner_mode():
+    from economy.api import _require_owner
+
+    with pytest.raises(Exception, match="Owner Authority"):
+        _require_owner(
+            {
+                "auth_provider": "google",
+                "auth_subject": "normal-user",
+                "owner_mode": False,
+            }
+        )
