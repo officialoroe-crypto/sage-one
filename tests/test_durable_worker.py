@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
 from database.connection import Base, SessionLocal, engine
-from database.models import Task
 from database.repository import repository
 
 
