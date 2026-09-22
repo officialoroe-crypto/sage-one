@@ -36,7 +36,7 @@ class _ResearchApiClient extends http.BaseClient {
 void main() {
   testWidgets('Research screen queues and displays task result', (tester) async {
     final client = _ResearchApiClient();
-    final api = SageApi(client: client);
+    final api = SageApi(client: client, authToken: 'test-token');
     await tester.pumpWidget(
       MaterialApp(home: Scaffold(body: ResearchScreen(api: api))),
     );
