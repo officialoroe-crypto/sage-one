@@ -122,8 +122,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
-                      '\${_value(project, 'project_type', 'general')} • '
-                      '\${_value(project, 'status', 'active')}',
+                      '${_value(project, 'project_type', 'general')} • '
+                      '${_value(project, 'status', 'active')}',
                     ),
                     trailing: const Icon(Icons.chevron_right),
                   ),
