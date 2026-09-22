@@ -21,7 +21,7 @@ import socket
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import requests
 import trafilatura
@@ -162,56 +162,79 @@ class WebReader:
             "Cache-Control": "no-cache",
         }
 
-        response = requests.get(
-            url,
-            headers=headers,
-            timeout=self.timeout,
-            allow_redirects=True,
-            stream=True,
-        )
+        # Never let requests follow redirects automatically. A public URL can
+        # redirect to localhost, a cloud metadata endpoint, or another private
+        # network target, so every redirect destination must pass the same SSRF
+        # validation as the original URL.
+        current_url = url
+        max_redirects = 5
 
-        response.raise_for_status()
+        for _ in range(max_redirects + 1):
+            valid, reason = self._validate_url(current_url)
+            if not valid:
+                raise ValueError(reason)
 
-        content_type = (
-            response.headers.get("content-type", "")
-            .lower()
-            .strip()
-        )
-
-        # Only process web/text documents.
-        allowed_types = (
-            "text/html",
-            "application/xhtml+xml",
-            "text/plain",
-            "application/xml",
-            "text/xml",
-        )
-
-        if content_type and not any(
-            item in content_type for item in allowed_types
-        ):
-            response.close()
-            raise ValueError(
-                f"Unsupported content type: {content_type}"
+            response = requests.get(
+                current_url,
+                headers=headers,
+                timeout=self.timeout,
+                allow_redirects=False,
+                stream=True,
             )
 
-        data = bytearray()
-
-        for chunk in response.iter_content(chunk_size=64 * 1024):
-            if not chunk:
+            if response.status_code in {301, 302, 303, 307, 308}:
+                location = response.headers.get("location")
+                response.close()
+                if not location:
+                    raise ValueError("Redirect response did not provide a location.")
+                current_url = urljoin(current_url, location)
                 continue
 
-            data.extend(chunk)
+            response.raise_for_status()
 
-            if len(data) > self.max_bytes:
+            content_type = (
+                response.headers.get("content-type", "")
+                .lower()
+                .strip()
+            )
+
+            # Only process web/text documents.
+            allowed_types = (
+                "text/html",
+                "application/xhtml+xml",
+                "text/plain",
+                "application/xml",
+                "text/xml",
+            )
+
+            if content_type and not any(
+                item in content_type for item in allowed_types
+            ):
                 response.close()
                 raise ValueError(
-                    f"Page exceeds maximum size of {self.max_bytes} bytes."
+                    f"Unsupported content type: {content_type}"
                 )
 
-        response._sage_content_bytes = bytes(data)
+            data = bytearray()
 
-        return response
+            for chunk in response.iter_content(chunk_size=64 * 1024):
+                if not chunk:
+                    continue
+
+                data.extend(chunk)
+
+                if len(data) > self.max_bytes:
+                    response.close()
+                    raise ValueError(
+                        f"Page exceeds maximum size of {self.max_bytes} bytes."
+                    )
+
+            response._sage_content_bytes = bytes(data)
+            response.url = current_url
+
+            return response
+
+        raise ValueError(f"Too many redirects (maximum {max_redirects}).")
 
     # ------------------------------------------------------------------
     # Extraction
