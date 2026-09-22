@@ -1,138 +1,100 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-20
+Last updated: 2026-09-22
+Current main: 3894c5418ac333dd32b78b0ecba17277478e263e
 
 ## Identity
 - Project: SAGE ONE
 - Assistant identity: sage.ai
 - Purpose: personal AI mentor and execution partner
-- Style: direct, practical, action-oriented, no unnecessary fluff/questions
-- Rules: no lying/hiding important information; permission-based actions
+- Style: direct, practical, action-oriented, no unnecessary fluff/questions.
+- Rules: no lying/hiding important information; permission-based actions.
 
 ## Development workflow
-- Work in large logical batches rather than tiny edits.
-- Inspect GitHub first; code directly in GitHub.
-- Use GitHub branches + PRs + CI for validation.
-- Keep the laptop usable; avoid unnecessary local test runs.
-- Do not rebuild working components.
-- Heavy AI, research, synthesis and verification belong in durable background/cloud execution where possible.
-
-## Hardware constraint
-- Intel Core i5-7200U @ 2.50 GHz
-- 20 GB RAM
-- Windows 10 64-bit
-- Intel HD Graphics 620 + NVIDIA GeForce 9xxM series (~1 GB dedicated VRAM)
-- Laptop must remain usable during SAGE operation.
-- Heavy AI, research, synthesis, verification and long-running work should run cloud/background.
-- Local Ollama must never automatically take over heavy work.
+- Work in large logical batches.
+- Inspect GitHub first; make source changes through branches/PRs.
+- Use GitHub Actions for heavy validation so the development laptop stays usable.
+- Never call a feature complete until its success path, failure path, restart/refresh behavior and regression coverage are checked.
 
 ## Environment
-- Python 3.14.7
-- FastAPI 0.141.1
-- Uvicorn 0.52.4
-- Flutter stable 3.47.3
-- Android SDK 37.0.0
-- Chrome web
-- Visual Studio Build Tools 2026 18.10.0
-- Backend: `C:\SageOne\Backend`
-- SAGE core: `C:\SageOne\sage_core`
-- Backend command:
-  `C:\SageOne\Backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8010`
+- Python local target: 3.14.7
+- CI Python: 3.13
+- FastAPI: 0.141.1
+- Flutter: 3.47.3
+- Android SDK: 37
+- Canonical source: C:\SageOne\sage_core
+- Legacy backend: C:\SageOne\Backend
+- Local backend port: 8010
 
-## Architecture implemented
-- Durable task lifecycle with atomic claim, lease, heartbeat, retry/backoff and crash recovery.
-- Application-managed durable worker lifecycle: FastAPI starts/stops the worker and exposes `/worker/health`; queued tasks are no longer left pending without an executor.
-- Resource-aware execution policy protecting the laptop from heavy local work.
-- Provider routing with Groq, Cerebras, Gemini (Google OpenAI-compatible API) and controlled Ollama fallback.
-- Research OS with source reading, evidence, synthesis, verification and persistent research records.
-- Mission planner/executor with bounded parallel execution, progress history and pause/resume/cancel controls.
-- Durable task notifications and Flutter unread badge.
-- Authenticated identity/profile foundation with Google ID-token verification, phone OTP state machine, user-scoped memory and onboarding APIs.
-- Controlled localhost-only Developer Mode with phone-free owner sessions, provider-aware profile ownership, and Flutter/web entry flow; disabled by default.
-- Controlled SAGE World Intelligence for bounded public-world observation/learning and human-reviewed upgrade proposals.
-- World Intelligence refreshes can now be queued as durable worker tasks instead of performing AI work inside the HTTP request.
-
-## SAGE World Intelligence
-World Intelligence is system-level learning about the public world, separate from personal user memory.
-
-Loop:
-WORLD → DISCOVER → COLLECT SOURCES → VERIFY/CROSS-CHECK → EXTRACT KNOWLEDGE → UPDATE WORLD KNOWLEDGE → DETECT PATTERNS/OPPORTUNITIES → HELP USERS
-
-Boundaries:
-- public sources only
-- bounded topics and research calls
-- source-traceable persisted knowledge/signals
-- upgrade proposals require human review
-- no self-modifying code
-- no permission/security changes
-- no financial/account/web-write authority
-
-Default topics include current affairs, AI/technology, business, content trends, software/APIs and education.
-
-## Mobile integration batch
-Current branch: `feature/world-intelligence-v1`
+## Core architecture
+REQUEST → PLAN → EXECUTE → RESULT → VERIFY → EVIDENCE → SETTLE → ACHIEVEMENT → EVOLUTION → HISTORY
 
 Implemented:
-1. Top-level identity and World Intelligence routers are mounted in `app.main`.
-2. Flutter `SageApi` supports World Intelligence status, knowledge, due topics and bounded refresh.
-3. Added `WorldIntelligenceScreen` with the approved premium black/blue/cyan/purple direction.
-4. Added World Intelligence to mobile navigation.
-5. Added first-run onboarding UI foundation covering profile, capabilities, help intent, and memory/privacy consent.
-6. Added API route integration regression coverage.
-7. Preserved Research OS, durable tasks, mission execution, permissions and personal memory architecture.
+- Durable worker with atomic claim, ownership leases, heartbeat, retry/backoff and lease recovery.
+- FastAPI lifecycle starts/stops the worker.
+- Mission planning with dependency-aware and bounded parallel execution.
+- Real tool execution and verification.
+- Research OS with search, web reading, evidence, claims, verification and persistent research records.
+- Provider routing: Groq, Cerebras, Gemini through Google's OpenAI-compatible API, controlled Ollama fallback.
+- CPU/resource protection that avoids automatic heavy local Ollama takeover.
+- Durable notifications and Flutter task polling.
+- Authenticated Google identity foundation.
+- Phone OTP state machine + provider abstraction.
+- User profile/onboarding/memory foundation.
+- Local phone-free Developer Mode and SAGE Owner Authority/God Mode.
+- Owner Spark/Evolution controls and audit log.
+- Non-mutating Evolution simulation with authoritative thresholds and Flutter animation.
+- Verified mission-task results now settle into Evolution atomically and idempotently.
+- Web Reader redirect validation prevents automatic redirect-based private-network SSRF.
+- Web Reader extraction dependency is declared explicitly.
+- Flutter onboarding capability IDs now match the backend's stable capability contract.
+- Command Center routing display now consumes the backend routing shape.
+- World Intelligence status UI correctly represents self-modification as blocked.
 
-## Approved visual system
-- Premium futuristic but restrained.
-- Deep/plain black foundation.
-- No cheap neon.
-- Extremely subtle typography glow.
-- SAGE Core/logo is the primary visual status element.
-- Recovery uses purple through light sky blue into stable state.
-- Research/source provenance is visible without dashboard clutter.
-- Evolution changes primarily the SAGE Core/logo treatment, voice visualizer, particles and small accents; background remains black.
-- SAGE Spark is the approved name for the internal credit concept.
-- Visual references are references for look/motion/hierarchy only; the written system specification remains the behavior source of truth.
+## Owner / God Mode
+- Local Developer Mode is localhost-only and requires no phone/SMS/OTP.
+- Owner controls are internal SAGE development/testing controls.
+- Production owner identity is explicitly bound with SAGE_OWNER_AUTH_SUBJECT.
+- God Mode does not create external authority over banks, payments, third-party accounts, or destructive external systems.
+- Owner economy mutations are audited.
 
-## Validation
-- Flutter CI job completed successfully on run #188.
-- Python CI run #188 reached 83 passing tests and 1 failing integration assertion.
-- The failure was the new top-level identity/world route assertion; the current branch source contains the required router mounts.
-- A fresh CI run is required on the current head before merge.
-- Never call the branch green until the fresh run passes.
+## Evolution settlement
+A successfully verified mission task awards a deployment-owner-scoped verified achievement event.
+- Reward: 100 Evolution achievement per newly verified mission task.
+- Source identity: mission_task + task ID.
+- Duplicate verification does not award twice.
+- Task verification and Evolution settlement are committed in one database transaction.
+- Failed settlement rolls the verification transaction back.
 
-## Celebration milestone
-The next project celebration checkpoint is the first real SAGE ONE integrated MVP slice:
-GOAL → AUTHENTICATED USER → PROFILE/CONSENT → PERSONAL SAGE WORKSPACE → RESEARCH/EXECUTE → VERIFIED RESULT → PERSISTED HISTORY
+## Web Reader security
+- Only HTTP/HTTPS URLs are accepted.
+- Local/private/link-local/multicast/reserved/unspecified targets are blocked.
+- Redirects are not followed automatically.
+- Every redirect destination is validated again.
+- Redirect chains are bounded.
+- Content size and supported content types are bounded.
+- Current dependency: trafilatura 2.2.0.
 
-World Intelligence and Opportunities/Marketplace then expand that MVP without replacing its core loop.
+## Validation status
+Recent logical batches were validated through GitHub Actions:
+- Evolution settlement: SAGE CI green.
+- Flutter routing/status fixes: SAGE CI green.
+- Web Reader security/dependency batch: SAGE CI green after regression correction.
+- Mission task start atomicity: SAGE CI green.
+- Flutter analyzer/tests passed on the recent batches.
 
-## SAGE Owner Authority / God Mode
-- Pre-launch development requirement: the configured SAGE owner has ultimate authority over SAGE's internal development state.
-- Local Developer Mode is an explicit owner session; no phone, SMS, or OTP is required for local development identity.
-- Owner controls include Spark balance set/reset, Evolution achievement/tier/stage set/reset, and a dedicated Owner Audit Log.
-- Every owner economy mutation is recorded with action, target, reason, amount and timestamp.
-- God Mode scope is explicitly internal SAGE development/testing. It does not create external account, payment, destructive, or third-party authority.
-- Production owner identity can be bound explicitly with `SAGE_OWNER_AUTH_SUBJECT`; Developer Mode remains localhost-only.
+Android APK and GitHub Pages workflows were previously green on main and remain covered by the Flutter source validation. A fresh Pages/APK workflow run should still be checked after the next release-affecting main push.
 
-## Owner Console
-- Flutter Owner Console exposes God Mode status, Spark set/reset, non-mutating Evolution simulation with real animation, Evolution apply/reset, and the Owner Audit Log.
-- Local Developer Mode enters directly into Owner Mode with no phone field and no OTP dependency.
-- Owner controls remain authenticated, localhost-only in Developer Mode, and internal to SAGE development.
-
-## Execution + Evolution recovery track
-- Root cause found: durable tasks were being persisted correctly but no application lifecycle started `SageWorker`, so `/execute/background` could queue work indefinitely.
-- Command Center now receives the nested durable task ID and polls the real task record until terminal state.
-- Owner/God Mode Evolution simulation is explicitly non-mutating: backend returns authoritative thresholds/milestones and Flutter animates the transition; APPLY remains the mutation path.
-- Gemini is now a real cloud provider fallback instead of an unused configuration value.
-
-## Next major tracks
-1. Keep the integrated main branch green through GitHub CI after each logical batch.
-2. Connect Google/phone identity flow fully through the Flutter first-run onboarding API and production SMS provider.
-3. Add durable scheduled World Intelligence refresh triggering and source-quality policy.
-4. Add world-knowledge freshness/provenance and human-reviewed upgrade proposal UI.
-5. Continue the mobile-first SAGE visual system.
-6. Add the dedicated Marketplace / Opportunities discovery area for jobs, rent, land/property and categories without cluttering the core command center.
-7. Reach the integrated MVP celebration checkpoint.
+## Remaining real-world blockers
+These require external configuration or are deliberate future scope:
+1. Production SMS/OTP provider credentials and delivery service.
+2. Long-lived Google web token/session refresh UX.
+3. Spark cost charging/refund settlement for premium execution.
+4. Scheduled World Intelligence refresh trigger and source-quality policy.
+5. User-visible memory management and consent-driven auto-learning UX.
+6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
+7. Automated visual regression tests for Evolution animation milestones.
+8. Production release hardening and external API integrations.
 
 ## Continuity rule
-This file is the continuity source for future SAGE ONE development sessions. Always inspect the actual GitHub repository and this state before making architectural changes.
+Always inspect the actual GitHub main branch and this file before architectural changes. Do not rely on an old branch or stale local copy.
