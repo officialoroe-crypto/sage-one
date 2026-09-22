@@ -6,6 +6,7 @@ import 'core/sage_api.dart';
 import 'screens/agent.dart';
 import 'screens/auth_gate.dart';
 import 'screens/command_center.dart';
+import 'screens/create.dart';
 import 'screens/projects.dart';
 import 'screens/research.dart';
 import 'screens/tasks.dart';
@@ -94,9 +95,10 @@ class _SageOneShellState extends State<SageOneShell> {
   @override
   Widget build(BuildContext context) {
     final screens = <Widget>[
-      CommandCenter(api: _api),
+      CommandCenter(api: _api, onCreate: () => setState(() => _index = 3)),
       ResearchScreen(api: _api),
       TasksScreen(api: _api),
+      CreateScreen(api: _api),
       const ProjectsScreen(),
       AgentScreen(api: _api),
       WorldIntelligenceScreen(api: _api),
@@ -129,6 +131,10 @@ class _SageOneShellState extends State<SageOneShell> {
               NavigationDestination(
                 icon: Icon(Icons.task_alt),
                 label: 'Tasks',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.auto_awesome_motion),
+                label: 'Create',
               ),
               NavigationDestination(
                 icon: Icon(Icons.folder_open),
