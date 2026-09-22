@@ -105,7 +105,7 @@ class SageApi {
     final uri = Uri.parse('$baseUrl/world/knowledge').replace(
       queryParameters: {'limit': limit.toString()},
     );
-    final data = _decode(await _client.get(uri));
+    final data = await _authorizedGetUri(uri);
     final items = data['knowledge'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
   }
