@@ -1,0 +1,318 @@
+import 'package:flutter/material.dart';
+
+import '../core/sage_api.dart';
+import '../theme/sage_theme.dart';
+
+class ProjectDetailScreen extends StatefulWidget {
+  const ProjectDetailScreen({required this.api, required this.project, super.key});
+  final SageApi api;
+  final Map<String, dynamic> project;
+
+  @override
+  State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
+}
+
+class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+  bool _loading = true;
+  String? _error;
+  List<dynamic> _assets = const [];
+  List<dynamic> _relations = const [];
+  List<dynamic> _workflows = const [];
+
+  String get _projectId => widget.project['id']?.toString() ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (_projectId.isEmpty) {
+      setState(() {
+        _loading = false;
+        _error = 'Project ID is missing.';
+      });
+      return;
+    }
+    try {
+      final results = await Future.wait([
+        widget.api.workflowAssets(_projectId),
+        widget.api.workflowRelations(_projectId),
+        widget.api.workflowDefinitions(_projectId),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _assets = results[0];
+        _relations = results[1];
+        _workflows = results[2];
+        _loading = false;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = error.toString();
+      });
+    }
+  }
+
+  String _value(dynamic item, String key, [String fallback = '']) =>
+      item is Map ? item[key]?.toString() ?? fallback : fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = _value(widget.project, 'name', 'Project');
+    final type = _value(widget.project, 'project_type', 'general').toUpperCase();
+    final description = _value(widget.project, 'description');
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('PROJECT'),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh',
+            onPressed: _loading ? null : _load,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 36),
+          children: [
+            _hero(name, type, description),
+            const SizedBox(height: 18),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 70),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_error != null)
+              _errorCard(_error!),
+            if (!_loading && _error == null) ...[
+              _metricRow(),
+              const SizedBox(height: 18),
+              _section('WORKFLOW', _workflowBody()),
+              const SizedBox(height: 14),
+              _section('ASSET GRAPH', _assetBody()),
+              const SizedBox(height: 14),
+              _section('RELATION GRAPH', _relationBody()),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _hero(String name, String type, String description) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: SageTheme.violet.withValues(alpha: .09),
+                    border: Border.all(
+                      color: SageTheme.violet.withValues(alpha: .35),
+                    ),
+                  ),
+                  child: const Icon(Icons.account_tree, color: SageTheme.violet),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(type, style: const TextStyle(
+                        fontSize: 9, letterSpacing: 1.6,
+                        color: SageTheme.violet, fontWeight: FontWeight.w800,
+                      )),
+                      const SizedBox(height: 4),
+                      Text(name, style: const TextStyle(
+                        fontSize: 23, fontWeight: FontWeight.w700,
+                      )),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 15),
+              Text(description, style: const TextStyle(
+                color: SageTheme.textSecondary, height: 1.45,
+              )),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _metricRow() {
+    return Row(
+      children: [
+        _metric('ASSETS', _assets.length),
+        const SizedBox(width: 8),
+        _metric('LINKS', _relations.length),
+        const SizedBox(width: 8),
+        _metric('FLOWS', _workflows.length),
+      ],
+    );
+  }
+
+  Widget _metric(String label, int value) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          child: Column(
+            children: [
+              Text('$value', style: const TextStyle(
+                fontSize: 21, fontWeight: FontWeight.w800,
+              )),
+              const SizedBox(height: 3),
+              Text(label, style: const TextStyle(
+                fontSize: 8, letterSpacing: 1.2,
+                color: SageTheme.textSecondary,
+              )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _section(String title, Widget body) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(
+              fontSize: 10, letterSpacing: 1.5,
+              fontWeight: FontWeight.w800, color: SageTheme.textSecondary,
+            )),
+            const SizedBox(height: 11),
+            body,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _workflowBody() {
+    if (_workflows.isEmpty) {
+      return const Text('No workflow has been attached yet.',
+          style: TextStyle(color: SageTheme.textSecondary));
+    }
+    return Column(
+      children: [
+        for (final workflow in _workflows) ...[
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.route, color: SageTheme.violet),
+            title: Text(_value(workflow, 'name', 'Workflow'),
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: Text(
+              '\${_value(workflow, 'workflow_type', 'workflow')} • '
+              '\${_value(workflow, 'current_stage', 'not started')}',
+            ),
+          ),
+          if (workflow != _workflows.last) const Divider(height: 1),
+        ],
+      ],
+    );
+  }
+
+  Widget _assetBody() {
+    if (_assets.isEmpty) {
+      return const Text(
+        'No assets yet. Create or import an asset to start the graph.',
+        style: TextStyle(color: SageTheme.textSecondary),
+      );
+    }
+    return Column(
+      children: [
+        for (final asset in _assets) ...[
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(_assetIcon(_value(asset, 'asset_type'))),
+            title: Text(_value(asset, 'name', 'Asset'),
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(
+              '\${_value(asset, 'asset_type', 'asset')} • '
+              '\${_value(asset, 'status', 'draft')}',
+            ),
+          ),
+          if (asset != _assets.last) const Divider(height: 1),
+        ],
+      ],
+    );
+  }
+
+  Widget _relationBody() {
+    if (_relations.isEmpty) {
+      return const Text('No asset relationships yet.',
+          style: TextStyle(color: SageTheme.textSecondary));
+    }
+    return Column(
+      children: [
+        for (final relation in _relations) ...[
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: const Icon(Icons.link, size: 18),
+            title: Text(
+              _value(relation, 'relation_type', 'relation').toUpperCase(),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+            ),
+            subtitle: Text(
+              '\${_value(relation, 'source_asset_id', 'source')} → '
+              '\${_value(relation, 'target_asset_id', 'target')}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (relation != _relations.last) const Divider(height: 1),
+        ],
+      ],
+    );
+  }
+
+  IconData _assetIcon(String type) {
+    final normalized = type.toLowerCase();
+    if (normalized.contains('video')) return Icons.movie_outlined;
+    if (normalized.contains('image')) return Icons.image_outlined;
+    if (normalized.contains('audio')) return Icons.graphic_eq;
+    if (normalized.contains('script') || normalized.contains('text')) return Icons.article_outlined;
+    if (normalized.contains('thumbnail')) return Icons.photo_size_select_large;
+    return Icons.insert_drive_file_outlined;
+  }
+
+  Widget _errorCard(String message) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline, color: SageTheme.failure),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+      ),
+    );
+  }
+}
