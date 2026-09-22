@@ -36,7 +36,7 @@ class _AgentApiClient extends http.BaseClient {
 void main() {
   testWidgets('Agent screen reports system check result', (tester) async {
     final client = _AgentApiClient();
-    final api = SageApi(client: client);
+    final api = SageApi(client: client, authToken: 'test-token');
     await tester.pumpWidget(MaterialApp(home: AgentScreen(api: api)));
     await tester.pump();
 
