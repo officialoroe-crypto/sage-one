@@ -46,3 +46,15 @@ def test_developer_login_is_disabled_by_default(monkeypatch):
         assert exc.status_code == 404
     else:
         raise AssertionError("Developer login must be disabled by default")
+
+
+def test_capability_validation_uses_stable_ids():
+    from identity.onboarding import validate_capabilities
+
+    assert validate_capabilities(["content", "learning", "content"]) == ["content", "learning"]
+    try:
+        validate_capabilities(["Content Creation"])
+    except ValueError as exc:
+        assert "Unknown onboarding capabilities" in str(exc)
+    else:
+        raise AssertionError("Human-facing capability labels must not be accepted as stored IDs")
