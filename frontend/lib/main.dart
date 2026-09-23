@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'core/sage_api.dart';
 import 'screens/agent.dart';
-import 'screens/auth_gate.dart';
+import 'screens/private_owner_gate.dart';
 import 'screens/command_center.dart';
 import 'screens/create.dart';
 import 'screens/project_detail.dart';
@@ -29,7 +29,7 @@ class SageOneApp extends StatelessWidget {
       theme: SageTheme.dark(),
       home: _api != null
           ? SageOneShell(api: _api)
-          : AuthGate(childBuilder: (_) => const SageOneShell()),
+          : const PrivateOwnerGate(),
     );
   }
 }
