@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/identity_client.dart';
-import 'main.dart';
-
 /// Private-first entry point.
 ///
 /// SAGE ONE currently runs as a single-owner local app. The older Google,
@@ -10,7 +8,9 @@ import 'main.dart';
 /// multi-user/public mode, but they are deliberately not part of the private
 /// app entry path.
 class PrivateOwnerGate extends StatefulWidget {
-  const PrivateOwnerGate({super.key});
+  const PrivateOwnerGate({required this.child, super.key});
+
+  final Widget child;
 
   @override
   State<PrivateOwnerGate> createState() => _PrivateOwnerGateState();
@@ -34,7 +34,7 @@ class _PrivateOwnerGateState extends State<PrivateOwnerGate> {
       }
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const SageOneShell()),
+        MaterialPageRoute(builder: (_) => child),
       );
     } catch (error) {
       if (mounted) {
