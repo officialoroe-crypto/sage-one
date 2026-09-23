@@ -26,7 +26,7 @@ class Settings:
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
-    DEVELOPER_MODE = os.getenv("SAGE_DEV_MODE", "false").strip().lower() in {
+    DEVELOPER_MODE = os.getenv("SAGE_DEV_MODE", "true").strip().lower() in {
         "1", "true", "yes", "on"
     }
     OWNER_AUTH_SUBJECT = os.getenv("SAGE_OWNER_AUTH_SUBJECT")
