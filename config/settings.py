@@ -26,7 +26,9 @@ class Settings:
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
-    # Private mode is the default only for development environments. Production\n    # deployments must opt in explicitly and never inherit local owner access.\n    PRIVATE_MODE = os.getenv(\n        "SAGE_PRIVATE_MODE", "true" if ENVIRONMENT == "development" else "false"\n    ).strip().lower() in {
+    # Private mode is the default only for development environments. Production
+    # deployments must opt in explicitly and never inherit local owner access.
+    PRIVATE_MODE = os.getenv(\n        "SAGE_PRIVATE_MODE", "true" if ENVIRONMENT == "development" else "false"\n    ).strip().lower() in {
         "1", "true", "yes", "on"
     }
     DEVELOPER_MODE = os.getenv(\n        "SAGE_DEV_MODE", "true" if PRIVATE_MODE else "false"\n    ).strip().lower() in {\n        "1", "true", "yes", "on"\n    }\n    OWNER_AUTH_SUBJECT = os.getenv("SAGE_OWNER_AUTH_SUBJECT")
