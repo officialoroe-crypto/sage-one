@@ -29,7 +29,7 @@ class SageOneApp extends StatelessWidget {
       theme: SageTheme.dark(),
       home: _api != null
           ? SageOneShell(api: _api)
-          : const PrivateOwnerGate(),
+          : const PrivateOwnerGate(child: SageOneShell()),
     );
   }
 }
