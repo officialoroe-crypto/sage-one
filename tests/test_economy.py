@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from database.connection import Base
 from economy.costs import cost_catalog, cost_for
 from economy.models import EvolutionProfile, SparkLedgerEntry, SparkWallet
-from economy.service import _tier_for, grant_sparks, record_achievement, spend_sparks, snapshot
+from economy.service import EVOLUTION_TIERS, _tier_for, grant_sparks, record_achievement, spend_sparks, snapshot
 
 
 @pytest.fixture
@@ -70,3 +70,11 @@ def test_premium_work_cost_catalog_is_stable():
     keys = [item["key"] for item in cost_catalog()]
     assert keys == ["research_deep", "mission_heavy", "verification", "content_generation"]
     assert cost_for("research_deep") == 25
+
+
+def test_evolution_tier_catalog_is_ordered_and_complete():
+    assert len(EVOLUTION_TIERS) == 13
+    thresholds = [threshold for threshold, _ in EVOLUTION_TIERS]
+    assert thresholds == sorted(set(thresholds))
+    assert EVOLUTION_TIERS[0] == (0, "Bronze")
+    assert EVOLUTION_TIERS[-1] == (100_000_000, "Californium Overlord")
