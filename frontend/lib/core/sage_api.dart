@@ -229,6 +229,26 @@ class SageApi {
         'definition': definition,
       });
 
+  Future<List<dynamic>> profileMemories() async {
+    final data = await _authorizedGet('/identity/memory');
+    final items = data['memories'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createProfileMemory({
+    required String memoryType,
+    required String content,
+  }) async =>
+      _authorizedPost('/identity/memory', {
+        'memory_type': memoryType,
+        'content': content,
+        'source': 'user',
+        'confirmed': true,
+      });
+
+  Future<Map<String, dynamic>> deleteProfileMemory(String memoryId) async =>
+      _authorizedDelete('/identity/memory/$memoryId');
+
   Future<Map<String, dynamic>> economyMe() async => _authorizedGet('/economy/me');
   Future<List<dynamic>> premiumWorkCosts() async {
     final data = await _authorizedGet('/economy/costs');
@@ -256,6 +276,14 @@ class SageApi {
       });
   Future<Map<String, dynamic>> ownerResetEvolution(String reason) async =>
       _authorizedPost('/economy/owner/evolution/reset', {'reason': reason});
+
+  Future<Map<String, dynamic>> _authorizedDelete(String path) async {
+    final token = await _identityToken();
+    final headers = <String, String>{};
+    if (token != null) headers['authorization'] = 'Bearer $token';
+    final response = await _client.delete(Uri.parse('$baseUrl$path'), headers: headers);
+    return _decode(response);
+  }
 
   Future<Map<String, dynamic>> _authorizedPost(String path, Map<String, dynamic> body) async {
     final token = await _identityToken();
