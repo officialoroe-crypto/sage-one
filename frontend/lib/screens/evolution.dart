@@ -72,7 +72,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
     final nextTier = progress['next_tier']?.toString();
     final nextThreshold = (progress['next_threshold'] as num?)?.toInt();
     final currentThreshold = (progress['current_threshold'] as num?)?.toInt() ?? 0;
-    final ratio = ((progress['ratio'] as num?)?.toDouble() ?? 0).clamp(0.0, 1.0);
+    final ratio = ((progress['ratio'] as num?)?.toDouble() ?? 0).clamp(0.0, 1.0).toDouble();
 
     return Scaffold(
       appBar: AppBar(
