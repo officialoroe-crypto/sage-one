@@ -1,6 +1,6 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-23
+Last updated: 2026-09-25
 Current main: 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd
 
 ## Identity
@@ -40,7 +40,7 @@ Implemented:
 - Durable notifications and Flutter task polling.
 - Authenticated Google identity foundation.
 - Phone OTP state machine + provider abstraction.
-- User profile/onboarding/memory foundation.
+- User profile/onboarding/memory foundation, plus private mobile memory review/add/delete UI.
 - Local phone-free Developer Mode and SAGE Owner Authority/God Mode.
 - Private-first owner mode: development defaults to a localhost-only owner session; Google/phone/KYC onboarding remains isolated for future multi-user mode.
 - Production environments do not inherit private/developer access by default.
@@ -102,7 +102,7 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
 ## Current private-first phase
-The immediate product target is a fast personal workspace for the owner: Command Center, Research, Tasks, Create, Projects/Workflow, memory, and execution. Public signup, KYC, Google/phone verification UX, multi-tenant ownership, and payment-provider integration are deferred until after real personal use.
+The immediate product target is a fast personal workspace for the owner: Command Center, Research, Tasks, Create, Projects/Workflow, memory, and execution. The private Flutter shell now exposes Memory from the More menu; its screen reads, adds, and deletes profile-scoped memories through the existing authenticated identity API. Public signup, KYC, Google/phone verification UX, multi-tenant ownership, and payment-provider integration are deferred until after real personal use.
 
 ## Remaining real-world blockers
 These require external configuration or are deliberate future scope:
