@@ -110,6 +110,7 @@ def grant_sparks(
     metadata: dict | None = None,
     *,
     commit: bool = True,
+    count_as_earned: bool = True,
 ) -> SparkLedgerEntry:
     if amount <= 0:
         raise ValueError("Spark grant amount must be positive")
@@ -127,7 +128,7 @@ def grant_sparks(
         .where(SparkWallet.owner_key == owner_key)
         .values(
             balance=SparkWallet.balance + amount,
-            lifetime_earned=SparkWallet.lifetime_earned + amount,
+            lifetime_earned=SparkWallet.lifetime_earned + (amount if count_as_earned else 0),
             updated_at=now,
         )
     )
@@ -336,6 +337,7 @@ def refund_premium_sparks(
             reference=_premium_refund_reference(operation_key),
             metadata={"operation_key": operation_key, "work_key": transaction.work_key},
             commit=False,
+            count_as_earned=False,
         )
         transaction.refund_ledger_id = ledger.id
         transaction.status = "refunded"
