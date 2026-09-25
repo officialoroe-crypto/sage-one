@@ -12,7 +12,7 @@ from economy.costs import cost_catalog
 from economy.owner import owner_audit, reset_evolution, reset_spark, set_evolution, set_spark
 from economy.service import (
     EVOLUTION_TIERS, evolution_simulation, get_evolution, grant_sparks, premium_transaction,
-    refund_premium_sparks, reserve_premium_sparks, settle_premium_sparks, snapshot, spend_sparks,
+    refund_premium_sparks, reserve_premium_work, settle_premium_sparks, snapshot, spend_sparks,
 )
 from identity.auth import authenticate_request
 
@@ -36,7 +36,6 @@ class VerifiedAchievementRequest(BaseModel):
 class PremiumTransactionRequest(BaseModel):
     operation_key: str = Field(min_length=1, max_length=200)
     work_key: str = Field(min_length=1, max_length=100)
-    amount: int = Field(gt=0, le=1_000_000_000)
     metadata: dict = Field(default_factory=dict)
 
 
@@ -226,8 +225,8 @@ def owner_premium_reserve(
 ):
     owner = _require_owner(claims)
     with SessionLocal() as db:
-        transaction = reserve_premium_sparks(
-            db, owner, request.operation_key, request.work_key, request.amount, request.metadata
+        transaction = reserve_premium_work(
+            db, owner, request.operation_key, request.work_key, request.metadata
         )
         return {"success": True, "transaction": _serialize_premium(transaction)}
 
