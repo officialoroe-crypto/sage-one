@@ -10,7 +10,10 @@ from database.connection import SessionLocal
 from economy.achievements import record_verified_achievement
 from economy.costs import cost_catalog
 from economy.owner import owner_audit, reset_evolution, reset_spark, set_evolution, set_spark
-from economy.service import EVOLUTION_TIERS, evolution_simulation, get_evolution, grant_sparks, snapshot, spend_sparks
+from economy.service import (
+    EVOLUTION_TIERS, evolution_simulation, get_evolution, grant_sparks, premium_transaction,
+    refund_premium_sparks, reserve_premium_sparks, settle_premium_sparks, snapshot, spend_sparks,
+)
 from identity.auth import authenticate_request
 
 router = APIRouter(prefix="/economy", tags=["economy"])
@@ -28,6 +31,18 @@ class VerifiedAchievementRequest(BaseModel):
     source_type: str = Field(min_length=1, max_length=100)
     source_id: str = Field(min_length=1, max_length=200)
     evidence: dict = Field(min_length=1)
+
+
+class PremiumTransactionRequest(BaseModel):
+    operation_key: str = Field(min_length=1, max_length=200)
+    work_key: str = Field(min_length=1, max_length=100)
+    amount: int = Field(gt=0, le=1_000_000_000)
+    metadata: dict = Field(default_factory=dict)
+
+
+class PremiumTransactionActionRequest(BaseModel):
+    operation_key: str = Field(min_length=1, max_length=200)
+    reason: str = Field(default="Premium operation failed", min_length=1, max_length=200)
 
 
 class OwnerSparkRequest(BaseModel):
@@ -54,6 +69,21 @@ class OwnerEvolutionSimulationRequest(BaseModel):
 def _owner(claims: dict) -> str:
     return f"{claims['auth_provider']}:{claims['auth_subject']}"
 
+
+
+def _serialize_premium(transaction):
+    return {
+        "id": transaction.id,
+        "operation_key": transaction.operation_key,
+        "work_key": transaction.work_key,
+        "amount": transaction.amount,
+        "status": transaction.status,
+        "spend_ledger_id": transaction.spend_ledger_id,
+        "refund_ledger_id": transaction.refund_ledger_id,
+        "created_at": transaction.created_at.isoformat(),
+        "settled_at": transaction.settled_at.isoformat() if transaction.settled_at else None,
+        "refunded_at": transaction.refunded_at.isoformat() if transaction.refunded_at else None,
+    }
 
 def _require_owner(claims: dict) -> str:
     if not claims.get("owner_mode", False):
@@ -186,6 +216,55 @@ def evolution_me(claims: dict = Depends(authenticate_request)):
             "tier": profile.tier,
             "stage": profile.stage,
         }
+
+
+
+@router.post("/owner/premium/reserve")
+def owner_premium_reserve(
+    request: PremiumTransactionRequest,
+    claims: dict = Depends(authenticate_request),
+):
+    owner = _require_owner(claims)
+    with SessionLocal() as db:
+        transaction = reserve_premium_sparks(
+            db, owner, request.operation_key, request.work_key, request.amount, request.metadata
+        )
+        return {"success": True, "transaction": _serialize_premium(transaction)}
+
+
+@router.post("/owner/premium/settle")
+def owner_premium_settle(
+    request: PremiumTransactionActionRequest,
+    claims: dict = Depends(authenticate_request),
+):
+    owner = _require_owner(claims)
+    with SessionLocal() as db:
+        transaction = settle_premium_sparks(db, owner, request.operation_key)
+        return {"success": True, "transaction": _serialize_premium(transaction)}
+
+
+@router.post("/owner/premium/refund")
+def owner_premium_refund(
+    request: PremiumTransactionActionRequest,
+    claims: dict = Depends(authenticate_request),
+):
+    owner = _require_owner(claims)
+    with SessionLocal() as db:
+        transaction = refund_premium_sparks(db, owner, request.operation_key, request.reason)
+        return {"success": True, "transaction": _serialize_premium(transaction)}
+
+
+@router.get("/owner/premium/{operation_key}")
+def owner_premium_get(
+    operation_key: str,
+    claims: dict = Depends(authenticate_request),
+):
+    owner = _require_owner(claims)
+    with SessionLocal() as db:
+        transaction = premium_transaction(db, owner, operation_key)
+        if transaction is None:
+            raise HTTPException(status_code=404, detail="Premium operation not found")
+        return {"success": True, "transaction": _serialize_premium(transaction)}
 
 
 @router.get("/owner/status")
