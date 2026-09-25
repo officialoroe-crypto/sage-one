@@ -13,6 +13,7 @@ import 'screens/research.dart';
 import 'screens/tasks.dart';
 import 'screens/world_intelligence.dart';
 import 'screens/owner_console.dart';
+import 'screens/memory.dart';
 import 'theme/sage_theme.dart';
 
 void main() => runApp(const SageOneApp());
@@ -102,6 +103,11 @@ class _SageOneShellState extends State<SageOneShell> {
               onTap: () => Navigator.pop(context, 4),
             ),
             ListTile(
+              leading: const Icon(Icons.psychology_alt_outlined),
+              title: const Text('Memory'),
+              onTap: () => Navigator.pop(context, 8),
+            ),
+            ListTile(
               leading: const Icon(Icons.smart_toy_outlined),
               title: const Text('Agent'),
               onTap: () => Navigator.pop(context, 5),
@@ -142,6 +148,7 @@ class _SageOneShellState extends State<SageOneShell> {
       AgentScreen(api: _api),
       WorldIntelligenceScreen(api: _api),
       OwnerConsoleScreen(api: _api),
+      MemoryScreen(api: _api),
     ];
 
     return Scaffold(
