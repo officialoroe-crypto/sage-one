@@ -14,6 +14,7 @@ import 'screens/tasks.dart';
 import 'screens/world_intelligence.dart';
 import 'screens/owner_console.dart';
 import 'screens/memory.dart';
+import 'screens/evolution.dart';
 import 'theme/sage_theme.dart';
 
 void main() => runApp(const SageOneApp());
@@ -108,6 +109,11 @@ class _SageOneShellState extends State<SageOneShell> {
               onTap: () => Navigator.pop(context, 8),
             ),
             ListTile(
+              leading: const Icon(Icons.auto_awesome),
+              title: const Text('Evolution'),
+              onTap: () => Navigator.pop(context, 9),
+            ),
+            ListTile(
               leading: const Icon(Icons.smart_toy_outlined),
               title: const Text('Agent'),
               onTap: () => Navigator.pop(context, 5),
@@ -149,6 +155,7 @@ class _SageOneShellState extends State<SageOneShell> {
       WorldIntelligenceScreen(api: _api),
       OwnerConsoleScreen(api: _api),
       MemoryScreen(api: _api),
+      EvolutionScreen(api: _api),
     ];
 
     return Scaffold(
