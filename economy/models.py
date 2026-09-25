@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Integer, String, Text
+from sqlalchemy import DateTime, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.connection import Base
@@ -46,3 +46,30 @@ class EvolutionProfile(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
+
+class PremiumSparkTransaction(Base):
+    """Idempotent reservation/settlement state for one premium operation."""
+
+    __tablename__ = "premium_spark_transactions"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_key",
+            "operation_key",
+            name="uq_premium_spark_operation",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid4()))
+    owner_key: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    operation_key: Mapped[str] = mapped_column(String, nullable=False)
+    work_key: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="reserved", index=True)
+    spend_ledger_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    refund_ledger_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    settled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    refunded_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
