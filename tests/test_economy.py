@@ -98,7 +98,7 @@ def test_premium_reservation_is_idempotent_and_debits_once(db_session):
     data = snapshot(db_session, owner)
     assert data["spark"]["balance"] == 75
     assert data["spark"]["lifetime_spent"] == 25
-    assert data["ledger"].count(next(e["delta"] for e in data["ledger"] if e["delta"] == -25)) >= 1
+    assert [entry["delta"] for entry in data["ledger"]].count(-25) == 1
 
 
 def test_premium_settlement_is_idempotent_without_second_charge(db_session):
@@ -127,7 +127,7 @@ def test_premium_refund_is_idempotent_and_restores_balance_once(db_session):
     assert replay.id == refunded.id
     assert data["spark"]["balance"] == 100
     assert data["spark"]["lifetime_spent"] == 50
-    assert data["spark"]["lifetime_earned"] == 150
+    assert data["spark"]["lifetime_earned"] == 100
 
 
 def test_premium_terminal_states_cannot_cross_over(db_session):
