@@ -143,3 +143,13 @@ def test_premium_terminal_states_cannot_cross_over(db_session):
     refund_premium_sparks(db_session, owner, "op-5")
     with pytest.raises(ValueError, match="cannot be settled"):
         settle_premium_sparks(db_session, owner, "op-5")
+
+
+def test_premium_work_uses_canonical_catalog_price(db_session):
+    owner = "google:premium-catalog"
+    grant_sparks(db_session, owner, 100, "welcome")
+    transaction = reserve_premium_work(
+        db_session, owner, "op-5", "research_deep",
+    )
+    assert transaction.amount == cost_for("research_deep")
+    assert snapshot(db_session, owner)["spark"]["balance"] == 75
