@@ -250,6 +250,11 @@ class SageApi {
       _authorizedDelete('/identity/memory/$memoryId');
 
   Future<Map<String, dynamic>> economyMe() async => _authorizedGet('/economy/me');
+  Future<List<dynamic>> evolutionTiers() async {
+    final data = await _authorizedGet('/economy/evolution/tiers');
+    final items = data['tiers'] ?? const [];
+    return items is List ? items : <dynamic>[];
+  }
   Future<List<dynamic>> premiumWorkCosts() async {
     final data = await _authorizedGet('/economy/costs');
     final items = data['costs'] ?? data['items'] ?? data;
