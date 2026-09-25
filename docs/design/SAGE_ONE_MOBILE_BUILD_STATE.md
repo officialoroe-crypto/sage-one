@@ -1,6 +1,6 @@
 # SAGE ONE — Mobile Design Build State
 
-Last updated: 2026-09-23
+Last updated: 2026-09-25
 
 ## Design source of truth
 
@@ -82,6 +82,12 @@ When the canonical logo asset is available to Figma, replace only the temporary 
 7. Add focused Flutter tests and let GitHub Actions perform the heavy validation.
 8. Update this document and PROJECT_STATE.md after each coherent batch.
 
+
+## Private-first memory management
+
+- Added a Memory destination under the app's More menu.
+- The screen lists profile-scoped memories, supports adding a typed memory, and asks for confirmation before deletion.
+- Flutter API calls use the existing authenticated `/identity/memory` endpoints; no new memory-learning automation or external sync was introduced.
 
 ## Persistent SAGE WORKFLOW graph foundation
 
