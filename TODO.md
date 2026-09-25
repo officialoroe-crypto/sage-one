@@ -125,7 +125,7 @@
 - [ ] Add production SMS/OTP provider.
 - [x] Expose secure authenticated onboarding/profile APIs through the mounted identity router.
 - [x] Build first-run Flutter onboarding flow.
-- [ ] Add user-visible memory management UI.
+- [x] Add user-visible memory management UI (view/add/delete in the private mobile app).
 - [ ] Add consent-driven auto-learning pipeline on top of profile memory.
 
 ## SAGE WORLD INTELLIGENCE
@@ -148,8 +148,8 @@
 
 ## SAGE WORKFLOW
 - [x] Define SAGE WORKFLOW connective architecture and content/asset/publishing model.
-- [ ] Add persistent project graph and asset relationships.
-- [ ] Build Create around persistent Content Projects.
+- [x] Add persistent project graph and asset relationships.
+- [x] Build Create around persistent Content Projects (project + initial content workflow creation).
 - [ ] Build permissioned publishing adapters.
 - [ ] Add analytics → improve feedback loop.
 
