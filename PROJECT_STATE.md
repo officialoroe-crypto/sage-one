@@ -84,7 +84,8 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Repeated operations with the same owner-scoped reference are idempotent.
 - Reusing a reference with a different amount is rejected.
 - Spending uses an atomic SQL balance >= amount update, preventing read/check/write overdraw races.
-- Premium execution charging/refund orchestration is still separate work and is not falsely marked complete.
+- Premium execution now has an atomic reservation → settle/refund lifecycle with owner-scoped idempotency keys. Reservations use the canonical Spark cost catalogue; refunds reverse the balance exactly once and do not inflate lifetime-earned Spark.
+- Premium transaction controls are owner-only development endpoints; actual premium execution still needs to call this lifecycle at the execution boundary.
 
 ## Web Reader security
 - Only HTTP/HTTPS URLs are accepted.
@@ -109,7 +110,7 @@ The immediate product target is a fast personal workspace for the owner: Command
 These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
-3. Premium execution Spark charge/refund orchestration.
+3. Wire premium Spark reservation/settlement into the actual premium execution boundary.
 4. Scheduled World Intelligence refresh trigger and source-quality policy.
 5. User-visible memory management and consent-driven auto-learning UX.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
