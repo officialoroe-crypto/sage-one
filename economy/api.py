@@ -10,7 +10,7 @@ from database.connection import SessionLocal
 from economy.achievements import record_verified_achievement
 from economy.costs import cost_catalog
 from economy.owner import owner_audit, reset_evolution, reset_spark, set_evolution, set_spark
-from economy.service import evolution_simulation, get_evolution, grant_sparks, snapshot, spend_sparks
+from economy.service import EVOLUTION_TIERS, evolution_simulation, get_evolution, grant_sparks, snapshot, spend_sparks
 from identity.auth import authenticate_request
 
 router = APIRouter(prefix="/economy", tags=["economy"])
@@ -161,6 +161,19 @@ def verified_evolution_achievement(
         return _record_verified(request, claims)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/evolution/tiers")
+def evolution_tiers(claims: dict = Depends(authenticate_request)):
+    """Return the canonical Evolution rank ladder and achievement thresholds."""
+    _owner(claims)
+    return {
+        "success": True,
+        "tiers": [
+            {"tier": tier, "threshold": threshold, "order": index + 1}
+            for index, (threshold, tier) in enumerate(EVOLUTION_TIERS)
+        ],
+    }
 
 
 @router.get("/evolution")

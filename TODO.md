@@ -169,6 +169,7 @@
 - [x] Add non-mutating Evolution simulation API using the authoritative achievement thresholds.
 - [x] Animate Evolution simulation in Owner/God Mode without mutating persisted Evolution state.
 - [x] Keep APPLY and RESET as explicit mutation controls.
+- [x] Add a Flutter Evolution rank-path screen backed by the canonical backend tier catalog and current achievement snapshot.
 - [ ] Add automated visual regression coverage for Evolution animation milestones.
 
 

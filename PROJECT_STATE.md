@@ -46,6 +46,7 @@ Implemented:
 - Production environments do not inherit private/developer access by default.
 - Owner Spark/Evolution controls and audit log.
 - Non-mutating Evolution simulation with authoritative thresholds and Flutter animation.
+- Flutter Evolution rank screen reads the canonical 13-rank names/thresholds from the authenticated `/economy/evolution/tiers` API; rank progress remains read-only and sourced from the economy snapshot.
 - Verified mission-task results settle into Evolution atomically and idempotently.
 - Web Reader redirect validation prevents automatic redirect-based private-network SSRF.
 - Web Reader extraction dependency is declared explicitly.
