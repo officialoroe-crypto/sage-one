@@ -4,9 +4,10 @@ import json
 from datetime import datetime, timezone
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from economy.models import EvolutionProfile, SparkLedgerEntry, SparkWallet
+from economy.models import EvolutionProfile, PremiumSparkTransaction, SparkLedgerEntry, SparkWallet
 
 EVOLUTION_TIERS = (
     (0, "Bronze"),
@@ -107,6 +108,8 @@ def grant_sparks(
     reason: str,
     reference: str | None = None,
     metadata: dict | None = None,
+    *,
+    commit: bool = True,
 ) -> SparkLedgerEntry:
     if amount <= 0:
         raise ValueError("Spark grant amount must be positive")
@@ -140,8 +143,10 @@ def grant_sparks(
         metadata_json=json.dumps(metadata or {}, sort_keys=True),
     )
     db.add(entry)
-    db.commit()
-    db.refresh(entry)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(entry)
     return entry
 
 
@@ -152,6 +157,8 @@ def spend_sparks(
     reason: str,
     reference: str | None = None,
     metadata: dict | None = None,
+    *,
+    commit: bool = True,
 ) -> SparkLedgerEntry:
     if amount <= 0:
         raise ValueError("Spark spend amount must be positive")
@@ -193,10 +200,165 @@ def spend_sparks(
         metadata_json=json.dumps(metadata or {}, sort_keys=True),
     )
     db.add(entry)
-    db.commit()
-    db.refresh(entry)
+    db.flush()
+    if commit:
+        db.commit()
+        db.refresh(entry)
     return entry
 
+
+
+def _premium_reference(operation_key: str) -> str:
+    return f"premium:{operation_key}"
+
+
+def _premium_refund_reference(operation_key: str) -> str:
+    return f"premium-refund:{operation_key}"
+
+
+def reserve_premium_sparks(
+    db: Session,
+    owner_key: str,
+    operation_key: str,
+    work_key: str,
+    amount: int,
+    metadata: dict | None = None,
+) -> PremiumSparkTransaction:
+    """Atomically reserve Spark for one premium operation."""
+    if not operation_key.strip():
+        raise ValueError("Premium operation key is required")
+    if amount <= 0:
+        raise ValueError("Premium reservation amount must be positive")
+
+    existing = db.scalar(
+        select(PremiumSparkTransaction).where(
+            PremiumSparkTransaction.owner_key == owner_key,
+            PremiumSparkTransaction.operation_key == operation_key,
+        )
+    )
+    if existing is not None:
+        if existing.work_key != work_key or existing.amount != amount:
+            raise ValueError("Premium operation key was already used with different work or amount")
+        return existing
+
+    transaction = PremiumSparkTransaction(
+        owner_key=owner_key,
+        operation_key=operation_key,
+        work_key=work_key,
+        amount=amount,
+        status="reserved",
+        metadata_json=json.dumps(metadata or {}, sort_keys=True),
+    )
+    db.add(transaction)
+    try:
+        db.flush()
+        ledger = spend_sparks(
+            db, owner_key, amount,
+            reason=f"Premium reserve: {work_key}",
+            reference=_premium_reference(operation_key),
+            metadata={"operation_key": operation_key, "work_key": work_key},
+            commit=False,
+        )
+        transaction.spend_ledger_id = ledger.id
+        db.commit()
+        db.refresh(transaction)
+        return transaction
+    except IntegrityError:
+        db.rollback()
+        existing = db.scalar(
+            select(PremiumSparkTransaction).where(
+                PremiumSparkTransaction.owner_key == owner_key,
+                PremiumSparkTransaction.operation_key == operation_key,
+            )
+        )
+        if existing is None:
+            raise
+        if existing.work_key != work_key or existing.amount != amount:
+            raise ValueError("Premium operation key was already used with different work or amount")
+        return existing
+    except Exception:
+        db.rollback()
+        raise
+
+
+def settle_premium_sparks(
+    db: Session,
+    owner_key: str,
+    operation_key: str,
+) -> PremiumSparkTransaction:
+    transaction = db.scalar(
+        select(PremiumSparkTransaction).where(
+            PremiumSparkTransaction.owner_key == owner_key,
+            PremiumSparkTransaction.operation_key == operation_key,
+        )
+    )
+    if transaction is None:
+        raise ValueError("Premium operation reservation was not found")
+    if transaction.status == "settled":
+        return transaction
+    if transaction.status == "refunded":
+        raise ValueError("A refunded premium operation cannot be settled")
+    if transaction.status != "reserved":
+        raise ValueError(f"Premium operation cannot settle from status: {transaction.status}")
+
+    transaction.status = "settled"
+    transaction.settled_at = _now()
+    db.commit()
+    db.refresh(transaction)
+    return transaction
+
+
+def refund_premium_sparks(
+    db: Session,
+    owner_key: str,
+    operation_key: str,
+    reason: str = "Premium operation failed",
+) -> PremiumSparkTransaction:
+    transaction = db.scalar(
+        select(PremiumSparkTransaction).where(
+            PremiumSparkTransaction.owner_key == owner_key,
+            PremiumSparkTransaction.operation_key == operation_key,
+        )
+    )
+    if transaction is None:
+        raise ValueError("Premium operation reservation was not found")
+    if transaction.status == "refunded":
+        return transaction
+    if transaction.status == "settled":
+        raise ValueError("A settled premium operation cannot be refunded")
+    if transaction.status != "reserved":
+        raise ValueError(f"Premium operation cannot refund from status: {transaction.status}")
+
+    try:
+        ledger = grant_sparks(
+            db, owner_key, transaction.amount,
+            reason=reason,
+            reference=_premium_refund_reference(operation_key),
+            metadata={"operation_key": operation_key, "work_key": transaction.work_key},
+            commit=False,
+        )
+        transaction.refund_ledger_id = ledger.id
+        transaction.status = "refunded"
+        transaction.refunded_at = _now()
+        db.commit()
+        db.refresh(transaction)
+        return transaction
+    except Exception:
+        db.rollback()
+        raise
+
+
+def premium_transaction(
+    db: Session,
+    owner_key: str,
+    operation_key: str,
+) -> PremiumSparkTransaction | None:
+    return db.scalar(
+        select(PremiumSparkTransaction).where(
+            PremiumSparkTransaction.owner_key == owner_key,
+            PremiumSparkTransaction.operation_key == operation_key,
+        )
+    )
 
 def record_achievement(
     db: Session,
