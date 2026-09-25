@@ -1,6 +1,6 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-22
+Last updated: 2026-09-25
 Current main: 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd
 
 ## Identity
@@ -40,8 +40,10 @@ Implemented:
 - Durable notifications and Flutter task polling.
 - Authenticated Google identity foundation.
 - Phone OTP state machine + provider abstraction.
-- User profile/onboarding/memory foundation.
+- User profile/onboarding/memory foundation, plus private mobile memory review/add/delete UI.
 - Local phone-free Developer Mode and SAGE Owner Authority/God Mode.
+- Private-first owner mode: development defaults to a localhost-only owner session; Google/phone/KYC onboarding remains isolated for future multi-user mode.
+- Production environments do not inherit private/developer access by default.
 - Owner Spark/Evolution controls and audit log.
 - Non-mutating Evolution simulation with authoritative thresholds and Flutter animation.
 - Verified mission-task results settle into Evolution atomically and idempotently.
@@ -52,6 +54,12 @@ Implemented:
 - World Intelligence status UI correctly represents self-modification as blocked.
 - Spark grants and spends now use idempotent references and atomic SQL balance mutations.
 - Android APK workflow accepts a device-reachable backend URL through workflow dispatch or the repository variable.
+
+## Private-first owner mode
+- SAGE ONE is currently being built for one owner before any public release work.
+- The mobile entry path skips Google sign-in, phone OTP, and onboarding; those identity capabilities remain in the codebase but are not on the private entry path.
+- Private/developer sessions remain localhost-only and still use a short-lived in-memory backend session token so normal authenticated APIs keep their ownership boundary.
+- Production does not default to private/developer access.
 
 ## Owner / God Mode
 - Local Developer Mode is localhost-only and requires no phone/SMS/OTP.
@@ -92,6 +100,9 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Flutter analyzer/tests passed.
 - The hardening PR was merged to main as 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd.
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
+
+## Current private-first phase
+The immediate product target is a fast personal workspace for the owner: Command Center, Research, Tasks, Create, Projects/Workflow, memory, and execution. The private Flutter shell now exposes Memory from the More menu; its screen reads, adds, and deletes profile-scoped memories through the existing authenticated identity API. Public signup, KYC, Google/phone verification UX, multi-tenant ownership, and payment-provider integration are deferred until after real personal use.
 
 ## Remaining real-world blockers
 These require external configuration or are deliberate future scope:

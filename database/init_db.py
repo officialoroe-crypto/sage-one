@@ -1,5 +1,6 @@
 from database.connection import Base, engine
 from database import models  # noqa: F401
+from workflows import models as workflow_models  # noqa: F401
 
 
 def initialize_database():

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/identity_client.dart';
+import '../theme/sage_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
@@ -36,8 +37,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _delivery;
   final Set<String> _capabilities = <String>{};
 
-  // Keep the UI contract aligned with identity/onboarding.py. The backend
-  // stores stable capability IDs, while the UI displays human-friendly labels.
   static const _capabilityOptions = <Map<String, String>>[
     {'id': 'personal_mentor', 'label': 'Personal mentor'},
     {'id': 'learning', 'label': 'Learn & improve skills'},
@@ -64,12 +63,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _ageController.dispose();
-    _intentController.dispose();
-    _otpController.dispose();
+    for (final c in [
+      _nameController,
+      _phoneController,
+      _addressController,
+      _ageController,
+      _intentController,
+      _otpController,
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -139,10 +142,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       setState(() => _error = 'Complete your name, address and help intent.');
       return;
     }
+
     setState(() {
       _saving = true;
       _error = null;
     });
+
     try {
       await widget.identity.completeOnboarding(
         name: _nameController.text.trim(),
@@ -161,12 +166,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  void _next() {
+  Future<void> _next() async {
     if (_step == 0) {
       if (_challengeId == null) {
-        _sendOtp();
+        await _sendOtp();
       } else {
-        _verifyOtp();
+        await _verifyOtp();
       }
       return;
     }
@@ -176,72 +181,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _error = null;
       });
     } else {
-      _complete();
+      await _complete();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        leading: _step == 0
-            ? null
-            : IconButton(
-                onPressed: _saving ? null : () => setState(() => _step--),
-                icon: const Icon(Icons.arrow_back),
-              ),
-        title: const Text('Set up SAGE'),
-        centerTitle: true,
-      ),
+      backgroundColor: SageTheme.voidBlack,
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 8, 22, 18),
-              child: Row(
-                children: List.generate(
-                  4,
-                  (index) => Expanded(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      height: 3,
-                      margin: EdgeInsets.only(right: index == 3 ? 0 : 6),
-                      decoration: BoxDecoration(
-                        color: index <= _step
-                            ? Colors.cyanAccent
-                            : Colors.white.withOpacity(.10),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            _topBar(),
+            _progress(),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(22, 8, 22, 24),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                 child: _page(),
               ),
             ),
             if (_error != null)
               Padding(
-                padding: const EdgeInsets.fromLTRB(22, 0, 22, 10),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                 child: Text(
                   _error!,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
                   textAlign: TextAlign.center,
+                  style: const TextStyle(color: SageTheme.failure, fontSize: 11),
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 8, 22, 20),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
               child: SizedBox(
                 width: double.infinity,
+                height: 54,
                 child: FilledButton(
-                  onPressed: (_saving || _sendingOtp || _verifyingOtp)
-                      ? null
-                      : _next,
+                  onPressed: (_saving || _sendingOtp || _verifyingOtp) ? null : _next,
                   child: Text(_buttonLabel),
                 ),
               ),
@@ -252,11 +226,71 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  Widget _topBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: SageTheme.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.35)),
+            ),
+            child: const Icon(Icons.auto_awesome, size: 18, color: SageTheme.cyan),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'SAGE ONE',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+          if (_step > 0)
+            IconButton(
+              onPressed: _saving ? null : () => setState(() => _step--),
+              icon: const Icon(Icons.arrow_back),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _progress() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+      child: Row(
+        children: List.generate(
+          4,
+          (index) => Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              height: 3,
+              margin: EdgeInsets.only(right: index == 3 ? 0 : 6),
+              decoration: BoxDecoration(
+                color: index <= _step
+                    ? SageTheme.cyan
+                    : Colors.white.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   String get _buttonLabel {
     if (_step == 0) {
       if (_sendingOtp) return 'Sending code…';
       if (_verifyingOtp) return 'Verifying…';
-      return _challengeId == null ? 'Send OTP' : 'Verify phone';
+      return _challengeId == null ? 'Send verification code' : 'Verify phone';
     }
     if (_saving) return 'Preparing your workspace…';
     return _step == 3 ? 'Enter SAGE ONE' : 'Continue';
@@ -275,235 +309,236 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  Widget _heading(String title, String subtitle) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.auto_awesome, color: Colors.cyanAccent, size: 34),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
+  Widget _heading(String eyebrow, String title, String subtitle, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: _step == 3 ? SageTheme.violet : SageTheme.cyan, size: 25),
+        const SizedBox(height: 14),
+        Text(
+          eyebrow,
+          style: const TextStyle(
+            color: SageTheme.cyan,
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.8,
           ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.white70, height: 1.45),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 28,
+            height: 1.08,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(height: 24),
-        ],
-      );
+        ),
+        const SizedBox(height: 9),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            color: SageTheme.textSecondary,
+            fontSize: 12,
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 22),
+      ],
+    );
+  }
 
   Widget _field(
     TextEditingController controller,
     String label,
     IconData icon, {
     TextInputType? keyboardType,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            labelText: label,
-            prefixIcon: Icon(icon),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 20),
         ),
-      );
+      ),
+    );
+  }
 
-  Widget _phonePage() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _heading(
-            'Verify your phone.',
-            'SAGE uses your verified number to protect your account and complete onboarding.',
-          ),
+  Widget _phonePage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _heading(
+          'SECURE IDENTITY',
+          'Verify your phone.',
+          'Your verified number protects your SAGE ONE identity and completes the first layer of your workspace.',
+          Icons.verified_user_outlined,
+        ),
+        _field(
+          _phoneController,
+          'Phone number',
+          Icons.phone_outlined,
+          keyboardType: TextInputType.phone,
+        ),
+        if (_challengeId != null) ...[
           _field(
-            _phoneController,
-            'Phone number',
-            Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
+            _otpController,
+            '6-digit verification code',
+            Icons.password_outlined,
+            keyboardType: TextInputType.number,
           ),
-          if (_challengeId != null) ...[
-            _field(
-              _otpController,
-              '6-digit code',
-              Icons.password_outlined,
-              keyboardType: TextInputType.number,
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: SageTheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.18)),
             ),
-            Text(
+            child: Text(
               _delivery == 'not_configured'
                   ? 'SMS delivery is not configured on this server yet.'
                   : 'Verification code sent to your number.',
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+              style: const TextStyle(color: SageTheme.textSecondary, fontSize: 11),
             ),
-            TextButton(
-              onPressed: _sendingOtp || _verifyingOtp ? null : _sendOtp,
-              child: const Text('Send a new code'),
-            ),
-          ],
-        ],
-      );
-
-  Widget _profilePage() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _heading(
-            'Complete your profile.',
-            'A few basics give SAGE the context it needs to become useful to you.',
           ),
-          _field(_nameController, 'Your name', Icons.person_outline),
-          _field(
-            _addressController,
-            'Address',
-            Icons.location_on_outlined,
-          ),
-          _field(
-            _ageController,
-            'Age',
-            Icons.cake_outlined,
-            keyboardType: TextInputType.number,
+          TextButton(
+            onPressed: _sendingOtp || _verifyingOtp ? null : _sendOtp,
+            child: const Text('Send a new code'),
           ),
         ],
-      );
+      ],
+    );
+  }
 
-  Widget _capabilitiesPage() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _heading(
-            'What should SAGE understand?',
-            'Choose your capabilities and tell SAGE what you want to accomplish.',
-          ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _capabilityOptions.map((option) {
-              final id = option['id']!;
-              final label = option['label']!;
-              final selected = _capabilities.contains(id);
-              return FilterChip(
-                selected: selected,
-                label: Text(label),
-                onSelected: (enabled) => setState(() {
-                  if (enabled) {
-                    _capabilities.add(id);
-                  } else {
-                    _capabilities.remove(id);
-                  }
-                }),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _intentController,
-            minLines: 5,
-            maxLines: 8,
-            decoration: InputDecoration(
-              labelText: 'What should SAGE help with?',
-              hintText: 'Build my business, create content, learn new skills…',
-              alignLabelWithHint: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-        ],
-      );
-
-  Widget _memoryPage() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _heading(
-            'Memory & privacy',
-            'Your information stays under your control. SAGE learns from private context only with your permission.',
-          ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(.035),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.blueAccent.withOpacity(.20),
-              ),
-            ),
-            child: const Column(
-              children: [
-                _PrivacyRow(
-                  icon: Icons.lock_outline,
-                  title: 'You control memory',
-                  text: 'You can view, edit or delete saved memories.',
-                ),
-                _PrivacyRow(
-                  icon: Icons.visibility_outlined,
-                  title: 'Learning is permission-based',
-                  text: 'SAGE does not silently turn private context into memory.',
-                ),
-                _PrivacyRow(
-                  icon: Icons.public,
-                  title: 'World Intelligence is separate',
-                  text: 'Public-world knowledge stays separate from personal memory.',
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          SwitchListTile.adaptive(
-            value: _memoryConsent,
-            onChanged: (value) => setState(() => _memoryConsent = value),
-            title: const Text(
-              'Allow SAGE to remember useful setup preferences',
-            ),
-            subtitle: const Text('You can change or delete memory later.'),
-            contentPadding: EdgeInsets.zero,
-          ),
-        ],
-      );
-}
-
-class _PrivacyRow extends StatelessWidget {
-  const _PrivacyRow({
-    required this.icon,
-    required this.title,
-    required this.text,
-  });
-
-  final IconData icon;
-  final String title;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: Colors.cyanAccent, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    text,
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Widget _profilePage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _heading(
+          'YOUR CONTEXT',
+          'Build your context.',
+          'A few basics give SAGE enough context to personalize planning, research and execution.',
+          Icons.person_outline,
         ),
-      );
+        _field(_nameController, 'Your name', Icons.badge_outlined),
+        _field(_addressController, 'Address', Icons.location_on_outlined),
+        _field(
+          _ageController,
+          'Age',
+          Icons.cake_outlined,
+          keyboardType: TextInputType.number,
+        ),
+      ],
+    );
+  }
+
+  Widget _capabilitiesPage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _heading(
+          'SAGE CONFIGURATION',
+          'What should SAGE understand?',
+          'Choose the areas where you want SAGE to become your mentor and execution partner.',
+          Icons.hub_outlined,
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _capabilityOptions.map((option) {
+            final id = option['id']!;
+            final selected = _capabilities.contains(id);
+            return FilterChip(
+              selected: selected,
+              label: Text(option['label']!),
+              onSelected: (enabled) => setState(() {
+                if (enabled) {
+                  _capabilities.add(id);
+                } else {
+                  _capabilities.remove(id);
+                }
+              }),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 18),
+        TextField(
+          controller: _intentController,
+          minLines: 5,
+          maxLines: 8,
+          decoration: const InputDecoration(
+            labelText: 'What should SAGE help with?',
+            hintText: 'Tell SAGE the outcomes you want to work toward…',
+            alignLabelWithHint: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _memoryPage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _heading(
+          'PRIVATE BY DEFAULT',
+          'Your memory. Your control.',
+          'SAGE can remember useful context, but permission comes first.',
+          Icons.lock_outline,
+        ),
+        for (final item in const [
+          (
+            'YOU CONTROL MEMORY',
+            'View, edit or delete saved memories.',
+            Icons.tune_outlined,
+          ),
+          (
+            'NO SILENT LEARNING',
+            'Private context is not silently turned into memory.',
+            Icons.visibility_off_outlined,
+          ),
+          (
+            'WORLD INTELLIGENCE IS SEPARATE',
+            'Public-world knowledge stays separate from personal memory.',
+            Icons.public_outlined,
+          ),
+        ])
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Card(
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                leading: Icon(item.$3, color: SageTheme.violet, size: 20),
+                title: Text(
+                  item.$1,
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: .7),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    item.$2,
+                    style: const TextStyle(color: SageTheme.textSecondary, fontSize: 11, height: 1.35),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _memoryConsent,
+          onChanged: (value) => setState(() => _memoryConsent = value),
+          title: const Text(
+            'Allow SAGE to remember useful setup preferences',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          subtitle: const Text(
+            'You can change or delete memory later.',
+            style: TextStyle(fontSize: 10),
+          ),
+        ),
+      ],
+    );
+  }
 }

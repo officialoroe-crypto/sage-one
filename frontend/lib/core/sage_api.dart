@@ -44,19 +44,12 @@ class SageApi {
   Future<Map<String, dynamic>> submitBackground(String prompt) async {
     final data = await _authorizedPost('/execute/background', {'goal': prompt});
     final task = data['task'];
-    if (task is Map) {
-      data['task_id'] = task['id'] ?? task['task_id'];
-    }
+    if (task is Map) data['task_id'] = task['id'] ?? task['task_id'];
     return data;
   }
 
-  Future<Map<String, dynamic>> workerHealth() async {
-    return _authorizedGet('/worker/health');
-  }
-
-  Future<Map<String, dynamic>> brainHealth() async {
-    return _authorizedGet('/brain/health');
-  }
+  Future<Map<String, dynamic>> workerHealth() async => _authorizedGet('/worker/health');
+  Future<Map<String, dynamic>> brainHealth() async => _authorizedGet('/brain/health');
 
   Future<List<dynamic>> tasks() async {
     final data = await _authorizedGet('/tasks');
@@ -64,13 +57,10 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
-  Future<Map<String, dynamic>> cancelTask(String taskId) async {
-    return _authorizedPost('/tasks/$taskId/cancel', <String, dynamic>{});
-  }
+  Future<Map<String, dynamic>> cancelTask(String taskId) async =>
+      _authorizedPost('/tasks/$taskId/cancel', <String, dynamic>{});
 
-  Future<Map<String, dynamic>> task(String taskId) async {
-    return _authorizedGet('/tasks/$taskId');
-  }
+  Future<Map<String, dynamic>> task(String taskId) async => _authorizedGet('/tasks/$taskId');
 
   Future<List<dynamic>> notifications({bool unreadOnly = false, int limit = 50}) async {
     final uri = Uri.parse('$baseUrl/notifications').replace(
@@ -84,19 +74,15 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
-  Future<Map<String, dynamic>> markNotificationRead(String notificationId) async {
-    return _authorizedPost('/notifications/$notificationId/read', <String, dynamic>{});
-  }
+  Future<Map<String, dynamic>> markNotificationRead(String notificationId) async =>
+      _authorizedPost('/notifications/$notificationId/read', <String, dynamic>{});
 
-  Future<Map<String, dynamic>> markAllNotificationsRead() async {
-    return _authorizedPost('/notifications/read-all', <String, dynamic>{});
-  }
+  Future<Map<String, dynamic>> markAllNotificationsRead() async =>
+      _authorizedPost('/notifications/read-all', <String, dynamic>{});
 
   Future<List<dynamic>> researchHistory({String? sessionId, int limit = 20}) async {
     final arguments = <String, dynamic>{'limit': limit};
-    if (sessionId != null && sessionId.isNotEmpty) {
-      arguments['session_id'] = sessionId;
-    }
+    if (sessionId != null && sessionId.isNotEmpty) arguments['session_id'] = sessionId;
     final data = await _executeTool('research_list', arguments);
     final items = data['result'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
@@ -114,9 +100,7 @@ class SageApi {
     return value is Map<String, dynamic> ? value : null;
   }
 
-  Future<Map<String, dynamic>> worldStatus() async {
-    return _authorizedGet('/world/status');
-  }
+  Future<Map<String, dynamic>> worldStatus() async => _authorizedGet('/world/status');
 
   Future<List<dynamic>> worldKnowledge({int limit = 20}) async {
     final uri = Uri.parse('$baseUrl/world/knowledge').replace(
@@ -133,95 +117,206 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
-  Future<Map<String, dynamic>> refreshWorld({List<String>? topics}) async {
-    return _authorizedPost('/world/refresh', {'topics': topics ?? <String>[]});
-  }
+  Future<Map<String, dynamic>> refreshWorld({List<String>? topics}) async =>
+      _authorizedPost('/world/refresh', {'topics': topics ?? <String>[]});
 
-  Future<Map<String, dynamic>> ownerStatus() async => _authorizedGet('/economy/owner/status');
-
-  Future<List<dynamic>> ownerAudit({int limit = 100}) async {
-    final data = await _authorizedGet('/economy/owner/audit?limit=$limit');
-    final items = data['events'] ?? const [];
+  Future<List<dynamic>> workflowWorkspaces() async {
+    final data = await _authorizedGet('/workflow/workspaces');
+    final items = data['workspaces'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
   }
 
-  Future<Map<String, dynamic>> ownerSetSpark(int amount, String reason) async =>
-      _authorizedPost('/economy/owner/spark/set', {'amount': amount, 'reason': reason});
-  Future<Map<String, dynamic>> ownerResetSpark(String reason) async =>
-      _authorizedPost('/economy/owner/spark/reset', {'reason': reason});
-  Future<Map<String, dynamic>> ownerSetEvolution(int achievement, String tier, String stage, String reason) async =>
-      _authorizedPost('/economy/owner/evolution/set', {'lifetime_achievement': achievement, 'tier': tier, 'stage': stage, 'reason': reason});
-  Future<Map<String, dynamic>> ownerSimulateEvolution(int achievement, {int durationMs = 3000}) async =>
-      _authorizedPost('/economy/owner/evolution/simulate', {'target_achievement': achievement, 'duration_ms': durationMs});
-  Future<Map<String, dynamic>> ownerResetEvolution(String reason) async =>
-      _authorizedPost('/economy/owner/evolution/reset', {'reason': reason});
+  Future<Map<String, dynamic>> createWorkflowWorkspace({
+    required String name,
+    required String slug,
+    String workspaceType = 'personal',
+    Map<String, dynamic>? metadata,
+  }) async =>
+      _authorizedPost('/workflow/workspaces', {
+        'name': name,
+        'slug': slug,
+        'workspace_type': workspaceType,
+        'metadata': metadata ?? <String, dynamic>{},
+      });
 
-  Future<Map<String, dynamic>> economyMe() async {
-    return _authorizedGet('/economy/me');
+  Future<List<dynamic>> workflowProjects(String workspaceId) async {
+    final data = await _authorizedGet('/workflow/workspaces/$workspaceId/projects');
+    final items = data['projects'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
   }
 
+  Future<Map<String, dynamic>> createWorkflowProject({
+    required String workspaceId,
+    required String name,
+    required String projectType,
+    String? description,
+    Map<String, dynamic>? metadata,
+  }) async =>
+      _authorizedPost('/workflow/workspaces/$workspaceId/projects', {
+        'name': name,
+        'project_type': projectType,
+        'description': description,
+        'metadata': metadata ?? <String, dynamic>{},
+      });
+
+  Future<List<dynamic>> workflowAssets(String projectId) async {
+    final data = await _authorizedGet('/workflow/projects/$projectId/assets');
+    final items = data['assets'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createWorkflowAsset({
+    required String projectId,
+    required String name,
+    required String assetType,
+    String? parentAssetId,
+    String status = 'draft',
+    String? path,
+    String? uri,
+    String? mimeType,
+    String? checksum,
+    Map<String, dynamic>? metadata,
+  }) async =>
+      _authorizedPost('/workflow/projects/$projectId/assets', {
+        'name': name,
+        'asset_type': assetType,
+        'parent_asset_id': parentAssetId,
+        'status': status,
+        'path': path,
+        'uri': uri,
+        'mime_type': mimeType,
+        'checksum': checksum,
+        'metadata': metadata ?? <String, dynamic>{},
+      });
+
+  Future<List<dynamic>> workflowRelations(String projectId) async {
+    final data = await _authorizedGet('/workflow/projects/$projectId/relations');
+    final items = data['relations'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createWorkflowRelation({
+    required String projectId,
+    required String sourceAssetId,
+    required String targetAssetId,
+    required String relationType,
+    Map<String, dynamic>? metadata,
+  }) async =>
+      _authorizedPost('/workflow/projects/$projectId/relations', {
+        'source_asset_id': sourceAssetId,
+        'target_asset_id': targetAssetId,
+        'relation_type': relationType,
+        'metadata': metadata ?? <String, dynamic>{},
+      });
+
+  Future<List<dynamic>> workflowDefinitions(String projectId) async {
+    final data = await _authorizedGet('/workflow/projects/$projectId/workflows');
+    final items = data['workflows'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createWorkflow({
+    required String projectId,
+    required String name,
+    required String workflowType,
+    required Map<String, dynamic> definition,
+    String? currentStage,
+  }) async =>
+      _authorizedPost('/workflow/projects/$projectId/workflows', {
+        'name': name,
+        'workflow_type': workflowType,
+        'current_stage': currentStage,
+        'definition': definition,
+      });
+
+  Future<List<dynamic>> profileMemories() async {
+    final data = await _authorizedGet('/identity/memory');
+    final items = data['memories'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createProfileMemory({
+    required String memoryType,
+    required String content,
+  }) async =>
+      _authorizedPost('/identity/memory', {
+        'memory_type': memoryType,
+        'content': content,
+        'source': 'user',
+        'confirmed': true,
+      });
+
+  Future<Map<String, dynamic>> deleteProfileMemory(String memoryId) async =>
+      _authorizedDelete('/identity/memory/$memoryId');
+
+  Future<Map<String, dynamic>> economyMe() async => _authorizedGet('/economy/me');
   Future<List<dynamic>> premiumWorkCosts() async {
     final data = await _authorizedGet('/economy/costs');
     final items = data['costs'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
   }
 
-  Future<Map<String, dynamic>> _authorizedPost(
-    String path,
-    Map<String, dynamic> body,
-  ) async {
+  Future<Map<String, dynamic>> ownerStatus() async => _authorizedGet('/economy/owner/status');
+  Future<List<dynamic>> ownerAudit({int limit = 100}) async {
+    final data = await _authorizedGet('/economy/owner/audit?limit=$limit');
+    final items = data['events'] ?? const [];
+    return items is List ? items : <dynamic>[];
+  }
+  Future<Map<String, dynamic>> ownerSetSpark(int amount, String reason) async =>
+      _authorizedPost('/economy/owner/spark/set', {'amount': amount, 'reason': reason});
+  Future<Map<String, dynamic>> ownerResetSpark(String reason) async =>
+      _authorizedPost('/economy/owner/spark/reset', {'reason': reason});
+  Future<Map<String, dynamic>> ownerSetEvolution(int achievement, String tier, String stage, String reason) async =>
+      _authorizedPost('/economy/owner/evolution/set', {
+        'lifetime_achievement': achievement, 'tier': tier, 'stage': stage, 'reason': reason,
+      });
+  Future<Map<String, dynamic>> ownerSimulateEvolution(int achievement, {int durationMs = 3000}) async =>
+      _authorizedPost('/economy/owner/evolution/simulate', {
+        'target_achievement': achievement, 'duration_ms': durationMs,
+      });
+  Future<Map<String, dynamic>> ownerResetEvolution(String reason) async =>
+      _authorizedPost('/economy/owner/evolution/reset', {'reason': reason});
+
+  Future<Map<String, dynamic>> _authorizedDelete(String path) async {
     final token = await _identityToken();
-    final headers = <String, String>{
-      'content-type': 'application/json',
-    };
-    if (token != null) {
-      headers['authorization'] = 'Bearer $token';
-    }
+    final headers = <String, String>{};
+    if (token != null) headers['authorization'] = 'Bearer $token';
+    final response = await _client.delete(Uri.parse('$baseUrl$path'), headers: headers);
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> _authorizedPost(String path, Map<String, dynamic> body) async {
+    final token = await _identityToken();
+    final headers = <String, String>{'content-type': 'application/json'};
+    if (token != null) headers['authorization'] = 'Bearer $token';
     final response = await _client.post(
-      Uri.parse('$baseUrl$path'),
-      headers: headers,
-      body: jsonEncode(body),
+      Uri.parse('$baseUrl$path'), headers: headers, body: jsonEncode(body),
     );
     return _decode(response);
   }
 
   Future<String?> _identityToken() async {
-    if (_authToken != null && _authToken.isNotEmpty) {
-      return _authToken;
-    }
-
+    if (_authToken != null && _authToken.isNotEmpty) return _authToken;
     String? token;
     try {
       token = await _storage.read(key: 'sage.google.id_token') ??
           await _storage.read(key: 'sage.identity.token');
     } catch (_) {
-      // Flutter widget tests and first-run local development may not have a
-      // platform secure-storage implementation available yet.
       token = null;
     }
-    if (token != null && token.isNotEmpty) {
-      return token;
-    }
-
+    if (token != null && token.isNotEmpty) return token;
     final host = Uri.parse(baseUrl).host;
-    if (host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2') {
-      // Explicit local Developer Mode can run without a persisted token.
-      return null;
-    }
-
+    if (host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2') return null;
     throw Exception('SAGE identity session is missing. Sign in again.');
   }
 
-  Future<Map<String, dynamic>> _authorizedGet(String path) async {
-    return _authorizedGetUri(Uri.parse('$baseUrl$path'));
-  }
+  Future<Map<String, dynamic>> _authorizedGet(String path) async =>
+      _authorizedGetUri(Uri.parse('$baseUrl$path'));
 
   Future<Map<String, dynamic>> _authorizedGetUri(Uri uri) async {
     final token = await _identityToken();
     final headers = <String, String>{};
-    if (token != null) {
-      headers['authorization'] = 'Bearer $token';
-    }
+    if (token != null) headers['authorization'] = 'Bearer $token';
     final response = await _client.get(uri, headers: headers);
     return _decode(response);
   }
@@ -238,17 +333,13 @@ class SageApi {
     );
     final token = await _identityToken();
     final headers = <String, String>{};
-    if (token != null) {
-      headers['authorization'] = 'Bearer $token';
-    }
+    if (token != null) headers['authorization'] = 'Bearer $token';
     final response = await _client.post(uri, headers: headers);
     return _decode(response);
   }
 
   Map<String, dynamic> _decode(http.Response response) {
-    final decoded = response.body.isEmpty
-        ? <String, dynamic>{}
-        : jsonDecode(response.body);
+    final decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
     final body = decoded is Map
         ? Map<String, dynamic>.from(decoded)
         : <String, dynamic>{'data': decoded};

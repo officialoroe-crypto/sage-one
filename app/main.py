@@ -28,6 +28,7 @@ from missions.api import router as mission_api_router
 from identity.api import router as identity_api_router
 from world_intelligence.api import router as world_api_router
 from economy.api import router as economy_api_router
+from workflows.api import router as workflow_api_router
 from app.worker_service import worker_service
 from config.settings import settings
 from identity.auth import authenticate_request
@@ -126,6 +127,7 @@ app.include_router(mission_api_router)
 app.include_router(identity_api_router)
 app.include_router(world_api_router)
 app.include_router(economy_api_router)
+app.include_router(workflow_api_router)
 
 
 # ============================================================
