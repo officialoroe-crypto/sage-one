@@ -7,6 +7,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from economy.costs import cost_for
 from economy.models import EvolutionProfile, PremiumSparkTransaction, SparkLedgerEntry, SparkWallet
 
 EVOLUTION_TIERS = (
@@ -280,6 +281,25 @@ def reserve_premium_sparks(
     except Exception:
         db.rollback()
         raise
+
+
+
+def reserve_premium_work(
+    db: Session,
+    owner_key: str,
+    operation_key: str,
+    work_key: str,
+    metadata: dict | None = None,
+) -> PremiumSparkTransaction:
+    """Reserve the catalog price for a named premium work type."""
+    return reserve_premium_sparks(
+        db,
+        owner_key,
+        operation_key,
+        work_key,
+        cost_for(work_key),
+        metadata,
+    )
 
 
 def settle_premium_sparks(
