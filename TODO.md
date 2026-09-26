@@ -191,7 +191,8 @@
 - [x] Make the Android development build configurable for the Huawei P40 USB/ADB workflow.
 - [ ] Add production SMS provider.
 - [ ] Add Google-token/session refresh handling for long-lived authenticated sessions.
-- [ ] Wire Spark costs into the premium-work execution settlement path.
+- [x] Build idempotent Spark reservation, settlement, and refund primitives bound to the canonical premium cost catalogue.
+- [ ] Wire Spark reservations into the actual premium-work execution settlement path.
 - [ ] Add scheduled World Intelligence refresh triggering.
 - [ ] Add source-quality/domain policy for World Intelligence refresh.
 - [ ] Add full multi-tenant data ownership if SAGE ONE is ever offered as a shared public service.
