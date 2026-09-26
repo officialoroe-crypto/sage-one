@@ -7,7 +7,7 @@ from economy.costs import cost_catalog, cost_for
 from economy.models import EvolutionProfile, PremiumSparkTransaction, SparkLedgerEntry, SparkWallet
 from economy.service import (
     EVOLUTION_TIERS, _tier_for, grant_sparks, record_achievement, refund_premium_sparks,
-    reserve_premium_sparks, settle_premium_sparks, spend_sparks, snapshot,
+    reserve_premium_sparks, reserve_premium_work, settle_premium_sparks, spend_sparks, snapshot,
 )
 
 
