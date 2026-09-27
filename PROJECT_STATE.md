@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
 Last updated: 2026-09-27
-Current main: 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd
+Current main: a6781834edddf969eb01ac5f976dd0be79686ed6
 
 ## Identity
 - Project: SAGE ONE
@@ -101,7 +101,7 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Python job passed.
 - Flutter analyzer/tests passed.
 - The hardening PR was merged to main as 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd.
-- Premium durable task integration was merged in PR #79. A focused regression suite is being added on branch `test/premium-task-lifecycle-recovery`; CI status is pending.
+- Premium durable task integration was merged in PR #79. Worker recovery/migration regression tests were merged in PR #80 after SAGE CI passed (Python and Flutter). Premium endpoint owner-boundary tests are now being added in PR #81; CI is pending.
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
 ## Current private-first phase
@@ -111,7 +111,7 @@ The immediate product target is a fast personal workspace for the owner: Command
 These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
-3. Validate the premium task lifecycle against a real configured local database and exercise the full API-to-worker flow; the regression suite now covers worker success, retry idempotency, terminal refunds, reconciliation, and migration repeatability.
+3. Validate the premium task lifecycle against a real configured local database and exercise the full API-to-worker flow. Regression coverage now includes worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, and premium endpoint owner/catalog boundaries.
 4. Scheduled World Intelligence refresh trigger and source-quality policy.
 5. User-visible memory management and consent-driven auto-learning UX.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
