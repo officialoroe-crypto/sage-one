@@ -146,7 +146,7 @@ class TaskEngine:
 
             db.commit()
             task = repository.get_task(db, task_id)
-            return self.serialize(task) if task else None
+            return self.serialize(task, include_owner=True) if task else None
         finally:
             db.close()
 
@@ -299,8 +299,8 @@ class TaskEngine:
         finally:
             db.close()
 
-    def serialize(self, task):
-        return {
+    def serialize(self, task, *, include_owner: bool = False):
+        payload = {
             "id": task.id,
             "title": task.title,
             "description": task.description,
@@ -327,6 +327,9 @@ class TaskEngine:
             "started_at": task.started_at.isoformat() if task.started_at else None,
             "completed_at": task.completed_at.isoformat() if task.completed_at else None,
         }
+        if include_owner:
+            payload["owner_key"] = task.owner_key
+        return payload
 
 
 tasks = TaskEngine()

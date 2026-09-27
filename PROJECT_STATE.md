@@ -111,7 +111,7 @@ The immediate product target is a fast personal workspace for the owner: Command
 These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
-3. Validate the premium task lifecycle against a real configured local database and exercise the full API-to-worker flow. Regression coverage now includes worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, and premium endpoint owner/catalog boundaries.
+3. Validate the premium task lifecycle against the configured local database and exercise the real provider-backed API-to-worker flow. Regression coverage includes worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, and premium endpoint owner/catalog boundaries; the isolated API-to-worker end-to-end test is validating the trusted owner-key handoff and full settlement path.
 4. Scheduled World Intelligence refresh trigger and source-quality policy.
 5. User-visible memory management and consent-driven auto-learning UX.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
