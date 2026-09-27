@@ -1,6 +1,6 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-25
+Last updated: 2026-09-27
 Current main: 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd
 
 ## Identity
@@ -85,7 +85,7 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Reusing a reference with a different amount is rejected.
 - Spending uses an atomic SQL balance >= amount update, preventing read/check/write overdraw races.
 - Premium execution now has an atomic reservation → settle/refund lifecycle with owner-scoped idempotency keys. Reservations use the canonical Spark cost catalogue; refunds reverse the balance exactly once and do not inflate lifetime-earned Spark.
-- Premium transaction controls are owner-only development endpoints; actual premium execution still needs to call this lifecycle at the execution boundary.
+- Premium transaction controls are owner-only development endpoints. Durable premium task creation is owner-authenticated and derives the owner key from trusted claims; the worker reserves catalog-priced Spark before execution, settles on completion, and refunds terminal failure/cancellation. A worker reconciliation pass repairs reserved transactions for terminal tasks after a crash. Retry attempts reuse the same task-scoped idempotency key.
 
 ## Web Reader security
 - Only HTTP/HTTPS URLs are accepted.
@@ -101,6 +101,7 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Python job passed.
 - Flutter analyzer/tests passed.
 - The hardening PR was merged to main as 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd.
+- Premium durable task integration was merged in PR #79. A focused regression suite is being added on branch `test/premium-task-lifecycle-recovery`; CI status is pending.
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
 ## Current private-first phase
@@ -110,7 +111,7 @@ The immediate product target is a fast personal workspace for the owner: Command
 These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
-3. Wire premium Spark reservation/settlement into the actual premium execution boundary.
+3. Validate the premium task lifecycle against a real configured local database and exercise the full API-to-worker flow; the regression suite now covers worker success, retry idempotency, terminal refunds, reconciliation, and migration repeatability.
 4. Scheduled World Intelligence refresh trigger and source-quality policy.
 5. User-visible memory management and consent-driven auto-learning UX.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
