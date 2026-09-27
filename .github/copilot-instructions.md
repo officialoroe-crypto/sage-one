@@ -26,3 +26,11 @@ Use static checks and unit tests first. Integration/live provider tests should b
 ## Security and authority
 
 Never silently expand permissions. Never spend money, deploy, publish packages, push remote Git changes, or delete important data without explicit owner authorization. Development automation may inspect, create, and replace approved source/test files, but remote Git operations remain an approval boundary.
+
+
+## Shared owner memory contract
+
+- Read `memory/CHATGPT_OS.md` and `memory/OWNER_MEMORY_MODEL.md` when work involves owner interaction behavior, memory, continuity, or user identity.
+- SAGE ONE is currently private-first and owner-scoped. Owner preferences and memories must never be treated as global defaults for future users.
+- The public repository stores the memory contract/schema, not raw private conversations, secrets, credentials, or sensitive owner data.
+- Runtime memory must enforce user/owner scope at the data-access boundary.
