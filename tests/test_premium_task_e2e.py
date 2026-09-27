@@ -3,12 +3,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
-from app import main as main_module
 from app import worker as worker_module
 from app.main import _require_owner, app
 from app.worker import SageWorker
 from database.connection import Base
 from database.models import Task
+from tasks import engine as task_engine
 from economy.models import (
     EvolutionProfile,
     PremiumSparkTransaction,
@@ -16,7 +16,6 @@ from economy.models import (
     SparkWallet,
 )
 from economy.service import grant_sparks, premium_transaction, snapshot
-from identity.auth import authenticate_request
 
 
 client = TestClient(app)
@@ -39,7 +38,7 @@ def test_premium_task_api_to_worker_settles_spark_end_to_end(monkeypatch):
         ],
     )
     session_factory = sessionmaker(bind=engine, expire_on_commit=False)
-    monkeypatch.setattr("tasks.engine.SessionLocal", session_factory)
+    monkeypatch.setattr(task_engine, "SessionLocal", session_factory)
     monkeypatch.setattr(worker_module, "SessionLocal", session_factory)
 
     claims = {
