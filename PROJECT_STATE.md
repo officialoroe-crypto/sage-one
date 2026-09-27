@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
 Last updated: 2026-09-27
-Current main: c207367bab306010b9821e1c6c54c99465b3d4b2
+Current main: fbc5b1c5d0949a17ad3fb0fc2b662e1e24dc1682
 
 ## Identity
 - Project: SAGE ONE
@@ -101,7 +101,7 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Python job passed.
 - Flutter analyzer/tests passed.
 - The hardening PR was merged to main as 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd.
-- Premium durable task integration was merged in PR #79. Worker recovery/migration regression tests were merged in PR #80 after SAGE CI passed (Python and Flutter). Premium endpoint owner-boundary tests are now being added in PR #81; CI is pending.
+- Premium durable task integration was merged in PR #79. Worker recovery/migration tests passed CI and were merged in PR #80; owner/catalog boundary tests passed CI and were merged in PR #81; the isolated API-to-worker end-to-end test and internal-only owner-key handoff fix passed CI and were merged in PR #82. Project-state validation updates were merged in PR #83.
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
 ## Current private-first phase
@@ -111,7 +111,7 @@ The immediate product target is a fast personal workspace for the owner: Command
 These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
-3. Run the migration and smoke-test the premium lifecycle against the user's configured local database. CI now covers worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, endpoint owner/catalog boundaries, and an isolated SQLite API-to-worker settlement path; real local database/provider-backed runtime validation remains outstanding.
+3. Run the additive task migration and smoke-test the premium lifecycle against the user's configured local database. CI covers worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, endpoint owner/catalog boundaries, and isolated SQLite API-to-worker settlement; local database/provider-backed runtime validation remains outstanding. See `docs/runbooks/PREMIUM_SPARK_TASKS.md`.
 4. Scheduled World Intelligence refresh trigger and source-quality policy.
 5. User-visible memory management and consent-driven auto-learning UX.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
