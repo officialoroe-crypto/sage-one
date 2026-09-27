@@ -309,7 +309,6 @@ class TaskEngine:
             "agent": task.agent,
             "session_id": task.session_id,
             "parent_task_id": task.parent_task_id,
-            "owner_key": task.owner_key,
             "premium_work_key": task.premium_work_key,
             "mission_id": task.mission_id,
             "depends_on": task.depends_on,
