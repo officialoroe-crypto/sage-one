@@ -67,17 +67,21 @@ def test_premium_task_api_to_worker_settles_spark_end_to_end(monkeypatch):
             },
         )
         assert response.status_code == 200
+        assert "owner_key" not in response.json()["task"]
         task_id = response.json()["task"]["id"]
 
         worker = SageWorker()
-        monkeypatch.setattr(
-            worker,
-            "execute_task",
-            lambda _task: {"success": True, "result": "verified test result"},
-        )
+        worker_input = {}
+
+        def execute_premium(task):
+            worker_input.update(task)
+            return {"success": True, "result": "verified test result"}
+
+        monkeypatch.setattr(worker, "execute_task", execute_premium)
         result = worker.run_once()
 
         assert result["success"] is True
+        assert worker_input["owner_key"] == owner_key
         assert result["task"]["id"] == task_id
         assert result["task"]["status"] == "completed"
 
