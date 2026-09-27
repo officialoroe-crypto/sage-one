@@ -16,6 +16,8 @@ def migrate():
     }
 
     migrations = [
+        ("owner_key", "ALTER TABLE tasks ADD COLUMN owner_key VARCHAR"),
+        ("premium_work_key", "ALTER TABLE tasks ADD COLUMN premium_work_key VARCHAR"),
         ("mission_id", "ALTER TABLE tasks ADD COLUMN mission_id VARCHAR"),
         ("depends_on", "ALTER TABLE tasks ADD COLUMN depends_on TEXT"),
         ("verification_status", "ALTER TABLE tasks ADD COLUMN verification_status VARCHAR DEFAULT 'pending'"),

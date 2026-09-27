@@ -202,6 +202,8 @@ class SageRepository:
         session_id: str | None = None,
         parent_task_id: str | None = None,
         max_retries: int = 3,
+        owner_key: str | None = None,
+        premium_work_key: str | None = None,
     ) -> Task:
         now = self._utc_now()
 
@@ -214,6 +216,8 @@ class SageRepository:
             agent=agent,
             session_id=session_id,
             parent_task_id=parent_task_id,
+            owner_key=owner_key,
+            premium_work_key=premium_work_key,
             progress=0,
             retries=0,
             max_retries=max_retries,

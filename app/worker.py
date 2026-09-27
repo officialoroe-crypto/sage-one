@@ -11,6 +11,11 @@ from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
 from world_intelligence.engine import world_intelligence
 from notifications.service import create_task_notification
+from database.connection import SessionLocal
+from database.models import Task
+from economy.models import PremiumSparkTransaction
+from economy.service import reserve_premium_work, settle_premium_sparks, refund_premium_sparks
+from sqlalchemy import select
 
 
 class SageWorker:
@@ -39,6 +44,56 @@ class SageWorker:
 
     def recover_expired_tasks(self):
         return tasks.recover_expired()
+
+    @staticmethod
+    def _premium_operation_key(task_id):
+        return f"task:{task_id}"
+
+    def _reserve_premium_for_task(self, task):
+        work_key = task.get("premium_work_key")
+        owner_key = task.get("owner_key")
+        if not work_key:
+            return
+        if not owner_key:
+            raise RuntimeError("Premium task is missing its trusted owner identity.")
+        with SessionLocal() as db:
+            reserve_premium_work(db, owner_key, self._premium_operation_key(task["id"]),
+                                 work_key, metadata={"task_id": task["id"]})
+
+    def _finalize_premium_for_task(self, task, success):
+        if not task or not task.get("premium_work_key") or not task.get("owner_key"):
+            return
+        with SessionLocal() as db:
+            operation_key = self._premium_operation_key(task["id"])
+            if success:
+                settle_premium_sparks(db, task["owner_key"], operation_key)
+            else:
+                refund_premium_sparks(db, task["owner_key"], operation_key,
+                                      reason=f"Premium task {task['id']} failed")
+
+    def reconcile_premium_transactions(self):
+        """Repair crash window between terminal task state and Spark finalization."""
+        with SessionLocal() as db:
+            rows = db.execute(
+                select(Task.id, Task.owner_key, Task.status).where(
+                    Task.premium_work_key.is_not(None),
+                    Task.owner_key.is_not(None),
+                    Task.status.in_(("completed", "failed", "cancelled")),
+                )
+            ).all()
+            for task_id, owner_key, status in rows:
+                operation_key = self._premium_operation_key(task_id)
+                transaction = db.scalar(select(PremiumSparkTransaction).where(
+                    PremiumSparkTransaction.owner_key == owner_key,
+                    PremiumSparkTransaction.operation_key == operation_key,
+                ))
+                if transaction is None or transaction.status != "reserved":
+                    continue
+                if status == "completed":
+                    settle_premium_sparks(db, owner_key, operation_key)
+                else:
+                    refund_premium_sparks(db, owner_key, operation_key,
+                                          reason=f"Premium task {task_id} ended as {status}")
 
     def _local_execution_allowed(self):
         """Do not block cloud-backed durable work on local CPU pressure.
@@ -169,6 +224,7 @@ class SageWorker:
             heartbeat_thread.join(timeout=max(1, self.heartbeat_interval + 1))
 
     def run_once(self):
+        self.reconcile_premium_transactions()
         self.recover_expired_tasks()
         task = self.claim()
 
@@ -185,6 +241,7 @@ class SageWorker:
         task_id = task['id']
 
         try:
+            self._reserve_premium_for_task(task)
             result = self.execute_task(task)
             completed = tasks.complete_claim(
                 task_id=task_id,
@@ -193,6 +250,7 @@ class SageWorker:
             )
 
             if completed is not None:
+                self._finalize_premium_for_task(task, success=True)
                 try:
                     create_task_notification(completed, success=True)
                 except Exception:
@@ -216,7 +274,8 @@ class SageWorker:
                 error=str(error),
                 retry_delay_seconds=delay,
             )
-            if failed is not None and failed.get('status') == 'failed':
+            if failed is not None and failed.get('status') in {'failed', 'cancelled'}:
+                self._finalize_premium_for_task(task, success=False)
                 try:
                     create_task_notification(
                         failed,

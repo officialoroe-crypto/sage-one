@@ -23,6 +23,8 @@ class TaskEngine:
         agent: str = "general",
         session_id: str | None = None,
         parent_task_id: str | None = None,
+        owner_key: str | None = None,
+        premium_work_key: str | None = None,
     ):
         priority = max(1, min(priority, 5))
         db = SessionLocal()
@@ -36,6 +38,8 @@ class TaskEngine:
                 agent=agent,
                 session_id=session_id,
                 parent_task_id=parent_task_id,
+                owner_key=owner_key,
+                premium_work_key=premium_work_key,
             )
             return self.serialize(task)
         finally:
@@ -305,6 +309,7 @@ class TaskEngine:
             "agent": task.agent,
             "session_id": task.session_id,
             "parent_task_id": task.parent_task_id,
+            "premium_work_key": task.premium_work_key,
             "mission_id": task.mission_id,
             "depends_on": task.depends_on,
             "progress": task.progress,
