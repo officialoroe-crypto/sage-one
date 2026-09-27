@@ -192,6 +192,15 @@ class TaskCreateRequest(BaseModel):
     parent_task_id: Optional[str] = None
 
 
+class PremiumTaskCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(min_length=1, max_length=20000)
+    work_key: str = Field(min_length=1, max_length=80)
+    priority: int = Field(default=3, ge=1, le=5)
+    agent: str = Field(default="general", min_length=1, max_length=100)
+    session_id: Optional[str] = None
+
+
 # ============================================================
 # SERIALIZATION HELPERS
 # ============================================================
@@ -699,6 +708,32 @@ def create_background_task(request: TaskCreateRequest):
         "status": "queued",
         "task": task,
     }
+
+
+@app.post("/tasks/premium")
+def create_premium_background_task(
+    request: PremiumTaskCreateRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """Queue owner-authorized premium work; pricing comes only from the Spark catalog."""
+    from economy.costs import cost_for
+
+    try:
+        cost_for(request.work_key)
+    except KeyError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.create(
+        title=request.title,
+        description=request.description,
+        priority=request.priority,
+        agent=request.agent,
+        session_id=request.session_id,
+        owner_key=owner_key,
+        premium_work_key=request.work_key,
+    )
+    return {"success": True, "status": "queued", "task": task}
 
 
 @app.get("/tasks")
