@@ -104,6 +104,12 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Premium durable task integration was merged in PR #79. Worker recovery/migration tests passed CI and were merged in PR #80; owner/catalog boundary tests passed CI and were merged in PR #81; the isolated API-to-worker end-to-end test and internal-only owner-key handoff fix passed CI and were merged in PR #82. Project-state validation updates were merged in PR #83.
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
+## Shared owner memory system
+- Added `memory/CHATGPT_OS.md` as the owner-facing AI working contract.
+- Added `memory/OWNER_MEMORY_MODEL.md` defining owner-scoped memory and future per-user isolation.
+- Added durable rule, preference, decision, mistake, current-context, and SAGE ONE integration documents under `memory/`.
+- Public GitHub contains the memory contract only; private conversations belong in the runtime memory store.
+
 ## Current private-first phase
 The immediate product target is a fast personal workspace for the owner: Command Center, Research, Tasks, Create, Projects/Workflow, memory, and execution. The private Flutter shell now exposes Memory from the More menu; its screen reads, adds, and deletes profile-scoped memories through the existing authenticated identity API. Public signup, KYC, Google/phone verification UX, multi-tenant ownership, and payment-provider integration are deferred until after real personal use.
 
