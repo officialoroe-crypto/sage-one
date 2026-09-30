@@ -4,7 +4,7 @@ from typing import Any
 from agentic.engine import AgenticActionEngine
 from agentic.models import ActionRequest
 from permissions.engine import PermissionEngine
-from tools.registry import ToolDefinition, ToolRegistry
+from tools.registry import ToolRegistry
 
 
 @dataclass
