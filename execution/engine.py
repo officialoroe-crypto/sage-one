@@ -268,6 +268,8 @@ class ExecutionEngine:
             )
         )
 
+        from tools.registry import registry
+
         available_tools = registry.schemas()
 
         task_prompt = f"""
