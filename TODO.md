@@ -197,3 +197,15 @@
 - [ ] Add source-quality/domain policy for World Intelligence refresh.
 - [ ] Add full multi-tenant data ownership if SAGE ONE is ever offered as a shared public service.
 - [ ] Add automated visual regression coverage for Evolution animation milestones.
+
+
+## MULTI-AI COLLABORATION / DEVELOPER CONTROL PLANE
+- [ ] Define machine-readable active work claims with agent, branch, base SHA, scope, objective, and timestamps.
+- [ ] Add atomic claim/release operations.
+- [ ] Detect overlapping file/module claims before work starts.
+- [ ] Detect stale claims and require explicit takeover/handoff.
+- [ ] Add developer handoff records with changed files, commits, tests, failures, and next action.
+- [ ] Add pre-PR consistency checks against current main.
+- [ ] Add optional CI enforcement for coordination invariants.
+- [ ] Expose a compact current-work/status view usable by any AI session.
+- [ ] Document two-AI parallel development and conflict-recovery procedure.
