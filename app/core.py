@@ -7,9 +7,6 @@ from app.state import state
 from tools.registry import registry
 from tools.builtins import register_builtin_tools
 
-from database.connection import SessionLocal
-from database.repository import repository
-
 from agentic.engine import action_engine
 from agentic.models import ActionRequest
 
