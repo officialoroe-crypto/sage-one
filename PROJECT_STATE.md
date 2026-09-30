@@ -126,3 +126,10 @@ These require external configuration or are deliberate future scope:
 
 ## Continuity rule
 Always inspect the actual GitHub main branch and this file before architectural changes. Do not rely on an old branch or stale local copy.
+
+## Multi-AI development coordination
+- SAGE ONE is intended to be safely maintainable from multiple independent AI sessions/accounts.
+- GitHub main is the canonical source of truth; chat history is not synchronization state.
+- `AI_COLLABORATION.md` defines preflight, work claims, path locks, handoffs, reconciliation, branch/PR rules, and planned automation.
+- `memory/AI_WORKING_CONTEXT.md` records the current Agentic Gateway milestone, core-completion target, immediate work queue, and multi-AI rules.
+- GitHub Issue #90 tracks implementation of the developer collaboration/work-lock control plane.
