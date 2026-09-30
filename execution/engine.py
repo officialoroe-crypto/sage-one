@@ -8,8 +8,6 @@ from brain.router import router
 
 from missions.engine import mission_engine
 
-from tools.registry import registry
-
 from database.connection import SessionLocal
 from database.repository import repository
 
@@ -64,6 +62,8 @@ class ExecutionEngine:
         arguments: dict
     ):
 
+        from tools.registry import registry
+
         tool = registry.get(
             tool_name
         )
@@ -93,12 +93,18 @@ class ExecutionEngine:
 
             return evidence
 
-        from app.core import sage
+        from agentic.engine import action_engine
+        from agentic.models import ActionRequest
 
-        result = sage._execute_tool(
-            tool_name,
-            arguments
-        )
+        result = action_engine.execute(
+            ActionRequest(
+                tool_name=tool_name,
+                arguments=arguments,
+                owner_authorized=True,
+                verify=True,
+                source="mission_execution",
+            )
+        ).to_dict()
 
         evidence = {
             "evidence_id":
@@ -261,6 +267,8 @@ class ExecutionEngine:
                 current_task_id=task_id
             )
         )
+
+        from tools.registry import registry
 
         available_tools = registry.schemas()
 
