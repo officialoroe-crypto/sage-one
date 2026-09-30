@@ -7,10 +7,11 @@ from app.state import state
 from tools.registry import registry
 from tools.builtins import register_builtin_tools
 
-from permissions.engine import permissions
-
 from database.connection import SessionLocal
 from database.repository import repository
+
+from agentic.engine import action_engine
+from agentic.models import ActionRequest
 
 
 SAGE_SYSTEM = """
@@ -114,180 +115,40 @@ class SageCore:
     def _execute_tool(
         self,
         tool_name: str,
-        arguments: dict
+        arguments: dict,
     ):
+        """Execute an agent-selected tool through the controlled action gateway."""
 
-        tool = registry.get(
-            tool_name
-        )
-
-        if not tool:
-
-            return {
-                "success": False,
-                "error":
-                    f"Unknown tool: {tool_name}"
-            }
-
-        # --------------------------------------------------------
-        # PERMISSION CHECK
-        # --------------------------------------------------------
-
-        decision = permissions.check(
-            permission=tool.permission,
-            risk=tool.risk
-        )
-
-        # Keep the existing in-memory audit system.
-        permissions.record(
-            tool_name=tool.name,
-            permission=tool.permission,
-            risk=tool.risk,
-            allowed=decision.allowed,
-            reason=decision.reason
-        )
-
-        # --------------------------------------------------------
-        # CREATE PERSISTENT ACTION LOG
-        # --------------------------------------------------------
-
-        action_id = None
-
-        try:
-
-            with SessionLocal() as db:
-
-                action = repository.create_action(
-
-                    db=db,
-
-                    tool=tool.name,
-
-                    permission=tool.permission,
-
-                    risk=tool.risk,
-
-                    capability=tool.capability,
-
-                    arguments=arguments,
-
-                    permission_allowed=
-                        decision.allowed,
-
-                    permission_reason=
-                        decision.reason
-                )
-
-                action_id = action.id
-
-        except Exception:
-            # The action ledger must NEVER prevent
-            # the actual permission system from working.
-            #
-            # If database logging fails, SAGE continues
-            # according to the actual permission decision.
-            action_id = None
-
-        # --------------------------------------------------------
-        # PERMISSION DENIED
-        # --------------------------------------------------------
-
-        if not decision.allowed:
-
-            return {
-                "success": False,
-                "error":
-                    "Permission denied.",
-
-                "permission":
-                    decision.permission,
-
-                "risk":
-                    decision.risk,
-
-                "reason":
-                    decision.reason,
-
-                "action_id":
-                    action_id
-            }
-
-        # --------------------------------------------------------
-        # EXECUTE TOOL
-        # --------------------------------------------------------
-
-        try:
-
-            result = registry.execute(
-                name=tool_name,
-                arguments=arguments
+        action = action_engine.execute(
+            ActionRequest(
+                tool_name=tool_name,
+                arguments=arguments,
+                owner_authorized=True,
+                verify=True,
+                source="sage_core",
             )
+        )
 
-            # ----------------------------------------------------
-            # MARK ACTION COMPLETED
-            # ----------------------------------------------------
-
-            if action_id:
-
-                try:
-
-                    with SessionLocal() as db:
-
-                        repository.complete_action(
-                            db=db,
-                            action_id=action_id,
-                            result=result
-                        )
-
-                except Exception:
-                    pass
-
+        if action.success:
             return {
                 "success": True,
-
-                "tool":
-                    tool_name,
-
-                "result":
-                    result,
-
-                "action_id":
-                    action_id
+                "tool": tool_name,
+                "result": action.result,
+                "action_id": action.action_id,
+                "verification_status": action.verification_status,
             }
 
-        except Exception as error:
-
-            # ----------------------------------------------------
-            # MARK ACTION FAILED
-            # ----------------------------------------------------
-
-            if action_id:
-
-                try:
-
-                    with SessionLocal() as db:
-
-                        repository.fail_action(
-                            db=db,
-                            action_id=action_id,
-                            error=str(error)
-                        )
-
-                except Exception:
-                    pass
-
-            return {
-                "success": False,
-
-                "tool":
-                    tool_name,
-
-                "error":
-                    str(error),
-
-                "action_id":
-                    action_id
-            }
+        return {
+            "success": False,
+            "tool": tool_name,
+            "error": action.error or action.permission_reason,
+            "permission": action.permission,
+            "risk": action.risk,
+            "reason": action.permission_reason,
+            "action_id": action.action_id,
+            "verification_status": action.verification_status,
+            "status": action.status,
+        }
 
     # ============================================================
     # CHAT / CORE
