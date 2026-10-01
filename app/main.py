@@ -1128,6 +1128,7 @@ def execute_single_task(
 @app.get("/missions/{mission_id}/trace")
 def get_mission_trace(
     mission_id: str,
+    _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
     return _serialize(
@@ -1140,6 +1141,7 @@ def get_mission_trace(
 @app.get("/missions/{mission_id}/result")
 def get_mission_result(
     mission_id: str,
+    _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
     return _serialize(
@@ -1152,6 +1154,7 @@ def get_mission_result(
 @app.get("/missions/{mission_id}/trace/summary")
 def get_trace_summary(
     mission_id: str,
+    _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
     trace = execution_trace.get_mission_trace(
