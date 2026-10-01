@@ -1,12 +1,22 @@
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app import main as main_module
+from app.main import _require_owner, app
 
 
 client = TestClient(app)
 
 
 def test_background_execution_queues_durable_task(monkeypatch):
+    monkeypatch.setitem(
+        app.dependency_overrides,
+        _require_owner,
+        lambda: {
+            "auth_provider": "developer",
+            "auth_subject": "local-owner",
+            "owner_mode": True,
+        },
+    )
     captured = {}
     created = {
         "id": "task-bg-1",
@@ -50,7 +60,16 @@ def test_background_execution_queues_durable_task(monkeypatch):
 
 
 def test_background_execution_does_not_run_in_request(monkeypatch):
-    created = {
+    monkeypatch.setitem(
+        app.dependency_overrides,
+        _require_owner,
+        lambda: {
+            "auth_provider": "developer",
+            "auth_subject": "local-owner",
+            "owner_mode": True,
+        },
+    )
+    created = {}
         "id": "task-bg-2",
         "title": "Do work later",
         "description": "Do work later",
