@@ -1,16 +1,3 @@
 version: 1
-updated_at: 2026-10-01T14:30:00Z
-claims:
-  - id: evolution-visual-engine-20261001
-    agent: ChatGPT
-    branch: ai/evolution-visual-engine
-    base_sha: 7495afa923a3d51ac57c7360ff61b5ed08df66a6
-    objective: Implement the shared data-driven Flutter Evolution visual layer without changing progression rules or backend contracts.
-    scope:
-      - frontend/lib/evolution
-      - frontend/lib/screens/evolution.dart
-      - frontend/test/evolution_visual_test.dart
-    status: in_progress
-    claimed_at: 2026-10-01T14:30:00Z
-    started_at: 2026-10-01T14:30:00Z
-    updated_at: 2026-10-01T14:30:00Z
+updated_at: 2026-10-01T14:45:00Z
+claims: []
