@@ -596,7 +596,7 @@ Do not invent evidence.
             task = self._get_task(task_id) or {}
             event_store.emit(
                 event_type="OutcomeVerificationCompleted",
-                action_id=self.current_action_id,
+                action_id=None,
                 session_id=self.current_session_id,
                 mission_id=self.current_mission_id,
                 task_id=task_id,
@@ -665,7 +665,7 @@ Do not invent evidence.
         )
 
         if deterministic is not None:
-
+            self._emit_outcome_event(task_id, deterministic)
             return deterministic
 
         verification_prompt = f"""
@@ -786,14 +786,15 @@ or:
             return outcome_result
 
         except Exception as error:
-
-            return {
+            outcome_result = {
                 "passed": False,
-
+                "status": "verification_error",
                 "evidence":
                     "Verification failed: "
-                    + str(error)
+                    + str(error),
             }
+            self._emit_outcome_event(task_id, outcome_result)
+            return outcome_result
 
     # ---------------------------------------------------------
     # DETERMINISTIC VERIFICATION
