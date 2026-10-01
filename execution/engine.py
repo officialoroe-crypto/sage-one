@@ -589,6 +589,28 @@ Do not invent evidence.
         return {"status": "semantic_deferred"}
 
 
+    def _emit_outcome_event(self, task_id: str, outcome: dict):
+        try:
+            from events.service import event_store
+
+            task = self._get_task(task_id) or {}
+            event_store.emit(
+                event_type="OutcomeVerificationCompleted",
+                action_id=self.current_action_id,
+                session_id=self.current_session_id,
+                mission_id=self.current_mission_id,
+                task_id=task_id,
+                status=outcome.get("status", "unknown"),
+                source="outcome_verification",
+                payload={
+                    "passed": bool(outcome.get("passed", False)),
+                    "evidence": outcome.get("evidence"),
+                    "task_title": task.get("title"),
+                },
+            )
+        except Exception:
+            pass
+
     def verify_task(
         self,
         task_id: str,
@@ -627,9 +649,11 @@ Do not invent evidence.
         )
 
         if outcome["status"] == "failed":
+            self._emit_outcome_event(task_id, outcome)
             return outcome
 
         if outcome["status"] == "passed":
+            self._emit_outcome_event(task_id, outcome)
             return outcome
 
         deterministic = (
