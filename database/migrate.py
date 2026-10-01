@@ -33,6 +33,19 @@ def migrate():
         ("next_retry_at", "ALTER TABLE tasks ADD COLUMN next_retry_at DATETIME"),
     ]
 
+    if "action_logs" in tables:
+        action_columns = {
+            column["name"]
+            for column in inspector.get_columns("action_logs")
+        }
+        action_migrations = [
+            ("mission_id", "ALTER TABLE action_logs ADD COLUMN mission_id VARCHAR"),
+            ("parent_action_id", "ALTER TABLE action_logs ADD COLUMN parent_action_id VARCHAR"),
+            ("source", "ALTER TABLE action_logs ADD COLUMN source VARCHAR DEFAULT 'sage'"),
+        ]
+    else:
+        action_migrations = []
+
     applied = 0
 
     with engine.begin() as connection:
@@ -43,6 +56,15 @@ def migrate():
 
             connection.execute(text(sql))
             print(f"ADDED: {column_name}")
+            applied += 1
+
+        for column_name, sql in action_migrations:
+            if column_name in action_columns:
+                print(f"SKIP: action_logs.{column_name}")
+                continue
+
+            connection.execute(text(sql))
+            print(f"ADDED: action_logs.{column_name}")
             applied += 1
 
     print(f"SAGE DATABASE MIGRATION COMPLETE. {applied} change(s) applied.")
