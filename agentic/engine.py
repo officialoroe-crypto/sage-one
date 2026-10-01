@@ -437,13 +437,13 @@ class AgenticActionEngine:
                     evidence_item["persisted"] = False
                 else:
                     evidence_id = record_evidence(
-                    action_id=action_id,
-                    mission_id=request.mission_id,
-                    task_id=request.task_id,
-                    parent_action_id=request.parent_action_id,
-                    evidence_type="execution_verification",
-                    content=evidence_item,
-                    verified=verification.status == "passed",
+                        action_id=action_id,
+                        mission_id=request.mission_id,
+                        task_id=request.task_id,
+                        parent_action_id=request.parent_action_id,
+                        evidence_type="execution_verification",
+                        content=evidence_item,
+                        verified=verification.status == "passed",
                     )
                     evidence_item["evidence_id"] = evidence_id
                     evidence_item["persisted"] = True
