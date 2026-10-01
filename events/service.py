@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from uuid import uuid4
 
@@ -54,6 +55,11 @@ class SQLAlchemyEventStore:
             if commit:
                 session.commit()
             return event_id
+        except OperationalError as error:
+            session.rollback()
+            if "no such table: execution_events" in str(error).lower():
+                return None
+            raise
         except Exception:
             session.rollback()
             raise
