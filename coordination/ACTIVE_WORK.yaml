@@ -10,6 +10,7 @@ claims:
       - identity/memory_learning.py
       - identity/api.py
       - tests/test_memory_learning.py
+      - memory/MEMORY_LEARNING.md
     status: in_progress
     claimed_at: 2026-10-01T14:12:00Z
     started_at: 2026-10-01T14:12:00Z
