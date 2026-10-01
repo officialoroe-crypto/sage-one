@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from tools.contracts import SIDE_EFFECT_CLASSES
+
 
 @dataclass
 class ToolDefinition:
@@ -11,6 +13,13 @@ class ToolDefinition:
     permission: str
     handler: Callable[..., Any]
     parameters: dict = field(default_factory=dict)
+    output_schema: dict | None = None
+    cost_policy: dict | None = None
+    timeout_seconds: float | None = None
+    retry_policy: dict | None = None
+    verification_policy: dict | None = None
+    audit_policy: dict | None = None
+    side_effect_class: str = "READ_ONLY"
 
 
 class ToolRegistry:
@@ -26,9 +35,22 @@ class ToolRegistry:
         permission: str,
         handler: Callable[..., Any],
         parameters: dict | None = None,
+        output_schema: dict | None = None,
+        cost_policy: dict | None = None,
+        timeout_seconds: float | None = None,
+        retry_policy: dict | None = None,
+        verification_policy: dict | None = None,
+        audit_policy: dict | None = None,
+        side_effect_class: str = "READ_ONLY",
     ):
         if name in self._tools:
             raise ValueError(f"Tool already registered: {name}")
+        if side_effect_class not in SIDE_EFFECT_CLASSES:
+            raise ValueError(
+                f"Unsupported side_effect_class: {side_effect_class}"
+            )
+        if timeout_seconds is not None and timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive.")
         self._tools[name] = ToolDefinition(
             name=name,
             description=description,
@@ -37,6 +59,13 @@ class ToolRegistry:
             permission=permission,
             handler=handler,
             parameters=parameters or {},
+            output_schema=output_schema,
+            cost_policy=cost_policy,
+            timeout_seconds=timeout_seconds,
+            retry_policy=retry_policy,
+            verification_policy=verification_policy,
+            audit_policy=audit_policy,
+            side_effect_class=side_effect_class,
         )
 
     def get(self, name: str) -> ToolDefinition | None:
@@ -54,6 +83,13 @@ class ToolRegistry:
                 "risk": tool.risk,
                 "permission": tool.permission,
                 "parameters": tool.parameters,
+                "output_schema": tool.output_schema,
+                "cost_policy": tool.cost_policy,
+                "timeout_seconds": tool.timeout_seconds,
+                "retry_policy": tool.retry_policy,
+                "verification_policy": tool.verification_policy,
+                "audit_policy": tool.audit_policy,
+                "side_effect_class": tool.side_effect_class,
             }
             for tool in self._tools.values()
         ]

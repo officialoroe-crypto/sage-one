@@ -279,6 +279,13 @@ class AgenticActionEngine:
             handler=tool.handler,
             arguments=dict(request.arguments),
             validation_errors=errors,
+            output_schema=tool.output_schema,
+            cost_policy=tool.cost_policy,
+            timeout_seconds=tool.timeout_seconds,
+            retry_policy=tool.retry_policy,
+            verification_policy=tool.verification_policy,
+            audit_policy=tool.audit_policy,
+            side_effect_class=tool.side_effect_class,
         )
 
     def _terminal_log(
