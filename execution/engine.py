@@ -115,6 +115,8 @@ class ExecutionEngine:
             )
         ).to_dict()
 
+        self.current_action_id = result.get("action_id")
+
         evidence = {
             "evidence_id":
                 str(uuid.uuid4()),
