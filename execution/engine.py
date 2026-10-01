@@ -1110,7 +1110,9 @@ or:
 
     def execute_next(
         self,
-        mission_id: str
+        mission_id: str,
+        *,
+        owner_authorized: bool = False,
     ):
 
         ready = mission_engine.get_ready_tasks(
@@ -1141,7 +1143,8 @@ or:
         task = ready[0]
 
         result = self.execute_task(
-            task["id"]
+            task["id"],
+            owner_authorized=owner_authorized,
         )
 
         mission = (
@@ -1167,7 +1170,9 @@ or:
     def execute_mission(
         self,
         mission_id: str,
-        max_steps: int = 20
+        max_steps: int = 20,
+        *,
+        owner_authorized: bool = False,
     ):
 
         history = []
@@ -1232,7 +1237,8 @@ or:
                 }
 
             task_result = self.execute_task(
-                ready[0]["id"]
+                ready[0]["id"],
+                owner_authorized=owner_authorized,
             )
 
             history.append(
