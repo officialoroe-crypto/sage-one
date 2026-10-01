@@ -422,6 +422,18 @@ def record_achievement(
     if commit:
         db.commit()
         db.refresh(profile)
+    event_store.emit(
+        event_type="EvolutionAchievementRecorded",
+        status="completed",
+        payload={
+            "owner_key": owner_key,
+            "amount": amount,
+            "reason": reason,
+            "lifetime_achievement": profile.lifetime_achievement,
+            "tier": profile.tier,
+            "stage": profile.stage,
+        },
+    )
     return profile
 
 
