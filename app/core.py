@@ -120,7 +120,8 @@ class SageCore:
             ActionRequest(
                 tool_name=tool_name,
                 arguments=arguments,
-                owner_authorized=True,
+                session_id=self.state.get_session(session_id).get("id") if self.state.get_session(session_id) else session_id,
+                owner_authorized=owner_authorized,
                 verify=True,
                 source="sage_core",
             )
@@ -155,7 +156,8 @@ class SageCore:
         self,
         user_message,
         session_id,
-        context=""
+        context="",
+        owner_authorized: bool = False,
     ):
 
         session = self.state.get_session(
