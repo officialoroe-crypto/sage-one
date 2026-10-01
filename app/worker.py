@@ -232,6 +232,8 @@ class SageWorker:
     def run_once(self):
         self.reconcile_premium_transactions()
         self.recover_expired_tasks()
+        from automation.service import automation
+        automation.dispatch_due(limit=10)
         task = self.claim()
 
         if not task:
