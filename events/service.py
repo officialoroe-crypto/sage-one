@@ -33,12 +33,6 @@ class SQLAlchemyEventStore:
         owns_session = db is None
         session = db or SessionLocal()
         try:
-            bind = getattr(session, "bind", None)
-            if bind is not None:
-                ExecutionEvent.__table__.create(
-                    bind=bind,
-                    checkfirst=True,
-                )
             row = ExecutionEvent(
                 id=event_id,
                 event_type=event_type,
