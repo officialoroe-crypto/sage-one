@@ -30,6 +30,13 @@ class ActionPlan:
     handler: Any | None
     arguments: dict[str, Any]
     validation_errors: tuple[str, ...] = ()
+    output_schema: dict[str, Any] | None = None
+    cost_policy: dict[str, Any] | None = None
+    timeout_seconds: float | None = None
+    retry_policy: dict[str, Any] | None = None
+    verification_policy: dict[str, Any] | None = None
+    audit_policy: dict[str, Any] | None = None
+    side_effect_class: str = "READ_ONLY"
 
     @property
     def ready(self) -> bool:
