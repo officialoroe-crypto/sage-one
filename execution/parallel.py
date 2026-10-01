@@ -22,7 +22,9 @@ class ParallelMissionExecutor:
 
     def _execute_task(self, task_id: str, owner_authorized: bool = False):
         engine = self.engine_factory()
-        return engine.execute_task(task_id, owner_authorized=owner_authorized)
+        if owner_authorized:
+            return engine.execute_task(task_id, owner_authorized=True)
+        return engine.execute_task(task_id)
 
     @staticmethod
     def _summary(mission_id: str, history: list[dict]) -> dict:
