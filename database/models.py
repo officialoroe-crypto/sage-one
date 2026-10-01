@@ -284,3 +284,36 @@ class ResearchRecord(Base):
     model: Mapped[str | None] = mapped_column(String, nullable=True)
     report_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+# ============================================================
+# DURABLE AUTOMATIONS
+# ============================================================
+
+class Automation(Base):
+    """Persistent schedule definition that creates normal durable tasks."""
+
+    __tablename__ = "automations"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_key: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    goal: Mapped[str] = mapped_column(Text, nullable=False)
+    session_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    agent: Mapped[str] = mapped_column(String, default="general", nullable=False)
+    schedule_type: Mapped[str] = mapped_column(String, default="once", nullable=False)
+    run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    interval_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    run_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    max_runs: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    enabled: Mapped[int] = mapped_column(Integer, default=1, nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String, default="active", nullable=False, index=True)
+    last_task_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
