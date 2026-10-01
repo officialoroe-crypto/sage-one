@@ -4,10 +4,16 @@ from urllib.parse import quote
 from fastapi.testclient import TestClient
 
 from app.main import _require_owner, app
+from identity.auth import authenticate_request
 
 
 client = TestClient(app)
 
+app.dependency_overrides[authenticate_request] = lambda: {
+    "auth_provider": "developer",
+    "auth_subject": "local-owner",
+    "owner_mode": True,
+}
 app.dependency_overrides[_require_owner] = lambda: {
     "auth_provider": "developer",
     "auth_subject": "local-owner",
