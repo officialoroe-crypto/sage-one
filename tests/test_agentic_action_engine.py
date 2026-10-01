@@ -360,8 +360,9 @@ def test_action_log_start_receives_full_correlation_context():
     )
 
     assert result.success is True
-    assert logs.start_kwargs["session_id"] == "session-1"
-    assert logs.start_kwargs["task_id"] == "task-1"
-    assert logs.start_kwargs["mission_id"] == "mission-1"
-    assert logs.start_kwargs["parent_action_id"] == "action-parent"
-    assert logs.start_kwargs["source"] == "mission_execution"
+    request = logs.start_kwargs["request"]
+    assert request.session_id == "session-1"
+    assert request.task_id == "task-1"
+    assert request.mission_id == "mission-1"
+    assert request.parent_action_id == "action-parent"
+    assert request.source == "mission_execution"
