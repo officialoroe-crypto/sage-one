@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Any, Optional
+from datetime import datetime
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -149,6 +150,17 @@ class ExecuteRequest(BaseModel):
     goal: str
     session_id: Optional[str] = None
     max_steps: int = Field(default=20, ge=1, le=100)
+
+
+class AutomationCreateRequest(BaseModel):
+    name: str
+    goal: str
+    schedule_type: str = "once"
+    run_at: Optional[datetime] = None
+    interval_seconds: Optional[int] = Field(default=None, ge=60)
+    session_id: Optional[str] = None
+    agent: str = "general"
+    max_runs: Optional[int] = Field(default=None, ge=1)
 
 
 class MemoryRequest(BaseModel):
@@ -514,6 +526,64 @@ def execute_background(
         "message": "Execution queued for the durable background worker.",
         "task": task,
     }
+
+
+# ============================================================
+# DURABLE AUTOMATION
+# ============================================================
+
+@app.post("/automation")
+def create_automation(
+    request: AutomationCreateRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    from automation.service import automation
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    return {
+        "success": True,
+        "automation": automation.create(
+            owner_key=owner_key,
+            name=request.name,
+            goal=request.goal,
+            schedule_type=request.schedule_type,
+            run_at=request.run_at,
+            interval_seconds=request.interval_seconds,
+            session_id=request.session_id,
+            agent=request.agent,
+            max_runs=request.max_runs,
+        ),
+    }
+
+
+@app.get("/automation")
+def list_automations(
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    from automation.service import automation
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    return {
+        "success": True,
+        "automations": automation.list(owner_key=owner_key),
+    }
+
+
+@app.delete("/automation/{automation_id}")
+def disable_automation(
+    automation_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    from automation.service import automation
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    result = automation.disable(
+        owner_key=owner_key,
+        automation_id=automation_id,
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Automation not found.")
+    return {"success": True, "automation": result}
 
 
 # ============================================================
