@@ -57,6 +57,7 @@ class ActionResult:
     mission_id: str | None = None
     parent_action_id: str | None = None
     evidence: list[dict[str, Any]] = field(default_factory=list)
+    event_ids: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -77,4 +78,5 @@ class ActionResult:
             "mission_id": self.mission_id,
             "parent_action_id": self.parent_action_id,
             "evidence": self.evidence,
+            "event_ids": self.event_ids,
         }

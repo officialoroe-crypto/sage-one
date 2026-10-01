@@ -210,6 +210,7 @@ class AgenticActionEngine:
         permission_engine: Any | None = None,
         log_store: Any | None = None,
         verification_engine: VerificationEngine | None = None,
+        event_store: Any | None = None,
     ) -> None:
         if registry is None:
             from tools.registry import registry as default_registry
@@ -223,6 +224,33 @@ class AgenticActionEngine:
         self.permission_engine = permission_engine
         self.log_store = log_store or SQLAlchemyActionLogStore()
         self.verification_engine = verification_engine or VerificationEngine()
+        self.event_store = event_store
+
+    def _emit_event(
+        self,
+        *,
+        event_type: str,
+        request: ActionRequest,
+        action_id: str | None,
+        status: str | None = None,
+        payload: Any = None,
+    ) -> str | None:
+        if self.event_store is None:
+            return None
+        try:
+            return self.event_store.emit(
+                event_type=event_type,
+                action_id=action_id,
+                session_id=request.session_id,
+                mission_id=request.mission_id,
+                task_id=request.task_id,
+                parent_action_id=request.parent_action_id,
+                status=status,
+                source=request.source,
+                payload=payload,
+            )
+        except Exception:
+            return None
 
     def plan(self, request: ActionRequest) -> ActionPlan:
         tool = self.registry.get(request.tool_name)
@@ -282,6 +310,14 @@ class AgenticActionEngine:
                     0,
                     int((time.monotonic() - time.monotonic()) * 1000),
                 ),
+            )
+            event_type = "ActionPermissionDenied" if status == "denied" else "ActionRejected"
+            self._emit_event(
+                event_type=event_type,
+                request=request,
+                action_id=action_id,
+                status=status,
+                payload={"tool": plan.tool_name, "error": error},
             )
             return action_id
         except Exception:
@@ -384,6 +420,17 @@ class AgenticActionEngine:
                 permission_reason=decision.reason,
                 started_at=started_at,
             )
+
+            event_ids = []
+            event_id = self._emit_event(
+                event_type="ActionStarted",
+                request=request,
+                action_id=action_id,
+                status="started",
+                payload={"tool": plan.tool_name, "capability": plan.capability},
+            )
+            if event_id:
+                event_ids.append(event_id)
         except Exception as exc:
             return ActionResult(
                 success=False,
@@ -402,6 +449,8 @@ class AgenticActionEngine:
         output: Any = None
         error: str | None = None
         execution_success = False
+        event_ids = locals().get("event_ids", [])
+
 
         try:
             output = plan.handler(**plan.arguments)
@@ -478,6 +527,27 @@ class AgenticActionEngine:
             )
             execution_success = False
 
+        lifecycle_event = self._emit_event(
+            event_type="ActionCompleted" if execution_success else "ActionFailed",
+            request=request,
+            action_id=action_id,
+            status=status,
+            payload={"tool": plan.tool_name, "error": error},
+        )
+        if lifecycle_event:
+            event_ids.append(lifecycle_event)
+
+        if verification is not None:
+            verification_event = self._emit_event(
+                event_type="VerificationCompleted",
+                request=request,
+                action_id=action_id,
+                status=verification.status,
+                payload={"reason": verification.reason, "evidence": verification.evidence},
+            )
+            if verification_event:
+                event_ids.append(verification_event)
+
         return ActionResult(
             success=execution_success,
             action_id=action_id,
@@ -500,7 +570,10 @@ class AgenticActionEngine:
             mission_id=request.mission_id,
             parent_action_id=request.parent_action_id,
             evidence=evidence,
+            event_ids=event_ids,
         )
 
 
-action_engine = AgenticActionEngine()
+from events.service import event_store as default_event_store
+
+action_engine = AgenticActionEngine(event_store=default_event_store)
