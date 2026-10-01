@@ -35,11 +35,11 @@ void main() {
 
     expect(find.text('SAGE ONE'), findsOneWidget);
     expect(find.text('COMMAND CENTER'), findsOneWidget);
-    expect(find.text('What are we executing today?'), findsOneWidget);
-
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -520));
-    await tester.pump();
-    expect(find.text('Search + verify'), findsOneWidget);
-    expect(find.text('Build content'), findsOneWidget);
+    expect(find.text('STAGE'), findsOneWidget);
+    expect(find.text('EVOLUTION'), findsOneWidget);
+    expect(find.text('READY'), findsOneWidget);
+    expect(find.text('Background execution'), findsOneWidget);
+    expect(find.text('Search + verify'), findsNothing);
+    expect(find.text('Build content'), findsNothing);
   });
 }
