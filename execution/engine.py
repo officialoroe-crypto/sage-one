@@ -765,19 +765,25 @@ or:
                 )
             )
 
-            return {
+            outcome_result = {
                 "passed":
                     passed,
-
+                "status":
+                    "passed" if passed else "failed",
                 "evidence":
                     evidence_text,
-
                 "verifier_provider":
                     result.provider,
-
                 "verifier_model":
-                    result.model
+                    result.model,
             }
+
+            self._emit_outcome_event(
+                task_id,
+                outcome_result,
+            )
+
+            return outcome_result
 
         except Exception as error:
 
