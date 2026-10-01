@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from economy.costs import cost_for
 from economy.models import EvolutionProfile, PremiumSparkTransaction, SparkLedgerEntry, SparkWallet
+from events.service import event_store
 
 EVOLUTION_TIERS = (
     (0, "Bronze"),
@@ -149,6 +150,19 @@ def grant_sparks(
     if commit:
         db.commit()
         db.refresh(entry)
+    event_store.emit(
+        event_type="SparkGranted",
+        status="completed",
+        payload={
+            "owner_key": owner_key,
+            "amount": amount,
+            "reason": reason,
+            "reference": reference,
+            "balance_after": entry.balance_after,
+        },
+        db=db,
+        commit=commit,
+    )
     return entry
 
 
@@ -206,6 +220,19 @@ def spend_sparks(
     if commit:
         db.commit()
         db.refresh(entry)
+    event_store.emit(
+        event_type="SparkSpent",
+        status="completed",
+        payload={
+            "owner_key": owner_key,
+            "amount": amount,
+            "reason": reason,
+            "reference": reference,
+            "balance_after": entry.balance_after,
+        },
+        db=db,
+        commit=commit,
+    )
     return entry
 
 
@@ -399,6 +426,20 @@ def record_achievement(
     if commit:
         db.commit()
         db.refresh(profile)
+    event_store.emit(
+        event_type="EvolutionAchievementRecorded",
+        status="completed",
+        payload={
+            "owner_key": owner_key,
+            "amount": amount,
+            "reason": reason,
+            "lifetime_achievement": profile.lifetime_achievement,
+            "tier": profile.tier,
+            "stage": profile.stage,
+        },
+        db=db,
+        commit=commit,
+    )
     return profile
 
 

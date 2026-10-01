@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from database.connection import SessionLocal
+from events.service import event_store
 from config.settings import settings
 from economy.achievements import VERIFIED_TASK_ACHIEVEMENT, record_verified_achievement
 
@@ -334,6 +335,15 @@ class MissionEngine:
             db.refresh(task)
             db.refresh(attempt)
 
+            event_store.emit(
+                event_type="TaskStarted",
+                task_id=task.id,
+                mission_id=task.mission_id,
+                session_id=task.session_id,
+                status=task.status,
+                payload={"attempt_id": attempt.id, "title": task.title},
+            )
+
             return {
                 "task": self.serialize_task(task),
                 "attempt_id": attempt.id,
@@ -401,6 +411,15 @@ class MissionEngine:
 
             db.refresh(task)
 
+            event_store.emit(
+                event_type="TaskCompleted",
+                task_id=task.id,
+                mission_id=task.mission_id,
+                session_id=task.session_id,
+                status=task.status,
+                payload={"result": result},
+            )
+
             return self.serialize_task(
                 task
             )
@@ -455,6 +474,15 @@ class MissionEngine:
                 attempt.completed_at = self.now()
 
             db.commit()
+
+            event_store.emit(
+                event_type="TaskFailed",
+                task_id=task.id,
+                mission_id=task.mission_id,
+                session_id=task.session_id,
+                status=task.status,
+                payload={"error": str(error)},
+            )
 
             return self.serialize_task(
                 task
@@ -562,7 +590,27 @@ class MissionEngine:
             db.refresh(task)
 
             result = self.serialize_task(task)
+            event_store.emit(
+                event_type="VerificationCompleted",
+                task_id=task.id,
+                mission_id=task.mission_id,
+                session_id=task.session_id,
+                status=task.verification_status,
+                payload={
+                    "passed": passed,
+                    "evidence": evidence,
+                    "achievement": achievement,
+                },
+            )
             if achievement is not None:
+                event_store.emit(
+                    event_type="EvolutionAchievementRecorded",
+                    task_id=task.id,
+                    mission_id=task.mission_id,
+                    session_id=task.session_id,
+                    status="recorded",
+                    payload=achievement,
+                )
                 result["achievement"] = achievement
 
             return result

@@ -1,3 +1,7 @@
+from database import models as _database_models  # noqa: F401
+from economy import models as _economy_models  # noqa: F401
+from workflows import models as _workflow_models  # noqa: F401
+
 import pytest
 
 from app.main import _require_api_access, app
