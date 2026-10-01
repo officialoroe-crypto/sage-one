@@ -160,6 +160,8 @@ def grant_sparks(
             "reference": reference,
             "balance_after": entry.balance_after,
         },
+        db=db,
+        commit=commit,
     )
     return entry
 
@@ -228,6 +230,8 @@ def spend_sparks(
             "reference": reference,
             "balance_after": entry.balance_after,
         },
+        db=db,
+        commit=commit,
     )
     return entry
 
@@ -433,6 +437,8 @@ def record_achievement(
             "tier": profile.tier,
             "stage": profile.stage,
         },
+        db=db,
+        commit=commit,
     )
     return profile
 
