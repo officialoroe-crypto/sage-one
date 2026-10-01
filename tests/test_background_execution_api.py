@@ -45,6 +45,7 @@ def test_background_execution_queues_durable_task(monkeypatch):
         "priority": 3,
         "agent": "research",
         "session_id": "session-1",
+        "owner_key": "developer:local-owner",
     }
 
 
