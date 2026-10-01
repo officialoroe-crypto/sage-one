@@ -150,7 +150,7 @@ class _CommandCenterState extends State<CommandCenter>
             ],
           ),
         ),
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text('STAGE', style: TextStyle(fontSize: 8, letterSpacing: 1.5, color: SageTheme.textSecondary)),
