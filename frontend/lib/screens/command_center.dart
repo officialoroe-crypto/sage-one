@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
-import 'economy.dart';
-
 class CommandCenter extends StatefulWidget {
   const CommandCenter({required this.api, this.onCreate, super.key});
   final SageApi api;
@@ -228,7 +226,7 @@ class _CommandCenterState extends State<CommandCenter>
             ),
           ),
         ),
-                if (_result != null && _result!.isNotEmpty) ...[
+        if (_result != null && _result!.isNotEmpty) ...[
           const SizedBox(height: 10),
           Card(
             child: Padding(
