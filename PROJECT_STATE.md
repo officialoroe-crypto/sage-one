@@ -100,7 +100,7 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - SAGE CI passed on the final audit-hardening PR after the Android workflow and Spark changes.
 - Python job passed.
 - Flutter analyzer/tests passed.
-- The hardening PR was merged to main as 1e1ad8a218e1fc2444d8cf0a26c2af65a526dcbd.
+- The audited hardening work is merged to main; current main is `a3f82b7deb10ae8346fa422d3a8e87a46ae8b285`.
 - Premium durable task integration was merged in PR #79. Worker recovery/migration tests passed CI and were merged in PR #80; owner/catalog boundary tests passed CI and were merged in PR #81; the isolated API-to-worker end-to-end test and internal-only owner-key handoff fix passed CI and were merged in PR #82. Project-state validation updates were merged in PR #83.
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
@@ -118,8 +118,8 @@ These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
 3. Run the additive task migration and smoke-test the premium lifecycle against the user's configured local database. CI covers worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, endpoint owner/catalog boundaries, and isolated SQLite API-to-worker settlement; local database/provider-backed runtime validation remains outstanding. See `docs/runbooks/PREMIUM_SPARK_TASKS.md`.
-4. Scheduled World Intelligence refresh trigger and source-quality policy.
-5. User-visible memory management and consent-driven auto-learning UX.
+4. World Intelligence source-quality/domain policy.
+5. Consent-driven memory auto-learning pipeline.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
 7. Automated visual regression tests for Evolution animation milestones.
 8. Production release hardening and external API integrations.
@@ -133,3 +133,14 @@ Always inspect the actual GitHub main branch and this file before architectural 
 - `AI_COLLABORATION.md` defines preflight, work claims, path locks, handoffs, reconciliation, branch/PR rules, and planned automation.
 - `memory/AI_WORKING_CONTEXT.md` records the current Agentic Gateway milestone, core-completion target, immediate work queue, and multi-AI rules.
 - GitHub Issue #90 tracks implementation of the developer collaboration/work-lock control plane.
+
+
+## Backend completion update — 2026-10-01
+- Agentic Action Engine remains the controlled tool execution gateway.
+- Standard Tool Contract metadata is now part of the registry and action-plan flow.
+- Durable Automation persists one-time/interval schedules and dispatches them into the normal durable task queue.
+- Automation trigger, action, execution verification, and outcome verification events are traceable.
+- Durable ActionEvidence has a controlled retrieval surface.
+- Mission trace/result endpoints require SAGE Owner Authority.
+- AI work coordination is operational with machine-readable claims, conservative path-overlap checks, stale-claim detection, explicit takeover, and CI validation.
+- Spark premium reservation/settlement/refund is already wired into the durable worker lifecycle and crash reconciliation.
