@@ -155,6 +155,24 @@ class AutomationService:
                     row.status = "completed"
 
                 row.updated_at = now
+                try:
+                    from events.service import event_store
+
+                    event_store.emit(
+                        event_type="AutomationTriggered",
+                        task_id=task["id"],
+                        session_id=row.session_id,
+                        status="dispatched",
+                        source="automation",
+                        payload={
+                            "automation_id": row.id,
+                            "name": row.name,
+                            "run_count": row.run_count,
+                        },
+                    )
+                except Exception:
+                    pass
+
                 dispatched.append({
                     "automation_id": row.id,
                     "task": task,
