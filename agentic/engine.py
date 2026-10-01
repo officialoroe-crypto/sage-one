@@ -311,6 +311,14 @@ class AgenticActionEngine:
                     int((time.monotonic() - time.monotonic()) * 1000),
                 ),
             )
+            event_type = "ActionPermissionDenied" if status == "denied" else "ActionRejected"
+            self._emit_event(
+                event_type=event_type,
+                request=request,
+                action_id=action_id,
+                status=status,
+                payload={"tool": plan.tool_name, "error": error},
+            )
             return action_id
         except Exception:
             return None
