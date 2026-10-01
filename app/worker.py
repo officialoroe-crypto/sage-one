@@ -190,6 +190,7 @@ class SageWorker:
         execution = parallel_mission_executor.execute_mission(
             mission_id=mission_id,
             max_steps=20,
+            owner_authorized=bool(task.get("owner_key")),
         )
 
         return {
