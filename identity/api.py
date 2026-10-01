@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from config.settings import settings
 from identity.auth import authenticate_request, create_developer_session, get_or_create_authenticated_profile
 from identity.memory import add_memory, delete_memory, list_memory, update_memory
+from identity.memory_learning import learn_memory_candidates
 from identity.onboarding import capability_catalog, validate_capabilities
 from identity.otp import otp_manager
 from identity.profile import SessionLocal, UserProfile, mark_phone_verified, upsert_profile
@@ -47,6 +48,17 @@ class MemoryCreateRequest(BaseModel):
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     source: str = Field(default="user", min_length=1, max_length=100)
     confirmed: bool = False
+
+class MemoryLearningCandidate(BaseModel):
+    memory_type: str
+    content: str = Field(min_length=1, max_length=5000)
+    importance: float = Field(default=0.5, ge=0.0, le=1.0)
+    confidence: float = Field(default=0.75, ge=0.0, le=1.0)
+
+
+class MemoryLearningRequest(BaseModel):
+    candidates: list[MemoryLearningCandidate] = Field(default_factory=list, max_length=20)
+
 
 class MemoryUpdateRequest(BaseModel):
     memory_type: str | None = None
@@ -138,6 +150,16 @@ def get_profile_memory(claims: dict[str, Any] = Depends(authenticate_request)):
 def create_profile_memory(request: MemoryCreateRequest, claims: dict[str, Any] = Depends(authenticate_request)):
     profile = _profile_from_claims(claims)
     return {"success": True, "memory": add_memory(profile_id=profile["id"], memory_type=request.memory_type, content=request.content, importance=request.importance, confidence=request.confidence, source=request.source, confirmed=request.confirmed)}
+
+@router.post("/memory/learn")
+def learn_profile_memory(request: MemoryLearningRequest, claims: dict[str, Any] = Depends(authenticate_request)):
+    profile = _profile_from_claims(claims)
+    return learn_memory_candidates(
+        profile_id=profile["id"],
+        memory_consent=bool(profile["memory_consent"]),
+        candidates=[candidate.model_dump() for candidate in request.candidates],
+    )
+
 
 @router.patch("/memory/{memory_id}")
 def edit_profile_memory(memory_id: str, request: MemoryUpdateRequest, claims: dict[str, Any] = Depends(authenticate_request)):
