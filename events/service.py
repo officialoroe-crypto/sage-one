@@ -36,8 +36,10 @@ class SQLAlchemyEventStore:
         session = db or SessionLocal()
         try:
             bind = getattr(session, "bind", None)
-            if bind is not None and not inspect(bind).has_table("execution_events"):
-                return None
+            if bind is not None:
+                connection = session.connection()
+                if not inspect(connection).has_table("execution_events"):
+                    return None
 
             row = ExecutionEvent(
                 id=event_id,
