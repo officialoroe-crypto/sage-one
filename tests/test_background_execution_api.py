@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
- from app.main import _require_owner, app
+from app.main import _require_owner, app
 
 
 client = TestClient(app)
