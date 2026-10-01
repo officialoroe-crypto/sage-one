@@ -23,6 +23,10 @@ Develop the 13-stage Evolution experience as a self-contained design package whi
 - [Motion storyboard](MOTION.md): nine-step rank transition and motion principles.
 - [Composition and assets](COMPOSITION_ASSETS.md): layout regions and required source assets.
 - [Review checklist](REVIEW_CHECKLIST.md): fidelity, content, motion and handoff checks.
+- [39-state matrix](STATE_MATRIX.md): Low / Mid / High visual direction for every stage.
+- [Board layout](BOARD_LAYOUT.md): reference composition and reading order.
+- [Visual token register](VISUAL_TOKEN_REGISTER.md): semantic roles; no invented final hex values.
+- [Delivery plan](DELIVERY_PLAN.md): independent design work sequence and review package.
 
 ## Isolation rule
 This package is design documentation only. Do not import it into Flutter/React, change app navigation, add APIs, or alter backend economy logic. Any future app integration requires a separate explicit user decision and a separate work claim.
