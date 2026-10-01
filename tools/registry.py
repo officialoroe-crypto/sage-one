@@ -342,3 +342,121 @@ registry.register(
         },
     },
 )
+
+
+from automation.service import automation as durable_automation
+
+
+def _automation_list(owner_key: str, enabled_only: bool = False, limit: int = 100):
+    return {
+        "success": True,
+        "automations": durable_automation.list(
+            owner_key=owner_key,
+            enabled_only=enabled_only,
+            limit=limit,
+        ),
+    }
+
+
+def _automation_create(
+    owner_key: str,
+    name: str,
+    goal: str,
+    schedule_type: str = "once",
+    run_at: str | None = None,
+    interval_seconds: int | None = None,
+    session_id: str | None = None,
+    agent: str = "general",
+    max_runs: int | None = None,
+):
+    from datetime import datetime
+
+    parsed_run_at = (
+        datetime.fromisoformat(run_at)
+        if run_at
+        else None
+    )
+    return {
+        "success": True,
+        "automation": durable_automation.create(
+            owner_key=owner_key,
+            name=name,
+            goal=goal,
+            schedule_type=schedule_type,
+            run_at=parsed_run_at,
+            interval_seconds=interval_seconds,
+            session_id=session_id,
+            agent=agent,
+            max_runs=max_runs,
+        ),
+    }
+
+
+def _automation_disable(owner_key: str, automation_id: str):
+    result = durable_automation.disable(
+        owner_key=owner_key,
+        automation_id=automation_id,
+    )
+    return {
+        "success": result is not None,
+        "automation": result,
+    }
+
+
+registry.register(
+    name="automation_list",
+    description="List durable scheduled automations belonging to the owner.",
+    capability="automation.read",
+    risk="low",
+    permission="automation.read",
+    handler=_automation_list,
+    parameters={
+        "required": ["owner_key"],
+        "properties": {
+            "owner_key": {"type": "string"},
+            "enabled_only": {"type": "boolean", "default": False},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 500, "default": 100},
+        },
+    },
+)
+
+
+registry.register(
+    name="automation_create",
+    description="Create a durable scheduled goal that will be dispatched into the normal task queue.",
+    capability="automation.create",
+    risk="medium",
+    permission="automation.create",
+    handler=_automation_create,
+    parameters={
+        "required": ["owner_key", "name", "goal"],
+        "properties": {
+            "owner_key": {"type": "string"},
+            "name": {"type": "string"},
+            "goal": {"type": "string"},
+            "schedule_type": {"type": "string"},
+            "run_at": {"type": "string"},
+            "interval_seconds": {"type": "integer", "minimum": 60},
+            "session_id": {"type": "string"},
+            "agent": {"type": "string"},
+            "max_runs": {"type": "integer", "minimum": 1},
+        },
+    },
+)
+
+
+registry.register(
+    name="automation_disable",
+    description="Disable one owner-owned durable automation.",
+    capability="automation.create",
+    risk="medium",
+    permission="automation.create",
+    handler=_automation_disable,
+    parameters={
+        "required": ["owner_key", "automation_id"],
+        "properties": {
+            "owner_key": {"type": "string"},
+            "automation_id": {"type": "string"},
+        },
+    },
+)
