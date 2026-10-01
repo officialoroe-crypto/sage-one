@@ -118,7 +118,7 @@ These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
 3. Run the additive task migration and smoke-test the premium lifecycle against the user's configured local database. CI covers worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, endpoint owner/catalog boundaries, and isolated SQLite API-to-worker settlement; local database/provider-backed runtime validation remains outstanding. See `docs/runbooks/PREMIUM_SPARK_TASKS.md`.
-4. World Intelligence source-quality/domain policy.
+4. Consent-driven memory auto-learning UX and pipeline.
 5. Consent-driven memory auto-learning pipeline.
 6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
 7. Automated visual regression tests for Evolution animation milestones.
@@ -144,3 +144,9 @@ Always inspect the actual GitHub main branch and this file before architectural 
 - Mission trace/result endpoints require SAGE Owner Authority.
 - AI work coordination is operational with machine-readable claims, conservative path-overlap checks, stale-claim detection, explicit takeover, and CI validation.
 - Spark premium reservation/settlement/refund is already wired into the durable worker lifecycle and crash reconciliation.
+
+
+## Latest verified backend update — 2026-10-01
+- World Intelligence now has a transparent configurable source-selection policy: HTTP/HTTPS validation, optional allowlist, explicit blocklist, and per-domain diversity limits.
+- Policy rejections are surfaced rather than hidden.
+- Current main: `6c454a63af377694e7e598cb67edc4d71656342a`.
