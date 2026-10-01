@@ -525,6 +525,69 @@ Do not invent evidence.
     # ---------------------------------------------------------
     # VERIFICATION
     # ---------------------------------------------------------
+    def _get_verification_criteria(self, task_id: str):
+        from database.models import VerificationCriterion
+
+        with SessionLocal() as db:
+            rows = (
+                db.query(VerificationCriterion)
+                .filter(VerificationCriterion.task_id == task_id)
+                .all()
+            )
+            return [
+                {
+                    "id": row.id,
+                    "description": row.description,
+                    "criterion_type": row.criterion_type,
+                    "expected_value": row.expected_value,
+                    "required": bool(row.required),
+                }
+                for row in rows
+            ]
+
+    def _deterministic_outcome_verify(
+        self,
+        *,
+        criteria,
+        execution_result,
+        evidence,
+    ):
+        if not criteria:
+            return {"status": "no_explicit_criteria"}
+
+        from verification.outcome import outcome_verifier
+
+        outcome = outcome_verifier.verify(
+            criteria=criteria,
+            result=execution_result,
+            evidence=evidence,
+        )
+
+        # Semantic/manual criteria remain the responsibility of the existing
+        # semantic verifier. Deterministic criteria must never be bypassed.
+        has_semantic = any(
+            str(item.get("criterion_type", "semantic")).lower()
+            in {"semantic", "manual"}
+            for item in criteria
+            if item.get("required", True)
+        )
+
+        if not outcome.passed and not has_semantic:
+            return {
+                "passed": False,
+                "status": "failed",
+                "evidence": outcome.evidence,
+            }
+
+        if outcome.passed and not has_semantic:
+            return {
+                "passed": True,
+                "status": "passed",
+                "evidence": outcome.evidence,
+            }
+
+        return {"status": "semantic_deferred"}
+
 
     def verify_task(
         self,
@@ -554,6 +617,20 @@ Do not invent evidence.
             "mission_context",
             []
         )
+
+        explicit_criteria = self._get_verification_criteria(task_id)
+
+        outcome = self._deterministic_outcome_verify(
+            criteria=explicit_criteria,
+            execution_result=execution_result,
+            evidence=evidence,
+        )
+
+        if outcome["status"] == "failed":
+            return outcome
+
+        if outcome["status"] == "passed":
+            return outcome
 
         deterministic = (
             self._deterministic_verify(
