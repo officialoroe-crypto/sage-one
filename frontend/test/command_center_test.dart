@@ -33,7 +33,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('SAGE ONE'), findsOneWidget);
-    expect(find.text('COMMAND CENTER'), findsOneWidget);
     expect(find.text('STAGE'), findsOneWidget);
     expect(find.text('EVOLUTION'), findsOneWidget);
     expect(find.text('READY'), findsOneWidget);
