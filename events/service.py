@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from typing import Any
+
+from sqlalchemy.orm import Session
 from uuid import uuid4
 
 from database.connection import SessionLocal
@@ -24,9 +26,12 @@ class SQLAlchemyEventStore:
         status: str | None = None,
         source: str = "sage",
         payload: Any = None,
+        db: Session | None = None,
+        commit: bool = True,
     ) -> str:
         event_id = str(uuid4())
-        db = SessionLocal()
+        owns_session = db is None
+        session = db or SessionLocal()
         try:
             row = ExecutionEvent(
                 id=event_id,
@@ -45,14 +50,16 @@ class SQLAlchemyEventStore:
                 ),
                 created_at=datetime.now(timezone.utc),
             )
-            db.add(row)
-            db.commit()
+            session.add(row)
+            if commit:
+                session.commit()
             return event_id
         except Exception:
-            db.rollback()
+            session.rollback()
             raise
         finally:
-            db.close()
+            if owns_session:
+                session.close()
 
 
 event_store = SQLAlchemyEventStore()
