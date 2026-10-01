@@ -27,6 +27,8 @@ Develop the 13-stage Evolution experience as a self-contained design package whi
 - [Board layout](BOARD_LAYOUT.md): reference composition and reading order.
 - [Visual token register](VISUAL_TOKEN_REGISTER.md): semantic roles; no invented final hex values.
 - [Delivery plan](DELIVERY_PLAN.md): independent design work sequence and review package.
+- [Individual stage sheets](STAGE_SHEETS.md): index for thirteen stage-specific art-direction briefs.
+- [Transition keyframes](TRANSITION_KEYFRAMES.md): nine-beat storyboard with entry/exit visual checks.
 
 ## Isolation rule
 This package is design documentation only. Do not import it into Flutter/React, change app navigation, add APIs, or alter backend economy logic. Any future app integration requires a separate explicit user decision and a separate work claim.
