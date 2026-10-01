@@ -3,10 +3,16 @@ from urllib.parse import quote
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import _require_owner, app
 
 
 client = TestClient(app)
+
+app.dependency_overrides[_require_owner] = lambda: {
+    "auth_provider": "developer",
+    "auth_subject": "local-owner",
+    "owner_mode": True,
+}
 
 
 def _tool_request(name: str, arguments: dict):
