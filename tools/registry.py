@@ -262,3 +262,47 @@ registry.register(
         },
     },
 )
+
+
+from events.service import event_store
+
+
+def _execution_events(
+    action_id: str | None = None,
+    session_id: str | None = None,
+    mission_id: str | None = None,
+    task_id: str | None = None,
+    event_type: str | None = None,
+    limit: int = 100,
+):
+    return {
+        "success": True,
+        "events": event_store.list(
+            action_id=action_id,
+            session_id=session_id,
+            mission_id=mission_id,
+            task_id=task_id,
+            event_type=event_type,
+            limit=limit,
+        ),
+    }
+
+
+registry.register(
+    name="execution_events",
+    description="Retrieve durable SAGE execution history correlated to an action, task, mission, or session.",
+    capability="execution.history",
+    risk="low",
+    permission="task.read",
+    handler=_execution_events,
+    parameters={
+        "properties": {
+            "action_id": {"type": "string"},
+            "session_id": {"type": "string"},
+            "mission_id": {"type": "string"},
+            "task_id": {"type": "string"},
+            "event_type": {"type": "string"},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 500, "default": 100},
+        },
+    },
+)
