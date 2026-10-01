@@ -52,6 +52,10 @@ class ExecutionEngine:
 
         self.current_evidence = []
         self.current_action_id = None
+        self.current_session_id = None
+        self.current_task_id = None
+        self.current_mission_id = None
+        self.current_owner_authorized = False
 
     # ---------------------------------------------------------
     # TOOL EXECUTION
@@ -101,7 +105,11 @@ class ExecutionEngine:
             ActionRequest(
                 tool_name=tool_name,
                 arguments=arguments,
-                owner_authorized=True,
+                session_id=self.current_session_id,
+                task_id=self.current_task_id,
+                mission_id=self.current_mission_id,
+                parent_action_id=self.current_action_id,
+                owner_authorized=self.current_owner_authorized,
                 verify=True,
                 source="mission_execution",
             )
@@ -227,7 +235,9 @@ class ExecutionEngine:
 
     def execute_task(
         self,
-        task_id: str
+        task_id: str,
+        *,
+        owner_authorized: bool = False,
     ):
 
         self.current_evidence = []
@@ -237,6 +247,11 @@ class ExecutionEngine:
         )
 
         task = started["task"]
+
+        self.current_task_id = task_id
+        self.current_mission_id = task.get("mission_id")
+        self.current_session_id = task.get("session_id")
+        self.current_owner_authorized = bool(owner_authorized)
 
         attempt_id = started[
             "attempt_id"
