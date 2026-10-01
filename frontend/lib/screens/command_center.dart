@@ -218,7 +218,17 @@ class _CommandCenterState extends State<CommandCenter>
             ),
           ],
         ),
-        if (_result != null && _result!.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Center(
+          child: Text(
+            _worker,
+            style: const TextStyle(
+              color: SageTheme.textSecondary,
+              fontSize: 9,
+            ),
+          ),
+        ),
+                if (_result != null && _result!.isNotEmpty) ...[
           const SizedBox(height: 10),
           Card(
             child: Padding(
