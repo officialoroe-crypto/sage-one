@@ -187,10 +187,15 @@ class SageWorker:
         if not mission_id:
             raise RuntimeError('Mission planner returned no mission ID.')
 
+        execution_kwargs = {
+            "mission_id": mission_id,
+            "max_steps": 20,
+        }
+        if task.get("owner_key"):
+            execution_kwargs["owner_authorized"] = True
+
         execution = parallel_mission_executor.execute_mission(
-            mission_id=mission_id,
-            max_steps=20,
-            owner_authorized=bool(task.get("owner_key")),
+            **execution_kwargs,
         )
 
         return {
