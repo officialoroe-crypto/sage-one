@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy import inspect
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -34,6 +35,10 @@ class SQLAlchemyEventStore:
         owns_session = db is None
         session = db or SessionLocal()
         try:
+            bind = getattr(session, "bind", None)
+            if bind is not None and not inspect(bind).has_table("execution_events"):
+                return None
+
             row = ExecutionEvent(
                 id=event_id,
                 event_type=event_type,
