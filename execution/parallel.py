@@ -20,8 +20,10 @@ class ParallelMissionExecutor:
         self.max_parallel = max(1, int(max_parallel))
         self.engine_factory = engine_factory
 
-    def _execute_task(self, task_id: str):
+    def _execute_task(self, task_id: str, owner_authorized: bool = False):
         engine = self.engine_factory()
+        if owner_authorized:
+            return engine.execute_task(task_id, owner_authorized=True)
         return engine.execute_task(task_id)
 
     @staticmethod
@@ -99,7 +101,7 @@ class ParallelMissionExecutor:
         except Exception:
             return None
 
-    def execute_mission(self, mission_id: str, max_steps: int = 20) -> dict:
+    def execute_mission(self, mission_id: str, max_steps: int = 20, owner_authorized: bool = False) -> dict:
         history: list[dict] = []
         waves = 0
         progress = MissionProgress(mission_id)
@@ -160,7 +162,15 @@ class ParallelMissionExecutor:
                 thread_name_prefix="sage-mission",
             ) as executor:
                 futures = {
-                    executor.submit(self._execute_task, task["id"]): task["id"]
+                    (
+                        executor.submit(
+                            self._execute_task,
+                            task["id"],
+                            True,
+                        )
+                        if owner_authorized
+                        else executor.submit(self._execute_task, task["id"])
+                    ): task["id"]
                     for task in batch
                 }
 

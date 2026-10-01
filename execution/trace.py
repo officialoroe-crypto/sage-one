@@ -15,6 +15,7 @@ from database.models import (
     Artifact,
     RecoveryAttempt,
     ActionLog,
+    ActionEvidence,
 )
 
 
@@ -257,6 +258,17 @@ class ExecutionTraceService:
                     )
                 ).all()
 
+                action_evidence = db.scalars(
+                    select(ActionEvidence)
+                    .where(
+                        ActionEvidence.task_id
+                        == task_id
+                    )
+                    .order_by(
+                        ActionEvidence.created_at.asc()
+                    )
+                ).all()
+
                 # ------------------------------------------------
                 # Find action IDs stored inside execution evidence
                 # ------------------------------------------------
@@ -482,6 +494,24 @@ class ExecutionTraceService:
                             )
                             for recovery in recoveries
                         ],
+
+                        "evidence": [
+                            _model_dict(
+                                item,
+                                [
+                                    "id",
+                                    "action_id",
+                                    "mission_id",
+                                    "task_id",
+                                    "parent_action_id",
+                                    "evidence_type",
+                                    "content",
+                                    "verified",
+                                    "created_at",
+                                ],
+                            )
+                            for item in action_evidence
+                        ],
                     }
                 )
 
@@ -643,6 +673,10 @@ class ExecutionTraceService:
                         "recovery",
                         [],
                     ),
+                    "evidence": node.get(
+                        "evidence",
+                        [],
+                    ),
                 }
                 for node in tasks
             ],
@@ -669,6 +703,8 @@ class ExecutionTraceService:
 
         total_artifacts = 0
         total_recoveries = 0
+        total_evidence = 0
+        verified_evidence = 0
 
         for node in task_traces:
 
@@ -714,6 +750,10 @@ class ExecutionTraceService:
                 "recovery",
                 [],
             )
+            evidence = node.get(
+                "evidence",
+                [],
+            )
 
             total_attempts += len(
                 attempts
@@ -729,6 +769,10 @@ class ExecutionTraceService:
 
             total_recoveries += len(
                 recoveries
+            )
+            total_evidence += len(evidence)
+            verified_evidence += sum(
+                1 for item in evidence if item.get("verified")
             )
 
             for action in actions:
@@ -829,6 +873,8 @@ class ExecutionTraceService:
             "total_recoveries": (
                 total_recoveries
             ),
+            "total_evidence": total_evidence,
+            "verified_evidence": verified_evidence,
         }
 
 

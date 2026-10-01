@@ -201,6 +201,21 @@ class RecoveryAttempt(Base):
 # ACTION / EXECUTION LEDGER
 # ============================================================
 
+class ActionEvidence(Base):
+    """Durable evidence produced by or attached to a controlled action."""
+
+    __tablename__ = "action_evidence"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    action_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    mission_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    task_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    parent_action_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    evidence_type: Mapped[str] = mapped_column(String, nullable=False, default="execution")
+    content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    verified: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+
+
 class ActionLog(Base):
     __tablename__ = "action_logs"
     id: Mapped[str] = mapped_column(String, primary_key=True)

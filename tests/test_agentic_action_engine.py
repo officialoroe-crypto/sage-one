@@ -20,12 +20,17 @@ class FakeLogStore:
         self.rows: dict[str, FakeLog] = {}
         self.starts = 0
         self.finishes = 0
+        self.evidence = []
 
     def start(self, **kwargs) -> str:
         self.starts += 1
         action_id = kwargs["action_id"]
         self.rows[action_id] = FakeLog(action_id, "started")
         return action_id
+
+    def record_evidence(self, **kwargs) -> str:
+        self.evidence.append(kwargs)
+        return f"evidence-{len(self.evidence)}"
 
     def finish(self, **kwargs) -> None:
         self.finishes += 1
@@ -270,3 +275,68 @@ def test_tool_reported_failure_is_not_marked_success():
     assert result.verification_status == "failed"
     assert "not completed" in result.error
     assert logs.rows[result.action_id].status == "failed"
+
+
+def test_action_context_is_traceable_and_evidence_is_persisted():
+    def handler(name: str):
+        return {"success": True, "message": name}
+
+    engine, logs = build_engine(handler)
+
+    result = engine.execute(
+        ActionRequest(
+            tool_name="demo_tool",
+            arguments={"name": "SAGE"},
+            session_id="session-1",
+            task_id="task-1",
+            mission_id="mission-1",
+            parent_action_id="action-parent",
+            owner_authorized=True,
+        )
+    )
+
+    assert result.success is True
+    assert result.mission_id == "mission-1"
+    assert result.parent_action_id == "action-parent"
+    assert result.evidence
+    assert result.evidence[0]["persisted"] is True
+    assert logs.evidence[0]["mission_id"] == "mission-1"
+    assert logs.evidence[0]["task_id"] == "task-1"
+    assert logs.evidence[0]["parent_action_id"] == "action-parent"
+
+
+def test_action_evidence_persistence_failure_fails_closed_after_execution():
+    class BrokenEvidenceLog(FakeLogStore):
+        def record_evidence(self, **kwargs) -> str:
+            raise RuntimeError("evidence store unavailable")
+
+    def handler(name: str):
+        return {"success": True}
+
+    registry = ToolRegistry()
+    registry.register(
+        name="demo_tool",
+        description="Test tool.",
+        capability="test.execute",
+        risk="low",
+        permission="tool.execute",
+        handler=handler,
+        parameters={"required": ["name"], "properties": {"name": {"type": "string"}}},
+    )
+    logs = BrokenEvidenceLog()
+    engine = AgenticActionEngine(
+        registry=registry,
+        permission_engine=PermissionEngine(),
+        log_store=logs,
+    )
+
+    result = engine.execute(
+        ActionRequest(
+            tool_name="demo_tool",
+            arguments={"name": "SAGE"},
+            owner_authorized=True,
+        )
+    )
+
+    assert result.success is False
+    assert "Evidence persistence failed" in result.error

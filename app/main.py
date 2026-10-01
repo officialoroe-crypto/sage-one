@@ -10,6 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.core import sage
+from agentic.engine import action_engine
+from agentic.models import ActionRequest
 from brain.router import router
 from database.connection import SessionLocal, Base, engine
 from database import repository
@@ -367,7 +369,10 @@ def get_session(session_id: str):
 # ============================================================
 
 @app.post("/chat")
-def chat(request: ChatRequest):
+def chat(
+    request: ChatRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
     try:
         context_parts = []
 
@@ -401,6 +406,7 @@ def chat(request: ChatRequest):
             user_message=request.message,
             session_id=session_id,
             context=context,
+            owner_authorized=bool(claims.get("owner_mode", False)),
         )
 
         return {
@@ -421,7 +427,10 @@ def chat(request: ChatRequest):
 # ============================================================
 
 @app.post("/execute")
-def execute(request: ExecuteRequest):
+def execute(
+    request: ExecuteRequest,
+    _claims: dict[str, Any] = Depends(_require_owner),
+):
     """
     High-level synchronous execution endpoint.
 
@@ -457,6 +466,7 @@ def execute(request: ExecuteRequest):
         execution_result = execution_engine.execute_mission(
             mission_id=mission_id,
             max_steps=request.max_steps,
+            owner_authorized=True,
         )
 
         return {
@@ -474,7 +484,10 @@ def execute(request: ExecuteRequest):
 
 
 @app.post("/execute/background")
-def execute_background(request: ExecuteRequest):
+def execute_background(
+    request: ExecuteRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
     """Queue goal execution as a durable task for the background worker.
 
     The HTTP process does not perform the AI work. The task is persisted
@@ -492,6 +505,7 @@ def execute_background(request: ExecuteRequest):
         priority=3,
         agent=agent_name,
         session_id=request.session_id,
+        owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
     )
 
     return {
@@ -593,6 +607,7 @@ def tool_schemas():
 def execute_tool(
     tool_name: str,
     arguments: Optional[str] = None,
+    _claims: dict[str, Any] = Depends(_require_owner),
 ):
     try:
         parsed_arguments: dict[str, Any] = {}
@@ -603,12 +618,17 @@ def execute_tool(
                 raise ValueError("Tool arguments must be a JSON object.")
             parsed_arguments = decoded
 
-        result = sage._execute_tool(
-            tool_name,
-            parsed_arguments,
-        )
+        result = action_engine.execute(
+            ActionRequest(
+                tool_name=tool_name,
+                arguments=parsed_arguments,
+                owner_authorized=True,
+                verify=True,
+                source="api_tools_execute",
+            )
+        ).to_dict()
 
-        if isinstance(result, dict) and result.get("success") is True:
+        if result.get("success") is True:
             return {
                 "success": True,
                 "tool": tool_name,
@@ -618,9 +638,7 @@ def execute_tool(
         return {
             "success": False,
             "tool": tool_name,
-            "error": result.get("error", "Tool execution failed.")
-            if isinstance(result, dict)
-            else "Tool execution failed.",
+            "error": result.get("error", "Tool execution failed."),
         }
 
     except Exception as exc:
@@ -971,6 +989,7 @@ def refresh_mission(mission_id: str):
 def execute_mission(
     mission_id: str,
     request: MissionExecuteRequest,
+    _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
     try:
@@ -993,11 +1012,13 @@ def execute_mission(
 @app.post("/missions/{mission_id}/execute-next")
 def execute_next_task(
     mission_id: str,
+    _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
     try:
         result = execution_engine.execute_next(
-            mission_id
+            mission_id,
+            owner_authorized=True,
         )
 
         return _serialize(result)
@@ -1012,11 +1033,13 @@ def execute_next_task(
 @app.post("/missions/tasks/{task_id}/execute")
 def execute_single_task(
     task_id: str,
+    _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
     try:
         result = execution_engine.execute_task(
-            task_id
+            task_id,
+            owner_authorized=True,
         )
 
         return _serialize(result)

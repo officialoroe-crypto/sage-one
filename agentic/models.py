@@ -12,6 +12,8 @@ class ActionRequest:
     arguments: dict[str, Any] = field(default_factory=dict)
     session_id: str | None = None
     task_id: str | None = None
+    mission_id: str | None = None
+    parent_action_id: str | None = None
     owner_authorized: bool = False
     verify: bool = True
     source: str = "agent"
@@ -52,6 +54,9 @@ class ActionResult:
     verification_status: str = "not_requested"
     verification_reason: str | None = None
     duration_ms: int | None = None
+    mission_id: str | None = None
+    parent_action_id: str | None = None
+    evidence: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -69,4 +74,7 @@ class ActionResult:
             "verification_status": self.verification_status,
             "verification_reason": self.verification_reason,
             "duration_ms": self.duration_ms,
+            "mission_id": self.mission_id,
+            "parent_action_id": self.parent_action_id,
+            "evidence": self.evidence,
         }
