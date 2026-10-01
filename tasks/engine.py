@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from database.connection import SessionLocal
+from events.service import event_store
 from database.repository import repository
 
 
@@ -146,6 +147,14 @@ class TaskEngine:
 
             db.commit()
             task = repository.get_task(db, task_id)
+            if task:
+                event_store.emit(
+                    event_type="TaskClaimed",
+                    task_id=task.id,
+                    session_id=task.session_id,
+                    status=task.status,
+                    payload={"worker_id": worker_id, "lease_seconds": lease_seconds},
+                )
             return self.serialize(task, include_owner=True) if task else None
         finally:
             db.close()
@@ -211,6 +220,15 @@ class TaskEngine:
                 heartbeat_at=datetime.now(timezone.utc),
                 next_retry_at=None,
             )
+            if task:
+                event_store.emit(
+                    event_type="TaskCompleted",
+                    task_id=task.id,
+                    session_id=task.session_id,
+                    mission_id=task.mission_id,
+                    status=task.status,
+                    payload={"result": result},
+                )
             return self.serialize(task) if task else None
         finally:
             db.close()
@@ -229,6 +247,15 @@ class TaskEngine:
                 worker_id,
                 result,
             )
+            if task:
+                event_store.emit(
+                    event_type="TaskCompleted",
+                    task_id=task.id,
+                    session_id=task.session_id,
+                    mission_id=task.mission_id,
+                    status=task.status,
+                    payload={"result": result},
+                )
             return self.serialize(task) if task else None
         finally:
             db.close()
