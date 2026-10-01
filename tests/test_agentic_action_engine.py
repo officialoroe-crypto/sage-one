@@ -24,6 +24,7 @@ class FakeLogStore:
 
     def start(self, **kwargs) -> str:
         self.starts += 1
+        self.start_kwargs = kwargs
         action_id = kwargs["action_id"]
         self.rows[action_id] = FakeLog(action_id, "started")
         return action_id
@@ -340,3 +341,27 @@ def test_action_evidence_persistence_failure_fails_closed_after_execution():
 
     assert result.success is False
     assert "Evidence persistence failed" in result.error
+
+
+def test_action_log_start_receives_full_correlation_context():
+    engine, logs = build_engine(lambda name: {"success": True})
+
+    result = engine.execute(
+        ActionRequest(
+            tool_name="demo_tool",
+            arguments={"name": "SAGE"},
+            session_id="session-1",
+            task_id="task-1",
+            mission_id="mission-1",
+            parent_action_id="action-parent",
+            source="mission_execution",
+            owner_authorized=True,
+        )
+    )
+
+    assert result.success is True
+    assert logs.start_kwargs["session_id"] == "session-1"
+    assert logs.start_kwargs["task_id"] == "task-1"
+    assert logs.start_kwargs["mission_id"] == "mission-1"
+    assert logs.start_kwargs["parent_action_id"] == "action-parent"
+    assert logs.start_kwargs["source"] == "mission_execution"
