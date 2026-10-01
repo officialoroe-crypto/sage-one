@@ -15,7 +15,8 @@ class CommandCenter extends StatefulWidget {
   State<CommandCenter> createState() => _CommandCenterState();
 }
 
-class _CommandCenterState extends State<CommandCenter> {
+class _CommandCenterState extends State<CommandCenter>
+    with SingleTickerProviderStateMixin {
   final _prompt = TextEditingController();
   String _status = 'Ready';
   String _provider = 'Cloud routing';
@@ -24,11 +25,15 @@ class _CommandCenterState extends State<CommandCenter> {
   String? _result;
   bool _sending = false;
   Timer? _poller;
+  late final AnimationController _orbController;
 
   @override
   void initState() {
     super.initState();
-    _loadRouting();
+    _orbController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..repeat(reverse: true);
     _loadWorker();
   }
 
@@ -42,19 +47,6 @@ class _CommandCenterState extends State<CommandCenter> {
       });
     } catch (_) {
       if (mounted) setState(() => _worker = 'Worker unavailable');
-    }
-  }
-
-  Future<void> _loadRouting() async {
-    try {
-      final data = await widget.api.routing();
-      final routing = data['routing'];
-      final provider = routing is Map
-          ? routing['provider']
-          : data['provider'] ?? data['selected_provider'];
-      if (mounted) setState(() => _provider = provider?.toString() ?? 'Auto routing');
-    } catch (_) {
-      if (mounted) setState(() => _provider = 'Offline / unavailable');
     }
   }
 
@@ -119,6 +111,7 @@ class _CommandCenterState extends State<CommandCenter> {
   @override
   void dispose() {
     _poller?.cancel();
+    _orbController.dispose();
     _prompt.dispose();
     super.dispose();
   }
@@ -133,25 +126,21 @@ class _CommandCenterState extends State<CommandCenter> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
-              sliver: SliverToBoxAdapter(child: _header()),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
-              sliver: SliverToBoxAdapter(child: _coreSection()),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
-              sliver: SliverToBoxAdapter(child: _commandBox()),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
-              sliver: SliverToBoxAdapter(child: _quickActions()),
-            ),
-          ],
+        child: AnimatedBuilder(
+          animation: _orbController,
+          builder: (context, _) => CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+                sliver: SliverToBoxAdapter(child: _header()),
+              ),
+              SliverToBoxAdapter(child: _orbSection()),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                sliver: SliverToBoxAdapter(child: _commandBox()),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -160,101 +149,49 @@ class _CommandCenterState extends State<CommandCenter> {
   Widget _header() {
     return Row(
       children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: SageTheme.surface,
-            shape: BoxShape.circle,
-            border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.39)),
-            boxShadow: [BoxShadow(color: SageTheme.cyan.withValues(alpha: 0.14), blurRadius: 18)],
-          ),
-          child: const Icon(Icons.auto_awesome, size: 19, color: SageTheme.cyan),
-        ),
-        const SizedBox(width: 11),
         const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('SAGE ONE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.6)),
-              SizedBox(height: 2),
+              Text('SAGE ONE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.8)),
+              SizedBox(height: 3),
               Text('PERSONAL AI • EXECUTION PARTNER', style: TextStyle(fontSize: 8, letterSpacing: 1.2, color: SageTheme.textSecondary)),
             ],
           ),
         ),
-        IconButton(
-          tooltip: 'SAGE Spark & Evolution',
-          onPressed: _openEconomy,
-          icon: const Icon(Icons.auto_awesome_outlined),
-        ),
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-          ),
-          child: const Icon(Icons.person_outline, size: 19),
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text('STAGE', style: TextStyle(fontSize: 8, letterSpacing: 1.5, color: SageTheme.textSecondary)),
+            Text('EVOLUTION', style: TextStyle(fontSize: 9, letterSpacing: 1, color: SageTheme.cyan, fontWeight: FontWeight.w700)),
+          ],
         ),
       ],
     );
   }
 
-  Widget _coreSection() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-      decoration: BoxDecoration(
-        color: SageTheme.surface.withValues(alpha: 0.71),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        children: [
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text('COMMAND CENTER', style: TextStyle(fontSize: 9, letterSpacing: 2.2, color: SageTheme.cyan, fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(height: 2),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text('What are we executing today?', style: TextStyle(fontSize: 23, height: 1.15, fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(height: 8),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Give SAGE the outcome. Planning, research, execution and verification can run in the background.',
-              style: TextStyle(color: SageTheme.textSecondary, fontSize: 12, height: 1.45),
+  Widget _orbSection() {
+    final glow = .55 + (_orbController.value * .45);
+    return SizedBox(
+      height: 390,
+      child: Center(
+        child: SizedBox(
+          width: 300,
+          height: 300,
+          child: CustomPaint(
+            painter: _SageOrbPainter(intensity: glow),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('S', style: TextStyle(fontSize: 104, height: .9, fontWeight: FontWeight.w800, color: SageTheme.textPrimary)),
+                  SizedBox(height: 14),
+                  Text('READY', style: TextStyle(fontSize: 9, letterSpacing: 3, color: SageTheme.cyan, fontWeight: FontWeight.w700)),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 220,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CustomPaint(size: const Size.square(214), painter: _SageCorePainter()),
-                const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('S', style: TextStyle(fontSize: 70, height: .95, fontWeight: FontWeight.w800, color: SageTheme.textPrimary)),
-                    SizedBox(height: 5),
-                    Text('READY TO EXECUTE', style: TextStyle(fontSize: 8, letterSpacing: 1.8, color: SageTheme.cyan, fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _StatusDot(color: SageTheme.success, label: _worker),
-              const SizedBox(width: 14),
-              _StatusDot(color: SageTheme.blue, label: _provider),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -301,66 +238,6 @@ class _CommandCenterState extends State<CommandCenter> {
     );
   }
 
-  Widget _quickActions() {
-    const modules = [
-      ('RESEARCH', Icons.travel_explore, 'Search + verify', SageTheme.cyan),
-      ('CREATE', Icons.auto_awesome, 'Build content', SageTheme.violet),
-      ('EXECUTE', Icons.bolt, 'Do the work', SageTheme.gold),
-    ];
-
-    return Row(
-      children: [
-        for (var i = 0; i < modules.length; i++) ...[
-          Expanded(
-            child: _ActionCard(
-              title: modules[i].$1,
-              subtitle: modules[i].$3,
-              onTap: modules[i].$1 == 'CREATE' ? widget.onCreate : null,
-              icon: modules[i].$2,
-              accent: modules[i].$4,
-            ),
-          ),
-          if (i != modules.length - 1) const SizedBox(width: 9),
-        ],
-      ],
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.title, required this.subtitle, required this.icon, required this.accent, this.onTap});
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color accent;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 118,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: SageTheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent.withValues(alpha: 0.39)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 19, color: accent),
-          const Spacer(),
-          Text(title, style: const TextStyle(fontSize: 10, letterSpacing: 1.1, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 9, color: SageTheme.textSecondary)),
-        ],
-        ),
-      ),
-    );
   }
 }
 
@@ -382,50 +259,46 @@ class _StatusDot extends StatelessWidget {
   }
 }
 
-class _SageCorePainter extends CustomPainter {
+class _SageOrbPainter extends CustomPainter {
+  const _SageOrbPainter({required this.intensity});
+  final double intensity;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
-
+    final center = size.center(Offset.zero);
+    final radius = size.shortestSide * .38;
     final halo = Paint()
       ..shader = RadialGradient(
-        colors: [SageTheme.cyan.withValues(alpha: 0.25), SageTheme.blue.withValues(alpha: 0.09), Colors.transparent],
-      ).createShader(Rect.fromCircle(center: c, radius: 105));
-    canvas.drawCircle(c, 105, halo);
+        colors: [
+          SageTheme.cyan.withValues(alpha: .22 * intensity),
+          SageTheme.blue.withValues(alpha: .10 * intensity),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: size.shortestSide * .49));
+    canvas.drawCircle(center, size.shortestSide * .49, halo);
 
-    final ring = Paint()
+    final orb = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-.25, -.3),
+        radius: 1,
+        colors: [SageTheme.surfaceRaised, SageTheme.surface, SageTheme.voidBlack],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, orb);
+
+    final edge = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..color = SageTheme.cyan.withValues(alpha: 0.59);
-    canvas.drawCircle(c, 76, ring);
+      ..strokeWidth = 1.2
+      ..color = SageTheme.cyan.withValues(alpha: .28 + .18 * intensity);
+    canvas.drawCircle(center, radius, edge);
 
-    canvas.save();
-    canvas.translate(c.dx, c.dy);
-    canvas.rotate(-0.32);
-    canvas.scale(1.65, .38);
-    canvas.drawCircle(
-      Offset.zero,
-      74,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..color = SageTheme.violet.withValues(alpha: 0.61),
-    );
-    canvas.restore();
-
-    canvas.drawCircle(c + const Offset(62, -30), 6, Paint()..color = SageTheme.gold);
-    canvas.drawCircle(c + const Offset(62, -30), 12, Paint()..color = SageTheme.gold.withValues(alpha: 0.12));
-
-    canvas.drawCircle(
-      c,
-      53,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = Colors.white.withValues(alpha: 0.14),
-    );
+    final glowEdge = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..color = SageTheme.cyan.withValues(alpha: .035 * intensity)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
+    canvas.drawCircle(center, radius, glowEdge);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SageOrbPainter oldDelegate) => oldDelegate.intensity != intensity;
 }
