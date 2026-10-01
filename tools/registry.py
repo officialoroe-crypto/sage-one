@@ -342,3 +342,47 @@ registry.register(
         },
     },
 )
+
+
+from evidence.service import evidence_service
+
+
+def _execution_evidence(
+    action_id: str | None = None,
+    mission_id: str | None = None,
+    task_id: str | None = None,
+    evidence_type: str | None = None,
+    verified_only: bool = False,
+    limit: int = 100,
+):
+    return {
+        "success": True,
+        "evidence": evidence_service.list(
+            action_id=action_id,
+            mission_id=mission_id,
+            task_id=task_id,
+            evidence_type=evidence_type,
+            verified_only=verified_only,
+            limit=limit,
+        ),
+    }
+
+
+registry.register(
+    name="execution_evidence",
+    description="Retrieve durable evidence attached to SAGE actions, tasks, or missions.",
+    capability="execution.evidence",
+    risk="low",
+    permission="task.read",
+    handler=_execution_evidence,
+    parameters={
+        "properties": {
+            "action_id": {"type": "string"},
+            "mission_id": {"type": "string"},
+            "task_id": {"type": "string"},
+            "evidence_type": {"type": "string"},
+            "verified_only": {"type": "boolean", "default": False},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 500, "default": 100},
+        },
+    },
+)
