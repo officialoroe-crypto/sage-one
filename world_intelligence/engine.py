@@ -137,13 +137,6 @@ class WorldIntelligenceEngine:
                 "error": report.get("error", "World knowledge synthesis failed.") if isinstance(report, dict) else "Invalid synthesis result.",
             }
 
-        report = {
-            **report,
-            "sources": allowed_sources,
-            "source_policy_rejections": rejected_sources,
-        }
-        report_json = json.dumps(report, ensure_ascii=False, default=str)
-        summary = str(report.get("summary") or "").strip()
         sources = report.get("sources") or []
         allowed_sources, rejected_sources = world_source_policy.select(
             [source for source in sources if isinstance(source, dict)],
@@ -156,6 +149,14 @@ class WorldIntelligenceEngine:
                 "error": "World source policy rejected all candidate sources.",
                 "rejected_sources": rejected_sources,
             }
+
+        report = {
+            **report,
+            "sources": allowed_sources,
+            "source_policy_rejections": rejected_sources,
+        }
+        report_json = json.dumps(report, ensure_ascii=False, default=str)
+        summary = str(report.get("summary") or "").strip()
         claims = report.get("claims") or []
         confidence = "verified" if claims and not rejected_sources else "source_backed"
         now = self._now()
