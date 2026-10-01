@@ -51,6 +51,7 @@ class ExecutionEngine:
         self.router = router
 
         self.current_evidence = []
+        self.current_action_id = None
 
     # ---------------------------------------------------------
     # TOOL EXECUTION
