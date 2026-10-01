@@ -160,7 +160,7 @@
 - [ ] Computer control.
 - [ ] File operations.
 - [ ] External API integrations.
-- [ ] Scheduled/background automation.
+- [x] Scheduled/background automation.
 - [x] Security/permission control plane for global owner mutations; production owner identity boundary is enforced.
 - [ ] Public-release preparation.
 
@@ -192,20 +192,20 @@
 - [ ] Add production SMS provider.
 - [ ] Add Google-token/session refresh handling for long-lived authenticated sessions.
 - [x] Build idempotent Spark reservation, settlement, and refund primitives bound to the canonical premium cost catalogue.
-- [ ] Wire Spark reservations into the actual premium-work execution settlement path.
-- [ ] Add scheduled World Intelligence refresh triggering.
+- [x] Wire Spark reservations into the actual premium-work execution settlement path.
+- [x] Add scheduled World Intelligence refresh triggering through the durable background automation layer.
 - [ ] Add source-quality/domain policy for World Intelligence refresh.
 - [ ] Add full multi-tenant data ownership if SAGE ONE is ever offered as a shared public service.
 - [ ] Add automated visual regression coverage for Evolution animation milestones.
 
 
 ## MULTI-AI COLLABORATION / DEVELOPER CONTROL PLANE
-- [ ] Define machine-readable active work claims with agent, branch, base SHA, scope, objective, and timestamps.
-- [ ] Add atomic claim/release operations.
-- [ ] Detect overlapping file/module claims before work starts.
-- [ ] Detect stale claims and require explicit takeover/handoff.
-- [ ] Add developer handoff records with changed files, commits, tests, failures, and next action.
+- [x] Define machine-readable active work claims with agent, branch, base SHA, scope, objective, and timestamps.
+- [x] Add atomic claim/release operations.
+- [x] Detect overlapping file/module claims before work starts.
+- [x] Detect stale claims and require explicit takeover/handoff.
+- [x] Add developer handoff records with changed files, commits, tests, failures, and next action.
 - [ ] Add pre-PR consistency checks against current main.
-- [ ] Add optional CI enforcement for coordination invariants.
-- [ ] Expose a compact current-work/status view usable by any AI session.
-- [ ] Document two-AI parallel development and conflict-recovery procedure.
+- [x] Add optional CI enforcement for coordination invariants.
+- [x] Expose a compact current-work/status view usable by any AI session.
+- [x] Document two-AI parallel development and conflict-recovery procedure.
