@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
+import '../evolution/evolution_visual.dart';
 import '../theme/sage_theme.dart';
 import 'economy.dart';
 
@@ -73,6 +74,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
     final nextThreshold = (progress['next_threshold'] as num?)?.toInt();
     final currentThreshold = (progress['current_threshold'] as num?)?.toInt() ?? 0;
     final ratio = ((progress['ratio'] as num?)?.toDouble() ?? 0).clamp(0.0, 1.0).toDouble();
+    final visual = evolutionVisualFor(currentTier, intensity: EvolutionIntensity.mid);
 
     return Scaffold(
       appBar: AppBar(
@@ -85,10 +87,12 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: EvolutionAtmosphere(
+        visual: visual,
+        child: RefreshIndicator(
         onRefresh: _load,
         color: SageTheme.cyan,
-        child: ListView(
+          child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
           children: [
             _CurrentRankCard(
@@ -98,7 +102,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
               nextTier: nextTier,
               nextThreshold: nextThreshold,
               ratio: ratio,
-              accent: _rankColor(currentTier),
+              accent: visual.accent,
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
@@ -136,7 +140,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
                     order: order,
                     isCurrent: isCurrent,
                     isReached: isReached,
-                    accent: _rankColor(name),
+                    accent: evolutionVisualFor(name).accent,
                   ),
                 );
               }),
@@ -146,6 +150,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
               style: TextStyle(color: SageTheme.textSecondary, fontSize: 11, height: 1.45),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -402,23 +407,6 @@ class _SectionHeader extends StatelessWidget {
           Text(subtitle, style: const TextStyle(color: SageTheme.textSecondary, fontSize: 11)),
         ],
       );
-}
-
-Color _rankColor(String tier) {
-  final value = tier.toLowerCase();
-  if (value.contains('bronze')) return const Color(0xFFCD8B5A);
-  if (value.contains('silver')) return const Color(0xFFB9C7D8);
-  if (value.contains('gold')) return const Color(0xFFFFC857);
-  if (value.contains('platinum')) return const Color(0xFF70D5FF);
-  if (value.contains('jade')) return const Color(0xFF45D6A2);
-  if (value.contains('ruby')) return const Color(0xFFFF4D68);
-  if (value.contains('sapphire')) return const Color(0xFF428DFF);
-  if (value.contains('emerald')) return const Color(0xFF37D9B2);
-  if (value.contains('diamond')) return const Color(0xFF8B7CFF);
-  if (value.contains('opal') || value.contains('painite')) return const Color(0xFFFF6C4A);
-  if (value.contains('void')) return const Color(0xFFBA63FF);
-  if (value.contains('californium')) return const Color(0xFFFFC857);
-  return SageTheme.cyan;
 }
 
 class _ErrorState extends StatelessWidget {
