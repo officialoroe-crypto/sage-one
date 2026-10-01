@@ -1,5 +1,6 @@
 from database.connection import SessionLocal
 from database.repository import repository
+from events.service import event_store
 
 
 def serialize(notification):
@@ -38,6 +39,17 @@ def create_task_notification(
             notification_type=f"task.{status}",
             task_id=task.get("id"),
             session_id=task.get("session_id"),
+        )
+        event_store.emit(
+            event_type="NotificationCreated",
+            task_id=notification.task_id,
+            session_id=notification.session_id,
+            status="created",
+            payload={
+                "notification_id": notification.id,
+                "type": notification.notification_type,
+                "title": notification.title,
+            },
         )
         return serialize(notification)
     finally:
