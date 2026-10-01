@@ -1,3 +1,14 @@
 version: 1
-updated_at: 2026-10-01T13:48:00Z
-claims: []
+updated_at: 2026-10-01T13:55:00Z
+claims:
+  - id: evolution-design-lab-20261001
+    agent: ChatGPT
+    branch: ai/evolution-design-lab
+    base_sha: d588e976afdc76f299d1cffc6d99b49371d01950
+    objective: Create the independent locked Evolution design lab specification without modifying production app code.
+    scope:
+      - docs/design/evolution-system-lab
+    status: in_progress
+    claimed_at: 2026-10-01T13:55:00Z
+    started_at: 2026-10-01T13:55:00Z
+    updated_at: 2026-10-01T13:55:00Z
