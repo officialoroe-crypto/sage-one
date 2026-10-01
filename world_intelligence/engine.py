@@ -7,6 +7,7 @@ from uuid import uuid4
 from permissions.engine import permissions
 from database.connection import SessionLocal
 from world_intelligence.models import UpgradeProposal, WorldKnowledge, WorldSignal
+from world_intelligence.source_policy import world_source_policy
 
 
 DEFAULT_TOPICS = (
@@ -66,6 +67,10 @@ class WorldIntelligenceEngine:
         )
 
         sources = result.get("sources", []) if isinstance(result, dict) else []
+        sources, rejected_sources = world_source_policy.select(
+            [source for source in sources if isinstance(source, dict)],
+            limit=20,
+        )
         readable = [
             source for source in sources
             if isinstance(source, dict) and source.get("read_success")
@@ -103,6 +108,8 @@ class WorldIntelligenceEngine:
             "readable_count": len(readable),
             "signal_count": len(signal_ids),
             "signal_ids": signal_ids,
+            "accepted_source_count": len(sources),
+            "rejected_sources": rejected_sources,
             "observed_at": now.isoformat(),
             "errors": result.get("errors", []) if isinstance(result, dict) else ["Invalid research result."],
         }
@@ -130,11 +137,27 @@ class WorldIntelligenceEngine:
                 "error": report.get("error", "World knowledge synthesis failed.") if isinstance(report, dict) else "Invalid synthesis result.",
             }
 
+        report = {
+            **report,
+            "sources": allowed_sources,
+            "source_policy_rejections": rejected_sources,
+        }
         report_json = json.dumps(report, ensure_ascii=False, default=str)
         summary = str(report.get("summary") or "").strip()
         sources = report.get("sources") or []
+        allowed_sources, rejected_sources = world_source_policy.select(
+            [source for source in sources if isinstance(source, dict)],
+            limit=20,
+        )
+        if not allowed_sources:
+            return {
+                "success": False,
+                "topic": topic,
+                "error": "World source policy rejected all candidate sources.",
+                "rejected_sources": rejected_sources,
+            }
         claims = report.get("claims") or []
-        confidence = "verified" if claims else "source_backed"
+        confidence = "verified" if claims and not rejected_sources else "source_backed"
         now = self._now()
 
         with SessionLocal() as db:
