@@ -20,7 +20,7 @@ class ParallelMissionExecutor:
         self.max_parallel = max(1, int(max_parallel))
         self.engine_factory = engine_factory
 
-    def _execute_task(self, task_id: str, owner_authorized: bool):
+    def _execute_task(self, task_id: str, owner_authorized: bool = False):
         engine = self.engine_factory()
         return engine.execute_task(task_id, owner_authorized=owner_authorized)
 
