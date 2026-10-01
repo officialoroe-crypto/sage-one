@@ -10,6 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.core import sage
+from agentic.engine import action_engine
+from agentic.models import ActionRequest
 from brain.router import router
 from database.connection import SessionLocal, Base, engine
 from database import repository
@@ -616,12 +618,17 @@ def execute_tool(
                 raise ValueError("Tool arguments must be a JSON object.")
             parsed_arguments = decoded
 
-        result = sage._execute_tool(
-            tool_name,
-            parsed_arguments,
-        )
+        result = action_engine.execute(
+            ActionRequest(
+                tool_name=tool_name,
+                arguments=parsed_arguments,
+                owner_authorized=True,
+                verify=True,
+                source="api_tools_execute",
+            )
+        ).to_dict()
 
-        if isinstance(result, dict) and result.get("success") is True:
+        if result.get("success") is True:
             return {
                 "success": True,
                 "tool": tool_name,
@@ -631,9 +638,7 @@ def execute_tool(
         return {
             "success": False,
             "tool": tool_name,
-            "error": result.get("error", "Tool execution failed.")
-            if isinstance(result, dict)
-            else "Tool execution failed.",
+            "error": result.get("error", "Tool execution failed."),
         }
 
     except Exception as exc:
