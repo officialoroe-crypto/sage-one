@@ -1,3 +1,15 @@
 version: 1
-updated_at: 2026-09-30T09:00:00Z
-claims: []
+updated_at: 2026-10-01T13:42:00Z
+claims:
+  - id: command-center-orb-20261001
+    agent: ChatGPT
+    branch: ai/command-center-orb-current
+    base_sha: dfe27218202291a662ff0b851f26cabfc227987e
+    objective: Rebuild Flutter Command Center around the approved standalone SAGE orb while preserving real task submission and polling.
+    scope:
+      - frontend/lib/screens/command_center.dart
+      - frontend/test/command_center_test.dart
+    status: in_progress
+    claimed_at: 2026-10-01T13:42:00Z
+    started_at: 2026-10-01T13:42:00Z
+    updated_at: 2026-10-01T13:45:00Z
