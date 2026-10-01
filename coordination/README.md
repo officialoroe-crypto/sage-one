@@ -20,5 +20,18 @@ This directory is the machine-readable coordination state for independent AI ses
 5. Before PR, record changed files, tests, failures, and next action.
 6. After merge/handoff, release the claim.
 
-## Future enforcement
-A script/CI check will validate claim shape, stale timestamps, path overlap, and PR changed-file overlap. Until that check exists, this file is the shared coordination contract and GitHub PR/issues are the authoritative claim records.
+## Operational controls
+Use `python coordination/claims.py status` to inspect claims.
+
+Create a claim before editing:
+`python coordination/claims.py claim --id <id> --agent <agent> --branch <branch> --base-sha <sha> --objective "<objective>" --scope <path> [<path> ...]`
+
+Release after merge/handoff:
+`python coordination/claims.py release --id <id>`
+
+Takeover is explicit and only allowed after a claim is stale:
+`python coordination/claims.py takeover --id <old-id> --new-id <new-id> --agent <agent> --branch <branch> --base-sha <sha>`
+
+The claim helper rejects exact-path and conservative parent-directory overlap. It writes the state atomically within a checkout; the state change must still be committed/pushed through the normal PR flow.
+
+Claims do not grant permission to merge or execute runtime actions. GitHub PR + CI and SAGE runtime permissions remain separate controls.
