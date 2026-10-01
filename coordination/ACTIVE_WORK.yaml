@@ -1,17 +1,3 @@
 version: 1
-updated_at: 2026-10-01T14:12:00Z
-claims:
-  - id: consented-memory-learning-20261001
-    agent: ChatGPT
-    branch: ai/consented-memory-learning
-    base_sha: aebe2f09dff8d0aa3344e028d2058185789e3ab6
-    objective: Add a consent-gated memory candidate learning pipeline on top of existing owner-scoped profile memory.
-    scope:
-      - identity/memory_learning.py
-      - identity/api.py
-      - tests/test_memory_learning.py
-      - memory/MEMORY_LEARNING.md
-    status: in_progress
-    claimed_at: 2026-10-01T14:12:00Z
-    started_at: 2026-10-01T14:12:00Z
-    updated_at: 2026-10-01T14:12:00Z
+updated_at: 2026-10-01T14:20:00Z
+claims: []
