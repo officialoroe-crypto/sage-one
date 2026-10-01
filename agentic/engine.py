@@ -432,7 +432,11 @@ class AgenticActionEngine:
                 "evidence": verification.evidence,
             }
             try:
-                evidence_id = self.log_store.record_evidence(
+                record_evidence = getattr(self.log_store, "record_evidence", None)
+                if record_evidence is None:
+                    evidence_item["persisted"] = False
+                else:
+                    evidence_id = record_evidence(
                     action_id=action_id,
                     mission_id=request.mission_id,
                     task_id=request.task_id,
@@ -440,8 +444,9 @@ class AgenticActionEngine:
                     evidence_type="execution_verification",
                     content=evidence_item,
                     verified=verification.status == "passed",
-                )
-                evidence_item["evidence_id"] = evidence_id
+                    )
+                    evidence_item["evidence_id"] = evidence_id
+                    evidence_item["persisted"] = True
             except Exception as exc:
                 evidence_item["persist_error"] = str(exc)
                 execution_success = False
