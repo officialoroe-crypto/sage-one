@@ -95,10 +95,11 @@ class SQLAlchemyActionLogStore:
 
     def __init__(self) -> None:
         from database.connection import SessionLocal
-        from database.models import ActionLog
+        from database.models import ActionLog, ActionEvidence
 
         self._session_factory = SessionLocal
         self._model = ActionLog
+        self._evidence_model = ActionEvidence
 
     def start(
         self,
@@ -131,6 +132,40 @@ class SQLAlchemyActionLogStore:
             db.add(row)
             db.commit()
             return action_id
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def record_evidence(
+        self,
+        *,
+        action_id: str,
+        mission_id: str | None,
+        task_id: str | None,
+        parent_action_id: str | None,
+        evidence_type: str,
+        content: Any,
+        verified: bool,
+    ) -> str:
+        db = self._session_factory()
+        evidence_id = str(uuid4())
+        try:
+            row = self._evidence_model(
+                id=evidence_id,
+                action_id=action_id,
+                mission_id=mission_id,
+                task_id=task_id,
+                parent_action_id=parent_action_id,
+                evidence_type=evidence_type,
+                content=_json_text(content),
+                verified=int(verified),
+                created_at=datetime.now(timezone.utc),
+            )
+            db.add(row)
+            db.commit()
+            return evidence_id
         except Exception:
             db.rollback()
             raise
@@ -388,6 +423,31 @@ class AgenticActionEngine:
             else None
         )
 
+        evidence: list[dict[str, Any]] = []
+        if verification is not None:
+            evidence_item = {
+                "type": "execution_verification",
+                "status": verification.status,
+                "reason": verification.reason,
+                "evidence": verification.evidence,
+            }
+            try:
+                evidence_id = self.log_store.record_evidence(
+                    action_id=action_id,
+                    mission_id=request.mission_id,
+                    task_id=request.task_id,
+                    parent_action_id=request.parent_action_id,
+                    evidence_type="execution_verification",
+                    content=evidence_item,
+                    verified=verification.status == "passed",
+                )
+                evidence_item["evidence_id"] = evidence_id
+            except Exception as exc:
+                evidence_item["persist_error"] = str(exc)
+                execution_success = False
+                error = f"{error + '; ' if error else ''}Evidence persistence failed: {exc}"
+            evidence.append(evidence_item)
+
         status = "completed" if execution_success else "failed"
         completed_at = datetime.now(timezone.utc)
         duration_ms = max(
@@ -432,6 +492,9 @@ class AgenticActionEngine:
                 verification.reason if verification else None
             ),
             duration_ms=duration_ms,
+            mission_id=request.mission_id,
+            parent_action_id=request.parent_action_id,
+            evidence=evidence,
         )
 
 
