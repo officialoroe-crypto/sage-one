@@ -1,7 +1,7 @@
 """Standard metadata contract for SAGE ONE registered tools."""
 
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping
 
 
 SIDE_EFFECT_CLASSES = {
