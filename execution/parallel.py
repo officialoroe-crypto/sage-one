@@ -160,7 +160,15 @@ class ParallelMissionExecutor:
                 thread_name_prefix="sage-mission",
             ) as executor:
                 futures = {
-                    executor.submit(self._execute_task, task["id"], owner_authorized): task["id"]
+                    (
+                        executor.submit(
+                            self._execute_task,
+                            task["id"],
+                            True,
+                        )
+                        if owner_authorized
+                        else executor.submit(self._execute_task, task["id"])
+                    ): task["id"]
                     for task in batch
                 }
 
