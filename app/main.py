@@ -72,8 +72,22 @@ def _require_api_access(request: Request) -> None:
     authenticate_request(request)
 
 
-def _require_owner(claims: dict[str, Any] = Depends(authenticate_request)) -> dict[str, Any]:
-    """Require the authenticated SAGE owner for global control-plane mutations."""
+def _require_owner(
+    request: Request,
+    claims: dict[str, Any] = Depends(authenticate_request),
+) -> dict[str, Any]:
+    """Require the SAGE owner; development mode may use the local owner identity."""
+    if (
+        settings.DEVELOPER_MODE
+        and settings.ENVIRONMENT == "development"
+        and request.client
+        and request.client.host in {"127.0.0.1", "::1", "localhost", "testclient"}
+    ):
+        return {
+            "owner_mode": True,
+            "auth_provider": "developer",
+            "auth_subject": "local-owner",
+        }
     if not claims.get("owner_mode", False):
         raise HTTPException(status_code=403, detail="SAGE Owner Authority is required.")
     return claims
