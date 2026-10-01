@@ -26,6 +26,12 @@ def test_evidence_retrieval_deserializes_content(monkeypatch):
             self.query = query
             return Result()
 
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.close()
+
         def close(self):
             self.closed = True
 
@@ -49,6 +55,12 @@ def test_evidence_limit_is_bounded(monkeypatch):
         def scalars(self, query):
             self.query = query
             return type("R", (), {"all": lambda self: []})()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.close()
 
         def close(self):
             pass
