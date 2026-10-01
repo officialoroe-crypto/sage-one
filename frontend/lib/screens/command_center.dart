@@ -19,7 +19,6 @@ class _CommandCenterState extends State<CommandCenter>
     with SingleTickerProviderStateMixin {
   final _prompt = TextEditingController();
   String _status = 'Ready';
-  String _provider = 'Cloud routing';
   String _worker = 'Checking worker…';
   String? _taskId;
   String? _result;
@@ -114,12 +113,6 @@ class _CommandCenterState extends State<CommandCenter>
     _orbController.dispose();
     _prompt.dispose();
     super.dispose();
-  }
-
-  void _openEconomy() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => EconomyScreen(api: widget.api)),
-    );
   }
 
   @override
@@ -234,26 +227,6 @@ class _CommandCenterState extends State<CommandCenter>
             ),
           ),
         ],
-      ],
-    );
-  }
-
-  }
-}
-
-class _StatusDot extends StatelessWidget {
-  const _StatusDot({required this.color, required this.label});
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(color: SageTheme.textSecondary, fontSize: 9)),
       ],
     );
   }
