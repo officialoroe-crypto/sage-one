@@ -16,7 +16,6 @@ from database.models import (
     RecoveryAttempt,
     ActionLog,
     ActionEvidence,
-    ExecutionEvent,
 )
 
 
