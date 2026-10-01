@@ -194,7 +194,7 @@
 - [x] Build idempotent Spark reservation, settlement, and refund primitives bound to the canonical premium cost catalogue.
 - [x] Wire Spark reservations into the actual premium-work execution settlement path.
 - [x] Add scheduled World Intelligence refresh triggering through the durable background automation layer.
-- [ ] Add source-quality/domain policy for World Intelligence refresh.
+- [x] Add transparent configurable source-quality/domain policy for World Intelligence refresh.
 - [ ] Add full multi-tenant data ownership if SAGE ONE is ever offered as a shared public service.
 - [ ] Add automated visual regression coverage for Evolution animation milestones.
 
