@@ -7,7 +7,7 @@ def test_required_contains_criterion_passes_from_evidence():
             "id": "c1",
             "description": "response contains READY",
             "criterion_type": "contains",
-            "expected_value": "CONFIRMED",
+            "expected_value": "READY",
             "required": True,
         }],
         result={"success": True},
