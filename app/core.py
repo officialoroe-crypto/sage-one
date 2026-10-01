@@ -102,6 +102,8 @@ class SageCore:
         self.memory = memory
 
         self.state = state
+        self._active_session_id = None
+        self._active_owner_authorized = False
 
         register_builtin_tools()
 
@@ -120,8 +122,8 @@ class SageCore:
             ActionRequest(
                 tool_name=tool_name,
                 arguments=arguments,
-                session_id=self.state.get_session(session_id).get("id") if self.state.get_session(session_id) else session_id,
-                owner_authorized=owner_authorized,
+                session_id=self._active_session_id,
+                owner_authorized=self._active_owner_authorized,
                 verify=True,
                 source="sage_core",
             )
@@ -134,6 +136,7 @@ class SageCore:
                 "result": action.result,
                 "action_id": action.action_id,
                 "verification_status": action.verification_status,
+                "evidence": action.evidence,
             }
 
         return {
@@ -253,6 +256,9 @@ class SageCore:
             prompt_parts
         )
 
+        self._active_session_id = session_id
+        self._active_owner_authorized = bool(owner_authorized)
+
         self.state.add_message(
             session_id,
             "user",
@@ -287,6 +293,9 @@ class SageCore:
             "assistant",
             result.response
         )
+
+        self._active_session_id = None
+        self._active_owner_authorized = False
 
         return result
 
