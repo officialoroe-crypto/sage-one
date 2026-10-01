@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
+import '../evolution/evolution_transition.dart';
 import '../evolution/evolution_visual.dart';
 import '../theme/sage_theme.dart';
 import 'economy.dart';
@@ -18,6 +19,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
   List<Map<String, dynamic>> _tiers = const [];
   bool _loading = true;
   String? _error;
+  EvolutionVisual? _transitionFrom;
 
   @override
   void initState() {
@@ -36,8 +38,24 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
         widget.api.evolutionTiers(),
       ]);
       if (!mounted) return;
+      final nextSnapshot = Map<String, dynamic>.from(results[0] as Map);
+      final nextEvolution =
+          Map<String, dynamic>.from(nextSnapshot['evolution'] ?? {});
+      final nextTier = nextEvolution['tier']?.toString();
+      final previousEvolution =
+          Map<String, dynamic>.from(_snapshot?['evolution'] ?? {});
+      final previousTier = previousEvolution['tier']?.toString();
+
       setState(() {
-        _snapshot = Map<String, dynamic>.from(results[0] as Map);
+        if (previousTier != null &&
+            nextTier != null &&
+            previousTier != nextTier) {
+          _transitionFrom = evolutionVisualFor(
+            previousTier,
+            intensity: EvolutionIntensity.high,
+          );
+        }
+        _snapshot = nextSnapshot;
         _tiers = (results[1] as List)
             .map((item) => Map<String, dynamic>.from(item as Map))
             .toList(growable: false);
@@ -87,8 +105,10 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
           ),
         ],
       ),
-      body: EvolutionAtmosphere(
-        visual: visual,
+      body: Stack(
+        children: [
+          EvolutionAtmosphere(
+            visual: visual,
         child: RefreshIndicator(
         onRefresh: _load,
         color: SageTheme.cyan,
@@ -151,7 +171,20 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
             ),
           ],
           ),
-        ),
+          ),
+          if (_transitionFrom != null)
+            Positioned.fill(
+              child: EvolutionTransition(
+                key: ValueKey(_transitionFrom!.name + '->' + currentTier),
+                from: _transitionFrom!,
+                to: evolutionVisualFor(
+                  currentTier,
+                  intensity: EvolutionIntensity.low,
+                ),
+                child: const SizedBox.expand(),
+              ),
+            ),
+        ],
       ),
     );
   }
