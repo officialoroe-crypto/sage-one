@@ -1,10 +1,16 @@
 from sqlalchemy import inspect, text
 from database.connection import engine
+from database import models  # noqa: F401
 
 
 def migrate():
     inspector = inspect(engine)
     tables = inspector.get_table_names()
+
+    if "execution_events" not in tables:
+        models.ExecutionEvent.__table__.create(bind=engine, checkfirst=True)
+        tables = inspect(engine).get_table_names()
+        print("ADDED: execution_events")
 
     if "tasks" not in tables:
         print("TASK TABLE DOES NOT EXIST.")
