@@ -216,6 +216,29 @@ class ActionEvidence(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
 
+class ExecutionEvent(Base):
+    """Durable lifecycle event linking actions to the broader SAGE trace."""
+
+    __tablename__ = "execution_events"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    event_type: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    action_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    session_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    mission_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    task_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    parent_action_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    status: Mapped[str | None] = mapped_column(String, nullable=True)
+    source: Mapped[str] = mapped_column(String, nullable=False, default="sage")
+    payload: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        index=True,
+    )
+
+
 class ActionLog(Base):
     __tablename__ = "action_logs"
     id: Mapped[str] = mapped_column(String, primary_key=True)
