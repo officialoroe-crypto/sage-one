@@ -138,9 +138,9 @@ class _CommandCenterState extends State<CommandCenter>
   }
 
   Widget _header() {
-    return Row(
+    return const Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -259,8 +259,8 @@ class _SageOrbPainter extends CustomPainter {
     canvas.drawCircle(center, size.shortestSide * .49, halo);
 
     final orb = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(-.25, -.3),
+      ..shader = const RadialGradient(
+        center: Alignment(-.25, -.3),
         radius: 1,
         colors: [SageTheme.surfaceRaised, SageTheme.surface, SageTheme.voidBlack],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
