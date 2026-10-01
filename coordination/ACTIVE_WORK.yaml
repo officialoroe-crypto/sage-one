@@ -11,3 +11,5 @@ claims:
       - frontend/test/command_center_test.dart
     status: in_progress
     claimed_at: 2026-10-01T13:42:00Z
+    started_at: 2026-10-01T13:42:00Z
+    updated_at: 2026-10-01T13:45:00Z
