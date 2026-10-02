@@ -14,7 +14,7 @@ enum EvolutionTransitionPhase {
 }
 
 EvolutionTransitionPhase evolutionTransitionPhaseFor(double progress) {
-  final value = progress.clamp(0.0, 1.0);
+  final value = progress.clamp(0.0, 1.0).toDouble();
   if (value < .18) return EvolutionTransitionPhase.accelerate;
   if (value < .32) return EvolutionTransitionPhase.concentrate;
   if (value < .43) return EvolutionTransitionPhase.blackout;
@@ -78,7 +78,7 @@ class _EvolutionTransitionState extends State<EvolutionTransition>
         IgnorePointer(
           child: AnimatedBuilder(
             animation: _controller,
-            builder: (context, child) {
+            builder: (context, _) {
               final progress = Curves.easeInOutCubic.transform(_controller.value);
               return CustomPaint(
                 painter: _EvolutionTransitionPainter(
@@ -117,8 +117,8 @@ class _EvolutionTransitionPainter extends CustomPainter {
     if (phase == EvolutionTransitionPhase.blackout ||
         phase == EvolutionTransitionPhase.burst) {
       final darkness = phase == EvolutionTransitionPhase.blackout
-          ? ((progress - .32) / .11).clamp(0.0, 1.0)
-          : ((.56 - progress) / .13).clamp(0.0, 1.0);
+          ? ((progress - .32) / .11).clamp(0.0, 1.0).toDouble()
+          : ((.56 - progress) / .13).clamp(0.0, 1.0).toDouble();
       canvas.drawRect(
         Offset.zero & size,
         Paint()..color = Colors.black.withValues(alpha: .82 * darkness),
@@ -127,12 +127,12 @@ class _EvolutionTransitionPainter extends CustomPainter {
 
     if (phase == EvolutionTransitionPhase.accelerate ||
         phase == EvolutionTransitionPhase.concentrate) {
-      final energy = (progress / .32).clamp(0.0, 1.0);
+      final energy = (progress / .32).clamp(0.0, 1.0).toDouble();
       _drawParticles(canvas, size, center, from.accent, energy, 28);
     }
 
     if (phase == EvolutionTransitionPhase.burst) {
-      final burst = ((progress - .43) / .13).clamp(0.0, 1.0);
+      final burst = ((progress - .43) / .13).clamp(0.0, 1.0).toDouble();
       final radius = maxRadius * Curves.easeOut.transform(burst);
       final paint = Paint()
         ..style = PaintingStyle.stroke
@@ -148,7 +148,7 @@ class _EvolutionTransitionPainter extends CustomPainter {
 
     if (phase == EvolutionTransitionPhase.reform ||
         phase == EvolutionTransitionPhase.settle) {
-      final formation = ((progress - .56) / .44).clamp(0.0, 1.0);
+      final formation = ((progress - .56) / .44).clamp(0.0, 1.0).toDouble();
       _drawParticles(canvas, size, center, to.accent, formation, 32);
       final glow = math.sin(formation * math.pi);
       canvas.drawCircle(
