@@ -111,7 +111,7 @@ class _EvolutionTransitionPainter extends CustomPainter {
     final phase = evolutionTransitionPhaseFor(progress);
     final center = size.center(Offset.zero);
     final maxRadius = math.sqrt(
-      math.pow(size.width, 2) + math.pow(size.height, 2),
+      size.width * size.width + size.height * size.height,
     );
 
     if (phase == EvolutionTransitionPhase.blackout ||
