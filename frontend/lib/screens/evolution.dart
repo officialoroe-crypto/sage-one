@@ -172,6 +172,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
           ],
           ),
           ),
+        ),
           if (_transitionFrom != null)
             Positioned.fill(
               child: EvolutionTransition(
