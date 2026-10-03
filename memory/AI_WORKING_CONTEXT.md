@@ -59,3 +59,11 @@ Work in large logical batches. Inspect first, implement coherent changes, valida
 - Flutter production UI remains behind the backend: the main branch has a private-first functional workspace but not all screens from the composite visual reference.
 - Command Center PRs #112 and #122 overlap. #122's latest Flutter CI had one failing task-completion dialog widget test. Reconcile and fix before further work in that module.
 - Continue page-by-page Flutter implementation in disjoint modules; preserve backend functionality and the standalone 13-stage Evolution lab.
+
+
+## Evolution integration decision — 2026-10-03
+- Owner approved combining the complete 13-stage Evolution system into the production SAGE ONE app; it is not a separate product/lab anymore.
+- Integrate design specs from PR #115 and transition engine from PR #121 with the existing backend-backed Flutter Evolution screen.
+- Keep Spark economic balance separate from Evolution lifetime achievement; withdrawals/spending do not reduce Evolution.
+- Expose coherent Evolution identity/progress across Home, Profile, Evolution detail, rank transitions and achievements.
+- Preserve SAGE blue/black identity; rank materials remain accents. Low/Mid/High affect intensity/particles, not total UI color takeover.
