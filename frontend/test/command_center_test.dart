@@ -68,6 +68,8 @@ void main() {
       find.byType(TextField),
       'Create a short report',
     );
+    await tester.ensureVisible(find.text('Execute'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Execute'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
