@@ -220,3 +220,11 @@
 - [ ] Continue frontend page sequence from Splash → onboarding/language → auth → KYC/profile, preserving private-owner entry and existing backend APIs.
 - [ ] Audit remaining screens against the owner's composite visual reference and implement in reviewable batches.
 - [ ] Produce a fresh APK from the reviewed frontend branch with a device-reachable backend URL and verify installation.
+
+
+## Evolution integration decision — 2026-10-03
+- Owner approved combining the complete 13-stage Evolution system into the production SAGE ONE app; it is not a separate product/lab anymore.
+- Integrate design specs from PR #115 and transition engine from PR #121 with the existing backend-backed Flutter Evolution screen.
+- Keep Spark economic balance separate from Evolution lifetime achievement; withdrawals/spending do not reduce Evolution.
+- Expose coherent Evolution identity/progress across Home, Profile, Evolution detail, rank transitions and achievements.
+- Preserve SAGE blue/black identity; rank materials remain accents. Low/Mid/High affect intensity/particles, not total UI color takeover.
