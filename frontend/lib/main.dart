@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'core/sage_api.dart';
 import 'screens/agent.dart';
+import 'screens/splash.dart';
 import 'screens/private_owner_gate.dart';
 import 'screens/command_center.dart';
 import 'screens/create.dart';
@@ -29,9 +30,11 @@ class SageOneApp extends StatelessWidget {
       title: 'SAGE ONE',
       debugShowCheckedModeBanner: false,
       theme: SageTheme.dark(),
-      home: _api != null
-          ? SageOneShell(api: _api)
-          : const PrivateOwnerGate(child: SageOneShell()),
+      home: SageSplashScreen(
+        child: _api != null
+            ? SageOneShell(api: _api)
+            : const PrivateOwnerGate(child: SageOneShell()),
+      ),
     );
   }
 }
