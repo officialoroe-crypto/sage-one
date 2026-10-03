@@ -69,7 +69,8 @@ void main() {
     await tester.tap(find.text('Execute'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
 
     expect(find.text('Your task is complete'), findsWidgets);
     expect(find.text('Your requested report is ready.'), findsOneWidget);
