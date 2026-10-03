@@ -33,7 +33,8 @@ class SageTheme {
 
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: voidBlack,\n      fontFamily: 'Roboto',
+      scaffoldBackgroundColor: voidBlack,
+      fontFamily: 'Roboto',
       colorScheme: scheme.copyWith(
         primary: cyan,
         secondary: violet,
