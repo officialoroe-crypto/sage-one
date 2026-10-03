@@ -1,3 +1,15 @@
 version: 1
-updated_at: 2026-10-01T14:45:00Z
-claims: []
+updated_at: 2026-10-02T04:00:00Z
+claims:
+  - id: flutter-command-center-visual-v2
+    agent: chatgpt
+    branch: feat/flutter-command-center-visual-v2
+    base_sha: 207b29c49e7bec4e75774ce2d74b4bd9bed9d59a
+    scope:
+      - frontend/lib/screens/command_center.dart
+      - frontend/lib/evolution/**
+      - frontend/test/**
+    objective: Implement a coherent cinematic Flutter Command Center visual pass while preserving real backend task execution; continuous unadorned glowing orb, improved completion result/file presentation, no image generation or fake features.
+    status: claimed
+    started_at: 2026-10-02T04:00:00Z
+    updated_at: 2026-10-02T04:00:00Z
