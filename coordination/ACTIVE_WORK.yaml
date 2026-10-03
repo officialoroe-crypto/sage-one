@@ -10,6 +10,9 @@ claims:
       - frontend/lib/evolution/**
       - frontend/test/**
       - docs/design/master-interface-reference.md
+      - frontend/lib/theme/**
+      - frontend/lib/widgets/**
+      - frontend/test/**
     objective: Implement a coherent cinematic Flutter Command Center visual pass while preserving real backend task execution; continuous unadorned glowing orb, improved completion result/file presentation, no image generation or fake features.
     status: claimed
     started_at: 2026-10-02T04:00:00Z
