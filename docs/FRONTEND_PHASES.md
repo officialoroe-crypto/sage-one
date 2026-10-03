@@ -32,10 +32,14 @@ Production frontend: Flutter. Canonical design source: owner-supplied composite 
 | 24 | Transactions and fee history | Partial economy foundation; visual pass pending |
 | 25 | User Profile | Pending |
 | 26 | Evolution dashboard | Existing backend-backed Flutter screen; visual pass pending |
-| 27 | 13 Evolution ranks and Low/Mid/High intensity | Separate design lab/transition PRs; not integrated until owner approval |
+| 27 | Unified 13-stage Evolution system | Integrate all 13 ranks, canonical rank order/materials, Low/Mid/High intensity states, transition animations, progression evidence and rank identity into the production app; use existing backend catalog and settlement APIs |
 | 28 | Settings and themes | Pending |
 | 29 | Notifications and activity | Notifications foundation exists; activity visual pass pending |
 | 30 | Responsive QA, motion/accessibility, error handling and Android release | Pending |
+
+## Unified Evolution integration
+
+Evolution is now a first-class part of SAGE ONE, not a separate product or isolated deliverable. The 13-stage design lab (PR #115) and transition engine (PR #121) are implementation inputs to the production Evolution experience. Reconcile them into the app in a controlled integration branch; do not leave them permanently disconnected. Spark remains a separate economic balance and must not be conflated with Evolution achievement/progression. Evolution is earned through verified achievement; wallet withdrawal or Spark spending must not reduce lifetime Evolution progress. The production UI should connect Home rank summary, Profile identity, Evolution detail, rank transition/reveal and relevant achievement surfaces. Keep canonical SAGE blue/black identity persistent; rank materials are accent layers, with Low/Mid/High changing intensity/particles only, not taking over the entire UI.
 
 ## Automation / validation
 
@@ -51,4 +55,4 @@ Production frontend: Flutter. Canonical design source: owner-supplied composite 
 - Never mark a phase complete until Flutter CI passes and its screen is manually/reference reviewed.
 - Preserve current backend APIs and private-owner path.
 - Do not invent missing reference artwork or claim pixel-perfect parity without the actual source assets.
-- Keep the 13-stage Evolution lab separate until explicitly approved for app integration.
+- Integrate the 13-stage Evolution lab and transition engine into the production SAGE ONE app under the unified Evolution scope; do not conflate Evolution with Spark.
