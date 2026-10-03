@@ -72,3 +72,7 @@ The current UI is a functional owner-first Flutter workspace, not yet a full vis
 
 ## Important honesty note
 The main-branch backend success claims are based on repository documentation and merged tests/CI. Items labelled remaining/deferred are not complete. The current feature PRs are not part of main until reviewed and merged.
+
+
+## Owner decision update — 2026-10-03
+Evolution is no longer a standalone lab in the product plan. It is a first-class SAGE ONE system. The 13-stage design lab (PR #115) and transition engine (PR #121) are implementation inputs to be integrated with the existing backend-backed `EvolutionScreen`. Spark remains a separate economic balance; Evolution is lifetime achievement and must not decrease on withdrawal or Spark spending. Connect Evolution rank to Home, Profile, detail, transition and achievement surfaces. Preserve permanent SAGE blue/black identity; rank material is an accent layer with Low/Mid/High intensity.
