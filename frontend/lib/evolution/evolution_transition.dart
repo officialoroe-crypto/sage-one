@@ -153,7 +153,7 @@ class _EvolutionTransitionPainter extends CustomPainter {
       final glow = math.sin(formation * math.pi);
       canvas.drawCircle(
         center,
-        math.min(size.shortestSide * .24, 180),
+        math.min(size.shortestSide * .24, 180.0),
         Paint()
           ..color = to.accent.withValues(alpha: .10 * glow)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28),
