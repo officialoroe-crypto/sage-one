@@ -615,8 +615,8 @@ class _SageOrbPainter extends CustomPainter {
     canvas.drawCircle(center, size.shortestSide * .5, outerGlow);
 
     final sphere = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(-.28, -.34),
+      ..shader = const RadialGradient(
+        center: Alignment(-.28, -.34),
         radius: .92,
         colors: [
           const Color(0xFF173B65),
