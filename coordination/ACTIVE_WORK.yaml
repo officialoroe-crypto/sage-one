@@ -1,3 +1,15 @@
 version: 1
-updated_at: 2026-10-01T14:45:00Z
-claims: []
+updated_at: 2026-10-03T00:00:00Z
+claims:
+  - id: flutter-phase-01-splash
+    agent: chatgpt
+    branch: feat/flutter-phase-01-splash
+    base_sha: 207b29c49e7bec4e75774ce2d74b4bd9bed9d59a
+    scope:
+      - frontend/lib/screens/splash.dart
+      - frontend/lib/main.dart
+      - frontend/test/splash_test.dart
+    objective: Implement and test Phase 01 Splash screen while preserving existing auth and owner entry flow.
+    status: in_progress
+    started_at: 2026-10-03T00:00:00Z
+    updated_at: 2026-10-03T00:00:00Z
