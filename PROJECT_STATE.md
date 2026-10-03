@@ -150,3 +150,23 @@ Always inspect the actual GitHub main branch and this file before architectural 
 - World Intelligence now has a transparent configurable source-selection policy: HTTP/HTTPS validation, optional allowlist, explicit blocklist, and per-domain diversity limits.
 - Policy rejections are surfaced rather than hidden.
 - Current main: `6c454a63af377694e7e598cb67edc4d71656342a`.
+
+
+## Verified cross-AI handoff — 2026-10-03
+- Audited canonical main SHA: `207b29c49e7bec4e75774ce2d74b4bd9bed9d59a`.
+- Main SAGE CI passed at run 36874551956; main Android APK workflow passed at run 36874551903.
+- Backend implementation inventory, deferred items, current Flutter screen inventory, open PR overlaps, and exact next actions are recorded in `docs/AI_HANDOFF_2026-10-03.md`.
+- Backend foundation is substantially implemented: durable worker, mission/action execution, Research OS, cloud routing, durable automation/notifications, identity/profile/onboarding APIs, owner controls, memory CRUD, Spark reservation/settlement/refund, Evolution authoritative tiers/settlement, and controlled World Intelligence.
+- Do not rebuild these backend capabilities. Read the handoff and integrate the existing APIs.
+- Explicit remaining work includes production SMS provider, Google session refresh UX, consent-driven memory auto-learning, selected World Intelligence UI, publishing/analytics, voice/device/file integrations, release preparation, Evolution visual regression, and local DB/provider smoke testing.
+- Flutter main is a private-first functional workspace with screens for agent, auth gate, Command Center, create, economy, Evolution, login, memory, onboarding, owner console, private owner gate, projects, research, tasks and World Intelligence. It is not yet a full implementation of the owner's composite visual reference.
+- Open PR #112 and PR #122 overlap in Command Center. PR #122 currently has one failing widget test and is not validated/merged. Reconcile before further Command Center edits.
+- PR #121 is an Evolution transition engine; PR #115 is the isolated Evolution design lab. Keep Evolution lab separate from production integration until owner approval.
+
+
+## Evolution integration decision — 2026-10-03
+- Owner approved combining the complete 13-stage Evolution system into the production SAGE ONE app; it is not a separate product/lab anymore.
+- Integrate design specs from PR #115 and transition engine from PR #121 with the existing backend-backed Flutter Evolution screen.
+- Keep Spark economic balance separate from Evolution lifetime achievement; withdrawals/spending do not reduce Evolution.
+- Expose coherent Evolution identity/progress across Home, Profile, Evolution detail, rank transitions and achievements.
+- Preserve SAGE blue/black identity; rank materials remain accents. Low/Mid/High affect intensity/particles, not total UI color takeover.
