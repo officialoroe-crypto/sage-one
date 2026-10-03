@@ -162,3 +162,11 @@ Always inspect the actual GitHub main branch and this file before architectural 
 - Flutter main is a private-first functional workspace with screens for agent, auth gate, Command Center, create, economy, Evolution, login, memory, onboarding, owner console, private owner gate, projects, research, tasks and World Intelligence. It is not yet a full implementation of the owner's composite visual reference.
 - Open PR #112 and PR #122 overlap in Command Center. PR #122 currently has one failing widget test and is not validated/merged. Reconcile before further Command Center edits.
 - PR #121 is an Evolution transition engine; PR #115 is the isolated Evolution design lab. Keep Evolution lab separate from production integration until owner approval.
+
+
+## Evolution integration decision — 2026-10-03
+- Owner approved combining the complete 13-stage Evolution system into the production SAGE ONE app; it is not a separate product/lab anymore.
+- Integrate design specs from PR #115 and transition engine from PR #121 with the existing backend-backed Flutter Evolution screen.
+- Keep Spark economic balance separate from Evolution lifetime achievement; withdrawals/spending do not reduce Evolution.
+- Expose coherent Evolution identity/progress across Home, Profile, Evolution detail, rank transitions and achievements.
+- Preserve SAGE blue/black identity; rank materials remain accents. Low/Mid/High affect intensity/particles, not total UI color takeover.
