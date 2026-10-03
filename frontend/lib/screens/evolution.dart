@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
+import '../evolution/evolution_transition.dart';
 import '../evolution/evolution_visual.dart';
 import '../theme/sage_theme.dart';
 import 'economy.dart';
@@ -18,6 +19,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
   List<Map<String, dynamic>> _tiers = const [];
   bool _loading = true;
   String? _error;
+  EvolutionVisual? _transitionFrom;
 
   @override
   void initState() {
@@ -36,8 +38,24 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
         widget.api.evolutionTiers(),
       ]);
       if (!mounted) return;
+      final nextSnapshot = Map<String, dynamic>.from(results[0] as Map);
+      final nextEvolution =
+          Map<String, dynamic>.from(nextSnapshot['evolution'] ?? {});
+      final nextTier = nextEvolution['tier']?.toString();
+      final previousEvolution =
+          Map<String, dynamic>.from(_snapshot?['evolution'] ?? {});
+      final previousTier = previousEvolution['tier']?.toString();
+
       setState(() {
-        _snapshot = Map<String, dynamic>.from(results[0] as Map);
+        if (previousTier != null &&
+            nextTier != null &&
+            previousTier != nextTier) {
+          _transitionFrom = evolutionVisualFor(
+            previousTier,
+            intensity: EvolutionIntensity.high,
+          );
+        }
+        _snapshot = nextSnapshot;
         _tiers = (results[1] as List)
             .map((item) => Map<String, dynamic>.from(item as Map))
             .toList(growable: false);
@@ -87,13 +105,15 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
           ),
         ],
       ),
-      body: EvolutionAtmosphere(
-        visual: visual,
-        child: RefreshIndicator(
-        onRefresh: _load,
-        color: SageTheme.cyan,
-          child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
+      body: Stack(
+        children: [
+          EvolutionAtmosphere(
+            visual: visual,
+            child: RefreshIndicator(
+              onRefresh: _load,
+              color: SageTheme.cyan,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
           children: [
             _CurrentRankCard(
               tier: currentTier,
@@ -149,9 +169,23 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
               'Rank names and thresholds are loaded from SAGE Core. Progress is based on verified achievements; this screen does not grant or modify XP.',
               style: TextStyle(color: SageTheme.textSecondary, fontSize: 11, height: 1.45),
             ),
-          ],
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_transitionFrom != null)
+            Positioned.fill(
+              child: EvolutionTransition(
+                key: ValueKey(_transitionFrom!.name + '->' + currentTier),
+                from: _transitionFrom!,
+                to: evolutionVisualFor(
+                  currentTier,
+                  intensity: EvolutionIntensity.low,
+                ),
+                child: const SizedBox.expand(),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -179,7 +213,7 @@ class _CurrentRankCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMax = nextTier == null || nextThreshold == null;
-    final remaining = isMax ? 0 : (nextThreshold! - achievement).clamp(0, 1 << 31);
+    final remaining = isMax ? 0 : (nextThreshold! - achievement).clamp(0, 1 << 31).toInt();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
