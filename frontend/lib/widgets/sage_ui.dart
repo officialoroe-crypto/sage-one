@@ -80,7 +80,7 @@ class SageSectionHeading extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
   }
