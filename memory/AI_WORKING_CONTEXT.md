@@ -49,3 +49,13 @@ Work in large logical batches. Inspect first, implement coherent changes, valida
 - AI collaboration claims are operational through `coordination/claims.py`, with overlap/stale checks and CI validation.
 - Current main SHA: `a3f82b7deb10ae8346fa422d3a8e87a46ae8b285`.
 - The 13 Evolution System remains a locked product/design constraint; backend work must not silently redefine its rank names, visual identities, or progression rules.
+
+
+## Verified handoff refresh — 2026-10-03
+- Audited main SHA: `207b29c49e7bec4e75774ce2d74b4bd9bed9d59a`.
+- Main CI and Android APK workflow passed at runs 36874551956 and 36874551903.
+- Read `docs/AI_HANDOFF_2026-10-03.md` first for backend implemented/deferred inventory, Flutter screen inventory, PR conflicts, owner design constraints and exact next actions.
+- Backend is substantially implemented; do not duplicate the durable worker, mission/action engine, Research OS, automation, notification, identity/profile, memory CRUD, Spark lifecycle, Evolution settlement or World Intelligence foundation. Integrate existing contracts.
+- Flutter production UI remains behind the backend: the main branch has a private-first functional workspace but not all screens from the composite visual reference.
+- Command Center PRs #112 and #122 overlap. #122's latest Flutter CI had one failing task-completion dialog widget test. Reconcile and fix before further work in that module.
+- Continue page-by-page Flutter implementation in disjoint modules; preserve backend functionality and the standalone 13-stage Evolution lab.
