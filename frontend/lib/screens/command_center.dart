@@ -619,12 +619,12 @@ class _SageOrbPainter extends CustomPainter {
         center: Alignment(-.28, -.34),
         radius: .92,
         colors: [
-          const Color(0xFF173B65),
-          const Color(0xFF07172C),
-          const Color(0xFF020713),
+          Color(0xFF173B65),
+          Color(0xFF07172C),
+          Color(0xFF020713),
           Colors.black,
         ],
-        stops: const [0, .38, .78, 1],
+        stops: [0, .38, .78, 1],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, sphere);
 
