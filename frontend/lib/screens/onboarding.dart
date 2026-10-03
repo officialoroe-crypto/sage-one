@@ -189,7 +189,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SageTheme.voidBlack,
-      body: SafeArea(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -.18),
+            radius: 1.18,
+            colors: [
+              Color(0xFF0B2242),
+              Color(0xFF061326),
+              Color(0xFF020306),
+            ],
+            stops: [0, .5, 1],
+          ),
+        ),
+        child: SafeArea(
         child: Column(
           children: [
             _topBar(),
@@ -231,16 +244,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: SageTheme.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: SageTheme.cyan.withValues(alpha: 0.35)),
-            ),
-            child: const Icon(Icons.auto_awesome, size: 18, color: SageTheme.cyan),
-          ),
+          _SageMark(size: 38),
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
@@ -539,6 +543,54 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+class _SageMark extends StatelessWidget {
+  const _SageMark({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          center: Alignment(-.3, -.35),
+          radius: .95,
+          colors: [
+            Color(0xFF5FE6FF),
+            Color(0xFF1263D2),
+            Color(0xFF061630),
+            Color(0xFF020306),
+          ],
+          stops: [0, .3, .72, 1],
+        ),
+        border: Border.all(color: SageTheme.cyan.withValues(alpha: .5)),
+        boxShadow: [
+          BoxShadow(
+            color: SageTheme.cyan.withValues(alpha: .18),
+            blurRadius: 24,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Text(
+        'S',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: size * .54,
+          height: 1,
+          fontWeight: FontWeight.w300,
+          shadows: const [Shadow(color: SageTheme.cyan, blurRadius: 10)],
+        ),
+      ),
     );
   }
 }
