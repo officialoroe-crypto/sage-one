@@ -14,6 +14,11 @@ class _FakeApiClient extends http.BaseClient {
       '/worker/health' => jsonEncode({'worker': {'running': true}}),
       '/execute/background' => jsonEncode({'task_id': 'test-task'}),
       '/tasks/test-task' => jsonEncode({
+        'id': 'test-task',
+        'status': 'completed',
+        'result': {'summary': 'Completed successfully.'},
+      }),
+      '/tasks/test-task' => jsonEncode({
           'status': 'completed',
           'result': {
             'summary': 'Your requested report is ready.',
@@ -41,6 +46,23 @@ class _FakeApiClient extends http.BaseClient {
       request: request,
     );
   }
+
+  testWidgets('completed task opens a result dialog', (tester) async {
+    final api = SageApi(client: _FakeApiClient());
+    await tester.pumpWidget(SageOneApp(api: api));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'Run a test task');
+    await tester.tap(find.text('Execute'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+
+    expect(find.text('Your task is complete'), findsOneWidget);
+    expect(find.text('Completed successfully.'), findsOneWidget);
+    expect(find.text('Close'), findsOneWidget);
+  });
+
 }
 
 void main() {
