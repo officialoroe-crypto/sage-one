@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:sage_one/core/sage_api.dart';
@@ -68,8 +67,6 @@ void main() {
       find.byType(TextField),
       'Create a short report',
     );
-    await tester.ensureVisible(find.text('Execute'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Execute'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
