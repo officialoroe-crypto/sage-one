@@ -29,6 +29,7 @@ class EvolutionTransition extends StatefulWidget {
     required this.to,
     required this.child,
     this.duration = const Duration(milliseconds: 1800),
+    this.onCompleted,
     super.key,
   });
 
@@ -36,6 +37,7 @@ class EvolutionTransition extends StatefulWidget {
   final EvolutionVisual to;
   final Widget child;
   final Duration duration;
+  final VoidCallback? onCompleted;
 
   @override
   State<EvolutionTransition> createState() => _EvolutionTransitionState();
@@ -49,7 +51,14 @@ class _EvolutionTransitionState extends State<EvolutionTransition>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..addStatusListener(_handleStatus)
       ..forward();
+  }
+
+  void _handleStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      widget.onCompleted?.call();
+    }
   }
 
   @override
@@ -65,7 +74,9 @@ class _EvolutionTransitionState extends State<EvolutionTransition>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller
+      ..removeStatusListener(_handleStatus)
+      ..dispose();
     super.dispose();
   }
 
@@ -79,7 +90,8 @@ class _EvolutionTransitionState extends State<EvolutionTransition>
           child: AnimatedBuilder(
             animation: _controller,
             builder: (context, _) {
-              final progress = Curves.easeInOutCubic.transform(_controller.value);
+              final progress =
+                  Curves.easeInOutCubic.transform(_controller.value);
               return CustomPaint(
                 painter: _EvolutionTransitionPainter(
                   from: widget.from,
