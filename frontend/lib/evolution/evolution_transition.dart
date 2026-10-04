@@ -157,7 +157,7 @@ class _EvolutionTransitionPainter extends CustomPainter {
       );
       final glowPaint = Paint()
         ..color = to.accent.withValues(alpha: .10 * glow)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 28.0);
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28.0);
       canvas.drawCircle(center, glowRadius, glowPaint);
     }
   }
