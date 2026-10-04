@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
@@ -231,41 +232,59 @@ class _CommandCenterState extends State<CommandCenter>
     );
   }
 
+  Future<void> _openArtifact(Map<String, dynamic> file) async {
+    final raw = (file['url'] ?? file['uri'] ?? '').toString().trim();
+    if (raw.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This artifact does not have an openable URL.')),
+        );
+      }
+      return;
+    }
+    final uri = Uri.tryParse(raw);
+    if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This artifact link is not a valid web URL.')),
+        );
+      }
+      return;
+    }
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SAGE could not open this artifact link.')),
+        );
+      }
+    }
+  }
+
   Widget _artifactTile(Map<String, dynamic> file) {
     final name = (file['name'] ?? file['filename'] ?? file['title'] ?? 'File')
         .toString();
     final location = (file['path'] ?? file['url'] ?? file['uri'] ?? '')
         .toString();
+    final rawUrl = (file['url'] ?? file['uri'] ?? '').toString().trim();
     final type = (file['mime_type'] ?? file['type'] ?? 'FILE').toString();
-    return Container(
-      width: double.infinity,
+    final openable = Uri.tryParse(rawUrl) is Uri &&
+        (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'));
+    return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: SageTheme.voidBlack,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: SageTheme.cyan.withValues(alpha: .28)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.insert_drive_file_outlined, color: SageTheme.cyan),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text(location.isEmpty ? type : location,
-                    maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: SageTheme.textSecondary,
-                      fontSize: 10,
-                    )),
-              ],
-            ),
-          ),
-        ],
+      color: SageTheme.voidBlack,
+      child: ListTile(
+        leading: const Icon(Icons.insert_drive_file_outlined, color: SageTheme.cyan),
+        title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          location.isEmpty ? type : location,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: SageTheme.textSecondary, fontSize: 10),
+        ),
+        trailing: openable
+            ? const Icon(Icons.open_in_new, color: SageTheme.cyan)
+            : const Icon(Icons.insert_drive_file_outlined, color: SageTheme.textSecondary),
+        onTap: openable ? () => _openArtifact(file) : null,
       ),
     );
   }
