@@ -133,12 +133,12 @@ class _EvolutionTransitionPainter extends CustomPainter {
 
     if (phase == EvolutionTransitionPhase.burst) {
       final burst = ((progress - .43) / .13).clamp(0.0, 1.0).toDouble();
-      final double radius = maxRadius * Curves.easeOut.transform(burst);
-      final Paint outerPaint = Paint()
+      final radius = maxRadius * Curves.easeOut.transform(burst);
+      final outerPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5 * (1 - burst) + .4
         ..color = to.accent.withValues(alpha: .85 * (1 - burst));
-      final Paint innerPaint = Paint()
+      final innerPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = outerPaint.strokeWidth
         ..color = from.accent.withValues(alpha: .38 * (1 - burst));
@@ -150,12 +150,12 @@ class _EvolutionTransitionPainter extends CustomPainter {
         phase == EvolutionTransitionPhase.settle) {
       final formation = ((progress - .56) / .44).clamp(0.0, 1.0).toDouble();
       _drawParticles(canvas, size, center, to.accent, formation, 32);
-      final double glow = math.sin(formation * math.pi);
-      final double glowRadius = math.min<double>(
+      final glow = math.sin(formation * math.pi);
+      final glowRadius = math.min<double>(
         size.shortestSide * .24,
         180.0,
       );
-      final Paint glowPaint = Paint()
+      final glowPaint = Paint()
         ..color = to.accent.withValues(alpha: .10 * glow)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 28.0);
       canvas.drawCircle(center, glowRadius, glowPaint);
@@ -170,7 +170,7 @@ class _EvolutionTransitionPainter extends CustomPainter {
     double energy,
     int count,
   ) {
-    final Paint paint = Paint()
+    final paint = Paint()
       ..color = color.withValues(alpha: .12 + energy * .58);
     for (var i = 0; i < count; i++) {
       final angle = i * math.pi * 2 / count + energy * math.pi * 1.6;
