@@ -176,7 +176,7 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
           if (_transitionFrom != null)
             Positioned.fill(
               child: EvolutionTransition(
-                key: ValueKey(_transitionFrom!.name + '->' + currentTier),
+                key: ValueKey('${_transitionFrom!.name}->${currentTier}'),
                 from: _transitionFrom!,
                 to: evolutionVisualFor(
                   currentTier,
