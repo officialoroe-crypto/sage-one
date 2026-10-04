@@ -182,6 +182,9 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
                   currentTier,
                   intensity: EvolutionIntensity.low,
                 ),
+                onCompleted: () {
+                  if (mounted) setState(() => _transitionFrom = null);
+                },
                 child: const SizedBox.expand(),
               ),
             ),
