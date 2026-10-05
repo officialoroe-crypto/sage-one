@@ -25,7 +25,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _send() async {
     final message = _input.text.trim();
-    if (message.isEmpty || _sending) return;
+    if (message.isEmpty || _sending) { return; }
     setState(() {
       _messages.add(_Message(message, true));
       _input.clear();
@@ -34,7 +34,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final data = await widget.api.chat(message: message, sessionId: _sessionId);
       final session = data['session_id'];
-      if (session is String && session.isNotEmpty) _sessionId = session;
+      if (session is String && session.isNotEmpty) { _sessionId = session; }
       final response = widget.api.chatResponseText(data['response']);
       if (mounted) {
         setState(() => _messages.add(_Message(
@@ -48,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         setState(() => _sending = false);
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scroll.hasClients) _scroll.animateTo(
+          if (_scroll.hasClients) { _scroll.animateTo(
             _scroll.position.maxScrollExtent,
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOut,
