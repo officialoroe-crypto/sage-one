@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-27
-Current main: fbc5b1c5d0949a17ad3fb0fc2b662e1e24dc1682
+Last updated: 2026-10-05
+Current main: 90dab1ddddb710b384b3a77b4f2ae9132c8ad9dd
 
 ## Identity
 - Project: SAGE ONE
@@ -96,11 +96,24 @@ A successfully verified mission task awards a deployment-owner-scoped verified a
 - Content size and supported content types are bounded.
 - Current dependency: trafilatura 2.2.0.
 
+## Frontend status — 2026-10-05
+
+Canonical main currently contains the functional private-owner Flutter shell with Command Center, Research, Tasks, Create, Projects, Agent, World Intelligence, Owner Console, Memory, and Evolution destinations.
+
+Active frontend work discovered in the shared repository:
+- Phase 01 Splash: PR #125, exact head CI green.
+- Phase 02 Onboarding: PR #128, exact head CI green.
+- Phase 03 Language Selection: PR #129, branch head `6f6dbdf2505ee4399b2339d866c3b4bdaf5d8444`; previous CI failed only on an undefined `SageTheme.textMuted` reference, now corrected and awaiting fresh CI.
+- Command Center visual v2: PR #122, latest head `e6edfc0aa6343fbedeea6782acba0756ac65a23d`; analyzer passes but the completion-dialog widget test failed in CI #1101, now corrected and awaiting fresh CI.
+- `feat/flutter-phase-04-auth` exists but is identical to the Phase 03 branch; it is not a separate Phase 04 implementation yet.
+
+Important: Phase 02 has two open PRs (#127 and #128); #128 is the newer implementation and should be the canonical Phase 02 review path. Command Center #112 is superseded by #122 and should not be merged.
+
 ## Validation status
 - SAGE CI passed on the final audit-hardening PR after the Android workflow and Spark changes.
 - Python job passed.
 - Flutter analyzer/tests passed.
-- The audited hardening work is merged to main; current main is `a3f82b7deb10ae8346fa422d3a8e87a46ae8b285`.
+- The audited hardening work is merged to main. Current canonical main for the frontend audit is `90dab1ddddb710b384b3a77b4f2ae9132c8ad9dd`.
 - Premium durable task integration was merged in PR #79. Worker recovery/migration tests passed CI and were merged in PR #80; owner/catalog boundary tests passed CI and were merged in PR #81; the isolated API-to-worker end-to-end test and internal-only owner-key handoff fix passed CI and were merged in PR #82. Project-state validation updates were merged in PR #83.
 - Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
 
@@ -118,11 +131,12 @@ These require external configuration or are deliberate future scope:
 1. Production SMS/OTP provider credentials and delivery service.
 2. Long-lived Google web token/session refresh UX.
 3. Run the additive task migration and smoke-test the premium lifecycle against the user's configured local database. CI covers worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, endpoint owner/catalog boundaries, and isolated SQLite API-to-worker settlement; local database/provider-backed runtime validation remains outstanding. See `docs/runbooks/PREMIUM_SPARK_TASKS.md`.
-4. Consent-driven memory auto-learning UX and pipeline.
-5. Consent-driven memory auto-learning pipeline.
-6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
-7. Automated visual regression tests for Evolution animation milestones.
-8. Production release hardening and external API integrations.
+4. World Intelligence Flutter freshness UI and source/freshness presentation polish.
+5. Permissioned publishing adapters and analytics → improve feedback loop.
+6. Voice commands, computer control, file operations, and external API integrations.
+7. Automated Evolution animation visual-regression coverage.
+8. Multi-tenant ownership only if SAGE ONE becomes a shared public service.
+9. Production release hardening and real-device/manual QA, including the Huawei P40 workflow.
 
 ## Continuity rule
 Always inspect the actual GitHub main branch and this file before architectural changes. Do not rely on an old branch or stale local copy.
