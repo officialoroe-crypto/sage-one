@@ -1,5 +1,5 @@
 version: 1
-updated_at: 2026-10-04T20:05:00Z
+updated_at: 2026-10-05T16:55:00Z
 claims:
   - id: evolution-transition-engine-20261001
     agent: ChatGPT
@@ -10,9 +10,9 @@ claims:
       - frontend/lib/evolution/evolution_transition.dart
       - frontend/lib/screens/evolution.dart
       - frontend/test/evolution_transition_test.dart
-    status: ready_for_review
+    status: handoff
     started_at: 2026-10-01T15:10:00Z
-    updated_at: 2026-10-04T16:45:00Z
+    updated_at: 2026-10-05T16:55:00Z
   - id: flutter-phase-01-splash
     agent: chatgpt
     branch: feat/flutter-phase-01-splash
@@ -22,6 +22,6 @@ claims:
       - frontend/lib/main.dart
       - frontend/test/splash_test.dart
     objective: Implement and test Phase 01 Splash screen while preserving existing auth and owner entry flow.
-    status: in_progress
+    status: handoff
     started_at: 2026-10-03T00:00:00Z
-    updated_at: 2026-10-04T20:05:00Z
+    updated_at: 2026-10-05T16:55:00Z
