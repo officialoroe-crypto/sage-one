@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-import '../lib/core/identity_client.dart';
-import '../lib/screens/login.dart';
+import 'package:sage_one/core/identity_client.dart';
+import 'package:sage_one/screens/login.dart';
 
 class _ConfigClient extends http.BaseClient {
   @override
