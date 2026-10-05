@@ -48,6 +48,37 @@ class SageApi {
     return data;
   }
 
+  Future<Map<String, dynamic>> chat({
+    required String message,
+    String? sessionId,
+    String? goal,
+    String? task,
+    String? project,
+    Map<String, dynamic>? context,
+  }) => _authorizedPost('/chat', {
+    'message': message,
+    'session_id': sessionId,
+    'goal': goal,
+    'task': task,
+    'project': project,
+    'context': context,
+  });
+
+  String chatResponseText(dynamic response) {
+    if (response is String) return response;
+    if (response is Map) {
+      for (final key in ['message', 'text', 'content', 'response', 'summary']) {
+        final value = response[key];
+        if (value is String && value.trim().isNotEmpty) return value;
+      }
+      return response.entries
+          .where((entry) => entry.value is String || entry.value is num)
+          .map((entry) => '${entry.key}: ${entry.value}')
+          .join('\n');
+    }
+    return response?.toString() ?? '';
+  }
+
   Future<Map<String, dynamic>> workerHealth() async => _authorizedGet('/worker/health');
   Future<Map<String, dynamic>> brainHealth() async => _authorizedGet('/brain/health');
 
