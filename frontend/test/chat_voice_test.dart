@@ -35,6 +35,7 @@ void main() {
     await tester.tap(find.byTooltip('Send message'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
     expect(find.text('Hello'), findsOneWidget);
     expect(find.text('Hello from SAGE Core.'), findsOneWidget);
   });
