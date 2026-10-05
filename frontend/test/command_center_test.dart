@@ -65,18 +65,14 @@ void main() {
       (tester) async {
     final api = SageApi(client: _FakeApiClient());
     await tester.pumpWidget(SageOneApp(api: api));
-    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump(const Duration(milliseconds: 2500));
     await tester.pump();
 
     await tester.enterText(
       find.byType(TextField),
       'Create a short report',
     );
-    await tester.drag(
-      find.byType(CustomScrollView),
-      const Offset(0, -220),
-    );
-    await tester.pump();
+    await tester.ensureVisible(find.text('Execute'));
     await tester.tap(find.text('Execute'));
     await tester.pump();
     for (var i = 0; i < 12 && find.text('Your task is complete').evaluate().isEmpty; i++) {
