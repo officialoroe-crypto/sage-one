@@ -43,7 +43,7 @@ class _ChatScreenState extends State<ChatScreen> {
         )));
       }
     } catch (error) {
-      if (mounted) setState(() => _messages.add(_Message('SAGE Core error: $error', false)));
+      if (mounted) { setState(() => _messages.add(_Message('SAGE Core error: $error', false))); }
     } finally {
       if (mounted) {
         setState(() => _sending = false);
