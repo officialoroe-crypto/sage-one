@@ -18,7 +18,7 @@ class _FeatureWorkspaceState extends State<FeatureWorkspace> {
         child: Row(children: [
           Container(width: 54,height:54,alignment:Alignment.center,decoration:BoxDecoration(shape:BoxShape.circle,color:SageTheme.cyan.withValues(alpha:.1)),child:Icon(widget.icon,color:SageTheme.cyan)),
           const SizedBox(width:16), Expanded(child: Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text(widget.title,style:SageTheme.headingStyle),const SizedBox(height:5),Text(widget.subtitle,style:const TextStyle(color:SageTheme.textSecondary,fontSize:12,height:1.4))
+            Text(widget.title,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:SageTheme.textPrimary)),const SizedBox(height:5),Text(widget.subtitle,style:const TextStyle(color:SageTheme.textSecondary,fontSize:12,height:1.4))
           ]))
         ])),
       const SizedBox(height:20),
