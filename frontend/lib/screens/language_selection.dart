@@ -90,7 +90,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                   child: Text(
                     'LANGUAGE • STEP 1',
                     style: TextStyle(
-                      color: SageTheme.textMuted,
+                      color: SageTheme.textSecondary,
                       fontSize: 9,
                       letterSpacing: 1.4,
                       fontWeight: FontWeight.w700,
@@ -183,7 +183,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                       : const Icon(
                           Icons.radio_button_unchecked,
                           key: ValueKey('unselected'),
-                          color: SageTheme.textMuted,
+                          color: SageTheme.textSecondary,
                         ),
                 ),
               ],
