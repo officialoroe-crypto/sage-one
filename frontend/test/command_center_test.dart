@@ -21,7 +21,7 @@ class _FakeApiClient extends http.BaseClient {
             'artifacts': [
               {
                 'name': 'report.pdf',
-                'url': 'https://example.com/report.pdf',
+                'url': 'HTTPS://example.com/report.pdf',
                 'mime_type': 'application/pdf',
               },
             ],
@@ -78,5 +78,6 @@ void main() {
     expect(find.text('Your task is complete'), findsWidgets);
     expect(find.text('Your requested report is ready.'), findsOneWidget);
     expect(find.text('report.pdf'), findsWidgets);
+    expect(find.byIcon(Icons.open_in_new), findsWidgets);
   });
 }
