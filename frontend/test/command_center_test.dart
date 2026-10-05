@@ -50,7 +50,7 @@ void main() {
       (tester) async {
     final api = SageApi(client: _FakeApiClient());
     await tester.pumpWidget(SageOneApp(api: api));
-    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump(const Duration(milliseconds: 2100));
     await tester.pump();
 
     expect(find.text('SAGE ONE'), findsOneWidget);
