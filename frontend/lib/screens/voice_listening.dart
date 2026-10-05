@@ -44,10 +44,12 @@ class _VoiceListeningScreenState extends State<VoiceListeningScreen> {
 
   Future<void> _stop() async {
     await _speech.stop();
-    if (mounted) { setState(() {
-      _listening = false;
-      _status = _text.isEmpty ? 'Listening stopped.' : 'Voice captured.';
-    });
+    if (mounted) {
+      setState(() {
+        _listening = false;
+        _status = _text.isEmpty ? 'Listening stopped.' : 'Voice captured.';
+      });
+    }
   }
 
   @override
