@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/main.dart';
+import 'package:sage_one/screens/command_center.dart';
+import 'package:sage_one/theme/sage_theme.dart';
 
 class _FakeApiClient extends http.BaseClient {
   @override
@@ -64,8 +66,12 @@ void main() {
   testWidgets('completed task opens a result dialog with its file',
       (tester) async {
     final api = SageApi(client: _FakeApiClient());
-    await tester.pumpWidget(SageOneApp(api: api));
-    await tester.pump(const Duration(milliseconds: 2500));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SageTheme.dark(),
+        home: CommandCenter(api: api),
+      ),
+    );
     await tester.pump();
 
     await tester.enterText(
