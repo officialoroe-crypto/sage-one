@@ -1,26 +1,16 @@
 version: 1
-updated_at: 2026-10-04T20:20:00Z
+updated_at: 2026-10-05T08:45:00Z
 claims:
-  - id: evolution-transition-engine-20261001
-    agent: ChatGPT
-    branch: ai/evolution-transition-engine
-    base_sha: 207b29c49e7bec4e75774ce2d74b4bd9bed9d59a
-    objective: "Implement shared Evolution High-to-Low transition engine and regression tests."
-    scope:
-      - frontend/lib/evolution/evolution_transition.dart
-      - frontend/lib/screens/evolution.dart
-      - frontend/test/evolution_transition_test.dart
-    status: ready_for_review
-    started_at: 2026-10-01T15:10:00Z
-    updated_at: 2026-10-04T16:45:00Z
-  - id: flutter-phase-02-onboarding
+  - id: flutter-phase-03-language-20261005
     agent: chatgpt
-    branch: feat/flutter-phase-02-onboarding
-    base_sha: 6d0e864b09da94e522ed2711c5c044fce065fcfe
+    branch: feat/flutter-phase-03-language-selection
+    base_sha: 90dab1ddddb710b384b3a77b4f2ae9132c8ad9dd
     scope:
-      - frontend/lib/screens/onboarding.dart
-      - frontend/test/onboarding_test.dart
-    objective: Build Phase 02 onboarding visual system on existing identity APIs.
+      - frontend/lib/main.dart
+      - frontend/lib/screens/language_selection.dart
+      - frontend/test/language_selection_test.dart
+      - frontend/test/command_center_test.dart
+    objective: Implement and validate Phase 03 language selection without breaking the private-owner workspace flow.
     status: in_progress
-    started_at: 2026-10-03T00:00:00Z
-    updated_at: 2026-10-04T20:05:00Z
+    started_at: 2026-10-05T08:20:00Z
+    updated_at: 2026-10-05T08:45:00Z
