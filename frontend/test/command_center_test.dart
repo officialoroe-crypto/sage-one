@@ -33,11 +33,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump();
 
+    expect(find.text('Choose your language.'), findsOneWidget);
+    await tester.tap(find.text('Continue'));
+    await tester.pump();
+
     expect(find.text('SAGE ONE'), findsOneWidget);
-    expect(find.text('STAGE'), findsOneWidget);
-    expect(find.text('EVOLUTION'), findsOneWidget);
+    expect(find.text('YOUR PERSONAL AI MENTOR'), findsOneWidget);
     expect(find.text('READY'), findsOneWidget);
-    expect(find.text('Search + verify'), findsNothing);
-    expect(find.text('Build content'), findsNothing);
+    expect(find.text('Tell SAGE what you want done…'), findsOneWidget);
   });
 }
