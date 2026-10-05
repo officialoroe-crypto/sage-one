@@ -7,6 +7,7 @@ import 'screens/agent.dart';
 import 'screens/splash.dart';
 import 'screens/private_owner_gate.dart';
 import 'screens/command_center.dart';
+import 'screens/chat.dart';
 import 'screens/create.dart';
 import 'screens/project_detail.dart';
 import 'screens/projects.dart';
@@ -131,6 +132,11 @@ class _SageOneShellState extends State<SageOneShell> {
               title: const Text('Owner Console'),
               onTap: () => Navigator.pop(context, 7),
             ),
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline),
+              title: const Text('Chat'),
+              onTap: () => Navigator.pop(context, 10),
+            ),
           ],
         ),
       ),
@@ -159,6 +165,7 @@ class _SageOneShellState extends State<SageOneShell> {
       OwnerConsoleScreen(api: _api),
       MemoryScreen(api: _api),
       EvolutionScreen(api: _api),
+      ChatScreen(api: _api),
     ];
 
     return Scaffold(
