@@ -267,8 +267,10 @@ class _CommandCenterState extends State<CommandCenter>
         .toString();
     final rawUrl = (file['url'] ?? file['uri'] ?? '').toString().trim();
     final type = (file['mime_type'] ?? file['type'] ?? 'FILE').toString();
-    final openable = Uri.tryParse(rawUrl) is Uri &&
-        (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'));
+    final parsedUrl = Uri.tryParse(rawUrl);
+    final scheme = parsedUrl?.scheme.toLowerCase();
+    final openable = parsedUrl != null &&
+        (scheme == 'http' || scheme == 'https');
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: SageTheme.voidBlack,
