@@ -200,7 +200,7 @@ class _SageOneShellState extends State<SageOneShell> {
       MemoryScreen(api: _api),
       EvolutionScreen(api: _api),
       functional_chat.ChatScreen(api: _api),
-      functional_voice.VoiceListeningScreen(),
+      const functional_voice.VoiceListeningScreen(),
     ];
 
     return Scaffold(
