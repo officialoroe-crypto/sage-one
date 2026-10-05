@@ -69,7 +69,11 @@ void main() {
       find.byType(TextField),
       'Create a short report',
     );
-    await tester.ensureVisible(find.text('Execute'));
+    await tester.drag(
+      find.byType(CustomScrollView),
+      const Offset(0, -220),
+    );
+    await tester.pump();
     await tester.tap(find.text('Execute'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
