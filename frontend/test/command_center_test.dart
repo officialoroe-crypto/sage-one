@@ -82,10 +82,9 @@ void main() {
     await tester.ensureVisible(executeButton);
     await tester.tap(executeButton);
     await tester.pump();
-    for (var i = 0; i < 12 && find.text('Your task is complete').evaluate().isEmpty; i++) {
-      await tester.pump(const Duration(seconds: 3));
-    }
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 3));
 
     expect(find.text('Your task is complete'), findsWidgets);
     expect(find.text('Your requested report is ready.'), findsOneWidget);
