@@ -48,11 +48,13 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         setState(() => _sending = false);
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scroll.hasClients) { _scroll.animateTo(
-            _scroll.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-          );
+          if (_scroll.hasClients) {
+            _scroll.animateTo(
+              _scroll.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+            );
+          }
         });
       }
     }
