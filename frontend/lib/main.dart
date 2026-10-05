@@ -7,6 +7,8 @@ import 'screens/agent.dart';
 import 'screens/splash.dart';
 import 'screens/private_owner_gate.dart';
 import 'screens/command_center.dart';
+import 'screens/chat.dart';
+import 'screens/voice_listening.dart';
 import 'screens/create.dart';
 import 'screens/project_detail.dart';
 import 'screens/projects.dart';
@@ -132,6 +134,16 @@ class _SageOneShellState extends State<SageOneShell> {
               title: const Text('Owner Console'),
               onTap: () => Navigator.pop(context, 7),
             ),
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline),
+              title: const Text('Chat'),
+              onTap: () => Navigator.pop(context, 10),
+            ),
+            ListTile(
+              leading: const Icon(Icons.mic_none),
+              title: const Text('Voice Listening'),
+              onTap: () => Navigator.pop(context, 11),
+            ),
             ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Identity Verification'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const KycScreen())); }),
             ListTile(leading: const Icon(Icons.flag_outlined), title: const Text('First Run'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const FirstRunScreen())); }),
             ListTile(leading: const Icon(Icons.mic), title: const Text('Voice'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const VoiceListeningScreen())); }),
@@ -179,6 +191,8 @@ class _SageOneShellState extends State<SageOneShell> {
       OwnerConsoleScreen(api: _api),
       MemoryScreen(api: _api),
       EvolutionScreen(api: _api),
+      ChatScreen(api: _api),
+      VoiceListeningScreen(),
     ];
 
     return Scaffold(
