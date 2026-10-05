@@ -50,6 +50,7 @@ void main() {
       (tester) async {
     final api = SageApi(client: _FakeApiClient());
     await tester.pumpWidget(SageOneApp(api: api));
+    await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump();
 
     expect(find.text('SAGE ONE'), findsOneWidget);
@@ -66,6 +67,8 @@ void main() {
     await tester.pumpWidget(
       TickerMode(enabled: false, child: SageOneApp(api: api)),
     );
+    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump();
 
     await tester.enterText(
       find.byType(TextField),
