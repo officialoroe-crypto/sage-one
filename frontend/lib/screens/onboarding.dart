@@ -245,7 +245,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
       child: Row(
         children: [
-          _SageMark(size: 38),
+          const _SageMark(size: 38),
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
