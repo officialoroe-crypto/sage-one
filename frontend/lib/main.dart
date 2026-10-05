@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'core/sage_api.dart';
 import 'screens/agent.dart';
 import 'screens/splash.dart';
+import 'screens/language_selection.dart';
 import 'screens/private_owner_gate.dart';
 import 'screens/command_center.dart';
 import 'screens/create.dart';
@@ -31,9 +32,13 @@ class SageOneApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: SageTheme.dark(),
       home: SageSplashScreen(
-        child: _api != null
-            ? SageOneShell(api: _api)
-            : const PrivateOwnerGate(child: SageOneShell()),
+        child: LanguageSelectionScreen(
+          onContinue: (_) {
+            // The selected language is intentionally scoped to the first-run
+            // presentation for now; the full locale/persistence layer follows
+            // the existing identity and settings contracts.
+          },
+        ),
       ),
     );
   }
