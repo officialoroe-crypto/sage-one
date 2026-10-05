@@ -7,8 +7,8 @@ import 'screens/agent.dart';
 import 'screens/splash.dart';
 import 'screens/private_owner_gate.dart';
 import 'screens/command_center.dart';
-import 'screens/chat.dart';
-import 'screens/voice_listening.dart';
+import 'screens/chat.dart' as functional_chat;
+import 'screens/voice_listening.dart' as functional_voice;
 import 'screens/create.dart';
 import 'screens/project_detail.dart';
 import 'screens/projects.dart';
@@ -191,8 +191,8 @@ class _SageOneShellState extends State<SageOneShell> {
       OwnerConsoleScreen(api: _api),
       MemoryScreen(api: _api),
       EvolutionScreen(api: _api),
-      ChatScreen(api: _api),
-      VoiceListeningScreen(),
+      functional_chat.ChatScreen(api: _api),
+      functional_voice.VoiceListeningScreen(),
     ];
 
     return Scaffold(
