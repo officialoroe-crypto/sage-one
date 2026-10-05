@@ -72,8 +72,9 @@ void main() {
       find.byType(TextField),
       'Create a short report',
     );
-    await tester.ensureVisible(find.text('Execute'));
-    await tester.tap(find.text('Execute'));
+    final executeButton = find.widgetWithText(FilledButton, 'Execute');
+    await tester.ensureVisible(executeButton);
+    await tester.tap(executeButton);
     await tester.pump();
     for (var i = 0; i < 12 && find.text('Your task is complete').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(seconds: 3));
