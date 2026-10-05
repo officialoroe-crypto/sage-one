@@ -126,7 +126,7 @@
 - [x] Expose secure authenticated onboarding/profile APIs through the mounted identity router.
 - [x] Build first-run Flutter onboarding flow.
 - [x] Add user-visible memory management UI (view/add/delete in the private mobile app).
-- [ ] Add consent-driven auto-learning pipeline on top of profile memory.
+- [x] Add consent-driven auto-learning pipeline on top of profile memory.
 
 ## SAGE WORLD INTELLIGENCE
 
@@ -142,8 +142,8 @@
 - [x] Register world intelligence as reusable SAGE tools.
 - [x] Add regression coverage for permissions, status, and upgrade proposals.
 - [x] Add durable World Intelligence refresh task type and queue endpoint.
-- [ ] Add durable scheduled world refresh trigger through the background automation layer.
-- [ ] Add source-quality/domain policies for world refresh.
+- [x] Add durable scheduled world refresh trigger through the background automation layer.
+- [x] Add source-quality/domain policies for world refresh.
 - [ ] Add world-knowledge UI and freshness indicators in Flutter.
 
 ## SAGE WORKFLOW
@@ -155,7 +155,7 @@
 
 ## LATER
 
-- [~] Mobile-first daily interface — Figma foundation + Command Center V1 in progress.
+- [~] Mobile-first daily interface — Figma foundation + Command Center production path in progress.
 - [ ] Voice commands.
 - [ ] Computer control.
 - [ ] File operations.
