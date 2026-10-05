@@ -34,9 +34,13 @@ class SageOneApp extends StatelessWidget {
       home: SageSplashScreen(
         child: LanguageSelectionScreen(
           onContinue: (_) {
-            // The selected language is intentionally scoped to the first-run
-            // presentation for now; the full locale/persistence layer follows
-            // the existing identity and settings contracts.
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => _api != null
+                    ? SageOneShell(api: _api)
+                    : const PrivateOwnerGate(child: SageOneShell()),
+              ),
+            );
           },
         ),
       ),
