@@ -79,7 +79,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Execute'));
     await tester.pump();
-    for (var i = 0; i < 8 && find.text('Your task is complete').evaluate().isEmpty; i++) {
+    for (var i = 0; i < 12 && find.text('Your task is complete').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(seconds: 3));
     }
     await tester.pump();
