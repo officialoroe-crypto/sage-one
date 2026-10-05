@@ -161,6 +161,14 @@ class _SageOneShellState extends State<SageOneShell> {
             ListTile(leading: const Icon(Icons.receipt_long_outlined), title: const Text('Transactions'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const TransactionsScreen())); }),
             ListTile(leading: const Icon(Icons.person_outline), title: const Text('Profile'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())); }),
             ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())); }),
+            ListTile(
+              leading: const Icon(Icons.travel_explore),
+              title: const Text('Research OS'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _index = 1);
+              },
+            ),
             ListTile(leading: const Icon(Icons.notifications_none), title: const Text('Notifications'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())); }),
 
           ],
