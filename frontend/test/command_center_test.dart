@@ -64,9 +64,7 @@ void main() {
   testWidgets('completed task opens a result dialog with its file',
       (tester) async {
     final api = SageApi(client: _FakeApiClient());
-    await tester.pumpWidget(
-      TickerMode(enabled: false, child: SageOneApp(api: api)),
-    );
+    await tester.pumpWidget(SageOneApp(api: api));
     await tester.pump(const Duration(milliseconds: 1900));
     await tester.pump();
 
