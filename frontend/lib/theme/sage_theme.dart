@@ -12,6 +12,17 @@ class SageTheme {
   static const failure = Color(0xFFFF5B43);
   static const textPrimary = Color(0xFFF0F7FF);
   static const textSecondary = Color(0xFF8191A6);
+  static const outline = Color(0x3324BFFF);
+  static const outlineStrong = Color(0x8043CFFF);
+  static const panelGlass = Color(0xE6091728);
+  static const midnight = Color(0xFF030916);
+  static const deepBlue = Color(0xFF071B35);
+  static const space = 4.0;
+  static const radiusSmall = 12.0;
+  static const radiusMedium = 18.0;
+  static const radiusLarge = 24.0;
+  static const labelStyle = TextStyle(color: textSecondary, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.4);
+  static const headingStyle = TextStyle(color: textPrimary, fontSize: 17, fontWeight: FontWeight.w800, letterSpacing: .2);
 
   static ThemeData dark() {
     final scheme = ColorScheme.fromSeed(
@@ -23,6 +34,7 @@ class SageTheme {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: voidBlack,
+      fontFamily: 'Roboto',
       colorScheme: scheme.copyWith(
         primary: cyan,
         secondary: violet,
@@ -36,7 +48,7 @@ class SageTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: Color(0x2617D8FF)),
+          side: const BorderSide(color: outline),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
