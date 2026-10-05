@@ -15,7 +15,7 @@ void main() {
     );
 
     expect(find.text('Choose your language.'), findsOneWidget);
-    expect(find.text('English'), findsOneWidget);
+    expect(find.text('English'), findsNWidgets(2));
     expect(find.text('नेपाली'), findsOneWidget);
 
     await tester.tap(find.text('नेपाली'));
