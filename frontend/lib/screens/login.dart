@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../core/google_web_button.dart';
 import '../core/identity_client.dart';
+import '../theme/sage_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.identity, required this.onSignedIn, super.key});
@@ -109,73 +110,170 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                children: [
-                  Container(
-                    width: 108, height: 108,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.cyanAccent.withOpacity(.7)),
-                      boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(.2), blurRadius: 30, spreadRadius: 4)],
-                    ),
-                    child: const Center(child: Text('S', style: TextStyle(fontSize: 64, fontWeight: FontWeight.w300, color: Colors.cyanAccent))),
+      backgroundColor: SageTheme.voidBlack,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: _LoginBackdrop()),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 34, 24, 28),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Column(
+                    children: [
+                      const _SageLoginMark(),
+                      const SizedBox(height: 22),
+                      const Text(
+                        'SAGE ONE',
+                        style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800, letterSpacing: 4),
+                      ),
+                      const SizedBox(height: 7),
+                      const Text(
+                        'YOUR PERSONAL AI MENTOR',
+                        style: TextStyle(color: SageTheme.cyan, fontSize: 9, letterSpacing: 2.2, fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'Enter a workspace built to\nthink, research and execute with you.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: SageTheme.textSecondary, fontSize: 13, height: 1.5),
+                      ),
+                      const SizedBox(height: 34),
+                      if (_developerMode)
+                        _LoginAction(
+                          icon: Icons.bolt,
+                          label: _loading ? 'Opening SAGE…' : 'Enter SAGE Owner Mode',
+                          onPressed: _loading ? null : _developerLogin,
+                        )
+                      else if (kIsWeb)
+                        SizedBox(
+                          width: double.infinity,
+                          child: _webReady
+                              ? buildGoogleWebButton()
+                              : const Padding(
+                                  padding: EdgeInsets.all(18),
+                                  child: CircularProgressIndicator(),
+                                ),
+                        )
+                      else
+                        _LoginAction(
+                          icon: Icons.g_mobiledata,
+                          label: _loading ? 'Connecting to Google…' : 'Continue with Google',
+                          onPressed: _loading ? null : _google,
+                        ),
+                      const SizedBox(height: 14),
+                      Text(
+                        _developerMode
+                            ? 'Local owner access • no Google, SMS or OTP required'
+                            : 'Your Google identity is verified by SAGE Core.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: SageTheme.textSecondary, fontSize: 10, height: 1.4),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 18),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: SageTheme.failure.withValues(alpha: .08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: SageTheme.failure.withValues(alpha: .28)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.error_outline, color: SageTheme.failure, size: 18),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(_error!, style: const TextStyle(color: SageTheme.textPrimary, fontSize: 12, height: 1.4))),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 34),
+                      const Text(
+                        'PRIVATE-FIRST • SECURE • EXECUTION READY',
+                        style: TextStyle(color: SageTheme.textSecondary, fontSize: 8, letterSpacing: 1.5, fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 28),
-                  const Text('S A G E   O N E', style: TextStyle(fontSize: 22, letterSpacing: 6, fontWeight: FontWeight.w300)),
-                  const SizedBox(height: 10),
-                  Text('More than an AI.\nIt’s your edge.', textAlign: TextAlign.center, style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70, height: 1.45)),
-                  const SizedBox(height: 42),
-                  if (_developerMode) ...[
-                    SizedBox(
-                      width: double.infinity, height: 54,
-                      child: FilledButton.icon(
-                        onPressed: _loading ? null : _developerLogin,
-                        icon: _loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.bolt),
-                        label: Text(_loading ? 'Opening SAGE…' : 'Enter SAGE Owner Mode'),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text('Local-only developer access • no Google • no SMS • no OTP', textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 11)),
-                                    ] else if (kIsWeb)
-                    SizedBox(
-                      width: double.infinity, height: 48,
-                      child: _webReady ? buildGoogleWebButton() : const Center(child: CircularProgressIndicator()),
-                    )
-                  else
-                    SizedBox(
-                      width: double.infinity, height: 54,
-                      child: FilledButton.icon(
-                        onPressed: _loading ? null : _google,
-                        icon: _loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.g_mobiledata, size: 28),
-                        label: Text(_loading ? 'Connecting to Google…' : 'Continue with Google'),
-                      ),
-                    ),
-                  const SizedBox(height: 18),
-                  if (!_developerMode)
-                    const Text('Your Google ID token is verified by SAGE on the server.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 12, height: 1.4)),
-                  if (_error != null) ...[
-                    const SizedBox(height: 18),
-                    Container(
-                      width: double.infinity, padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: Colors.red.withOpacity(.06), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.redAccent.withOpacity(.25))),
-                      child: Text(_error!, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
+}
+
+class _LoginAction extends StatelessWidget {
+  const _LoginAction({required this.icon, required this.label, required this.onPressed});
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: double.infinity,
+    height: 56,
+    child: FilledButton.icon(
+      onPressed: onPressed,
+      icon: onPressed == null ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(icon, size: 22),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+    ),
+  );
+}
+
+class _SageLoginMark extends StatelessWidget {
+  const _SageLoginMark();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 92,
+    height: 92,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: const RadialGradient(
+        center: Alignment(-.35, -.4),
+        colors: [Color(0xFF61E9FF), Color(0xFF1265D7), Color(0xFF020306)],
+        stops: [0, .34, 1],
+      ),
+      border: Border.all(color: SageTheme.cyan.withValues(alpha: .65)),
+      boxShadow: [BoxShadow(color: SageTheme.cyan.withValues(alpha: .22), blurRadius: 34)],
+    ),
+    child: const Text('S', style: TextStyle(fontSize: 54, fontWeight: FontWeight.w300, color: Colors.white)),
+  );
+}
+
+class _LoginBackdrop extends StatelessWidget {
+  const _LoginBackdrop();
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(
+      gradient: RadialGradient(
+        center: Alignment(0, -.2),
+        radius: 1.15,
+        colors: [Color(0xFF0A2442), Color(0xFF04101F), SageTheme.voidBlack],
+      ),
+    ),
+    child: CustomPaint(painter: _LoginStars(), child: const SizedBox.expand()),
+  );
+}
+
+class _LoginStars extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withValues(alpha: .2);
+    for (var i = 0; i < 42; i++) {
+      final x = ((i * 83 + 17) % 997) / 997 * size.width;
+      final y = ((i * 149 + 29) % 991) / 991 * size.height;
+      canvas.drawCircle(Offset(x, y), i % 8 == 0 ? .9 : .45, paint);
+    }
+  }
+  @override
+  bool shouldRepaint(covariant _LoginStars oldDelegate) => false;
 }
