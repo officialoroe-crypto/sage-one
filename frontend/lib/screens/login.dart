@@ -111,7 +111,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primary = const Color(0xFF17D8FF);
-    final secondary = const Color(0xFF3E66FF);
 
     return Scaffold(
       backgroundColor: const Color(0xFF020306),
