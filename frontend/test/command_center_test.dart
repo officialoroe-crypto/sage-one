@@ -63,7 +63,9 @@ void main() {
   testWidgets('completed task opens a result dialog with its file',
       (tester) async {
     final api = SageApi(client: _FakeApiClient());
-    await tester.pumpWidget(SageOneApp(api: api));
+    await tester.pumpWidget(
+      TickerMode(enabled: false, child: SageOneApp(api: api)),
+    );
 
     await tester.enterText(
       find.byType(TextField),
@@ -76,10 +78,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Execute'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 250));
-    for (var i = 0; i < 20 && find.text('Your task is complete').evaluate().isEmpty; i++) {
-      await tester.pump(const Duration(milliseconds: 250));
-    }
+    await tester.pumpAndSettle();
 
     expect(find.text('Your task is complete'), findsWidgets);
     expect(find.text('Your requested report is ready.'), findsOneWidget);
