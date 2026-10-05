@@ -35,7 +35,7 @@ void main() {
 
     expect(find.text('Choose your language.'), findsOneWidget);
     await tester.tap(find.text('Continue'));
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
 
     expect(find.text('SAGE ONE'), findsOneWidget);
     expect(find.text('YOUR PERSONAL AI MENTOR'), findsOneWidget);
