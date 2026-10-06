@@ -27,15 +27,43 @@ class _FakeClient extends http.BaseClient {
   }
 }
 
+class _FakeChatApi extends SageApi {
+  _FakeChatApi() : super(client: _FakeClient(), baseUrl: 'http://localhost:8010');
+
+  @override
+  Future<Map<String, dynamic>> chat({
+    required String message,
+    String? sessionId,
+    String? goal,
+    String? task,
+    String? project,
+    Map<String, dynamic>? context,
+  }) async {
+    return {
+      'success': true,
+      'session_id': 'session-1',
+      'response': {'message': 'Hello from SAGE Core.'},
+    };
+  }
+}
+
 void main() {
-  testWidgets('chat sends through the SAGE chat endpoint', (tester) async {
+  testWidgets('SageApi chat contract decodes the backend response',
+      (tester) async {
     final api = SageApi(client: _FakeClient(), baseUrl: 'http://localhost:8010');
+    final data = await api.chat(message: 'Hello');
+    expect(data['session_id'], 'session-1');
+    expect(api.chatResponseText(data['response']), 'Hello from SAGE Core.');
+  });
+
+  testWidgets('chat renders the returned SAGE response', (tester) async {
+    final api = _FakeChatApi();
     await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.tap(find.byTooltip('Send message'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pump();
+    await tester.pumpAndSettle();
+
     expect(find.text('Hello'), findsOneWidget);
     expect(find.text('Hello from SAGE Core.'), findsOneWidget);
   });
