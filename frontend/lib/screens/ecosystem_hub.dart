@@ -38,7 +38,7 @@ class AppsHubScreen extends StatelessWidget {
       gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,mainAxisSpacing:10,crossAxisSpacing:10,childAspectRatio:1.15),
       itemBuilder:(context,i){final app=_apps[i];return _AppCard(title:app.$1,subtitle:app.$2,icon:app.$3,accent:app.$4,onTap:(){
         final Widget? screen=switch(app.$1){
-          'Marketplace'=>const MarketplaceScreen(),'Jobs'=>const JobsScreen(),'Learning'=>const LearningScreen(),'Community'=>const CommunityScreen(),'Earnings'=>const EarningsScreen(),_=>null};
+          'Marketplace'=>const EcosystemMarketplaceScreen(),'Jobs'=>const EcosystemJobsScreen(),'Learning'=>const EcosystemLearningScreen(),'Community'=>const EcosystemCommunityScreen(),'Earnings'=>const EcosystemEarningsScreen(),_=>null};
         if(screen!=null){Navigator.push(context,MaterialPageRoute(builder:(_)=>screen));}
         else{ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(app.$1+' workspace is being connected next.')));}
       });}),
@@ -55,7 +55,7 @@ class _AppCard extends StatelessWidget {
   )));
 }
 
-class MarketplaceScreen extends StatelessWidget { const MarketplaceScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Marketplace',eyebrow:'SAGE MARKET',subtitle:'A Nepal-first buying and selling surface. Listings stay simple; SAGE can help compare, negotiate and organize the next step.',icon:Icons.storefront,child:const Column(children:[
+class EcosystemMarketplaceScreen extends StatelessWidget { const MarketplaceScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Marketplace',eyebrow:'SAGE MARKET',subtitle:'A Nepal-first buying and selling surface. Listings stay simple; SAGE can help compare, negotiate and organize the next step.',icon:Icons.storefront,child:const Column(children:[
   _MetricRow(label:'Discover',value:'Products • Services • Courses'),
   _ActionTile(icon:Icons.search,title:'Browse listings',subtitle:'Search categories and nearby opportunities.'),
   _ActionTile(icon:Icons.add_circle_outline,title:'Create a listing',subtitle:'Prepare photos, description and price with SAGE.'),
@@ -63,7 +63,7 @@ class MarketplaceScreen extends StatelessWidget { const MarketplaceScreen({super
   _ActionTile(icon:Icons.shield_outlined,title:'SAGE payment protection',subtitle:'Payment rails and settlement stay in the controlled SAGE flow.'),
 ]));}
 
-class JobsScreen extends StatelessWidget { const JobsScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Jobs',eyebrow:'SAGE WORK',subtitle:'Turn your profile, skills and goals into practical work opportunities. Start with Nepal-first matching.',icon:Icons.work_outline,accent:SageTheme.blue,child:const Column(children:[
+class EcosystemJobsScreen extends StatelessWidget { const JobsScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Jobs',eyebrow:'SAGE WORK',subtitle:'Turn your profile, skills and goals into practical work opportunities. Start with Nepal-first matching.',icon:Icons.work_outline,accent:SageTheme.blue,child:const Column(children:[
   _MetricRow(label:'Match mode',value:'Skills • Location • Availability',accent:SageTheme.blue),
   _ActionTile(icon:Icons.manage_search,title:'Find a job',subtitle:'Tell SAGE what kind of work you want.'),
   _ActionTile(icon:Icons.description_outlined,title:'Build your CV',subtitle:'Use your profile and verified skills as the starting point.'),
@@ -71,7 +71,7 @@ class JobsScreen extends StatelessWidget { const JobsScreen({super.key}); @overr
   _ActionTile(icon:Icons.business_center_outlined,title:'Employer tools',subtitle:'Post roles and manage candidate connections.'),
 ]));}
 
-class LearningScreen extends StatelessWidget { const LearningScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Learning',eyebrow:'SAGE ACADEMY',subtitle:'A practical learning surface built around goals, progress and an AI mentor—not a static course list.',icon:Icons.school_outlined,accent:SageTheme.violet,child:const Column(children:[
+class EcosystemLearningScreen extends StatelessWidget { const LearningScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Learning',eyebrow:'SAGE ACADEMY',subtitle:'A practical learning surface built around goals, progress and an AI mentor—not a static course list.',icon:Icons.school_outlined,accent:SageTheme.violet,child:const Column(children:[
   _MetricRow(label:'Path',value:'Goal → Lessons → Practice → Proof',accent:SageTheme.violet),
   _ActionTile(icon:Icons.play_circle_outline,title:'Continue learning',subtitle:'Resume the next lesson in your active path.'),
   _ActionTile(icon:Icons.explore_outlined,title:'Explore paths',subtitle:'Choose skills connected to work and earning goals.'),
@@ -79,7 +79,7 @@ class LearningScreen extends StatelessWidget { const LearningScreen({super.key})
   _ActionTile(icon:Icons.psychology_alt_outlined,title:'Ask SAGE',subtitle:'Turn a question into a guided learning session.'),
 ]));}
 
-class CommunityScreen extends StatelessWidget { const CommunityScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Community',eyebrow:'SAGE COMMUNITY',subtitle:'A future-ready collaboration space with private-first controls and useful activity—not noisy social feeds.',icon:Icons.groups_outlined,child:const Column(children:[
+class EcosystemCommunityScreen extends StatelessWidget { const CommunityScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Community',eyebrow:'SAGE COMMUNITY',subtitle:'A future-ready collaboration space with private-first controls and useful activity—not noisy social feeds.',icon:Icons.groups_outlined,child:const Column(children:[
   _MetricRow(label:'Mode',value:'Learn • Share • Collaborate'),
   _ActionTile(icon:Icons.forum_outlined,title:'Community spaces',subtitle:'Discover focused groups and discussions.'),
   _ActionTile(icon:Icons.edit_outlined,title:'Create a post',subtitle:'Share a question, result, opportunity or resource.'),
@@ -87,7 +87,7 @@ class CommunityScreen extends StatelessWidget { const CommunityScreen({super.key
   _ActionTile(icon:Icons.lock_outline,title:'Privacy controls',subtitle:'Choose what you share and with whom.'),
 ]));}
 
-class EarningsScreen extends StatelessWidget { const EarningsScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Earnings',eyebrow:'SAGE EARN',subtitle:'A clear view of completed work, pending payouts and income history. Spark balance remains separate from Evolution progress.',icon:Icons.trending_up,accent:SageTheme.gold,child:const Column(children:[
+class EcosystemEarningsScreen extends StatelessWidget { const EarningsScreen({super.key}); @override Widget build(BuildContext context)=>EcosystemScaffold(title:'Earnings',eyebrow:'SAGE EARN',subtitle:'A clear view of completed work, pending payouts and income history. Spark balance remains separate from Evolution progress.',icon:Icons.trending_up,accent:SageTheme.gold,child:const Column(children:[
   _MetricRow(label:'Today',value:'NPR 0.00',accent:SageTheme.gold),
   _ActionTile(icon:Icons.task_alt,title:'Completed work',subtitle:'Review work that has generated earnings.'),
   _ActionTile(icon:Icons.pending_actions,title:'Pending payouts',subtitle:'See earnings waiting for settlement.'),
