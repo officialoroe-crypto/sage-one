@@ -26,4 +26,65 @@ void main() {
     expect(visual.order, 0);
     expect(visual.name, 'SAGE');
   });
+  testWidgets('Evolution atmosphere renders one deterministic visual layer', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EvolutionAtmosphere(
+            visual: evolutionVisualFor(
+              'Gold',
+              intensity: EvolutionIntensity.mid,
+            ),
+            child: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(EvolutionAtmosphere), findsOneWidget);
+    expect(find.byType(CustomPaint), findsOneWidget);
+    expect(
+      tester.widget<CustomPaint>(find.byType(CustomPaint)).painter,
+      isNotNull,
+    );
+  });
+
+  testWidgets('Evolution transition mounts and completes as a visual overlay', (
+    tester,
+  ) async {
+    var completed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const SizedBox.expand(),
+              EvolutionTransition(
+                from: evolutionVisualFor(
+                  'Bronze',
+                  intensity: EvolutionIntensity.high,
+                ),
+                to: evolutionVisualFor(
+                  'Silver',
+                  intensity: EvolutionIntensity.low,
+                ),
+                duration: const Duration(milliseconds: 100),
+                onCompleted: () => completed = true,
+                child: const SizedBox.expand(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(IgnorePointer), findsOneWidget);
+    expect(find.byType(CustomPaint), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(completed, isTrue);
+  });
+
 }
