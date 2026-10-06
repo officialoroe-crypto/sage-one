@@ -67,7 +67,8 @@ void main() {
     );
     final executeButton = find.widgetWithText(FilledButton, 'Execute');
     await tester.tap(executeButton);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Your task is complete'), findsWidgets);
     expect(find.text('Your requested report is ready.'), findsOneWidget);
