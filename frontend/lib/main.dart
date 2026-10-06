@@ -18,6 +18,7 @@ import 'screens/memory.dart';
 import 'screens/evolution.dart';
 import 'theme/sage_theme.dart';
 import 'screens/feature_workspaces.dart';
+import 'screens/ecosystem_hub.dart';
 
 void main() => runApp(const SageOneApp());
 
@@ -136,7 +137,7 @@ class _SageOneShellState extends State<SageOneShell> {
             ListTile(leading: const Icon(Icons.flag_outlined), title: const Text('First Run'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const FirstRunScreen())); }),
             ListTile(leading: const Icon(Icons.mic), title: const Text('Voice'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const VoiceListeningScreen())); }),
             ListTile(leading: const Icon(Icons.chat_bubble_outline), title: const Text('Chat'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())); }),
-            ListTile(leading: const Icon(Icons.apps), title: const Text('Apps'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AppsScreen())); }),
+            ListTile(leading: const Icon(Icons.apps), title: const Text('Apps Hub'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AppsHubScreen())); }),
             ListTile(leading: const Icon(Icons.trending_up), title: const Text('Earnings'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const EarningsScreen())); }),
             ListTile(leading: const Icon(Icons.storefront), title: const Text('Marketplace'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const MarketplaceScreen())); }),
             ListTile(leading: const Icon(Icons.work_outline), title: const Text('Jobs'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const JobsScreen())); }),
