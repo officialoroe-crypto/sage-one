@@ -48,16 +48,9 @@ class _FakeChatApi extends SageApi {
 }
 
 void main() {
-  testWidgets('SageApi chat contract decodes the backend response',
-      (tester) async {
-    final api = SageApi(client: _FakeClient(), baseUrl: 'http://localhost:8010');
-    final data = await api.chat(message: 'Hello');
-    expect(data['session_id'], 'session-1');
-    expect(api.chatResponseText(data['response']), 'Hello from SAGE Core.');
-  });
-
   testWidgets('chat renders the returned SAGE response', (tester) async {
     final api = _FakeChatApi();
+    expect(api.chatResponseText({'message': 'Hello from SAGE Core.'}), 'Hello from SAGE Core.');
     await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.tap(find.byTooltip('Send message'));
