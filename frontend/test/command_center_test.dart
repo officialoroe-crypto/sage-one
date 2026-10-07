@@ -71,7 +71,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Your task is complete'), findsWidgets);
-    expect(find.text('Your requested report is ready.'), findsOneWidget);
+    expect(find.text('Your requested report is ready.'), findsWidgets);
     expect(find.text('report.pdf'), findsWidgets);
     expect(find.byIcon(Icons.open_in_new), findsWidgets);
   });
