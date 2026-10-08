@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_interpolation_to_compose_strings, empty_catches
 import 'package:flutter/material.dart';
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
