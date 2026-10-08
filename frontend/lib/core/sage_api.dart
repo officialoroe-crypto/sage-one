@@ -282,11 +282,45 @@ class SageApi {
   Future<Map<String, dynamic>> ownerResetEvolution(String reason) async =>
       _authorizedPost('/economy/owner/evolution/reset', {'reason': reason});
 
+  Future<Map<String, dynamic>> profileMe() async => _authorizedGet('/identity/me');
+
+  Future<Map<String, dynamic>> updateProfile({
+    String? name,
+    String? phone,
+    String? address,
+    int? age,
+    Map<String, dynamic>? basicInfo,
+    String? helpIntent,
+    List<String>? capabilities,
+    bool? memoryConsent,
+  }) async => _authorizedPatch('/identity/me', {
+    if (name != null) 'name': name,
+    if (phone != null) 'phone': phone,
+    if (address != null) 'address': address,
+    if (age != null) 'age': age,
+    if (basicInfo != null) 'basic_info': basicInfo,
+    if (helpIntent != null) 'help_intent': helpIntent,
+    if (capabilities != null) 'capabilities': capabilities,
+    if (memoryConsent != null) 'memory_consent': memoryConsent,
+  });
+
+  Future<Map<String, dynamic>> paymentStatus() async => _authorizedGet('/economy/payment/status');
+
   Future<Map<String, dynamic>> _authorizedDelete(String path) async {
     final token = await _identityToken();
     final headers = <String, String>{};
     if (token != null) headers['authorization'] = 'Bearer $token';
     final response = await _client.delete(Uri.parse('$baseUrl$path'), headers: headers);
+    return _decode(response);
+  }
+
+  Future<Map<String, dynamic>> _authorizedPatch(String path, Map<String, dynamic> body) async {
+    final token = await _identityToken();
+    final headers = <String, String>{'content-type': 'application/json'};
+    if (token != null) headers['authorization'] = 'Bearer $token';
+    final response = await _client.patch(
+      Uri.parse('$baseUrl$path'), headers: headers, body: jsonEncode(body),
+    );
     return _decode(response);
   }
 
