@@ -1,212 +1,59 @@
 # SAGE ONE — TODO
 
-## COMPLETE CHECKPOINTS
+## COMPLETE — CORE RUNTIME
+- [x] Durable worker, leases, heartbeat, retry/backoff and recovery.
+- [x] Background task API, polling, cancellation and notifications.
+- [x] Mission planning, dependency-aware execution and verification.
+- [x] Research OS with persistent reports/evidence/claims.
+- [x] Provider routing, health visibility and resource protection.
+- [x] Unified Chat `/command` execution loop.
+- [x] Project-scoped commands and result assets.
+- [x] Consent-gated task-experience memory learning.
+- [x] Device voice STT/TTS through the durable command path.
+- [x] Owner Developer Mode preview/apply safety gate.
+- [x] Durable owner-scoped Developer Mode proposals.
+- [x] Research and task history/status filtering.
 
-### CI
-- [x] Fix CI `PYTHONPATH` / repository-root import problem for top-level `execution`.
-- [x] Run pytest after CI fix.
-- [x] Confirm compilation + tests independently.
+## COMPLETE — IDENTITY / OWNER WORKSPACE
+- [x] Authenticated profile persistence.
+- [x] Google token validation foundation.
+- [x] Phone OTP state machine and provider abstraction.
+- [x] First-run onboarding foundation.
+- [x] User-visible memory read/add/delete UI.
+- [x] Private-first owner entry path.
+- [x] World Intelligence backend and Flutter status/knowledge/refresh UI.
+- [x] Spark reservation/settlement/refund primitives and premium execution lifecycle.
+- [x] Evolution achievement settlement and canonical tier API.
+- [x] Apps Hub and ecosystem shell surfaces.
+- [x] File Manager / AI Studio / Wallet / Payments / Transactions / Profile / Settings / Notifications shell surfaces.
 
-### Durable Worker
-- [x] Inspect current task model.
-- [x] Add atomic claiming.
-- [x] Add worker ownership.
-- [x] Add lease timestamps.
-- [x] Add heartbeat.
-- [x] Add scheduled retry time.
-- [x] Implement retry/backoff.
-- [x] Implement lease-expiry recovery.
-- [x] Ensure worker-owned execution context is preserved.
-- [x] Add tests for competing workers.
-- [x] Add tests for worker crash/lease expiry.
-- [x] Add tests for retry behavior.
+## REMAINING — EXTERNAL OR DEFERRED
+- [ ] Production SMS/OTP provider.
+- [ ] Long-lived Google web session refresh UX.
+- [ ] Local/provider-backed premium lifecycle smoke test on the user's configured environment.
+- [ ] Broader consent-driven memory candidate review UX.
+- [ ] Full multi-tenant ownership if SAGE becomes public/shared.
+- [ ] Broader third-party integrations and permissioned publishing adapters.
+- [ ] Analytics → improve feedback loop.
+- [ ] Automated Evolution visual regression.
+- [ ] Full production release hardening and manual Android/device QA.
 
-### Resource Protection
-- [x] Add task classification: LIGHT / MEDIUM / HEAVY.
-- [x] Add host CPU and memory monitoring.
-- [x] Add local CPU guard with conservative thresholds.
-- [x] Add graceful defer behavior when local resources are too busy.
-- [x] Prevent heavy work from starting locally above the protected CPU threshold.
-- [x] Add regression tests for resource protection.
-- [x] Keep automatic heavy local Ollama fallback disabled.
+## DEVELOPMENT CONTROL PLANE
+- [x] Machine-readable AI work claims.
+- [x] Atomic claim/release and stale-claim detection.
+- [x] Handoff records.
+- [x] Overlap checks and explicit takeover.
+- [x] Compact current-work/status view.
+- [x] CI coordination enforcement.
+- [ ] Pre-PR consistency checks against current main.
 
-### Background Jobs
-- [x] Create durable task API.
-- [x] Create background worker process/service entry point.
-- [x] Persist task state through the existing durable worker lifecycle.
-- [x] Allow user to query task status.
-- [x] Store completed results.
-- [x] Add explicit failure states to the user-facing task API.
-- [x] Queue background execution without performing inference in the HTTP request.
-- [x] Add Flutter task polling/detail/cancellation UX.
-- [x] Route research-agent tasks through the real Research OS pipeline.
-- [x] Route non-research durable goals through mission planning + tool execution + verification.
-- [x] Keep mission child tasks out of the global durable worker queue.
-- [x] Add durable in-app notification mechanism for completed/failed background tasks.
-- [x] Add notification list/read/read-all API endpoints.
-- [x] Add unread notification badge to the Flutter shell.
+## VALIDATION
+- [x] Python compile/lint/tests on main.
+- [x] Flutter analyzer/tests on main.
+- [x] Android APK workflow on main.
+- [x] God Mode developer website workflow on main.
+- [ ] Manual full-device walkthrough.
+- [ ] Full visual/reference comparison.
 
-## SAGE EXECUTION / AGENT LAYER
-
-### Foundation — COMPLETE
-- [x] Convert high-level goals into durable missions.
-- [x] Decompose missions into dependent executable tasks.
-- [x] Execute tasks through the real tool registry.
-- [x] Carry verified outputs forward as mission context.
-- [x] Verify task completion before satisfying dependencies.
-- [x] Run durable goals through the same mission execution path as synchronous execution.
-- [x] Protect mission child tasks from competing global workers.
-
-### Mission Intelligence — COMPLETE
-- [x] Parallelize independent mission tasks with bounded concurrency.
-- [x] Add dependency-aware execution waves.
-- [x] Add mission execution progress summary from verified task state.
-- [x] Persist a final mission result synthesized from verified task outputs.
-- [x] Add mission cancellation/pause/resume semantics at the execution layer.
-- [x] Add deterministic retry/recovery strategies per task type.
-- [x] Add deterministic user-facing mission progress events.
-- [x] Expose mission pause/resume/cancel controls through the HTTP/mobile API.
-- [x] Persist richer execution events for long-term trace/history.
-
-## RESEARCH OS
-
-### Foundation — COMPLETE
-- [x] Search layer.
-- [x] Web Reader.
-- [x] URL normalization and duplicate-source suppression.
-- [x] Source metadata/content hashing.
-- [x] Evidence objects with stable IDs.
-- [x] Structured synthesis.
-- [x] Claim/source/evidence validation.
-- [x] Cross-check/verification layer.
-- [x] Empty-response and zero-claim detection.
-- [x] Durable worker execution for research tasks.
-- [x] Start/stop the durable worker from the FastAPI application lifecycle and expose worker health.
-
-### Next
-- [x] First-class persistent research artifacts.
-- [x] Persist source/evidence/claim/citation relationships.
-- [x] Citation-preserving report generation.
-- [x] Parallel cloud research with bounded concurrency.
-- [x] Research result retrieval independent of task-row size.
-
-## BRAIN
-
-### Foundation — COMPLETE
-- [x] Deterministic task classification/routing policy.
-- [x] Groq-first cloud routing.
-- [x] Cerebras secondary cloud routing.
-- [x] Gemini cloud fallback through Google's OpenAI-compatible API.
-- [x] Controlled Ollama local routing.
-- [x] Explicit `auto`, `cloud`, and `local` routing modes.
-- [x] CPU-aware local eligibility.
-- [x] Provider health visibility.
-- [x] Structured-output validation.
-- [x] Empty-response detection.
-- [x] Retry/cooldown behavior.
-- [x] Avoid local heavy fallback.
-
-### Next
-- [x] Stronger quota awareness.
-- [x] Provider health-aware fallback selection.
-- [x] Better retry classification for transient vs permanent errors.
-- [x] Durable provider telemetry.
-
-## IDENTITY / ONBOARDING / MEMORY
-
-### Foundation — IN PROGRESS
-- [x] Add shared user profile persistence keyed by authenticated provider identity.
-- [x] Store onboarding profile fields: name, phone verification state, address, age, useful basics, help intent, and selected capabilities.
-- [x] Add stable multi-select onboarding capability catalog.
-- [x] Add user-scoped persistent memory with explicit classifications: fact, interest, inference, skill, skill evidence, goal, preference, experience.
-- [x] Support memory view/update/delete at the service layer with profile ownership checks.
-- [x] Verify Google authentication tokens server-side against configured OAuth client ID.
-- [x] Add phone verification challenge state machine with expiry, attempt limits, identity binding, and SMS-provider abstraction.
-- [ ] Add production SMS/OTP provider.
-- [x] Expose secure authenticated onboarding/profile APIs through the mounted identity router.
-- [x] Build first-run Flutter onboarding flow.
-- [x] Add user-visible memory management UI (view/add/delete in the private mobile app).
-- [x] Add consent-driven task-experience auto-learning pipeline on top of profile memory.
-- [ ] Expand consent-driven auto-learning to richer candidate sources and user review UX.
-
-## SAGE WORLD INTELLIGENCE
-
-### Controlled public-world learning
-- [x] Add separate system-level world intelligence engine.
-- [x] Grant bounded permissions for public-world reading/observation/learning.
-- [x] Keep public-world knowledge separate from user personal memory.
-- [x] Store source-traceable world knowledge and public-world signals.
-- [x] Add bounded default topics covering current affairs, AI/technology, business, content trends, software/APIs, and education.
-- [x] Add stale-knowledge detection and refresh readiness.
-- [x] Add human-reviewable SAGE upgrade proposals.
-- [x] Explicitly prevent self-modification through world learning.
-- [x] Register world intelligence as reusable SAGE tools.
-- [x] Add regression coverage for permissions, status, and upgrade proposals.
-- [x] Add durable World Intelligence refresh task type and queue endpoint.
-- [ ] Add durable scheduled world refresh trigger through the background automation layer.
-- [ ] Add source-quality/domain policies for world refresh.
-- [ ] Add world-knowledge UI and freshness indicators in Flutter.
-
-## SAGE WORKFLOW
-- [x] Define SAGE WORKFLOW connective architecture and content/asset/publishing model.
-- [x] Add persistent project graph and asset relationships.
-- [x] Build Create around persistent Content Projects (project + initial content workflow creation).
-- [ ] Build permissioned publishing adapters.
-- [ ] Add analytics → improve feedback loop.
-
-## LATER
-
-- [~] Mobile-first daily interface — Figma foundation + Command Center V1 in progress.
-- [x] Voice commands.
-- [ ] Computer control.
-- [ ] File operations.
-- [ ] External API integrations.
-- [x] Scheduled/background automation.
-- [x] Security/permission control plane for global owner mutations; production owner identity boundary is enforced.
-- [ ] Public-release preparation.
-
-
-## EVOLUTION / GOD MODE TESTING
-- [x] Add non-mutating Evolution simulation API using the authoritative achievement thresholds.
-- [x] Animate Evolution simulation in Owner/God Mode without mutating persisted Evolution state.
-- [x] Keep APPLY and RESET as explicit mutation controls.
-- [x] Add a Flutter Evolution rank-path screen backed by the canonical backend tier catalog and current achievement snapshot.
-- [ ] Add automated visual regression coverage for Evolution animation milestones.
-
-
-## AUDIT — CURRENT REMAINING WORK
-- [x] Run Python compileall + Ruff unused-import checks across the full backend/test source set.
-- [x] Run the complete Python test suite on audited batches.
-- [x] Run Flutter analyzer + Flutter tests on audited batches.
-- [x] Verify the Google/developer authentication gate after refresh/restart scenarios covered by tests.
-- [x] Verify atomic verified-achievement settlement and idempotent replay.
-- [x] Wire verified mission-task results into Evolution settlement.
-- [x] Make mission task start + ExecutionAttempt creation atomic.
-- [x] Restrict global permission mutation to SAGE Owner Authority.
-- [x] Redact private worker results from public worker health.
-- [x] Prevent accidental multi-user production deployments by requiring the configured owner identity.
-- [x] Fix Flutter/backend onboarding capability ID mismatch.
-- [x] Fix Command Center provider-routing display contract.
-- [x] Harden Web Reader redirect handling against SSRF.
-- [x] Declare the Web Reader extraction dependency.
-- [x] Make the Android development build configurable for the Huawei P40 USB/ADB workflow.
-- [ ] Add production SMS provider.
-- [ ] Add Google-token/session refresh handling for long-lived authenticated sessions.
-- [x] Build idempotent Spark reservation, settlement, and refund primitives bound to the canonical premium cost catalogue.
-- [x] Wire Spark reservations into the actual premium-work execution settlement path.
-- [x] Add scheduled World Intelligence refresh triggering through the durable background automation layer.
-- [x] Add transparent configurable source-quality/domain policy for World Intelligence refresh.
-- [ ] Add full multi-tenant data ownership if SAGE ONE is ever offered as a shared public service.
-- [ ] Add automated visual regression coverage for Evolution animation milestones.
-
-
-## MULTI-AI COLLABORATION / DEVELOPER CONTROL PLANE
-- [x] Define machine-readable active work claims with agent, branch, base SHA, scope, objective, and timestamps.
-- [x] Add atomic claim/release operations.
-- [x] Detect overlapping file/module claims before work starts.
-- [x] Detect stale claims and require explicit takeover/handoff.
-- [x] Add developer handoff records with changed files, commits, tests, failures, and next action.
-- [ ] Add pre-PR consistency checks against current main.
-- [x] Add optional CI enforcement for coordination invariants.
-- [x] Expose a compact current-work/status view usable by any AI session.
-- [x] Document two-AI parallel development and conflict-recovery procedure.
+## PRINCIPLE
+Do not mark an item complete because code exists alone. Mark it complete when the runtime path is real and the relevant verification evidence exists.
