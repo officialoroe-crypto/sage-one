@@ -1336,6 +1336,7 @@ def execute_mission(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
     try:
         result = execution_engine.execute_mission(
             mission_id=mission_id,
@@ -1359,6 +1360,7 @@ def execute_next_task(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
     try:
         result = execution_engine.execute_next(
             mission_id,
@@ -1405,6 +1407,8 @@ def get_mission_trace(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
+
     return _serialize(
         execution_trace.get_mission_trace(
             mission_id
@@ -1418,6 +1422,8 @@ def get_mission_result(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
+
     return _serialize(
         execution_trace.get_mission_result(
             mission_id
@@ -1430,6 +1436,8 @@ def get_trace_summary(
     mission_id: str,
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
+
+    _owned_mission_id(mission_id, _claims)
 
     trace = execution_trace.get_mission_trace(
         mission_id
