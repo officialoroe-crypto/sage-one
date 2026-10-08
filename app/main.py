@@ -34,7 +34,8 @@ from economy.api import router as economy_api_router
 from workflows.api import router as workflow_api_router
 from app.worker_service import worker_service
 from config.settings import settings
-from identity.auth import authenticate_request
+from identity.auth import authenticate_request, get_or_create_authenticated_profile
+from workflows import repository as workflow_repository
 
 
 # ============================================================
@@ -148,6 +149,7 @@ class ChatRequest(BaseModel):
 
 class ExecuteRequest(BaseModel):
     goal: str
+    project_id: Optional[str] = None
     session_id: Optional[str] = None
     max_steps: int = Field(default=20, ge=1, le=100)
 
@@ -204,6 +206,13 @@ class TaskCreateRequest(BaseModel):
     agent: str = Field(default="general", min_length=1, max_length=100)
     session_id: Optional[str] = None
     parent_task_id: Optional[str] = None
+
+
+class CommandRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=20000)
+    session_id: Optional[str] = None
+    project_id: Optional[str] = None
+    priority: int = Field(default=3, ge=1, le=5)
 
 
 class PremiumTaskCreateRequest(BaseModel):
@@ -511,6 +520,13 @@ def execute_background(
     if not agents.exists(agent_name):
         agent_name = "general"
 
+    profile = get_or_create_authenticated_profile(claims)
+    project_id = request.project_id
+    if project_id:
+        with SessionLocal() as db:
+            if workflow_repository.get_project(db, profile["id"], project_id) is None:
+                raise HTTPException(status_code=404, detail="Project not found.")
+
     task = tasks.create(
         title=request.goal.strip()[:120],
         description=request.goal.strip(),
@@ -518,12 +534,58 @@ def execute_background(
         agent=agent_name,
         session_id=request.session_id,
         owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
+        profile_id=profile["id"],
+        project_id=project_id,
     )
 
     return {
         "success": True,
         "status": "queued",
         "message": "Execution queued for the durable background worker.",
+        "task": task,
+    }
+
+
+# ============================================================
+# UNIFIED COMMAND EXECUTION
+# ============================================================
+
+@app.post("/command")
+def command(
+    request: CommandRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """Queue a user command into the same durable execution path used by SAGE."""
+    profile = get_or_create_authenticated_profile(claims)
+    project_id = request.project_id
+    if project_id:
+        with SessionLocal() as db:
+            if workflow_repository.get_project(db, profile["id"], project_id) is None:
+                raise HTTPException(status_code=404, detail="Project not found.")
+
+    session_id = request.session_id
+    if not session_id:
+        with SessionLocal() as db:
+            session_id = repository.create_session(db)
+
+    agent_name = agents.choose(request.message)
+    if not agents.exists(agent_name):
+        agent_name = "general"
+
+    task = tasks.create(
+        title=request.message.strip()[:120],
+        description=request.message.strip(),
+        priority=request.priority,
+        agent=agent_name,
+        session_id=session_id,
+        owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
+        profile_id=profile["id"],
+        project_id=project_id,
+    )
+    return {
+        "success": True,
+        "status": "queued",
+        "session_id": session_id,
         "task": task,
     }
 
