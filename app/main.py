@@ -18,7 +18,8 @@ from agentic.models import ActionRequest
 from brain.router import router
 from database.connection import SessionLocal, Base, engine
 from database import repository
-from database.models import DeveloperProposal, SalesActivity, SalesLead
+from database.models import DeveloperProposal
+from sales.models import SalesActivity, SalesLead
 
 from missions.engine import mission_engine
 from missions.planner import planner
