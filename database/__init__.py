@@ -17,3 +17,5 @@ from economy.models import (  # noqa: F401
     SparkLedgerEntry,
     SparkWallet,
 )
+
+from sales.models import SalesActivity, SalesLead  # noqa: F401
