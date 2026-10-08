@@ -35,7 +35,7 @@ from workflows.api import router as workflow_api_router
 from app.worker_service import worker_service
 from config.settings import settings
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
-from workflows import repository as workflow_repository
+from workflows.repository import repository as workflow_repository
 
 
 # ============================================================
