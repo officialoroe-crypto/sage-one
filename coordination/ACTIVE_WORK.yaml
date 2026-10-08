@@ -1,3 +1,14 @@
 version: 1
-updated_at: 2026-10-08T04:03:00Z
-claims: []
+updated_at: 2026-10-08T11:00:00Z
+claims:
+  - id: frontend-command-center-v2
+    agent: chatgpt
+    branch: feat/flutter-command-center-v2
+    base_sha: e43791c8491b7d9fce7a84363ff12467b359286d
+    scope:
+      - frontend/lib/screens/command_center.dart
+      - frontend/test/command_center_test.dart
+    objective: "Upgrade the Command Center into the real SAGE core interaction surface without changing backend contracts."
+    status: in_progress
+    started_at: 2026-10-08T11:00:00Z
+    updated_at: 2026-10-08T11:00:00Z
