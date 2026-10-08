@@ -126,7 +126,8 @@
 - [x] Expose secure authenticated onboarding/profile APIs through the mounted identity router.
 - [x] Build first-run Flutter onboarding flow.
 - [x] Add user-visible memory management UI (view/add/delete in the private mobile app).
-- [ ] Add consent-driven auto-learning pipeline on top of profile memory.
+- [x] Add consent-driven task-experience auto-learning pipeline on top of profile memory.
+- [ ] Expand consent-driven auto-learning to richer candidate sources and user review UX.
 
 ## SAGE WORLD INTELLIGENCE
 
@@ -156,7 +157,7 @@
 ## LATER
 
 - [~] Mobile-first daily interface — Figma foundation + Command Center V1 in progress.
-- [ ] Voice commands.
+- [x] Voice commands.
 - [ ] Computer control.
 - [ ] File operations.
 - [ ] External API integrations.
