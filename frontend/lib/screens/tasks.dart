@@ -24,6 +24,7 @@ class _TasksScreenState extends State<TasksScreen> {
   _TaskViewStatus _status = _TaskViewStatus.loading;
   String? _error;
   Timer? _poller;
+  String _filter = 'all';
   final Set<String> _cancelling = <String>{};
 
   @override
@@ -168,6 +169,13 @@ class _TasksScreenState extends State<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final visibleTasks = _tasks.where((item) {
+      if (_filter == 'all') return true;
+      final status = _taskStatus(item).toLowerCase();
+      if (_filter == 'active') return {'queued','pending','running','claimed','processing'}.contains(status);
+      return status == _filter;
+    }).toList();
+
     final body = switch (_status) {
       _TaskViewStatus.loading => const Center(child: CircularProgressIndicator()),
       _TaskViewStatus.error => _Empty(
@@ -185,10 +193,10 @@ class _TasksScreenState extends State<TasksScreen> {
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            itemCount: _tasks.length,
+            itemCount: visibleTasks.length,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              final item = _tasks[index];
+              final item = visibleTasks[index];
               final id = _taskId(item) ?? 'unknown';
               final status = _taskStatus(item);
               final canCancel = {
@@ -252,6 +260,18 @@ class _TasksScreenState extends State<TasksScreen> {
       appBar: AppBar(
         title: const Text('Tasks'),
         actions: [
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _filter,
+              items: const [
+                DropdownMenuItem(value: 'all', child: Text('ALL')),
+                DropdownMenuItem(value: 'active', child: Text('ACTIVE')),
+                DropdownMenuItem(value: 'completed', child: Text('DONE')),
+                DropdownMenuItem(value: 'failed', child: Text('FAILED')),
+              ],
+              onChanged: (value) => setState(() => _filter = value ?? 'all'),
+            ),
+          ),
           IconButton(
             tooltip: 'Refresh',
             onPressed: () => _loadTasks(),
