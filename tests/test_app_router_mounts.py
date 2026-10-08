@@ -26,6 +26,7 @@ def test_identity_and_world_router_definitions_exist():
     assert "/economy/me" in {route.path for route in economy_router.routes}
     assert "/economy/payment/status" in {route.path for route in economy_router.routes}
     assert "/sales/discover" in {route.path for route in sales_router.routes}
+    assert "/sales/discover/leads" in {route.path for route in sales_router.routes}
     assert "/sales/leads" in {route.path for route in sales_router.routes}
     assert "/world/status" in world_paths
     assert "/world/knowledge" in world_paths
@@ -46,6 +47,7 @@ def test_identity_and_world_routers_are_mounted_on_app():
     assert "/economy/me" in paths
     assert "/economy/payment/status" in paths
     assert "/sales/discover" in paths
+    assert "/sales/discover/leads" in paths
     assert "/sales/leads" in paths
     assert "/world/status" in paths
     assert "/world/knowledge" in paths
