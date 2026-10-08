@@ -111,9 +111,16 @@ def test_completed_task_indexes_project_result_and_learns_with_consent():
             profile_id=profile_id,
             project_id=project_id,
         )
+        task_payload = {
+            "id": task.id,
+            "title": task.title,
+            "session_id": task.session_id,
+            "profile_id": task.profile_id,
+            "project_id": task.project_id,
+        }
 
     worker = SageWorker(worker_id="outcome-test")
-    worker._persist_task_outcome(task.__dict__, {"success": True, "answer": "done"})
+    worker._persist_task_outcome(task_payload, {"success": True, "answer": "done"})
 
     with SessionLocal() as db:
         assets = workflow_repository.list_assets(db, profile_id, project_id)
