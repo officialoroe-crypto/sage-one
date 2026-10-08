@@ -26,7 +26,8 @@ The Sales Engine is exposed under `/sales` and is owner/profile scoped through t
 | POST | `/sales/leads` | Create a durable sales lead. |
 | GET | `/sales/leads` | List the authenticated profile's leads, optionally filtered by status. |
 | GET | `/sales/leads/{lead_id}` | Retrieve one scoped lead. |
-| POST | `/sales/leads/{lead_id}/audit` | Audit online presence, calculate opportunity score, and generate sales intelligence/outreach draft. |
+| POST | `/sales/leads/{lead_id}/audit` | Audit online presence synchronously (use queue for slow work). |
+| POST | `/sales/leads/{lead_id}/audit/queue` | Queue network-heavy audit work for the durable SAGE worker. |
 | PATCH | `/sales/leads/{lead_id}/status` | Move a lead through the sales pipeline. |
 | GET | `/sales/leads/{lead_id}/activities` | Read the lead activity history. |
 | POST | `/sales/leads/{lead_id}/outreach/approve` | Explicitly approve or reject the generated outreach draft; approval does not send a message. |
