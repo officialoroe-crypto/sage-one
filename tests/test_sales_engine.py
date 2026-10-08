@@ -27,3 +27,18 @@ def test_sales_engine_task_payload_round_trip():
     )
     assert result["success"] is True
     assert result["lead"]["business_name"] == payload["business_name"]
+
+
+def test_sales_engine_workflow_contract():
+    result = SalesEngine().audit_business(
+        business_name="Calvert Hardware Suppliers",
+        website=None,
+        instagram="@calverthardware",
+        notes="First customer validation target.",
+    )
+    assert result["workflow"] == [
+        "discovery", "audit", "score", "lead", "intelligence",
+        "outreach_draft", "approval", "history", "customer",
+    ]
+    assert result["outreach"]["sent"] is False
+    assert result["outreach"]["requires_approval"] is True
