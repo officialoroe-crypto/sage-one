@@ -30,9 +30,9 @@ jobs:
       - name: Validate AI coordination claims
         run: python scripts/check_ai_coordination.py
       - name: Compile Python modules
-        run: python -m compileall -q brain database tasks execution app research tools agents missions memory permissions web identity world_intelligence
+        run: python -m compileall -q brain database tasks execution app research tools agents missions memory permissions web identity world_intelligence sales
       - name: Static Python lint
-        run: python -m pip install ruff && ruff check --select F brain database tasks execution app research tools agents missions memory permissions web identity world_intelligence tests
+        run: python -m pip install ruff && ruff check --select F brain database tasks execution app research tools agents missions memory permissions web identity world_intelligence sales tests
       - name: Run tests
         run: python -m pytest -q tests
 
