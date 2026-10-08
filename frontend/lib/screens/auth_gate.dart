@@ -9,7 +9,6 @@ bool shouldRequireOnboarding(
   required bool developerMode,
   required bool ownerMode,
 }) {
-  if (developerMode || ownerMode) return false;
   return profile['onboarding_completed'] != true;
 }
 
@@ -126,6 +125,7 @@ class _AuthGateState extends State<AuthGate> {
         identity: _identity,
         initialProfile: _profile,
         onComplete: _completed,
+        privateOwnerMode: _developerMode || _ownerMode,
       );
     }
 

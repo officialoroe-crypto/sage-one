@@ -25,25 +25,25 @@ void main() {
     );
   });
 
-  test('developer mode bypasses onboarding', () {
+  test('developer mode still requires first-run onboarding', () {
     expect(
       shouldRequireOnboarding(
         const {'onboarding_completed': false},
         developerMode: true,
         ownerMode: false,
       ),
-      isFalse,
+      isTrue,
     );
   });
 
-  test('owner mode bypasses onboarding', () {
+  test('owner mode still requires first-run onboarding', () {
     expect(
       shouldRequireOnboarding(
         const {'onboarding_completed': false},
         developerMode: false,
         ownerMode: true,
       ),
-      isFalse,
+      isTrue,
     );
   });
 }

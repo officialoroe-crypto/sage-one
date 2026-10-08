@@ -7,12 +7,12 @@ Production frontend: Flutter. The owner-supplied interface board is a visual ref
 | Phase | Deliverable | Current main status |
 |---|---|---|
 | 01 | Splash / app entry | Implemented |
-| 02 | Welcome / onboarding introduction | Implemented foundation |
+| 02 | Welcome / onboarding introduction | Implemented + authenticated entry routing |
 | 03 | Language selection | Implemented foundation |
-| 04 | Login / sign-up | Backend identity foundation + UI foundation |
+| 04 | Login / sign-up | Authenticated login gate implemented; Google/provider delivery remains external |
 | 05 | KYC verification | Flow foundation; real provider remains external |
-| 06 | Profile creation | Implemented foundation |
-| 07 | First-run completion | Implemented |
+| 06 | Profile creation | Real onboarding profile flow |
+| 07 | First-run completion | Real onboarding completion + private-owner provider-free path |
 | 08 | Home / Command Center | Functional + cinematic surface |
 | 09 | Voice listening | Implemented device STT |
 | 10 | Voice response | Implemented device TTS |
