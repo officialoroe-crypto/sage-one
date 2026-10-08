@@ -227,3 +227,49 @@ def test_tasks_are_owner_scoped_for_reads_and_cancellation():
     assert tasks.cancel(task_a_id, owner_key="developer:owner-b") is None
     assert tasks.cancel(task_a_id, owner_key="developer:owner-a")["status"] == "cancelled"
     assert tasks.get(task_b_id, owner_key="developer:owner-b") is not None
+
+
+def test_legacy_memory_is_owner_scoped():
+    fresh_db()
+    claims_a = {
+        "auth_provider": "developer",
+        "auth_subject": "memory-owner-a",
+        "owner_mode": True,
+        "developer_mode": True,
+    }
+    claims_b = {
+        "auth_provider": "developer",
+        "auth_subject": "memory-owner-b",
+        "owner_mode": True,
+        "developer_mode": True,
+    }
+
+    from app.main import add_memory, get_memory
+    created = add_memory(
+        __import__("app.main", fromlist=["MemoryRequest"]).MemoryRequest(
+            content="private owner A memory",
+            memory_type="fact",
+            importance=0.8,
+            confidence=1.0,
+            source="test",
+        ),
+        claims_a,
+    )
+    assert created["success"] is True
+
+    visible_a = get_memory(claims_a)
+    visible_b = get_memory(claims_b)
+    assert any(item["content"] == "private owner A memory" for item in visible_a["memories"])
+    assert all(item["content"] != "private owner A memory" for item in visible_b["memories"])
+
+
+def test_memory_migration_contains_owner_context_columns():
+    from database import migrate as migration_module
+    from sqlalchemy import inspect
+
+    fresh_db()
+    migration_module.migrate()
+
+    columns = {item["name"] for item in inspect(engine).get_columns("memories")}
+    assert "owner_key" in columns
+    assert "profile_id" in columns
