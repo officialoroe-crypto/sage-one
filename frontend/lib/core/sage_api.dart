@@ -41,11 +41,33 @@ class SageApi {
     return data;
   }
 
-  Future<Map<String, dynamic>> submitBackground(String prompt) async {
-    final data = await _authorizedPost('/execute/background', {'goal': prompt});
+  Future<Map<String, dynamic>> submitBackground(String prompt, {String? projectId}) async {
+    final data = await _authorizedPost('/execute/background', {
+      'goal': prompt,
+      if (projectId != null) 'project_id': projectId,
+    });
     final task = data['task'];
     if (task is Map) data['task_id'] = task['id'] ?? task['task_id'];
     return data;
+  }
+
+  Future<Map<String, dynamic>> submitCommand(
+    String message, {
+    String? sessionId,
+    String? projectId,
+    int priority = 3,
+  }) async =>
+      _authorizedPost('/command', {
+        'message': message,
+        if (sessionId != null) 'session_id': sessionId,
+        if (projectId != null) 'project_id': projectId,
+        'priority': priority,
+      });
+
+  Future<List<dynamic>> sessionMessages(String sessionId, {int limit = 50}) async {
+    final data = await _authorizedGet('/session/$sessionId/messages?limit=$limit');
+    final items = data['messages'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
   }
 
   Future<Map<String, dynamic>> workerHealth() async => _authorizedGet('/worker/health');
