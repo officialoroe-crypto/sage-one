@@ -142,3 +142,60 @@ def test_task_migration_contains_project_context_columns():
     columns = {item["name"] for item in inspect(engine).get_columns("tasks")}
     assert "profile_id" in columns
     assert "project_id" in columns
+
+
+def test_sessions_are_owner_scoped_and_command_rejects_foreign_session():
+    fresh_db()
+    owner_a = {
+        "auth_provider": "developer",
+        "auth_subject": "owner-a",
+        "owner_mode": True,
+        "developer_mode": True,
+    }
+    owner_b = {
+        "auth_provider": "developer",
+        "auth_subject": "owner-b",
+        "owner_mode": True,
+        "developer_mode": True,
+    }
+
+    from app.main import create_session, get_session, command
+    with SessionLocal() as db:
+        session_id = repository.create_session(
+            db,
+            profile_id="profile-a",
+            owner_key="developer:owner-a",
+        )
+
+    created = get_session(session_id, owner_a)
+    assert created["success"] is True
+    assert created["session"]["owner_key"] == "developer:owner-a"
+
+    try:
+        get_session(session_id, owner_b)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 404
+    else:
+        raise AssertionError("foreign owner unexpectedly accessed a session")
+
+    try:
+        command(
+            CommandRequest(message="should be rejected", session_id=session_id),
+            owner_b,
+        )
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 404
+    else:
+        raise AssertionError("foreign owner unexpectedly queued into another session")
+
+
+def test_session_migration_contains_owner_context_columns():
+    from database import migrate as migration_module
+    from sqlalchemy import inspect
+
+    fresh_db()
+    migration_module.migrate()
+
+    columns = {item["name"] for item in inspect(engine).get_columns("sessions")}
+    assert "profile_id" in columns
+    assert "owner_key" in columns
