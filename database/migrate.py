@@ -42,6 +42,14 @@ def migrate():
                 connection.execute(text("ALTER TABLE memories ADD COLUMN profile_id VARCHAR"))
                 print("ADDED: memories.profile_id")
 
+    for table_name, column_name in [("missions", "owner_key"), ("notifications", "owner_key"), ("action_logs", "owner_key"), ("research_records", "owner_key")]:
+        if table_name in tables:
+            columns = {column["name"] for column in inspector.get_columns(table_name)}
+            if column_name not in columns:
+                with engine.begin() as connection:
+                    connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} VARCHAR"))
+                print(f"ADDED: {table_name}.{column_name}")
+
     if "tasks" not in tables:
         print("TASK TABLE DOES NOT EXIST.")
         return
