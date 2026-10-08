@@ -23,6 +23,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
   String? _error;
   bool _submitting = false;
   bool _loadingHistory = false;
+  String _filter = 'all';
   List<dynamic> _history = <dynamic>[];
 
   @override
@@ -251,6 +252,18 @@ class _ResearchScreenState extends State<ResearchScreen> {
           Row(
             children: [
               const Expanded(child: Text('RESEARCH HISTORY', style: TextStyle(fontSize: 11, letterSpacing: 1.8, fontWeight: FontWeight.w700))),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _filter,
+                  isDense: true,
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('ALL')),
+                    DropdownMenuItem(value: 'completed', child: Text('DONE')),
+                    DropdownMenuItem(value: 'failed', child: Text('FAILED')),
+                  ],
+                  onChanged: (value) => setState(() => _filter = value ?? 'all'),
+                ),
+              ),
               IconButton(onPressed: _loadingHistory ? null : _loadHistory, icon: const Icon(Icons.refresh, size: 19)),
             ],
           ),
@@ -260,7 +273,11 @@ class _ResearchScreenState extends State<ResearchScreen> {
               child: Text('Completed research will appear here.', style: TextStyle(color: Colors.white38)),
             )
           else
-            ..._history.map((item) => _HistoryTile(
+            ..._history.where((item) {
+              if (_filter == 'all') return true;
+              final status = item is Map ? (item['status'] ?? 'completed').toString().toLowerCase() : 'completed';
+              return status == _filter;
+            }).map((item) => _HistoryTile(
                   item: item,
                   onTap: () {
                     final id = item is Map ? item['research_id']?.toString() : null;
