@@ -752,6 +752,7 @@ class SageRepository:
         self,
         db: DBSession,
         notification_id: str,
+        owner_key: str | None = None,
     ) -> Notification | None:
         notification = (
             db.query(Notification)
@@ -769,8 +770,11 @@ class SageRepository:
         self,
         db: DBSession,
         session_id: str | None = None,
+        owner_key: str | None = None,
     ) -> int:
         query = db.query(Notification).filter(Notification.read_at.is_(None))
+        if owner_key is not None:
+            query = query.filter(Notification.owner_key == owner_key)
         if session_id:
             query = query.filter(Notification.session_id == session_id)
         notifications = query.all()
