@@ -22,6 +22,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
   String? _result;
   String? _error;
   bool _submitting = false;
+  bool _cancelling = false;
   bool _loadingHistory = false;
   String _filter = 'all';
   List<dynamic> _history = <dynamic>[];
@@ -37,7 +38,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
     setState(() => _loadingHistory = true);
     try {
       final history = await widget.api.researchHistory(limit: 30);
-      if (mounted) setState(() => _history = history);
+      if (mounted) setState(() => _history = history.whereType<Map>().toList());
     } catch (_) {
       // History is additive; a retrieval failure must not block new research.
     } finally {
@@ -170,12 +171,15 @@ class _ResearchScreenState extends State<ResearchScreen> {
 
   Future<void> _cancel() async {
     final taskId = _taskId;
-    if (taskId == null) return;
+    if (taskId == null || _cancelling) return;
+    setState(() => _cancelling = true);
     try {
       await widget.api.cancelTask(taskId);
       await _refreshTask();
     } catch (_) {
       if (mounted) setState(() => _error = 'Could not cancel the research task.');
+    } finally {
+      if (mounted) setState(() => _cancelling = false);
     }
   }
 
@@ -227,9 +231,9 @@ class _ResearchScreenState extends State<ResearchScreen> {
               Expanded(child: Text(_status, style: const TextStyle(color: Colors.white54, fontSize: 11))),
               if (active)
                 TextButton.icon(
-                  onPressed: _cancel,
+                  onPressed: _cancelling ? null : _cancel,
                   icon: const Icon(Icons.stop_circle_outlined, size: 16),
-                  label: const Text('CANCEL'),
+                  label: Text(_cancelling ? 'CANCELLING…' : 'CANCEL'),
                 ),
             ],
           ),
@@ -267,16 +271,20 @@ class _ResearchScreenState extends State<ResearchScreen> {
               IconButton(onPressed: _loadingHistory ? null : _loadHistory, icon: const Icon(Icons.refresh, size: 19)),
             ],
           ),
-          if (_history.isEmpty && !_loadingHistory)
+          if (_loadingHistory && _history.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_history.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 18),
               child: Text('Completed research will appear here.', style: TextStyle(color: Colors.white38)),
             )
           else
             ..._history.where((item) {
-              if (_filter == 'all') return true;
-              final status = item is Map ? (item['status'] ?? 'completed').toString().toLowerCase() : 'completed';
-              return status == _filter;
+              final status = (item['status'] ?? 'completed').toString().toLowerCase();
+              return _filter == 'all' || status == _filter;
             }).map((item) => _HistoryTile(
                   item: item,
                   onTap: () {
