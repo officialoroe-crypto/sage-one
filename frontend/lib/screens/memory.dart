@@ -32,8 +32,13 @@ class _MemoryScreenState extends State<MemoryScreen> {
     try {
       final items = await widget.api.profileMemories();
       if (!mounted) return;
+      final validMemories = items
+          .whereType<Map>()
+          .where((item) => item['id'] != null && item['content'] != null)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false);
       setState(() {
-        _memories = items;
+        _memories = validMemories;
         _loading = false;
         _error = null;
       });
@@ -199,7 +204,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
               ))
             else
               for (final raw in _memories)
-                if (raw is Map)
+                if (raw is Map<String, dynamic>)
                   Card(
                     margin: const EdgeInsets.only(bottom: 10),
                     child: Padding(

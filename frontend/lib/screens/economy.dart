@@ -36,7 +36,10 @@ class _EconomyScreenState extends State<EconomyScreen> {
       if (!mounted) return;
       setState(() {
         _data = Map<String, dynamic>.from(results[0] as Map);
-        _costs = List<dynamic>.from(results[1] as Iterable);
+        _costs = (results[1] is Iterable ? results[1] as Iterable : const <dynamic>[])
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(growable: false);
         _loading = false;
       });
     } catch (error) {
@@ -60,9 +63,14 @@ class _EconomyScreenState extends State<EconomyScreen> {
       );
     }
 
-    final spark = Map<String, dynamic>.from(_data?['spark'] ?? {});
-    final evolution = Map<String, dynamic>.from(_data?['evolution'] ?? {});
-    final ledger = (_data?['ledger'] as List?) ?? const [];
+    final sparkValue = _data?['spark'];
+    final evolutionValue = _data?['evolution'];
+    final ledgerValue = _data?['ledger'];
+    final spark = sparkValue is Map ? Map<String, dynamic>.from(sparkValue) : <String, dynamic>{};
+    final evolution = evolutionValue is Map ? Map<String, dynamic>.from(evolutionValue) : <String, dynamic>{};
+    final ledger = ledgerValue is List
+        ? ledgerValue.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList(growable: false)
+        : const <Map<String, dynamic>>[];
 
     return Scaffold(
       appBar: AppBar(
@@ -149,7 +157,8 @@ class _EvolutionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = Map<String, dynamic>.from(evolution['progress'] ?? {});
-    final ratio = ((progress['ratio'] as num?)?.toDouble() ?? 0).clamp(0.0, 1.0);
+    final ratioValue = progress['ratio'];
+    final ratio = ratioValue is num ? ratioValue.toDouble().clamp(0.0, 1.0) : 0.0;
     final current = evolution['tier'] ?? 'Bronze';
     final next = progress['next_tier'] ?? 'MAX';
 

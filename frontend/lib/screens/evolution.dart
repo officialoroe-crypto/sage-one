@@ -56,8 +56,10 @@ class _EvolutionScreenState extends State<EvolutionScreen> {
           );
         }
         _snapshot = nextSnapshot;
-        _tiers = (results[1] as List)
-            .map((item) => Map<String, dynamic>.from(item as Map))
+        _tiers = (results[1] is Iterable ? results[1] as Iterable : const <dynamic>[])
+            .whereType<Map>()
+            .where((item) => item['tier'] != null && item['threshold'] is num)
+            .map((item) => Map<String, dynamic>.from(item))
             .toList(growable: false);
         _loading = false;
       });

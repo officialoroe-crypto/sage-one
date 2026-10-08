@@ -36,9 +36,14 @@ class _CreateScreenState extends State<CreateScreen> {
     try {
       final workspaces = await widget.api.workflowWorkspaces();
       if (!mounted) return;
+      final validWorkspaces = workspaces
+          .whereType<Map>()
+          .where((item) => item['id'] != null)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false);
       setState(() {
-        _workspaces = workspaces;
-        _workspaceId = workspaces.isNotEmpty ? _id(workspaces.first) : null;
+        _workspaces = validWorkspaces;
+        _workspaceId = validWorkspaces.isNotEmpty ? _id(validWorkspaces.first) : null;
         _loading = false;
       });
     } catch (error) {
@@ -80,7 +85,12 @@ class _CreateScreenState extends State<CreateScreen> {
   Future<void> _createProject() async {
     final name = _projectName.text.trim();
     final workspaceId = _workspaceId;
-    if (name.isEmpty || workspaceId == null || _creating) return;
+    if (name.isEmpty || name.length > 120 || workspaceId == null || _creating) {
+      if (mounted && name.length > 120) {
+        _error(const FormatException('Project name must be 120 characters or fewer.'));
+      }
+      return;
+    }
 
     setState(() => _creating = true);
     try {
