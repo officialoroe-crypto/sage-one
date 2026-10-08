@@ -293,16 +293,18 @@ class SageApi {
     String? helpIntent,
     List<String>? capabilities,
     bool? memoryConsent,
-  }) async => _authorizedPatch('/identity/me', {
-    if (name != null) 'name': name,
-    if (phone != null) 'phone': phone,
-    if (address != null) 'address': address,
-    if (age != null) 'age': age,
-    if (basicInfo != null) 'basic_info': basicInfo,
-    if (helpIntent != null) 'help_intent': helpIntent,
-    if (capabilities != null) 'capabilities': capabilities,
-    if (memoryConsent != null) 'memory_consent': memoryConsent,
-  });
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (phone != null) body['phone'] = phone;
+    if (address != null) body['address'] = address;
+    if (age != null) body['age'] = age;
+    if (basicInfo != null) body['basic_info'] = basicInfo;
+    if (helpIntent != null) body['help_intent'] = helpIntent;
+    if (capabilities != null) body['capabilities'] = capabilities;
+    if (memoryConsent != null) body['memory_consent'] = memoryConsent;
+    return _authorizedPatch('/identity/me', body);
+  }
 
   Future<Map<String, dynamic>> paymentStatus() async => _authorizedGet('/economy/payment/status');
 
