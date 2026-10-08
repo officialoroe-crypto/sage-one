@@ -827,9 +827,11 @@ def disable_automation(
 @app.get("/memory")
 def get_memory(_claims: dict[str, Any] = Depends(_require_owner)):
     db = SessionLocal()
+    owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
+    profile = get_or_create_authenticated_profile(_claims)
 
     try:
-        memories = repository.get_memories(db)
+        memories = repository.get_memories(db, owner_key=owner_key, profile_id=profile["id"])
 
         return {
             "success": True,
@@ -846,6 +848,8 @@ def add_memory(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
     db = SessionLocal()
+    owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
+    profile = get_or_create_authenticated_profile(_claims)
 
     try:
         memory = repository.add_memory(
@@ -855,6 +859,8 @@ def add_memory(
             importance=request.importance,
             confidence=request.confidence,
             source=request.source,
+            owner_key=owner_key,
+            profile_id=profile["id"],
         )
 
         return {
