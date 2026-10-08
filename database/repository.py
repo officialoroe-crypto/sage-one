@@ -242,12 +242,12 @@ class SageRepository:
         self,
         db: DBSession,
         task_id: str,
+        owner_key: str | None = None,
     ) -> Task | None:
-        return (
-            db.query(Task)
-            .filter(Task.id == task_id)
-            .first()
-        )
+        query = db.query(Task).filter(Task.id == task_id)
+        if owner_key is not None:
+            query = query.filter(Task.owner_key == owner_key)
+        return query.first()
 
     def get_tasks(
         self,
