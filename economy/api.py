@@ -96,6 +96,25 @@ def economy_me(claims: dict = Depends(authenticate_request)):
         return {"success": True, **snapshot(db, _owner(claims))}
 
 
+@router.get("/payment/status")
+def payment_status(claims: dict = Depends(authenticate_request)):
+    """Expose provider readiness without pretending a payment provider is configured."""
+    _owner(claims)
+    configured = bool(settings.PAYMENT_PROVIDER and settings.PAYMENT_SECRET_KEY)
+    return {
+        "success": True,
+        "configured": configured,
+        "provider": settings.PAYMENT_PROVIDER or None,
+        "mode": "live" if configured else "not_configured",
+        "can_create_payment": False,
+        "message": (
+            "Payment provider credentials are configured."
+            if configured
+            else "Payment provider is not configured; no payment action is available."
+        ),
+    }
+
+
 @router.get("/costs")
 def economy_costs(claims: dict = Depends(authenticate_request)):
     _owner(claims)
