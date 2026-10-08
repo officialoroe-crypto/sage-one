@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class _Page extends StatelessWidget {
   const _Page({required this.title, required this.body});
@@ -21,7 +22,7 @@ class _SparkWalletState extends State<SparkWalletScreen>{
   Future<void> load()async{try{final v=await widget.api.economyMe();if(mounted)setState(()=>data=v);}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Spark Wallet',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    if(error!=null)Text('Wallet error: '+error.toString(),style:const TextStyle(color:SageTheme.danger)),
+    if(error!=null)Text('Wallet error: '+error.toString(),style:const TextStyle(color:SageTheme.failure)),
     if(data!=null)...[
       _row('Balance',data!['spark']?['balance']),
       _row('Lifetime earned',data!['spark']?['lifetime_earned']),
@@ -61,7 +62,7 @@ class _EvolutionFinalState extends State<EvolutionFinalScreen>{
   Future<void> load()async{try{final d=await widget.api.economyMe();final t=await widget.api.evolutionTiers();if(mounted)setState((){data=d;tiers=t;});}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Evolution',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    if(error!=null)Text('Evolution error: '+error.toString(),style:const TextStyle(color:SageTheme.danger)),
+    if(error!=null)Text('Evolution error: '+error.toString(),style:const TextStyle(color:SageTheme.failure)),
     if(data!=null)...[
       Text('Tier: '+(data!['evolution']?['tier']?.toString()??'Bronze'),style:const TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
       Text('Stage: '+(data!['evolution']?['stage']?.toString()??'LOW')),
@@ -152,7 +153,24 @@ class _FileManagerFinalState extends State<FileManagerFinalScreen>{
   @override Widget build(BuildContext c)=>_Page(title:'File Manager',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
     const Text('Task artifacts',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),
     if(error!=null)Text('File manager error: '+error.toString()),
-    ...items.map((t){final a=t is Map&&t['artifact'] is Map?t['artifact']:null;return a==null?const SizedBox.shrink():Card(child:ListTile(title:Text(a['name']?.toString()??'Artifact'),subtitle:Text(a['mime_type']?.toString()??''),onTap:(){final u=a['url']??a['uri'];if(u!=null)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(u.toString())));},));}),
+    ...items.map((t){final a=t is Map&&t['artifact'] is Map?t['artifact']:null;return a==null?const SizedBox.shrink():Card(child:ListTile(title:Text(a['name']?.toString()??'Artifact'),subtitle:Text(a['mime_type']?.toString()??''),onTap:() async {
+  final raw = a['url'] ?? a['uri'];
+  final uri = raw == null ? null : Uri.tryParse(raw.toString());
+  if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This artifact does not have an openable URL.')),
+      );
+    }
+    return;
+  }
+  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!opened && mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('SAGE could not open this artifact.')),
+    );
+  }
+},));}),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('No task artifacts found yet.')),
   ])));
 }
