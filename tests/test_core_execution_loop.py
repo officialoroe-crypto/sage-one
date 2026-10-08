@@ -84,10 +84,11 @@ def test_completed_task_indexes_project_result_and_learns_with_consent():
         )
         db.add(profile)
         db.commit()
+        profile_id = profile.id
 
         workspace = workflow_repository.create_workspace(
             db,
-            profile.id,
+            profile_id,
             "SAGE ONE",
             "sage-one-memory",
             "personal",
