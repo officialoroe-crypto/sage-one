@@ -10,6 +10,7 @@ from sales.discovery import discovery_service
 from sales.repository import add_activity, create_lead, find_duplicate, get_lead, list_activities, list_leads, serialize, update_lead
 from sales.scoring import score_opportunity
 from sales.service import build_outreach, build_sales_intelligence
+from tasks.engine import tasks
 
 router = APIRouter(prefix="/sales", tags=["sales"])
 
@@ -83,6 +84,25 @@ def audit_lead(lead_id: str, claims: dict[str, Any] = Depends(authenticate_reque
         lead = update_lead(db, lead, audit=result, score=score["score"], sales_intelligence=intelligence, outreach=outreach, status="qualified", last_audited_at=datetime.now(timezone.utc))
         add_activity(db, lead.id, "audit_completed", {"score": score})
         return {"success": True, "lead": serialize(lead)}
+
+@router.post("/leads/{lead_id}/audit/queue")
+def queue_audit(lead_id: str, claims: dict[str, Any] = Depends(authenticate_request)):
+    """Queue a network-heavy audit for the durable SAGE worker."""
+    profile_id = _profile_id(claims)
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        lead = get_lead(db, profile_id, lead_id)
+        if not lead:
+            raise HTTPException(status_code=404, detail="Lead not found")
+        task = tasks.create(
+            title=f"Audit {lead.business_name}",
+            description=f"{profile_id}|{lead.id}",
+            priority=3,
+            agent="sales",
+            owner_key=owner_key,
+        )
+        add_activity(db, lead.id, "audit_queued", {"task_id": task["id"]})
+        return {"success": True, "status": "queued", "task": task}
 
 @router.get("/leads")
 def list_leads_endpoint(status: str | None = None, limit: int = 50, claims: dict[str, Any] = Depends(authenticate_request)):
