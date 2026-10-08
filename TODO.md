@@ -18,9 +18,9 @@
 - [x] Authenticated profile persistence.
 - [x] Google token validation foundation.
 - [x] Phone OTP state machine and provider abstraction.
-- [x] First-run onboarding foundation.
+- [x] Authenticated onboarding entry and first-run completion flow.
 - [x] User-visible memory read/add/delete UI.
-- [x] Private-first owner entry path.
+- [x] Private-first owner entry path + provider-free owner onboarding.
 - [x] World Intelligence backend and Flutter status/knowledge/refresh UI.
 - [x] Spark reservation/settlement/refund primitives and premium execution lifecycle.
 - [x] Evolution achievement settlement and canonical tier API.
