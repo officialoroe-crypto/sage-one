@@ -63,12 +63,14 @@ class _EconomyScreenState extends State<EconomyScreen> {
       );
     }
 
-    final spark = Map<String, dynamic>.from(_data?['spark'] ?? {});
-    final evolution = Map<String, dynamic>.from(_data?['evolution'] ?? {});
-    final ledger = (_data?['ledger'] is List ? _data?['ledger'] as List : const <dynamic>[])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList(growable: false);
+    final sparkValue = _data?['spark'];
+    final evolutionValue = _data?['evolution'];
+    final ledgerValue = _data?['ledger'];
+    final spark = sparkValue is Map ? Map<String, dynamic>.from(sparkValue) : <String, dynamic>{};
+    final evolution = evolutionValue is Map ? Map<String, dynamic>.from(evolutionValue) : <String, dynamic>{};
+    final ledger = ledgerValue is List
+        ? ledgerValue.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList(growable: false)
+        : const <Map<String, dynamic>>[];
 
     return Scaffold(
       appBar: AppBar(
