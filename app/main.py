@@ -825,7 +825,7 @@ def disable_automation(
 # ============================================================
 
 @app.get("/memory")
-def get_memory():
+def get_memory(_claims: dict[str, Any] = Depends(_require_owner)):
     db = SessionLocal()
 
     try:
@@ -841,7 +841,10 @@ def get_memory():
 
 
 @app.post("/memory")
-def add_memory(request: MemoryRequest):
+def add_memory(
+    request: MemoryRequest,
+    _claims: dict[str, Any] = Depends(_require_owner),
+):
     db = SessionLocal()
 
     try:
@@ -1016,7 +1019,12 @@ def audit_legacy(_claims: dict[str, Any] = Depends(_require_owner)):
 # ============================================================
 
 @app.post("/tasks")
-def create_background_task(request: TaskCreateRequest):
+def create_background_task(
+    request: TaskCreateRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    profile = get_or_create_authenticated_profile(claims)
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     task = tasks.create(
         title=request.title,
         description=request.description,
@@ -1059,7 +1067,10 @@ def create_premium_background_task(
 
 
 @app.get("/tasks")
-def get_tasks(status: Optional[str] = None):
+def get_tasks(
+    status: Optional[str] = None,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
     if status is not None and status not in tasks.VALID_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid task status")
 
@@ -1081,8 +1092,12 @@ def get_task(task_id: str):
 
 
 @app.post("/tasks/{task_id}/cancel")
-def cancel_task(task_id: str):
-    task = tasks.cancel(task_id)
+def cancel_task(
+    task_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.cancel(task_id, owner_key=owner_key)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return {
