@@ -62,7 +62,7 @@ def test_command_creates_owned_durable_task_with_project_context():
 
     assert response["success"] is True
     task = response["task"]
-    assert task["project_id"] == project.id
+    assert task["project_id"] == project_id
     assert task["status"] == "pending"
 
     with SessionLocal() as db:
