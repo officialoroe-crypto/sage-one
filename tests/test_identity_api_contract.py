@@ -58,3 +58,11 @@ def test_capability_validation_uses_stable_ids():
         assert "Unknown onboarding capabilities" in str(exc)
     else:
         raise AssertionError("Human-facing capability labels must not be accepted as stored IDs")
+
+
+def test_private_owner_onboarding_allows_missing_phone():
+    request = api.OnboardingRequest(
+        name="Owner", address="Private workspace", age=25,
+        help_intent="Build SAGE ONE", capabilities=[], memory_consent=False,
+    )
+    assert request.phone is None
