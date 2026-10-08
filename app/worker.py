@@ -2,6 +2,7 @@ import socket
 import threading
 import time
 import uuid
+from datetime import datetime, timezone
 
 from app.orchestrator import orchestrator
 from execution.parallel import parallel_mission_executor
@@ -174,7 +175,7 @@ class SageWorker:
                 updated = sales_update_lead(
                     db, lead, audit=audit, score=score['score'],
                     sales_intelligence=intelligence, outreach=outreach,
-                    status='qualified', last_audited_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc),
+                    status='qualified', last_audited_at=datetime.now(timezone.utc),
                 )
                 sales_add_activity(db, updated.id, 'audit_completed', {'score': score, 'background': True})
                 return {'success': True, 'lead_id': updated.id, 'score': score, 'status': updated.status}
