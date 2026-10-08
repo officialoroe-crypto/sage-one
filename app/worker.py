@@ -7,6 +7,7 @@ from app.orchestrator import orchestrator
 from execution.parallel import parallel_mission_executor
 from missions.planner import planner
 from research.persistence import research_persistence
+from sales.service import sales_engine
 from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
 from world_intelligence.engine import world_intelligence
@@ -218,6 +219,17 @@ class SageWorker:
             requested = description.removeprefix(prefix).strip()
             topics = [item.strip() for item in requested.split('|') if item.strip()]
             return world_intelligence.refresh(topics or None)
+
+        # Sales audits are durable, structured business workflows. They run under the same
+        # task lease and return an approval-gated outreach draft; they never send messages.
+        if agent == 'sales':
+            return sales_engine.run_from_task(
+                description=description,
+                task_id=task['id'],
+                owner_key=task.get('owner_key'),
+                project_id=task.get('project_id'),
+                profile_id=task.get('profile_id'),
+            )
 
         # Research remains a first-class durable workload because its
         # specialized pipeline persists a citation/evidence graph separately

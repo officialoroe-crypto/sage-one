@@ -60,6 +60,13 @@ class AgentManager:
                 ]
             ),
 
+            "sales": AgentDefinition(
+                name="sales",
+                description="Audits businesses, scores leads, prepares approval-gated outreach.",
+                capabilities=["business_discovery","website_audit","social_audit","content_audit","lead_scoring","outreach"],
+                preferred_tools=["web_read"],
+            ),
+
             "business": AgentDefinition(
                 name="business",
                 description=(
@@ -151,6 +158,18 @@ class AgentManager:
         ):
 
             return "research"
+
+        if any(
+            word in text
+            for word in [
+                "sales audit",
+                "lead audit",
+                "prospect audit",
+                "outreach draft",
+                "qualify this business",
+            ]
+        ):
+            return "sales"
 
         if any(
             word in text

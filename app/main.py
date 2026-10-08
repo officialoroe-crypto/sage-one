@@ -229,6 +229,15 @@ class DeveloperApplyRequest(BaseModel):
     approved: bool = False
 
 
+class SalesRunRequest(BaseModel):
+    business_name: str = Field(min_length=1, max_length=200)
+    website: Optional[str] = None
+    instagram: Optional[str] = None
+    notes: Optional[str] = None
+    project_id: Optional[str] = None
+    session_id: Optional[str] = None
+
+
 class PremiumTaskCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1, max_length=20000)
@@ -290,6 +299,42 @@ def _context_to_string(context: Optional[dict[str, Any]]) -> str:
         return json.dumps(context, ensure_ascii=False)
     except Exception:
         return str(context)
+
+
+# ============================================================
+# SALES ENGINE
+# ============================================================
+
+@app.post("/sales/run")
+def run_sales_audit(
+    request: SalesRunRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    profile = get_or_create_authenticated_profile(claims)
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+
+    if request.project_id:
+        with SessionLocal() as db:
+            if workflow_repository.get_project(db, profile["id"], request.project_id) is None:
+                raise HTTPException(status_code=404, detail="Project not found.")
+
+    payload = {
+        "business_name": request.business_name.strip(),
+        "website": request.website.strip() if request.website else None,
+        "instagram": request.instagram.strip() if request.instagram else None,
+        "notes": request.notes.strip() if request.notes else None,
+    }
+    task = tasks.create(
+        title=f"Sales audit: {request.business_name.strip()[:100]}",
+        description=json.dumps(payload, ensure_ascii=False),
+        priority=3,
+        agent="sales",
+        session_id=request.session_id,
+        owner_key=owner_key,
+        profile_id=profile["id"],
+        project_id=request.project_id,
+    )
+    return {"success": True, "status": "queued", "task": _serialize(task), "workflow": "discover_audit_score_lead_intelligence_outreach"}
 
 
 # ============================================================
