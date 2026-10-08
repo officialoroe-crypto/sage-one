@@ -38,7 +38,7 @@ class SageOneApp extends StatelessWidget {
         child: _api != null
             ? SageOneShell(api: _api)
             : AuthGate(
-                childBuilder: (identity) => SageOneShell(),
+                childBuilder: (identity) => const SageOneShell(),
               ),
       ),
     );
