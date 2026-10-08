@@ -18,6 +18,7 @@ from agentic.models import ActionRequest
 from brain.router import router
 from database.connection import SessionLocal, Base, engine
 from database import repository
+from database.models import DeveloperProposal
 
 from missions.engine import mission_engine
 from missions.planner import planner
@@ -629,9 +630,6 @@ def command(
 # OWNER DEVELOPER MODE
 # ============================================================
 
-_DEVELOPER_PROPOSALS: dict[str, dict[str, Any]] = {}
-
-
 def _developer_workspace(requested: Optional[str]) -> Path:
     configured = requested or os.getenv("SAGE_WORKSPACE")
     workspace = Path(configured).expanduser().resolve() if configured else Path(__file__).resolve().parent.parent
@@ -640,24 +638,32 @@ def _developer_workspace(requested: Optional[str]) -> Path:
     return workspace
 
 
+def _developer_owner_key(claims: dict[str, Any]) -> str:
+    return f"{claims['auth_provider']}:{claims['auth_subject']}"
+
+
 @app.post("/developer/preview")
 def developer_preview(
     request: DeveloperPreviewRequest,
     claims: dict[str, Any] = Depends(_require_owner),
 ):
-    """Inspect and plan a code change without writing files."""
+    """Inspect and plan a code change without writing files, durably."""
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
     workspace = _developer_workspace(request.workspace)
     result = DevelopmentAgent(str(workspace), apply_changes=False).plan(request.task)
     proposal_id = str(uuid.uuid4())
-    _DEVELOPER_PROPOSALS[proposal_id] = {
-        "id": proposal_id,
-        "task": request.task,
-        "workspace": str(workspace),
-        "preview": result,
-        "approved": False,
-    }
+    with SessionLocal() as db:
+        proposal = DeveloperProposal(
+            id=proposal_id,
+            owner_key=_developer_owner_key(claims),
+            task=request.task,
+            workspace=str(workspace),
+            preview_json=json.dumps(result, default=str),
+            status="preview",
+        )
+        db.add(proposal)
+        db.commit()
     return {
         "success": True,
         "proposal_id": proposal_id,
@@ -667,29 +673,71 @@ def developer_preview(
     }
 
 
+@app.get("/developer/proposals/{proposal_id}")
+def developer_proposal(
+    proposal_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """Read one owner-scoped Developer Mode proposal across restarts."""
+    with SessionLocal() as db:
+        proposal = db.query(DeveloperProposal).filter(
+            DeveloperProposal.id == proposal_id,
+            DeveloperProposal.owner_key == _developer_owner_key(claims),
+        ).first()
+        if proposal is None:
+            raise HTTPException(status_code=404, detail="Developer proposal not found.")
+        return {
+            "success": True,
+            "proposal_id": proposal.id,
+            "status": proposal.status,
+            "requires_approval": proposal.status == "preview",
+            "proposal": json.loads(proposal.preview_json),
+            "result": json.loads(proposal.result_json) if proposal.result_json else None,
+        }
+
+
 @app.post("/developer/apply")
 def developer_apply(
     request: DeveloperApplyRequest,
     claims: dict[str, Any] = Depends(_require_owner),
 ):
-    """Apply exactly one previously previewed proposal after explicit approval."""
+    """Apply exactly one owner-scoped preview after explicit approval."""
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
     if not request.approved:
         raise HTTPException(status_code=400, detail="Explicit approval is required.")
-    proposal = _DEVELOPER_PROPOSALS.get(request.proposal_id)
-    if proposal is None:
-        raise HTTPException(status_code=404, detail="Developer proposal not found.")
-    if proposal.get("applied"):
-        raise HTTPException(status_code=409, detail="Developer proposal was already applied.")
 
-    result = DevelopmentAgent(proposal["workspace"], apply_changes=True).apply(proposal["task"])
-    proposal["approved"] = True
-    proposal["applied"] = True
-    proposal["result"] = result
+    owner_key = _developer_owner_key(claims)
+    with SessionLocal() as db:
+        proposal = db.query(DeveloperProposal).filter(
+            DeveloperProposal.id == request.proposal_id,
+            DeveloperProposal.owner_key == owner_key,
+        ).first()
+        if proposal is None:
+            raise HTTPException(status_code=404, detail="Developer proposal not found.")
+        if proposal.status != "preview":
+            raise HTTPException(status_code=409, detail="Developer proposal is no longer applicable.")
+        workspace = proposal.workspace
+        task = proposal.task
+
+    result = DevelopmentAgent(workspace, apply_changes=True).apply(task)
+    now = datetime.utcnow()
+    with SessionLocal() as db:
+        proposal = db.query(DeveloperProposal).filter(
+            DeveloperProposal.id == request.proposal_id,
+            DeveloperProposal.owner_key == owner_key,
+        ).first()
+        if proposal is None:
+            raise HTTPException(status_code=404, detail="Developer proposal disappeared.")
+        proposal.approved_at = now
+        proposal.applied_at = now
+        proposal.result_json = json.dumps(result, default=str)
+        proposal.status = "applied" if result.get("success") else "failed"
+        db.commit()
+
     return {
         "success": bool(result.get("success")),
-        "proposal_id": proposal["id"],
+        "proposal_id": request.proposal_id,
         "status": "applied" if result.get("success") else "failed",
         "result": result,
     }
