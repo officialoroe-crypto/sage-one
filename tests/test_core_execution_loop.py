@@ -128,7 +128,7 @@ def test_completed_task_indexes_project_result_and_learns_with_consent():
         assert assets[0].asset_type == "text"
         assert assets[0].status == "completed"
 
-    memories = __import__("identity.memory", fromlist=["list_memory"]).list_memory(profile.id)
+    memories = __import__("identity.memory", fromlist=["list_memory"]).list_memory(profile_id)
     assert any("Persistent result" in item["content"] for item in memories)
 
 
