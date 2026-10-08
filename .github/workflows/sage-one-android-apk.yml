@@ -1,4 +1,4 @@
-name: SAGE ONE Android APK
+name: SAGE ONE Android Release
 
 on:
   workflow_dispatch:
@@ -11,31 +11,70 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: sage-one-android-release
+  cancel-in-progress: true
+
 jobs:
-  build-apk:
+  release-validation:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
     env:
       SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://10.0.2.2:8010' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.3'
           channel: stable
+          cache: true
+
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.sageone --project-name sage_one --no-pub .
+
       - name: Remove generated Flutter sample test
         run: rm -f test/widget_test.dart
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
-      - name: Build Android APK
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Analyze Flutter app
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Validate release backend URL
+        run: |
+          python - <<'PY'
+          import os
+          from urllib.parse import urlparse
+
+          value = os.environ["SAGE_ANDROID_API_URL"].strip()
+          parsed = urlparse(value)
+          if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+              raise SystemExit(f"Invalid SAGE_ANDROID_API_URL: {value!r}")
+          print(f"Validated Android API endpoint: {parsed.scheme}://{parsed.netloc}")
+          PY
+
+      - name: Build release APK
         run: flutter build apk --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
-      - uses: actions/upload-artifact@v4
+
+      - name: Build release App Bundle
+        run: flutter build appbundle --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: sage-one-android-apk
-          path: frontend/build/app/outputs/flutter-apk/app-release.apk
+          name: sage-one-android-release
+          retention-days: 14
           if-no-files-found: error
+          path: |
+            frontend/build/app/outputs/flutter-apk/app-release.apk
+            frontend/build/app/outputs/bundle/release/app-release.aab
