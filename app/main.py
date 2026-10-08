@@ -450,15 +450,21 @@ def chat(
 
         context = "\n".join(context_parts)
 
+        owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+        profile = get_or_create_authenticated_profile(claims)
         session_id = request.session_id
 
         if not session_id:
-            db = SessionLocal()
-
-            try:
-                session_id = repository.create_session(db)
-            finally:
-                db.close()
+            with SessionLocal() as db:
+                session_id = repository.create_session(
+                    db,
+                    profile_id=profile["id"],
+                    owner_key=owner_key,
+                )
+        else:
+            with SessionLocal() as db:
+                if repository.get_session(db, session_id, owner_key=owner_key) is None:
+                    raise HTTPException(status_code=404, detail="Session not found.")
 
         result = sage.handle(
             user_message=request.message,
@@ -595,6 +601,7 @@ def command(
 ):
     """Queue a user command into the same durable execution path used by SAGE."""
     profile = get_or_create_authenticated_profile(claims)
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     project_id = request.project_id
     if project_id:
         with SessionLocal() as db:
@@ -604,7 +611,15 @@ def command(
     session_id = request.session_id
     if not session_id:
         with SessionLocal() as db:
-            session_id = repository.create_session(db)
+            session_id = repository.create_session(
+                db,
+                profile_id=profile["id"],
+                owner_key=owner_key,
+            )
+    else:
+        with SessionLocal() as db:
+            if repository.get_session(db, session_id, owner_key=owner_key) is None:
+                raise HTTPException(status_code=404, detail="Session not found.")
 
     with SessionLocal() as db:
         repository.add_message(db, session_id, "user", request.message)
