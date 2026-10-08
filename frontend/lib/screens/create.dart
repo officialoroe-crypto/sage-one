@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
@@ -156,13 +157,19 @@ class _CreateScreenState extends State<CreateScreen> {
       );
       final asset = result['asset'];
       if (!mounted) return;
+      final uri = asset is Map ? asset['uri']?.toString() : null;
+      final downloadUri = uri == null ? null : Uri.parse('\${widget.api.baseUrl}\$uri');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            asset is Map
-                ? 'Video created. Open its asset link from the project.'
-                : 'Video created.',
+            downloadUri == null ? 'Video created.' : 'Video created in SAGE.',
           ),
+          action: downloadUri == null
+              ? null
+              : SnackBarAction(
+                  label: 'OPEN',
+                  onPressed: () => launchUrl(downloadUri),
+                ),
         ),
       );
     } catch (error) {
