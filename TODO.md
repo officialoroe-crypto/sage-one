@@ -36,7 +36,8 @@
 - [ ] Broader third-party integrations and permissioned publishing adapters.
 - [ ] Analytics → improve feedback loop.
 - [ ] Automated Evolution visual regression.
-- [ ] Full production release hardening and manual Android/device QA.
+- [x] CI release hardening: Android build uses an emulator-reachable host API default and supports explicit device API override.
+- [ ] Manual Android/device QA (requires physical device/backend access).
 
 ## DEVELOPMENT CONTROL PLANE
 - [x] Machine-readable AI work claims.
