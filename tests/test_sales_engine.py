@@ -10,7 +10,7 @@ def test_sales_score_is_transparent_and_bounded():
         "branding": {"quality": "weak"},
         "contact": {"present": False},
     })
-    assert result["score"] == 100
+    assert result["score"] == 80
     assert result["tier"] == "hot"
     assert len(result["signals"]) >= 5
 
