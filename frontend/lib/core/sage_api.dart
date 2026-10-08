@@ -346,7 +346,7 @@ class SageApi {
 
 
   Future<List<dynamic>> salesLeads({String? status}) async {
-    final path = status == null || status.isEmpty ? '/sales/leads' : '/sales/leads?status=' + Uri.encodeQueryComponent(status);
+    final path = status == null || status.isEmpty ? '/sales/leads' : '/sales/leads?status=${Uri.encodeQueryComponent(status)}';
     final data = await _authorizedGet(path);
     final items = data['leads'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
@@ -355,7 +355,7 @@ class SageApi {
   Future<Map<String, dynamic>> salesLead(String leadId) async => _authorizedGet('/sales/leads/' + leadId);
 
   Future<List<dynamic>> salesLeadHistory(String leadId) async {
-    final data = await _authorizedGet('/sales/leads/' + leadId + '/history');
+    final data = await _authorizedGet('/sales/leads/$leadId/history');
     final items = data['history'] ?? data['activities'] ?? data['items'] ?? data;
     return items is List ? items : <dynamic>[];
   }
