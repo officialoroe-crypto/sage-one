@@ -92,6 +92,6 @@ def mark_read(notification_id: str, owner_key: str | None = None):
 def mark_all_read(session_id: str | None = None, owner_key: str | None = None):
     db = SessionLocal()
     try:
-        return repository.mark_all_notifications_read(db, session_id=session_id, owner_key=owner_key)
+        return repository.mark_all_notifications_read(db, session_id=session_id, **({"owner_key": owner_key} if owner_key is not None else {}))
     finally:
         db.close()
