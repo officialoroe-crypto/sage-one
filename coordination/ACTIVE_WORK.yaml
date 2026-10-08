@@ -1,3 +1,19 @@
 version: 1
-updated_at: 2026-10-08T04:03:00Z
-claims: []
+updated_at: 2026-10-08T14:20:00Z
+claims:
+  - id: frontend-voice-mode-v1
+    agent: chatgpt
+    branch: feature/flutter-voice-mode-v1
+    base_sha: 1f80f824591510d1ce874061328f05801d7c089d
+    scope:
+      - frontend/lib/screens/voice_mode.dart
+      - frontend/lib/main.dart
+      - frontend/pubspec.yaml
+      - .github/workflows/sage-one-android-apk.yml
+      - coordination/ACTIVE_WORK.yaml
+    objective: "Implement the pending SAGE Voice frontend path with native speech capture, Nepali-first locale selection, durable task execution, spoken completion, and Android microphone permission."
+    status: in_progress
+    started_at: 2026-10-08T14:00:00Z
+    updated_at: 2026-10-08T14:20:00Z
+    pr: 152
+    validation: "SAGE CI run 37789962939 in progress; Python job has the same pre-existing developer-mode test failure seen on PR #151."
