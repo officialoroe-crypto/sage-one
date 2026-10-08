@@ -239,6 +239,11 @@ class SalesRunRequest(BaseModel):
     session_id: Optional[str] = None
 
 
+class SalesFollowUpRequest(BaseModel):
+    note: str = Field(min_length=1, max_length=5000)
+    status: str = Field(default="planned", min_length=1, max_length=50)
+
+
 class PremiumTaskCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1, max_length=20000)
