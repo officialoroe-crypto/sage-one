@@ -142,6 +142,90 @@ class _CreateScreenState extends State<CreateScreen> {
     }
   }
 
+  Future<void> _generateBusinessDemo() async {
+    final projectId = _lastProjectId;
+    if (projectId == null || _creating) return;
+    final business = TextEditingController();
+    final location = TextEditingController();
+    final phone = TextEditingController();
+    final offer = TextEditingController();
+    final audience = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Business Demo Pack'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: business, decoration: const InputDecoration(labelText: 'Business name')),
+              TextField(controller: location, decoration: const InputDecoration(labelText: 'Location')),
+              TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'WhatsApp / phone')),
+              TextField(controller: offer, decoration: const InputDecoration(labelText: 'Main offer')),
+              TextField(controller: audience, decoration: const InputDecoration(labelText: 'Target customer')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Generate')),
+        ],
+      ),
+    );
+    if (ok != true || business.text.trim().isEmpty) {
+      business.dispose();
+      location.dispose();
+      phone.dispose();
+      offer.dispose();
+      audience.dispose();
+      return;
+    }
+    setState(() => _creating = true);
+    try {
+      final result = await widget.api.createBusinessDemo(
+        projectId: projectId,
+        businessName: business.text.trim(),
+        location: location.text.trim(),
+        phone: phone.text.trim(),
+        offer: offer.text.trim(),
+        audience: audience.text.trim(),
+      );
+      if (!mounted) return;
+      final marketing = result['marketing'];
+      final whatsapp = marketing is Map ? marketing['whatsapp_url']?.toString() : null;
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('SAGE Demo Pack Ready'),
+          content: SingleChildScrollView(
+            child: Text(
+              marketing is Map
+                  ? 'HEADLINE\\n\\n${marketing['headline']}\\n\\nSCRIPT\\n\\n${marketing['script']}\\n\\nCAPTION\\n\\n${marketing['caption']}'
+                  : 'Demo pack created.',
+            ),
+          ),
+          actions: [
+            if (whatsapp != null)
+              TextButton(
+                onPressed: () => launchUrl(Uri.parse(whatsapp)),
+                child: const Text('OPEN WHATSAPP'),
+              ),
+            FilledButton(onPressed: () => Navigator.pop(c), child: const Text('Done')),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (mounted) _error(error);
+    } finally {
+      business.dispose();
+      location.dispose();
+      phone.dispose();
+      offer.dispose();
+      audience.dispose();
+      if (mounted) setState(() => _creating = false);
+    }
+  }
+
   Future<void> _generateVideo() async {
     final projectId = _lastProjectId;
     if (projectId == null || _creating) return;
@@ -433,6 +517,15 @@ class _CreateScreenState extends State<CreateScreen> {
                       onPressed: _creating ? null : _generateVideo,
                       icon: const Icon(Icons.movie_creation_outlined),
                       label: Text(_creating ? 'Rendering…' : 'Generate Demo Video'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _creating ? null : _generateBusinessDemo,
+                      icon: const Icon(Icons.business_center_outlined),
+                      label: const Text('Generate Business Demo Pack'),
                     ),
                   ),
                 ],
