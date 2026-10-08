@@ -70,6 +70,8 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<Map<String, dynamic>> createSession() async => _authorizedPost('/session', <String, dynamic>{});
+
   Future<Map<String, dynamic>> workerHealth() async => _authorizedGet('/worker/health');
   Future<Map<String, dynamic>> brainHealth() async => _authorizedGet('/brain/health');
 
