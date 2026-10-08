@@ -75,11 +75,15 @@ class SageRepository:
     def create_session(
         self,
         db: DBSession,
+        profile_id: str | None = None,
+        owner_key: str | None = None,
     ) -> str:
         session_id = str(uuid.uuid4())
 
         session = Session(
             id=session_id,
+            profile_id=profile_id,
+            owner_key=owner_key,
             created_at=self._utc_now(),
         )
 
@@ -92,12 +96,12 @@ class SageRepository:
         self,
         db: DBSession,
         session_id: str,
+        owner_key: str | None = None,
     ) -> Session | None:
-        return (
-            db.query(Session)
-            .filter(Session.id == session_id)
-            .first()
-        )
+        query = db.query(Session).filter(Session.id == session_id)
+        if owner_key is not None:
+            query = query.filter(Session.owner_key == owner_key)
+        return query.first()
 
     # ============================================================
     # MESSAGES
@@ -782,15 +786,18 @@ repository = SageRepository()
 
 def create_session(
     db: DBSession,
+    profile_id: str | None = None,
+    owner_key: str | None = None,
 ) -> str:
-    return repository.create_session(db)
+    return repository.create_session(db, profile_id, owner_key)
 
 
 def get_session(
     db: DBSession,
     session_id: str,
+    owner_key: str | None = None,
 ) -> Session | None:
-    return repository.get_session(db, session_id)
+    return repository.get_session(db, session_id, owner_key)
 
 
 def add_message(
