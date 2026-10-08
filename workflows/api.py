@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from database.connection import SessionLocal
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
+from media.video import VideoRenderError, render_text_video
 from workflows import repository
 
 router = APIRouter(prefix="/workflow", tags=["workflow"])
@@ -50,6 +54,16 @@ class WorkflowCreateRequest(BaseModel):
     workflow_type: str = Field(default="content", min_length=1, max_length=80)
     current_stage: str | None = Field(default=None, max_length=100)
     definition: dict[str, Any] = Field(default_factory=dict)
+
+
+class VideoCreateRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    subtitle: str = Field(default="", max_length=1000)
+    cta: str = Field(default="", max_length=120)
+    duration_seconds: float = Field(default=5.0, ge=2.0, le=30.0)
+    width: int = Field(default=720, ge=320, le=1280)
+    height: int = Field(default=1280, ge=320, le=1920)
+    fps: int = Field(default=24, ge=12, le=30)
 
 
 def _profile_id(claims: dict[str, Any]) -> str:
@@ -137,6 +151,75 @@ def create_asset(project_id: str, request: AssetCreateRequest, claims: dict[str,
             request.metadata,
         )
         return {"success": True, "asset": repository.serialize(asset)}
+
+
+@router.post("/projects/{project_id}/video")
+def create_video(project_id: str, request: VideoCreateRequest, claims: dict[str, Any] = Depends(authenticate_request)):
+    """Create a real MP4 asset inside the authenticated user's project."""
+    with SessionLocal() as db:
+        profile_id = _profile_id(claims)
+        project = repository.get_project(db, profile_id, project_id)
+        if project is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        output_dir = Path(os.getenv("SAGE_MEDIA_DIR", "./generated_media")).resolve()
+        try:
+            output = render_text_video(
+                title=request.title,
+                subtitle=request.subtitle,
+                cta=request.cta,
+                output_dir=output_dir,
+                duration_seconds=request.duration_seconds,
+                width=request.width,
+                height=request.height,
+                fps=request.fps,
+            )
+        except VideoRenderError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Video rendering failed: {exc}") from exc
+
+        asset = repository.create_asset(
+            db,
+            project,
+            request.title,
+            "video",
+            status="ready",
+            path=str(output),
+            uri=f"/workflow/assets/pending/download",
+            mime_type="video/mp4",
+            metadata={
+                "renderer": "sage_local_text_renderer",
+                "duration_seconds": request.duration_seconds,
+                "width": request.width,
+                "height": request.height,
+                "fps": request.fps,
+            },
+        )
+        asset.uri = f"/workflow/assets/{asset.id}/download"
+        db.commit()
+        db.refresh(asset)
+        return {"success": True, "asset": repository.serialize(asset)}
+
+
+@router.get("/assets/{asset_id}/download")
+def download_asset(asset_id: str, claims: dict[str, Any] = Depends(authenticate_request)):
+    """Download an asset only after verifying it belongs to the authenticated profile."""
+    with SessionLocal() as db:
+        asset = repository.get_asset(db, _profile_id(claims), asset_id)
+        if asset is None:
+            raise HTTPException(status_code=404, detail="Asset not found")
+        if not asset.path:
+            raise HTTPException(status_code=404, detail="Asset has no downloadable file")
+
+        root = Path(os.getenv("SAGE_MEDIA_DIR", "./generated_media")).resolve()
+        candidate = Path(asset.path).resolve()
+        if not candidate.is_relative_to(root):
+            raise HTTPException(status_code=403, detail="Asset path is outside SAGE media storage")
+        if not candidate.is_file():
+            raise HTTPException(status_code=404, detail="Asset file is missing")
+
+        return FileResponse(candidate, media_type=asset.mime_type or "application/octet-stream", filename=asset.name)
 
 
 @router.get("/projects/{project_id}/relations")
