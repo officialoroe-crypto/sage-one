@@ -49,7 +49,7 @@ class SageApi {
     });
     final task = data['task'];
     final taskMap = task is Map ? task : null;
-    data['task_id'] = taskMap?['id'] ?? taskMap?['task_id'];
+    data['task_id'] = taskMap?['id'] ?? taskMap?['task_id'] ?? data['task_id'];
     return data;
   }
 
