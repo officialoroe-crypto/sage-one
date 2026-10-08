@@ -159,6 +159,22 @@ class SageApi {
         'metadata': metadata ?? <String, dynamic>{},
       });
 
+  Future<Map<String, dynamic>> createBusinessDemo({
+    required String projectId,
+    required String businessName,
+    String location = '',
+    String phone = '',
+    String offer = '',
+    String audience = '',
+  }) async =>
+      _authorizedPost('/workflow/projects/$projectId/business-demo', {
+        'business_name': businessName,
+        'location': location,
+        'phone': phone,
+        'offer': offer,
+        'audience': audience,
+      });
+
   Future<Map<String, dynamic>> createWorkflowVideo({
     required String projectId,
     required String title,
