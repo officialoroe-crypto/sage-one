@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
+from urllib.parse import quote
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -64,6 +66,14 @@ class VideoCreateRequest(BaseModel):
     width: int = Field(default=720, ge=320, le=1280)
     height: int = Field(default=1280, ge=320, le=1920)
     fps: int = Field(default=24, ge=12, le=30)
+
+
+class BusinessDemoRequest(BaseModel):
+    business_name: str = Field(min_length=1, max_length=200)
+    location: str = Field(default="", max_length=500)
+    phone: str = Field(default="", max_length=40)
+    offer: str = Field(default="", max_length=500)
+    audience: str = Field(default="", max_length=300)
 
 
 def _profile_id(claims: dict[str, Any]) -> str:
@@ -220,6 +230,79 @@ def download_asset(asset_id: str, claims: dict[str, Any] = Depends(authenticate_
             raise HTTPException(status_code=404, detail="Asset file is missing")
 
         return FileResponse(candidate, media_type=asset.mime_type or "application/octet-stream", filename=asset.name)
+
+
+@router.post("/projects/{project_id}/business-demo")
+def create_business_demo(project_id: str, request: BusinessDemoRequest, claims: dict[str, Any] = Depends(authenticate_request)):
+    """Turn business details into a reusable SAGE marketing/demo pack."""
+    with SessionLocal() as db:
+        profile_id = _profile_id(claims)
+        project = repository.get_project(db, profile_id, project_id)
+        if project is None:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        name = request.business_name.strip()
+        location = request.location.strip()
+        offer = request.offer.strip() or "quality products and dependable service"
+        audience = request.audience.strip() or "local customers and businesses"
+        phone_digits = re.sub(r"\D+", "", request.phone)
+        whatsapp_text = f"Hi {name}, I would like to know more about your products and services."
+        whatsapp_url = (
+            f"https://wa.me/{phone_digits}?text={quote(whatsapp_text)}"
+            if phone_digits
+            else None
+        )
+
+        headline = f"{name} — trusted locally."
+        script = (
+            f"Meet {name}. {offer.capitalize()}. "
+            f"We serve {audience}."
+            + (f" Visit us in {location}." if location else "")
+            + " Contact us today."
+        )
+        caption = (
+            f"{name}: {offer}. "
+            + (f"Serving {location}. " if location else "")
+            + "Message us to get started."
+        )
+        hashtags = [
+            "#localbusiness",
+            "#business",
+            "#quality",
+            "#nepalbusiness",
+            "#sagestudio",
+        ]
+
+        script_asset = repository.create_asset(
+            db, project, f"{name} Video Script", "text", status="ready",
+            metadata={"content": script, "kind": "video_script"},
+        )
+        caption_asset = repository.create_asset(
+            db, project, f"{name} Caption", "caption", status="ready",
+            metadata={"content": caption, "hashtags": hashtags},
+        )
+
+        return {
+            "success": True,
+            "business": {
+                "name": name,
+                "location": location,
+                "phone": request.phone.strip(),
+                "offer": offer,
+                "audience": audience,
+            },
+            "marketing": {
+                "headline": headline,
+                "script": script,
+                "caption": caption,
+                "hashtags": hashtags,
+                "whatsapp_url": whatsapp_url,
+            },
+            "assets": [
+                repository.serialize(script_asset),
+                repository.serialize(caption_asset),
+            ],
+        }
 
 
 @router.get("/projects/{project_id}/relations")
