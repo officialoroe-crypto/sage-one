@@ -16,7 +16,7 @@ from database.repository import repository
 from database.models import Task
 from identity.memory_learning import learn_memory_candidates
 from identity.profile import SessionLocal as ProfileSessionLocal, UserProfile
-from workflows import repository as workflow_repository
+from workflows.repository import repository as workflow_repository
 from economy.models import PremiumSparkTransaction
 from economy.service import reserve_premium_work, settle_premium_sparks, refund_premium_sparks
 from sqlalchemy import select
