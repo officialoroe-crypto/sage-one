@@ -25,7 +25,7 @@ void main() {
     );
   });
 
-  test('developer mode bypasses onboarding', () {
+  test('developer mode still requires first-run onboarding', () {
     expect(
       shouldRequireOnboarding(
         const {'onboarding_completed': false},
