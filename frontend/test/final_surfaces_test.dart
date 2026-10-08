@@ -92,12 +92,21 @@ void main() {
       AiStudioFinalScreen(api: _api()),
     ];
 
-    for (final screen in screens) {
-      await tester.pumpWidget(MaterialApp(home: screen));
-      await tester.pumpAndSettle();
-    }
+    final labels = <String>[
+      'Spark Wallet',
+      'Transactions',
+      'Profile',
+      'Settings',
+      'Activity',
+      'Provider readiness',
+      'Task artifacts',
+      'Workflow Studio',
+    ];
 
-    expect(find.text('Spark Wallet'), findsOneWidget);
-    expect(find.text('Provider readiness'), findsNothing);
+    for (var i = 0; i < screens.length; i++) {
+      await tester.pumpWidget(MaterialApp(home: screens[i]));
+      await tester.pumpAndSettle();
+      expect(find.text(labels[i]), findsOneWidget);
+    }
   });
 }
