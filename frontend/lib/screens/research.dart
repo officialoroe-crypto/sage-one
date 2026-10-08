@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/sage_api.dart';
 
@@ -368,12 +369,86 @@ class _ResearchDetail extends StatelessWidget {
               const SizedBox(height: 14),
               const Text('SOURCES', style: TextStyle(fontSize: 10, letterSpacing: 1.4, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
-              ...sources.map((item) => Text(item.toString(), style: const TextStyle(color: Colors.white60, fontSize: 12))),
+              ...sources.map((item) => _ResearchSourceRow(item: item)),
             ],
           ]),
         ),
       ),
       actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('CLOSE'))],
+    );
+  }
+}
+
+Uri? researchSourceUri(dynamic item) {
+  final value = item is Map
+      ? (item['url'] ?? item['uri'] ?? item['source_url'])
+      : item;
+  if (value == null) return null;
+  final uri = Uri.tryParse(value.toString().trim());
+  if (uri == null || uri.host.isEmpty) return null;
+  if (uri.scheme != 'http' && uri.scheme != 'https') return null;
+  return uri;
+}
+
+class _ResearchSourceRow extends StatelessWidget {
+  const _ResearchSourceRow({required this.item});
+
+  final dynamic item;
+
+  Uri? get _uri => researchSourceUri(item);
+
+  String get _label {
+    if (item is Map) {
+      final map = Map<dynamic, dynamic>.from(item as Map);
+      return (map['title'] ?? map['name'] ?? map['url'] ?? 'Research source').toString();
+    }
+    return item.toString();
+  }
+
+  Future<void> _open(BuildContext context) async {
+    final uri = _uri;
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This research source has no valid HTTP(S) URL.')),
+      );
+      return;
+    }
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('SAGE could not open this research source.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final uri = _uri;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: ListTile(
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(
+          uri == null ? Icons.link_off : Icons.open_in_new,
+          size: 17,
+          color: uri == null ? Colors.white30 : Colors.cyanAccent,
+        ),
+        title: Text(
+          _label,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        subtitle: Text(
+          uri == null ? 'No valid HTTP(S) URL' : uri.toString(),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white30, fontSize: 10),
+        ),
+        trailing: uri == null ? null : const Icon(Icons.arrow_outward, size: 16),
+        onTap: () => _open(context),
+      ),
     );
   }
 }
