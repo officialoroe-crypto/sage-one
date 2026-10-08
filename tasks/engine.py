@@ -50,18 +50,18 @@ class TaskEngine:
         finally:
             db.close()
 
-    def get(self, task_id: str):
+    def get(self, task_id: str, owner_key: str | None = None):
         db = SessionLocal()
         try:
-            task = repository.get_task(db, task_id)
+            task = repository.get_task(db, task_id, owner_key=owner_key)
             return self.serialize(task) if task else None
         finally:
             db.close()
 
-    def list(self, status: str | None = None):
+    def list(self, status: str | None = None, owner_key: str | None = None):
         db = SessionLocal()
         try:
-            tasks = repository.get_tasks(db, status=status)
+            tasks = repository.get_tasks(db, status=status, owner_key=owner_key)
             return [self.serialize(task) for task in tasks]
         finally:
             db.close()
@@ -316,12 +316,13 @@ class TaskEngine:
         finally:
             db.close()
 
-    def cancel(self, task_id: str):
+    def cancel(self, task_id: str, owner_key: str | None = None):
         db = SessionLocal()
         try:
             task = repository.update_task(
                 db,
                 task_id,
+                owner_key=owner_key,
                 status="cancelled",
                 worker_id=None,
                 lease_expires_at=None,
