@@ -352,13 +352,15 @@ def orchestrator_status():
 # ============================================================
 
 @app.post("/session")
-def create_session():
+def create_session(claims: dict[str, Any] = Depends(_require_owner)):
     db = SessionLocal()
 
     try:
-        session_id = repository.create_session(db)
+        profile = get_or_create_authenticated_profile(claims)
+        owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+        session_id = repository.create_session(db, profile_id=profile["id"], owner_key=owner_key)
 
-        session = repository.get_session(db, session_id)
+        session = repository.get_session(db, session_id, owner_key=owner_key)
 
         if session is not None:
             return {
@@ -378,11 +380,12 @@ def create_session():
 
 
 @app.get("/session/{session_id}")
-def get_session(session_id: str):
+def get_session(session_id: str, claims: dict[str, Any] = Depends(_require_owner)):
     db = SessionLocal()
 
     try:
-        session = repository.get_session(db, session_id)
+        owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+        session = repository.get_session(db, session_id, owner_key=owner_key)
 
         if not session:
             raise HTTPException(
@@ -406,7 +409,8 @@ def get_session_messages(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
     with SessionLocal() as db:
-        session = repository.get_session(db, session_id)
+        owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
+        session = repository.get_session(db, session_id, owner_key=owner_key)
         if session is None:
             raise HTTPException(status_code=404, detail="Session not found.")
         messages = repository.get_messages(db, session_id, limit=max(1, min(limit, 100)))
@@ -554,6 +558,7 @@ def execute_background(
         agent_name = "general"
 
     profile = get_or_create_authenticated_profile(claims)
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     project_id = request.project_id
     if project_id:
         with SessionLocal() as db:
