@@ -1032,6 +1032,8 @@ def create_background_task(
         agent=request.agent,
         session_id=request.session_id,
         parent_task_id=request.parent_task_id,
+        owner_key=owner_key,
+        profile_id=profile["id"],
     )
     return {
         "success": True,
