@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import json
+import uuid
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
+from sqlalchemy.orm import Session as DBSession
+
+from database.models import SalesActivity, SalesLead
 from web.reader import WebReader
 
 
@@ -86,7 +91,6 @@ class SalesEngine:
         }
 
     def run_from_task(self, description: str, task_id: str, owner_key: str | None, project_id: str | None, profile_id: str | None) -> dict[str, Any]:
-        del task_id, owner_key, project_id, profile_id
         try:
             payload = json.loads(description)
         except json.JSONDecodeError as exc:
@@ -94,12 +98,101 @@ class SalesEngine:
         business_name = str(payload.get("business_name") or "").strip()
         if not business_name:
             raise ValueError("Sales task requires business_name.")
-        return self.audit_business(
+        result = self.audit_business(
             business_name=business_name,
             website=payload.get("website"),
             instagram=payload.get("instagram"),
             notes=payload.get("notes"),
         )
+        if owner_key:
+            result["lead_id"] = self.persist_lead(owner_key, profile_id, project_id, task_id, result)
+        return result
+
+    @staticmethod
+    def _now() -> datetime:
+        return datetime.now(timezone.utc)
+
+    @staticmethod
+    def _load(value: str | None, fallback: Any) -> Any:
+        if not value:
+            return fallback
+        try:
+            return json.loads(value)
+        except Exception:
+            return fallback
+
+    def persist_lead(self, owner_key: str, profile_id: str | None, project_id: str | None, task_id: str, result: dict[str, Any], db: DBSession | None = None) -> str:
+        from database.connection import SessionLocal
+        own_session = db is None
+        session = db or SessionLocal()
+        try:
+            data = result["lead"]
+            lead = SalesLead(
+                id=str(uuid.uuid4()), owner_key=owner_key, profile_id=profile_id,
+                project_id=project_id, task_id=task_id,
+                business_name=data["business_name"], website=data.get("website"),
+                instagram=data.get("instagram"), score=int(data["score"]),
+                tier=data["tier"], status="outreach_pending",
+                audit_json=json.dumps(data, ensure_ascii=False),
+                intelligence_json=json.dumps(result["intelligence"], ensure_ascii=False),
+                outreach_json=json.dumps(result["outreach"], ensure_ascii=False),
+                created_at=self._now(), updated_at=self._now(),
+            )
+            session.add(lead)
+            session.add(SalesActivity(
+                id=str(uuid.uuid4()), lead_id=lead.id, owner_key=owner_key,
+                event_type="discovered_audited_scored", status="completed",
+                payload_json=json.dumps({"score": lead.score, "tier": lead.tier, "task_id": task_id}),
+                created_at=self._now(),
+            ))
+            session.commit()
+            return lead.id
+        finally:
+            if own_session:
+                session.close()
+
+    def approve_outreach(self, db: DBSession, lead: SalesLead, owner_key: str) -> SalesLead:
+        if lead.owner_key != owner_key:
+            raise ValueError("Sales lead is not owned by the authenticated owner.")
+        if lead.status in {"outreach_approved", "customer"}:
+            return lead
+        outreach = self._load(lead.outreach_json, {})
+        if not outreach.get("draft"):
+            raise ValueError("No outreach draft is available for approval.")
+        outreach["approved"] = True
+        outreach["requires_approval"] = False
+        lead.outreach_json = json.dumps(outreach, ensure_ascii=False)
+        lead.status = "outreach_approved"
+        lead.updated_at = self._now()
+        db.add(SalesActivity(
+            id=str(uuid.uuid4()), lead_id=lead.id, owner_key=owner_key,
+            event_type="outreach_approved", status="approved",
+            payload_json=json.dumps({"channel": outreach.get("channel"), "sent": False}),
+            created_at=self._now(),
+        ))
+        db.commit()
+        db.refresh(lead)
+        return lead
+
+    def convert_customer(self, db: DBSession, lead: SalesLead, owner_key: str) -> SalesLead:
+        if lead.owner_key != owner_key:
+            raise ValueError("Sales lead is not owned by the authenticated owner.")
+        if lead.status == "customer":
+            return lead
+        if lead.status != "outreach_approved":
+            raise ValueError("Approve the outreach draft before converting this lead to a customer.")
+        lead.status = "customer"
+        lead.updated_at = self._now()
+        db.add(SalesActivity(
+            id=str(uuid.uuid4()), lead_id=lead.id, owner_key=owner_key,
+            event_type="customer_converted", status="completed",
+            payload_json=json.dumps({"business_name": lead.business_name}),
+            created_at=self._now(),
+        ))
+        db.commit()
+        db.refresh(lead)
+        return lead
+
 
 
 sales_engine = SalesEngine()
