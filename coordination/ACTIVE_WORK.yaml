@@ -1,3 +1,14 @@
 version: 1
-updated_at: 2026-10-08T04:03:00Z
-claims: []
+updated_at: 2026-10-08T11:20:00Z
+claims:
+  - id: frontend-world-intelligence-v2
+    agent: chatgpt
+    branch: feat/flutter-world-intelligence-v2
+    base_sha: 1f80f824591510d1ce874061328f05801d7c089d
+    scope:
+      - frontend/lib/screens/world_intelligence.dart
+      - frontend/test/world_intelligence_test.dart
+    objective: "Upgrade World Intelligence into a production-facing source-aware frontend surface without changing backend contracts."
+    status: in_progress
+    started_at: 2026-10-08T11:20:00Z
+    updated_at: 2026-10-08T11:20:00Z
