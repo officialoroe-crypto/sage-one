@@ -18,6 +18,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   List<dynamic> _assets = const [];
   List<dynamic> _relations = const [];
   List<dynamic> _workflows = const [];
+  bool _commandBusy = false;
 
   String get _projectId => widget.project['id']?.toString() ?? '';
 
@@ -25,6 +26,57 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  Future<void> _runProjectCommand() async {
+    if (_projectId.isEmpty || _commandBusy) return;
+    final controller = TextEditingController();
+    final command = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Run SAGE in this project'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          minLines: 2,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            hintText: 'Tell SAGE what to do with this project…',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+            },
+            child: const Text('Queue'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (command == null || command.isEmpty) return;
+
+    setState(() => _commandBusy = true);
+    try {
+      final response = await widget.api.submitCommand(command, projectId: _projectId);
+      final task = response['task'];
+      final taskId = task is Map ? task['id']?.toString() : response['task_id']?.toString();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(taskId == null ? 'Project command queued.' : 'Project task queued: $taskId')),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not queue project command: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _commandBusy = false);
+    }
   }
 
   Future<void> _addAsset() async {
@@ -246,6 +298,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       appBar: AppBar(
         title: const Text('PROJECT'),
         actions: [
+          IconButton(
+            tooltip: 'Run SAGE command',
+            onPressed: _commandBusy ? null : _runProjectCommand,
+            icon: Icon(_commandBusy ? Icons.hourglass_top : Icons.play_circle_outline),
+          ),
           IconButton(
             tooltip: 'Connect assets',
             onPressed: _loading || _assets.length < 2 ? null : _linkAssets,
