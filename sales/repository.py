@@ -35,6 +35,23 @@ def get_lead(db: Session, profile_id: str, lead_id: str) -> SalesLead | None:
     return db.query(SalesLead).filter(SalesLead.id==lead_id, SalesLead.profile_id==profile_id).first()
 
 
+def find_duplicate(
+    db: Session,
+    profile_id: str,
+    business_name: str,
+    website_url: str | None = None,
+) -> SalesLead | None:
+    query = db.query(SalesLead).filter(
+        SalesLead.profile_id == profile_id,
+        SalesLead.business_name == business_name.strip(),
+    )
+    if website_url:
+        exact = query.filter(SalesLead.website_url == website_url).first()
+        if exact:
+            return exact
+    return query.first()
+
+
 def list_leads(db: Session, profile_id: str, status: str | None=None, limit: int=50) -> list[SalesLead]:
     q=db.query(SalesLead).filter(SalesLead.profile_id==profile_id)
     if status: q=q.filter(SalesLead.status==status)
