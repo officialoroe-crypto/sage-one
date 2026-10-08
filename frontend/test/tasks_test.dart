@@ -7,6 +7,9 @@ import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/screens/tasks.dart';
 
 class _TasksApiClient extends http.BaseClient {
+  _TasksApiClient({this.includeActiveTask = true});
+
+  final bool includeActiveTask;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final body = switch (request.url.path) {
@@ -15,7 +18,7 @@ class _TasksApiClient extends http.BaseClient {
             {
               'id': 'task-123',
               'title': 'Research: Flutter reliability',
-              'status': 'running',
+              'status': includeActiveTask ? 'running' : 'completed',
             },
           ],
         }),
@@ -66,7 +69,10 @@ void main() {
     expect(find.text('Research completed.'), findsOneWidget);
   });
   testWidgets('Tasks screen shows a useful empty state for filters', (tester) async {
-    final api = SageApi(client: _TasksApiClient(), authToken: 'test-token');
+    final api = SageApi(
+      client: _TasksApiClient(includeActiveTask: false),
+      authToken: 'test-token',
+    );
     await tester.pumpWidget(MaterialApp(home: TasksScreen(api: api)));
     await tester.pump();
 
