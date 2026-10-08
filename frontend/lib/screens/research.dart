@@ -379,21 +379,23 @@ class _ResearchDetail extends StatelessWidget {
   }
 }
 
+Uri? researchSourceUri(dynamic item) {
+  final value = item is Map
+      ? (item['url'] ?? item['uri'] ?? item['source_url'])
+      : item;
+  if (value == null) return null;
+  final uri = Uri.tryParse(value.toString().trim());
+  if (uri == null || uri.host.isEmpty) return null;
+  if (uri.scheme != 'http' && uri.scheme != 'https') return null;
+  return uri;
+}
+
 class _ResearchSourceRow extends StatelessWidget {
   const _ResearchSourceRow({required this.item});
 
   final dynamic item;
 
-  Uri? get _uri {
-    final value = item is Map
-        ? (item['url'] ?? item['uri'] ?? item['source_url'])
-        : item;
-    if (value == null) return null;
-    final uri = Uri.tryParse(value.toString().trim());
-    if (uri == null || uri.host.isEmpty) return null;
-    if (uri.scheme != 'http' && uri.scheme != 'https') return null;
-    return uri;
-  }
+  Uri? get _uri => researchSourceUri(item);
 
   String get _label {
     if (item is Map) {
