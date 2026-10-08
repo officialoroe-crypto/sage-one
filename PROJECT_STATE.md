@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-10-08
-Current main: 3a8bc13da4d141383fb0c3395550ec808ad27b0e
+Last updated: 2026-10-09
+Current main: c57c36c60d0056099f5bdc715405c9400fa8bd45
 
 ## Identity
 - Project: SAGE ONE
@@ -31,6 +31,8 @@ Main contains the real private-first execution core:
 - Owner Developer Mode provides non-mutating preview plus explicit approval-gated apply.
 - Developer proposals are durable and owner-scoped across API restarts.
 - Project detail can queue project-scoped commands.
+- Sales Engine is executable end-to-end: discovery → audit → score → durable lead → intelligence → approval-gated outreach → activity history → customer conversion.
+- Owner Sales UI exposes lead pipeline, lead detail, approval, customer conversion and human follow-up recording; it never sends external outreach automatically.
 - Authenticated identity/profile/onboarding/memory foundations exist.
 - Private mobile Memory screen supports profile-scoped read/add/delete.
 - World Intelligence has status, knowledge, due items and refresh UI.
@@ -72,9 +74,8 @@ Latest main push triggered and completed successfully:
 - SAGE ONE God Mode Developer Website — success
 
 Latest verified workflow run IDs:
-- SAGE CI: 37800075265
-- Android APK: 37800075159
-- God Mode Developer Website: 37800075318
+- Phase 5 PR SAGE CI: 37832532613 (Python + Flutter PASS)
+- Main release workflows must be rechecked after the Phase 5 merge.
 
 ## Important coordination truth
 Several older feature branches and open PRs still exist. Their existence does not mean their work is absent from main. Current main must be treated as the canonical implementation; stale branches should be reconciled or closed only after their changes are compared with main.
