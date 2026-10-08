@@ -70,7 +70,9 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: TasksScreen(api: api)));
     await tester.pump();
 
-    await tester.tap(find.text('ACTIVE'));
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pump();
+    await tester.tap(find.text('ACTIVE').last);
     await tester.pump();
     expect(find.text('No tasks match this filter.'), findsOneWidget);
   });
