@@ -141,11 +141,12 @@ def onboarding_options():
 def complete_onboarding(request: OnboardingRequest, claims: dict[str, Any] = Depends(authenticate_request)):
     profile = _profile_from_claims(claims)
     capabilities = validate_capabilities(request.capabilities)
-    if not profile["phone_verified"]:
+    private_owner = bool(claims.get("owner_mode"))
+    if not private_owner and not profile["phone_verified"]:
         raise HTTPException(status_code=409, detail="Phone verification is required before onboarding can be completed.")
-    if profile["phone"] != request.phone:
+    if not private_owner and profile["phone"] != request.phone:
         raise HTTPException(status_code=409, detail="The verified phone number must match onboarding.")
-    updated = upsert_profile(auth_provider=claims["auth_provider"], auth_subject=claims["auth_subject"], email=claims.get("email"), name=request.name, phone=request.phone, address=request.address, age=request.age, basic_info=request.basic_info, help_intent=request.help_intent, capabilities=capabilities, memory_consent=request.memory_consent)
+    updated = upsert_profile(auth_provider=claims["auth_provider"], auth_subject=claims["auth_subject"], email=claims.get("email"), name=request.name, phone=request.phone or None, address=request.address, age=request.age, basic_info=request.basic_info, help_intent=request.help_intent, capabilities=capabilities, memory_consent=request.memory_consent)
     if request.memory_consent:
         add_memory(profile_id=updated["id"], memory_type="preference", content=f"SAGE onboarding capabilities: {', '.join(capabilities) if capabilities else 'none selected'}", importance=0.7, confidence=1.0, source="onboarding", confirmed=True)
     with SessionLocal() as db:
