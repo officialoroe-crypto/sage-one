@@ -2,7 +2,6 @@ from database.connection import Base, SessionLocal, engine
 from database.repository import repository
 from identity.profile import UserProfile
 from workflows.repository import repository as workflow_repository
-from workflows.models import Workspace
 from app.main import CommandRequest, command
 from app.worker import SageWorker
 
