@@ -60,3 +60,14 @@ SAGE should eventually connect securely to GitHub and AI model providers so the 
 
 ## Current Constraint
 The immediate objective is a stable runnable SAGE ONE core and a usable demo. Avoid adding placeholder screens when real backend functionality can be implemented instead.
+
+
+## 2026-10-08 Build Directive
+- Start building now in bulk/full-speed mode; do not pause for tiny implementation steps.
+- The first acceptance target is a **working SAGE-only demo workflow**, not another collection of placeholder screens.
+- The owner wants to use SAGE itself for the work: research -> content creation -> video creation/workflow -> portfolio/business materials -> WhatsApp-ready outreach.
+- The first real-world validation target is the owner's existing family-business customer, **Calvert Hardware Suppliers**. Existing business information can be used to create the first demo.
+- Business discovery is a later SAGE capability: SAGE should be able to find businesses in real time whose online presence needs improvement (for example weak/inconsistent Instagram, weak video content, poor branding, missing reels, outdated websites or weak Google presence) and turn findings into actionable sales/work opportunities.
+- Do not make manual prospecting the immediate blocker; the owner already has a first customer target.
+- Build order remains: stabilize core -> connect real backend/frontend -> complete one end-to-end customer workflow -> owner testing/private demo -> then expand automation and Owner Developer Mode.
+- GitHub remains the canonical shared memory for both backend and frontend chats.
