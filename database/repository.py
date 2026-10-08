@@ -557,6 +557,7 @@ class SageRepository:
         arguments: dict | None = None,
         permission_allowed: bool = False,
         permission_reason: str | None = None,
+        owner_key: str | None = None,
     ) -> ActionLog:
         action = ActionLog(
             id=str(uuid.uuid4()),
@@ -668,8 +669,12 @@ class SageRepository:
         tool: str | None = None,
         status: str | None = None,
         limit: int = 100,
+        owner_key: str | None = None,
     ) -> list[ActionLog]:
         query = db.query(ActionLog)
+
+        if owner_key is not None:
+            query = query.filter(ActionLog.owner_key == owner_key)
 
         if session_id:
             query = query.filter(
@@ -711,6 +716,7 @@ class SageRepository:
         notification_type: str = "task",
         task_id: str | None = None,
         session_id: str | None = None,
+        owner_key: str | None = None,
     ) -> Notification:
         notification = Notification(
             id=str(uuid.uuid4()),
