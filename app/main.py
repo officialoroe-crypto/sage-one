@@ -19,6 +19,7 @@ from brain.router import router
 from database.connection import SessionLocal, Base, engine
 from database import repository
 from database.models import DeveloperProposal
+from sales.models import SalesActivity, SalesLead
 
 from missions.engine import mission_engine
 from missions.planner import planner
@@ -229,6 +230,15 @@ class DeveloperApplyRequest(BaseModel):
     approved: bool = False
 
 
+class SalesRunRequest(BaseModel):
+    business_name: str = Field(min_length=1, max_length=200)
+    website: Optional[str] = None
+    instagram: Optional[str] = None
+    notes: Optional[str] = None
+    project_id: Optional[str] = None
+    session_id: Optional[str] = None
+
+
 class PremiumTaskCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1, max_length=20000)
@@ -290,6 +300,121 @@ def _context_to_string(context: Optional[dict[str, Any]]) -> str:
         return json.dumps(context, ensure_ascii=False)
     except Exception:
         return str(context)
+
+
+# ============================================================
+# SALES ENGINE
+# ============================================================
+
+@app.post("/sales/run")
+def run_sales_audit(
+    request: SalesRunRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    profile = get_or_create_authenticated_profile(claims)
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    if request.project_id:
+        with SessionLocal() as db:
+            if workflow_repository.get_project(db, profile["id"], request.project_id) is None:
+                raise HTTPException(status_code=404, detail="Project not found.")
+    payload = {
+        "business_name": request.business_name.strip(),
+        "website": request.website.strip() if request.website else None,
+        "instagram": request.instagram.strip() if request.instagram else None,
+        "notes": request.notes.strip() if request.notes else None,
+    }
+    task = tasks.create(
+        title=f"Sales audit: {request.business_name.strip()[:100]}",
+        description=json.dumps(payload, ensure_ascii=False),
+        priority=3, agent="sales", session_id=request.session_id,
+        owner_key=owner_key, profile_id=profile["id"], project_id=request.project_id,
+    )
+    return {
+        "success": True,
+        "status": "queued",
+        "task": _serialize(task),
+        "workflow": "discover_audit_score_lead_intelligence_outreach_approval_history_customer",
+    }
+
+
+@app.get("/sales/leads")
+def list_sales_leads(
+    status: Optional[str] = None,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        query = db.query(SalesLead).filter(SalesLead.owner_key == owner_key)
+        if status:
+            query = query.filter(SalesLead.status == status)
+        leads = query.order_by(SalesLead.created_at.desc()).all()
+        return {"success": True, "leads": [_serialize(lead) for lead in leads]}
+
+
+@app.get("/sales/leads/{lead_id}")
+def get_sales_lead(lead_id: str, claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        lead = db.query(SalesLead).filter(
+            SalesLead.id == lead_id, SalesLead.owner_key == owner_key
+        ).first()
+        if lead is None:
+            raise HTTPException(status_code=404, detail="Sales lead not found.")
+        return {"success": True, "lead": _serialize(lead)}
+
+
+@app.get("/sales/leads/{lead_id}/history")
+def get_sales_lead_history(lead_id: str, claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        lead = db.query(SalesLead).filter(
+            SalesLead.id == lead_id, SalesLead.owner_key == owner_key
+        ).first()
+        if lead is None:
+            raise HTTPException(status_code=404, detail="Sales lead not found.")
+        rows = db.query(SalesActivity).filter(
+            SalesActivity.lead_id == lead_id,
+            SalesActivity.owner_key == owner_key,
+        ).order_by(SalesActivity.created_at.asc()).all()
+        return {
+            "success": True,
+            "lead_id": lead_id,
+            "history": [_serialize(row) for row in rows],
+        }
+
+
+@app.post("/sales/leads/{lead_id}/approve-outreach")
+def approve_sales_outreach(lead_id: str, claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        lead = db.query(SalesLead).filter(
+            SalesLead.id == lead_id, SalesLead.owner_key == owner_key
+        ).first()
+        if lead is None:
+            raise HTTPException(status_code=404, detail="Sales lead not found.")
+        try:
+            from sales.service import sales_engine
+            lead = sales_engine.approve_outreach(db, lead, owner_key)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {"success": True, "approved": True, "sent": False, "lead": _serialize(lead)}
+
+
+@app.post("/sales/leads/{lead_id}/convert-customer")
+def convert_sales_customer(lead_id: str, claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        lead = db.query(SalesLead).filter(
+            SalesLead.id == lead_id, SalesLead.owner_key == owner_key
+        ).first()
+        if lead is None:
+            raise HTTPException(status_code=404, detail="Sales lead not found.")
+        try:
+            from sales.service import sales_engine
+            lead = sales_engine.convert_customer(db, lead, owner_key)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {"success": True, "customer": True, "lead": _serialize(lead)}
 
 
 # ============================================================
