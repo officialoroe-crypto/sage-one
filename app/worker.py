@@ -86,15 +86,17 @@ class SageWorker:
                 with SessionLocal() as db:
                     project = workflow_repository.get_project(db, profile_id, project_id)
                     if project is not None:
+                        research_id = result.get("research_id") if isinstance(result, dict) else None
                         workflow_repository.create_asset(
                             db,
                             project,
-                            name=f"Task result: {task['title'][:160]}",
-                            asset_type="text",
+                            name=f"Research result: {task['title'][:160]}" if research_id else f"Task result: {task['title'][:160]}",
+                            asset_type="research" if research_id else "text",
                             status="completed",
                             metadata={
                                 "task_id": task["id"],
                                 "source": "durable_task",
+                                "research_id": research_id,
                                 "result": str(result)[:12000],
                             },
                         )
