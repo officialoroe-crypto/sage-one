@@ -848,6 +848,8 @@ def add_memory(
     importance: float = 0.5,
     confidence: float = 1.0,
     source: str = "conversation",
+    owner_key: str | None = None,
+    profile_id: str | None = None,
 ) -> Memory:
     return repository.add_memory(
         db,
@@ -856,16 +858,22 @@ def add_memory(
         importance,
         confidence,
         source,
+        owner_key,
+        profile_id,
     )
 
 
 def get_memories(
     db: DBSession,
     limit: int = 20,
+    owner_key: str | None = None,
+    profile_id: str | None = None,
 ) -> list[Memory]:
     return repository.get_memories(
         db,
         limit,
+        owner_key,
+        profile_id,
     )
 
 
