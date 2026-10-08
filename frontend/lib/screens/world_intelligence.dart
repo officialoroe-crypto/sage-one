@@ -107,7 +107,7 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
                       Text('World Intelligence', style: theme.textTheme.titleLarge),
                       const SizedBox(height: 2),
                       Text(
-                        'SAGE learns from the public world — not your private memory.',
+                        'SAGE learns from the public world — not your private memory. Knowledge remains source-traceable and refreshable.',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -233,6 +233,7 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
     final topic = data['topic'] ?? 'World knowledge';
     final title = data['title'] ?? data['summary'] ?? 'Knowledge update';
     final sourceCount = data['source_count'] ?? data['sources_count'];
+    final updatedAt = data['updated_at'] ?? data['created_at'] ?? data['refreshed_at'];
     return Container(
       margin: const EdgeInsets.only(bottom: 9),
       padding: const EdgeInsets.all(14),
@@ -254,6 +255,8 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
                 const SizedBox(height: 4),
                 Text('$title', style: theme.textTheme.bodyMedium),
                 if (sourceCount != null) ...[
+                  Text(updatedAt == null ? 'No refresh timestamp' : 'Updated $updatedAt', style: theme.textTheme.bodySmall),
+                  const SizedBox(width: 10),
                   const SizedBox(height: 5),
                   Text('$sourceCount sources', style: theme.textTheme.bodySmall),
                 ],

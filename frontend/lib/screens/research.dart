@@ -207,7 +207,7 @@ class _ResearchScreenState extends State<ResearchScreen> {
           const SizedBox(height: 28),
           const Text('Turn a question into evidence.', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          const Text('Search, read, cross-check and preserve evidence before synthesis.', style: TextStyle(color: Colors.white60, height: 1.45)),
+          const Text('Search, read, cross-check and preserve evidence before synthesis. Stored reports retain source and verification context.', style: TextStyle(color: Colors.white60, height: 1.45)),
           const SizedBox(height: 22),
           TextField(
             controller: _query,
@@ -317,7 +317,7 @@ class _HistoryTile extends StatelessWidget {
               Text(summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.35)),
             ],
             const SizedBox(height: 8),
-            Text('$sources sources  •  $claims claims', style: const TextStyle(color: Colors.white30, fontSize: 10, letterSpacing: .7)),
+            Text('$sources sources  •  $claims claims  •  ${map['status'] ?? 'completed'}', style: const TextStyle(color: Colors.white30, fontSize: 10, letterSpacing: .7)),
           ]),
         ),
       ),

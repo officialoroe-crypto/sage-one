@@ -86,16 +86,16 @@ class _EconomyScreenState extends State<EconomyScreen> {
             const SizedBox(height: 14),
             _EvolutionCard(evolution: evolution),
             const SizedBox(height: 24),
-            const _SectionTitle('Premium work'),
+            const _SectionTitle('Premium work • Evolution protected'),
             const SizedBox(height: 10),
             const Text(
-              'Spark costs shown here are internal platform credits. Nothing here represents cash or cryptocurrency.',
+              'Spark is an internal SAGE work credit. Spending Spark never removes verified Evolution achievement.',
               style: TextStyle(color: Colors.white54, height: 1.4, fontSize: 12),
             ),
             const SizedBox(height: 12),
             ..._costs.map((item) => _CostTile(item: Map<String, dynamic>.from(item as Map))),
             const SizedBox(height: 24),
-            const _SectionTitle('Spark history'),
+            const _SectionTitle('Spark ledger • Economic history only'),
             const SizedBox(height: 10),
             if (ledger.isEmpty)
               const Text('No Spark activity yet.', style: TextStyle(color: Colors.white54))
