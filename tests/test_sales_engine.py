@@ -23,3 +23,21 @@ def test_auditor_handles_missing_website_without_network():
     result = BusinessAuditor().audit(None)
     assert result["website"]["present"] is False
     assert result["website"]["quality"] == "missing"
+
+
+def test_sales_intelligence_and_outreach_are_actionable_and_owner_gated():
+    from sales.service import build_outreach, build_sales_intelligence
+    audit = {
+        "website": {"present": False, "quality": "missing", "cta_present": False},
+        "social": {},
+        "content": {"video_present": False, "consistency": "unknown"},
+        "branding": {"quality": "unknown"},
+        "contact": {"present": False},
+    }
+    score = score_opportunity(audit)
+    intelligence = build_sales_intelligence("Example Business", audit, score)
+    outreach = build_outreach("Example Business", intelligence)
+    assert intelligence["recommended_services"]
+    assert outreach["channel"] == "whatsapp"
+    assert outreach["requires_owner_approval"] is True
+    assert "Example Business" in outreach["message"]
