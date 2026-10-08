@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
 import '../evolution/evolution_visual.dart';
-import '../core/sage_api.dart';
 
 class EconomyScreen extends StatefulWidget {
   const EconomyScreen({required this.api, super.key});
@@ -114,12 +113,12 @@ class _SparkCard extends StatelessWidget {
         Container(width: 46, height: 46, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFB99CFF).withValues(alpha: .08), border: Border.all(color: const Color(0xFFB99CFF).withValues(alpha: .35))), child: const Icon(Icons.auto_awesome, color: Color(0xFFB99CFF))),
         const SizedBox(width: 12),
         const Expanded(child: Text('SAGE SPARK', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
-        Text('\${spark['balance'] ?? 0}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+        Text((spark['balance'] ?? 0).toString(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
       ]),
       const SizedBox(height: 18),
       Row(children: [
-        _Metric(label: 'Lifetime earned', value: '\${spark['lifetime_earned'] ?? 0}'),
-        _Metric(label: 'Lifetime spent', value: '\${spark['lifetime_spent'] ?? 0}'),
+        _Metric(label: 'Lifetime earned', value: (spark['lifetime_earned'] ?? 0).toString()),
+        _Metric(label: 'Lifetime spent', value: (spark['lifetime_spent'] ?? 0).toString()),
       ]),
     ]),
   );
@@ -156,14 +155,14 @@ class _EvolutionCard extends StatelessWidget {
         Text(tier, style: TextStyle(color: visual.accent, fontWeight: FontWeight.w800)),
       ]),
       const SizedBox(height: 10),
-      Text('\${evolution['lifetime_achievement'] ?? 0} verified lifetime achievement', style: const TextStyle(color: Colors.white60)),
+      Text((evolution['lifetime_achievement'] ?? 0).toString() + ' verified lifetime achievement', style: const TextStyle(color: Colors.white60)),
       const SizedBox(height: 12),
       ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: ratio, minHeight: 8, valueColor: AlwaysStoppedAnimation<Color>(visual.accent))),
       const SizedBox(height: 8),
       Row(children: [
-        Text('\${progress['current_threshold'] ?? 0}', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+        Text((progress['current_threshold'] ?? 0).toString(), style: const TextStyle(color: Colors.white38, fontSize: 11)),
         const Spacer(),
-        Text('\${progress['next_tier'] ?? 'MAX'}  •  \${progress['next_threshold'] ?? 'MAX'}', style: TextStyle(color: visual.accent, fontSize: 11, fontWeight: FontWeight.w700)),
+        Text((progress['next_tier'] ?? 'MAX').toString() + '  •  ' + (progress['next_threshold'] ?? 'MAX').toString(), style: TextStyle(color: visual.accent, fontSize: 11, fontWeight: FontWeight.w700)),
       ]),
     ]));
   }
@@ -207,7 +206,7 @@ class _CostTile extends StatelessWidget {
     leading: const Icon(Icons.bolt_outlined, color: Color(0xFFB99CFF)),
     title: Text(item['name']?.toString() ?? 'Premium work'),
     subtitle: Text(item['description']?.toString() ?? '', style: const TextStyle(color: Colors.white54)),
-    trailing: Text('\${item['spark_cost'] ?? 0} ✦', style: const TextStyle(fontWeight: FontWeight.w800)),
+    trailing: Text((item['spark_cost'] ?? 0).toString() + ' ✦', style: const TextStyle(fontWeight: FontWeight.w800)),
   ));
 }
 
@@ -220,7 +219,7 @@ class _LedgerTile extends StatelessWidget {
       leading: Icon(delta >= 0 ? Icons.south_west : Icons.north_east, size: 19),
       title: Text(entry['reason']?.toString() ?? 'Spark activity'),
       subtitle: Text(entry['created_at']?.toString() ?? '', style: const TextStyle(color: Colors.white30, fontSize: 10)),
-      trailing: Text('\${delta >= 0 ? '+' : ''}\$delta', style: TextStyle(fontWeight: FontWeight.w800, color: delta >= 0 ? const Color(0xFFE7C76A) : Colors.white70)),
+      trailing: Text((delta >= 0 ? '+' : '') + delta.toString(), style: TextStyle(fontWeight: FontWeight.w800, color: delta >= 0 ? const Color(0xFFE7C76A) : Colors.white70)),
     );
   }
 }
