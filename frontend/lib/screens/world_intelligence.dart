@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
+import '../theme/sage_theme.dart';
 
 class WorldIntelligenceScreen extends StatefulWidget {
   const WorldIntelligenceScreen({required this.api, super.key});
@@ -75,7 +76,8 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
     final learning = _status?['learning_enabled'] == true;
     final selfModification = _status?['self_modification'] == true;
 
-    return SafeArea(
+    return Scaffold(
+      body: SafeArea(
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -88,10 +90,10 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
                   height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.cyanAccent.withOpacity(.65)),
+                    border: Border.all(color: SageTheme.cyan.withValues(alpha: .65)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blueAccent.withOpacity(.18),
+                        color: SageTheme.blue.withOpacity(.18),
                         blurRadius: 18,
                         spreadRadius: 2,
                       ),
@@ -104,11 +106,11 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('World Intelligence', style: theme.textTheme.titleLarge),
+                      Text('World Intelligence', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 2),
                       Text(
                         'SAGE learns from the public world — not your private memory.',
-                        style: theme.textTheme.bodySmall,
+                        style: const TextStyle(fontSize: 10, color: SageTheme.textSecondary),
                       ),
                     ],
                   ),
@@ -162,7 +164,7 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF050A12),
+        color: SageTheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.blueAccent.withOpacity(.32)),
       ),
@@ -171,16 +173,16 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.psychology_alt, color: Colors.lightBlueAccent),
+              const Icon(Icons.psychology_alt, color: SageTheme.cyan),
               const SizedBox(width: 10),
-              Text('SAGE World Layer', style: theme.textTheme.titleMedium),
+              Text('SAGE World Layer', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
             ],
           ),
           const SizedBox(height: 14),
           _statusRow('Public-world learning', learning, Colors.cyanAccent),
-          _statusRow('Source-traceable knowledge', true, Colors.greenAccent),
-          _statusRow('Self-modification blocked', !selfModification, Colors.purpleAccent),
-          _statusRow('Human review for upgrades', true, Colors.amberAccent),
+          _statusRow('Source-traceable knowledge', true, SageTheme.success),
+          _statusRow('Self-modification blocked', !selfModification, SageTheme.violet),
+          _statusRow('Human review for upgrades', true, SageTheme.gold),
         ],
       ),
     );
@@ -237,7 +239,7 @@ class _WorldIntelligenceScreenState extends State<WorldIntelligenceScreen> {
       margin: const EdgeInsets.only(bottom: 9),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF04080E),
+        color: SageTheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(.08)),
       ),
