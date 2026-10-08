@@ -53,7 +53,7 @@ class _CommandCenterState extends State<CommandCenter>
 
     setState(() {
       _sending = true;
-      _status = 'Queued';
+      _status = 'Sending to SAGE Core…';
     });
 
     try {
@@ -94,7 +94,7 @@ class _CommandCenterState extends State<CommandCenter>
       final value = task['result'] ?? task['error'];
 
       setState(() {
-        _status = 'Task ${status.toUpperCase()} • $taskId';
+        _status = terminal ? 'Task complete' : 'SAGE is working…';
         _result = value?.toString();
         _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
       });
@@ -266,18 +266,11 @@ class _SageOrbPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, orb);
 
-    final edge = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = SageTheme.cyan.withValues(alpha: .28 + .18 * intensity);
-    canvas.drawCircle(center, radius, edge);
-
-    final glowEdge = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..color = SageTheme.cyan.withValues(alpha: .035 * intensity)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
-    canvas.drawCircle(center, radius, glowEdge);
+    final softGlow = Paint()
+      ..style = PaintingStyle.fill
+      ..color = SageTheme.cyan.withValues(alpha: .045 * intensity)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+    canvas.drawCircle(center, radius * .96, softGlow);
   }
 
   @override
