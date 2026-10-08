@@ -32,8 +32,6 @@ class _FeatureWorkspaceState extends State<FeatureWorkspace> {
     ]));
 }
 
-class VoiceListeningScreen extends StatelessWidget { const VoiceListeningScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Voice Listening',subtitle:'Hands-free command capture with explicit user control.',icon:Icons.mic,actions:['Start listening','Stop listening','Set auto-send']);}
-class VoiceResponseScreen extends StatelessWidget { const VoiceResponseScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Voice Response',subtitle:'Spoken SAGE answers with playback controls.',icon:Icons.volume_up,actions:['Play latest response','Pause response','Choose voice']);}
 class ChatScreen extends StatefulWidget {
   const ChatScreen({required this.api, super.key});
   final SageApi api;
