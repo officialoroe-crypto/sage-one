@@ -52,7 +52,7 @@ class _SalesScreenState extends State<SalesScreen> {
     return Card(child: ListTile(
       leading: CircleAvatar(child: Text(score.toString())),
       title: Text(lead['business_name']?.toString() ?? 'Unnamed business'),
-      subtitle: Text('${tier} • ${status}\n${lead['website'] ?? 'No website supplied'}'),
+      subtitle: Text('$tier • $status\n${lead['website'] ?? 'No website supplied'}'),
       isThreeLine: true, trailing: const Icon(Icons.chevron_right), onTap: () => openLead(lead)));
   }
 }
@@ -74,13 +74,13 @@ class _SalesLeadScreenState extends State<SalesLeadScreen> {
   Future<void> approve() async {
     setState(() => busy = true);
     try { await widget.api.approveSalesOutreach(lead['id'].toString()); await load(); }
-    catch (e) { _message('Approval failed: ${e}'); }
+    catch (e) { _message('Approval failed: $e'); }
     finally { if (mounted) setState(() => busy = false); }
   }
   Future<void> convert() async {
     setState(() => busy = true);
     try { await widget.api.convertSalesCustomer(lead['id'].toString()); await load(); }
-    catch (e) { _message('Conversion failed: ${e}'); }
+    catch (e) { _message('Conversion failed: $e'); }
     finally { if (mounted) setState(() => busy = false); }
   }
   Future<void> addFollowUp() async {
@@ -95,7 +95,7 @@ class _SalesLeadScreenState extends State<SalesLeadScreen> {
     ));
     if (ok == true && controller.text.trim().isNotEmpty) {
       try { await widget.api.addSalesFollowUp(lead['id'].toString(), controller.text.trim()); await load(); }
-      catch (e) { _message('Follow-up failed: ${e}'); }
+      catch (e) { _message('Follow-up failed: $e'); }
     }
     controller.dispose();
   }
