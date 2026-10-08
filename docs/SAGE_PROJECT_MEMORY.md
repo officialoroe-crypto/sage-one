@@ -71,3 +71,15 @@ The immediate objective is a stable runnable SAGE ONE core and a usable demo. Av
 - Do not make manual prospecting the immediate blocker; the owner already has a first customer target.
 - Build order remains: stabilize core -> connect real backend/frontend -> complete one end-to-end customer workflow -> owner testing/private demo -> then expand automation and Owner Developer Mode.
 - GitHub remains the canonical shared memory for both backend and frontend chats.
+
+## 2026-10-08 Role Boundary Correction — LOCKED
+- The backend chat's job is to **build and maintain the system**, not to personally perform SAGE's future customer-facing work.
+- SAGE Sales is a future SAGE capability/agent. When we say SAGE should create videos, research businesses, make portfolios, generate outreach, or perform sales work, that means **we must code SAGE so SAGE can perform those jobs**.
+- Backend chat must therefore prioritize the infrastructure, APIs, orchestration, tools, permissions, data models, workers, integrations and tests that enable those SAGE capabilities.
+- Do NOT mistake a desired SAGE capability for an instruction for the backend chat to manually perform that capability.
+- Example: “SAGE Sales should create the customer's video” means build the sales/content/video capability into SAGE; it does **not** mean the backend chat should switch its engineering work into manually creating a customer video.
+- Do not let an individual feature such as video generation hijack the roadmap. Features must serve the agreed product architecture and launch priorities.
+- Before implementing a feature, determine: **Who performs this action? SAGE, backend infrastructure, frontend, or the owner?** Keep those responsibilities separate.
+- Current engineering priority: make the existing app runnable end-to-end, connect real backend/frontend behavior, verify routes/buttons/links/contracts, keep CI green, prepare the private demo, then expand SAGE Sales/business discovery and Owner Developer Mode in the agreed order.
+- Work in bulk/full-speed mode, but do not make unrelated changes just to show activity.
+
