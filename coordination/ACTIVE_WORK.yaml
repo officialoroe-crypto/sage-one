@@ -1,3 +1,15 @@
 version: 1
 updated_at: 2026-10-08T04:03:00Z
-claims: []
+claims:
+  - id: frontend-final-surfaces-v2
+    agent: chatgpt
+    branch: feat/flutter-final-surfaces-v2
+    base_sha: 1471181aac309fd3ecdfc7b0d100fba40522af13
+    scope:
+      - frontend/lib/screens/final_surfaces.dart
+      - frontend/test/final_surfaces_test.dart
+      - coordination/ACTIVE_WORK.yaml
+    objective: "Production-polish Spark, Evolution, Profile, Settings, Notifications, Payments, File Manager, and AI Studio surfaces with resilient loading/error/empty states and accessible actions."
+    status: in_progress
+    started_at: 2026-10-08T14:25:00Z
+    updated_at: 2026-10-08T14:25:00Z
