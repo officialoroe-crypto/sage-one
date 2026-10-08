@@ -7,7 +7,7 @@ from database.connection import SessionLocal
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from sales.audit import auditor
 from sales.discovery import discovery_service
-from sales.repository import add_activity, create_lead, get_lead, list_activities, list_leads, serialize, update_lead
+from sales.repository import add_activity, create_lead, find_duplicate, get_lead, list_activities, list_leads, serialize, update_lead
 from sales.scoring import score_opportunity
 from sales.service import build_outreach, build_sales_intelligence
 
@@ -40,6 +40,31 @@ def _json_load(value: str | None) -> dict[str, Any]:
 @router.post("/discover")
 def discover(request: DiscoveryRequest, claims: dict[str, Any] = Depends(authenticate_request)):
     return {"success": True, "query": request.query, "results": discovery_service.search(request.query, request.location, request.limit)}
+
+@router.post("/discover/leads")
+def discover_and_save_leads(request: DiscoveryRequest, claims: dict[str, Any] = Depends(authenticate_request)):
+    """Discover businesses and persist unique candidates as profile-scoped leads."""
+    profile_id = _profile_id(claims)
+    candidates = discovery_service.search(request.query, request.location, request.limit)
+    created = []
+    duplicates = []
+    with SessionLocal() as db:
+        for candidate in candidates:
+            duplicate = find_duplicate(db, profile_id, candidate.get("business_name", ""), candidate.get("website_url"))
+            if duplicate:
+                duplicates.append(serialize(duplicate))
+                continue
+            lead = create_lead(db, profile_id, candidate)
+            add_activity(db, lead.id, "discovered", {"query": request.query, "location": request.location})
+            created.append(serialize(lead))
+    return {
+        "success": True,
+        "query": request.query,
+        "created_count": len(created),
+        "duplicate_count": len(duplicates),
+        "leads": created,
+        "duplicates": duplicates,
+    }
 
 @router.post("/leads")
 def create_lead_endpoint(request: LeadCreateRequest, claims: dict[str, Any] = Depends(authenticate_request)):
