@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
 Last updated: 2026-10-08
-Current main: fbc5b1c5d0949a17ad3fb0fc2b662e1e24dc1682
+Current main: b1d76fa22545d44f743bda9c2589af8ed8150269
 
 ## Identity
 - Project: SAGE ONE
@@ -12,146 +12,86 @@ Current main: fbc5b1c5d0949a17ad3fb0fc2b662e1e24dc1682
 
 ## Development workflow
 - Work in large logical batches.
-- Inspect GitHub first; make source changes through branches/PRs.
+- GitHub main is the canonical source of truth.
+- Use branches/PRs for source changes.
 - Use GitHub Actions for heavy validation so the development laptop stays usable.
-- Never call a feature complete until its success path, failure path, restart/refresh behavior and regression coverage are checked.
+- Never call a feature complete until success, failure, refresh/restart behavior and regression coverage are checked where practical.
 
-## Environment
-- Python local target: 3.14.7
-- CI Python: 3.13
-- FastAPI: 0.141.1
-- Flutter: 3.47.3
-- Android SDK: 37
-- Canonical source: C:\SageOne\sage_core
-- Legacy backend: C:\SageOne\Backend
-- Local backend port: 8010
-
-## Core architecture
-REQUEST → PLAN → EXECUTE → RESULT → VERIFY → EVIDENCE → SETTLE → ACHIEVEMENT → EVOLUTION → HISTORY
-
-Implemented:
+## Current verified product state
+Main contains the real private-first execution core:
 - Durable worker with atomic claim, ownership leases, heartbeat, retry/backoff and lease recovery.
-- FastAPI lifecycle starts/stops the worker.
-- Mission planning with dependency-aware and bounded parallel execution.
+- Mission planning with dependency-aware bounded execution.
 - Real tool execution and verification.
 - Research OS with search, web reading, evidence, claims, verification and persistent research records.
-- Provider routing: Groq, Cerebras, Gemini through Google's OpenAI-compatible API, controlled Ollama fallback.
-- CPU/resource protection that avoids automatic heavy local Ollama takeover.
-- Durable notifications and Flutter task polling.
-- Unified Chat `/command` loop persists session history and carries owner/project context through the durable worker.
-- Completed durable tasks index project results and consent-gated experience memory.
-- Device voice commands now use speech-to-text + TTS while submitting through the same durable `/command` path.
-- Owner Developer Mode now has a real Flutter preview/approval surface and durable owner-scoped proposal records that survive API restarts.
-- Project detail can queue project-scoped SAGE commands directly into the execution loop.
-- Authenticated Google identity foundation.
-- Phone OTP state machine + provider abstraction.
-- User profile/onboarding/memory foundation, plus private mobile memory review/add/delete UI.
-- Local phone-free Developer Mode and SAGE Owner Authority/God Mode.
-- Private-first owner mode: development defaults to a localhost-only owner session; Google/phone/KYC onboarding remains isolated for future multi-user mode.
-- Production environments do not inherit private/developer access by default.
-- Owner Spark/Evolution controls and audit log.
-- Non-mutating Evolution simulation with authoritative thresholds and Flutter animation.
-- Flutter Evolution rank screen reads the canonical 13-rank names/thresholds from the authenticated `/economy/evolution/tiers` API; rank progress remains read-only and sourced from the economy snapshot.
-- Verified mission-task results settle into Evolution atomically and idempotently.
-- Web Reader redirect validation prevents automatic redirect-based private-network SSRF.
-- Web Reader extraction dependency is declared explicitly.
-- Flutter onboarding capability IDs match the backend stable capability contract.
-- Command Center routing display consumes the backend routing shape.
-- World Intelligence status UI correctly represents self-modification as blocked.
-- Spark grants and spends now use idempotent references and atomic SQL balance mutations.
-- Android APK workflow accepts a device-reachable backend URL through workflow dispatch or the repository variable.
+- Provider routing with cloud-first controls and protected local fallback.
+- Durable notifications and Flutter task polling/filtering.
+- Unified Chat `/command` loop with persistent session history and owner/project context.
+- Completed durable tasks can index project results and consented experience memory.
+- Device voice capture and TTS use the same durable command path.
+- Owner Developer Mode provides non-mutating preview plus explicit approval-gated apply.
+- Developer proposals are durable and owner-scoped across API restarts.
+- Project detail can queue project-scoped commands.
+- Authenticated identity/profile/onboarding/memory foundations exist.
+- Private mobile Memory screen supports profile-scoped read/add/delete.
+- World Intelligence has status, knowledge, due items and refresh UI.
+- Spark/Evolution foundations are backend-backed and exposed in Flutter.
+- Apps Hub/ecosystem surfaces, file manager, AI Studio, wallet, payments, transactions, profile, settings and notifications are exposed from the private shell.
+- Android APK and God Mode developer website workflows both succeed from main.
+- SAGE CI passes Python compile/lint/tests plus Flutter analyzer/tests.
 
 ## Private-first owner mode
-- SAGE ONE is currently being built for one owner before any public release work.
-- The mobile entry path skips Google sign-in, phone OTP, and onboarding; those identity capabilities remain in the codebase but are not on the private entry path.
-- Private/developer sessions remain localhost-only and still use a short-lived in-memory backend session token so normal authenticated APIs keep their ownership boundary.
-- Production does not default to private/developer access.
+- SAGE ONE is currently being built for one owner before public release.
+- The private mobile entry path does not require Google sign-in, phone OTP or KYC.
+- Developer access is local/owner controlled and production does not inherit private access by default.
+- Public signup, multi-tenant ownership, production KYC/SMS and payment-provider expansion remain later scope.
 
-## Owner / God Mode
-- Local Developer Mode is localhost-only and requires no phone/SMS/OTP.
-- Owner controls are internal SAGE development/testing controls.
-- Production owner identity is explicitly bound with SAGE_OWNER_AUTH_SUBJECT.
-- God Mode does not create external authority over banks, payments, third-party accounts, or destructive external systems.
+## Safety / authority
+- Developer Mode cannot apply source changes without explicit approval.
+- God Mode does not create external authority over banks, payments, third-party accounts or destructive external systems.
 - Owner economy mutations are audited.
+- World Intelligence cannot self-modify production code.
 
-## Evolution settlement
-A successfully verified mission task awards a deployment-owner-scoped verified achievement event.
-- Reward: 100 Evolution achievement per newly verified mission task.
-- Source identity: mission_task + task ID.
-- Duplicate verification does not award twice.
-- Task verification and Evolution settlement are committed in one database transaction.
-- Failed settlement rolls the verification transaction back.
-
-## Spark economy
+## Economy / Evolution
 - Spark is an internal platform credit, not cash.
-- Premium work has a stable cost catalogue.
-- Grant/spend operations reject non-positive amounts.
-- Repeated operations with the same owner-scoped reference are idempotent.
-- Reusing a reference with a different amount is rejected.
-- Spending uses an atomic SQL balance >= amount update, preventing read/check/write overdraw races.
-- Premium execution now has an atomic reservation → settle/refund lifecycle with owner-scoped idempotency keys. Reservations use the canonical Spark cost catalogue; refunds reverse the balance exactly once and do not inflate lifetime-earned Spark.
-- Premium transaction controls are owner-only development endpoints. Durable premium task creation is owner-authenticated and derives the owner key from trusted claims; the worker reserves catalog-priced Spark before execution, settles on completion, and refunds terminal failure/cancellation. A worker reconciliation pass repairs reserved transactions for terminal tasks after a crash. Retry attempts reuse the same task-scoped idempotency key.
+- Premium work uses a canonical cost catalogue with reservation → settle/refund lifecycle and owner-scoped idempotency.
+- Terminal failure/cancellation refunds exactly once; crash reconciliation exists.
+- Verified mission-task results settle lifetime Evolution achievement atomically and idempotently.
+- Evolution remains separate from Spark spending.
 
-## Web Reader security
-- Only HTTP/HTTPS URLs are accepted.
-- Local/private/link-local/multicast/reserved/unspecified targets are blocked.
-- Redirects are not followed automatically.
-- Every redirect destination is validated again.
-- Redirect chains are bounded.
-- Content size and supported content types are bounded.
-- Current dependency: trafilatura 2.2.0.
+## Security
+- Web Reader validates HTTP/HTTPS targets, blocks private/reserved/link-local targets, validates redirect destinations and bounds content.
+- Authentication ownership checks are applied to user/profile/task/project/developer surfaces.
+- Developer proposals are owner-scoped by trusted authenticated identity.
+- Public worker health does not expose private worker results.
 
-## Validation status
-- SAGE CI passed on the final audit-hardening PR after the Android workflow and Spark changes.
-- Python job passed.
-- Flutter analyzer/tests passed.
-- The audited hardening work is merged to main; current main is `a3f82b7deb10ae8346fa422d3a8e87a46ae8b285`.
-- Premium durable task integration was merged in PR #79. Worker recovery/migration tests passed CI and were merged in PR #80; owner/catalog boundary tests passed CI and were merged in PR #81; the isolated API-to-worker end-to-end test and internal-only owner-key handoff fix passed CI and were merged in PR #82. Project-state validation updates were merged in PR #83.
-- Fresh main-branch Android APK / Pages workflow results should be checked after release-affecting pushes.
+## Validation — main b1d76fa
+Latest main push triggered and completed successfully:
+- SAGE CI — success
+- SAGE ONE Android APK — success
+- SAGE ONE God Mode Developer Website — success
 
-## Shared owner memory system
-- Added `memory/CHATGPT_OS.md` as the owner-facing AI working contract.
-- Added `memory/OWNER_MEMORY_MODEL.md` defining owner-scoped memory and future per-user isolation.
-- Added durable rule, preference, decision, mistake, current-context, and SAGE ONE integration documents under `memory/`.
-- Public GitHub contains the memory contract only; private conversations belong in the runtime memory store.
+Latest verified workflow run IDs:
+- SAGE CI: 37800075265
+- Android APK: 37800075159
+- God Mode Developer Website: 37800075318
 
-## Current private-first phase
-The immediate product target is a fast personal workspace for the owner: Command Center, Research, Tasks, Create, Projects/Workflow, memory, and execution. The private Flutter shell now exposes Memory from the More menu; its screen reads, adds, and deletes profile-scoped memories through the existing authenticated identity API. Public signup, KYC, Google/phone verification UX, multi-tenant ownership, and payment-provider integration are deferred until after real personal use.
+## Important coordination truth
+Several older feature branches and open PRs still exist. Their existence does not mean their work is absent from main. Current main must be treated as the canonical implementation; stale branches should be reconciled or closed only after their changes are compared with main.
 
-## Remaining real-world blockers
-These require external configuration or are deliberate future scope:
-1. Production SMS/OTP provider credentials and delivery service.
+## Real remaining blockers
+1. Production SMS/OTP provider credentials and delivery.
 2. Long-lived Google web token/session refresh UX.
-3. Run the additive task migration and smoke-test the premium lifecycle against the user's configured local database. CI covers worker success, retry idempotency, terminal refunds, reconciliation, migration repeatability, endpoint owner/catalog boundaries, and isolated SQLite API-to-worker settlement; local database/provider-backed runtime validation remains outstanding. See `docs/runbooks/PREMIUM_SPARK_TASKS.md`.
-4. Consent-driven memory auto-learning UX and pipeline.
-5. Consent-driven memory auto-learning pipeline.
-6. Full multi-tenant ownership only if SAGE ONE becomes a shared public service.
-7. Automated visual regression tests for Evolution animation milestones.
-8. Production release hardening and external API integrations.
+3. Smoke-test the premium lifecycle against the user's configured local database/provider setup.
+4. Broader consent-driven memory candidate review/UX.
+5. Full multi-tenant isolation only if SAGE becomes a shared public service.
+6. Automated visual regression for Evolution animation milestones.
+7. Broader external integrations and production release hardening.
+8. Manual device/reference review of the complete Flutter surface; CI cannot prove visual fidelity.
 
 ## Continuity rule
-Always inspect the actual GitHub main branch and this file before architectural changes. Do not rely on an old branch or stale local copy.
+Always inspect actual GitHub main and this file before architectural changes. Do not rely on stale branches or old chat state.
 
 ## Multi-AI development coordination
-- SAGE ONE is intended to be safely maintainable from multiple independent AI sessions/accounts.
-- GitHub main is the canonical source of truth; chat history is not synchronization state.
-- `AI_COLLABORATION.md` defines preflight, work claims, path locks, handoffs, reconciliation, branch/PR rules, and planned automation.
-- `memory/AI_WORKING_CONTEXT.md` records the current Agentic Gateway milestone, core-completion target, immediate work queue, and multi-AI rules.
-- GitHub Issue #90 tracks implementation of the developer collaboration/work-lock control plane.
-
-
-## Backend completion update — 2026-10-01
-- Agentic Action Engine remains the controlled tool execution gateway.
-- Standard Tool Contract metadata is now part of the registry and action-plan flow.
-- Durable Automation persists one-time/interval schedules and dispatches them into the normal durable task queue.
-- Automation trigger, action, execution verification, and outcome verification events are traceable.
-- Durable ActionEvidence has a controlled retrieval surface.
-- Mission trace/result endpoints require SAGE Owner Authority.
-- AI work coordination is operational with machine-readable claims, conservative path-overlap checks, stale-claim detection, explicit takeover, and CI validation.
-- Spark premium reservation/settlement/refund is already wired into the durable worker lifecycle and crash reconciliation.
-
-
-## Latest verified backend update — 2026-10-01
-- World Intelligence now has a transparent configurable source-selection policy: HTTP/HTTPS validation, optional allowlist, explicit blocklist, and per-domain diversity limits.
-- Policy rejections are surfaced rather than hidden.
-- Current main: `6c454a63af377694e7e598cb67edc4d71656342a`.
+- GitHub main is the synchronization source of truth.
+- `AI_COLLABORATION.md` defines claims, path locks, handoffs, reconciliation and branch/PR rules.
+- Do not silently overwrite another active agent's work.
