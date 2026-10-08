@@ -31,10 +31,11 @@ def test_command_creates_owned_durable_task_with_project_context():
         )
         db.add(profile)
         db.commit()
+        profile_id = profile.id
 
         workspace = workflow_repository.create_workspace(
             db,
-            profile.id,
+            profile_id,
             "SAGE ONE",
             "sage-one",
             "personal",
@@ -104,7 +105,7 @@ def test_completed_task_indexes_project_result_and_learns_with_consent():
             db=db,
             title="Persistent result",
             description="Produce a durable project result",
-            profile_id=profile.id,
+            profile_id=profile_id,
             project_id=project.id,
         )
 
@@ -112,7 +113,7 @@ def test_completed_task_indexes_project_result_and_learns_with_consent():
     worker._persist_task_outcome(task.__dict__, {"success": True, "answer": "done"})
 
     with SessionLocal() as db:
-        assets = workflow_repository.list_assets(db, profile.id, project.id)
+        assets = workflow_repository.list_assets(db, profile_id, project.id)
         assert len(assets) == 1
         assert assets[0].asset_type == "text"
         assert assets[0].status == "completed"
