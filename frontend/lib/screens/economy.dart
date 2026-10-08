@@ -36,7 +36,10 @@ class _EconomyScreenState extends State<EconomyScreen> {
       if (!mounted) return;
       setState(() {
         _data = Map<String, dynamic>.from(results[0] as Map);
-        _costs = List<dynamic>.from(results[1] as Iterable);
+        _costs = (results[1] is Iterable ? results[1] as Iterable : const <dynamic>[])
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(growable: false);
         _loading = false;
       });
     } catch (error) {
@@ -62,7 +65,10 @@ class _EconomyScreenState extends State<EconomyScreen> {
 
     final spark = Map<String, dynamic>.from(_data?['spark'] ?? {});
     final evolution = Map<String, dynamic>.from(_data?['evolution'] ?? {});
-    final ledger = (_data?['ledger'] as List?) ?? const [];
+    final ledger = (_data?['ledger'] is List ? _data?['ledger'] as List : const <dynamic>[])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
 
     return Scaffold(
       appBar: AppBar(

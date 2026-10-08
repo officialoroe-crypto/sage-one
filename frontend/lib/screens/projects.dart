@@ -42,7 +42,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _projects = results.expand((items) => items).toList();
+        _projects = results
+            .expand((items) => items)
+            .whereType<Map>()
+            .where((item) => item['id'] != null)
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(growable: false);
         _loading = false;
         _error = null;
       });

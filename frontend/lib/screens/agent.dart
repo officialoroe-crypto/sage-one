@@ -19,12 +19,14 @@ class _AgentScreenState extends State<AgentScreen> {
   String? _taskId;
   String? _result;
   bool _running = false;
+  bool _hasError = false;
 
   Future<void> _runSystemCheck() async {
     if (_running) return;
     _stopPolling();
     setState(() {
       _running = true;
+      _hasError = false;
       _status = 'Queueing system check…';
       _taskId = null;
       _result = null;
@@ -43,6 +45,7 @@ class _AgentScreenState extends State<AgentScreen> {
         setState(() {
           _status = 'Could not reach Sage Core';
           _running = false;
+          _hasError = true;
         });
       }
     }
@@ -138,6 +141,14 @@ class _AgentScreenState extends State<AgentScreen> {
             Text(_status, style: const TextStyle(color: Colors.white54, fontSize: 11)),
             if (_taskId != null)
               Text('TASK  $_taskId', style: const TextStyle(color: Colors.white30, fontSize: 10, letterSpacing: 1)),
+            if (_hasError) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _running ? null : _runSystemCheck,
+                icon: const Icon(Icons.refresh),
+                label: const Text('RETRY SYSTEM CHECK'),
+              ),
+            ],
             if (_result != null && _result!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Card(child: Padding(padding: const EdgeInsets.all(14), child: Text(_result!, style: const TextStyle(color: Colors.white70, height: 1.4)))),
