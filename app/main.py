@@ -385,6 +385,25 @@ def get_session(session_id: str):
         db.close()
 
 
+@app.get("/session/{session_id}/messages")
+def get_session_messages(
+    session_id: str,
+    limit: int = 50,
+    _claims: dict[str, Any] = Depends(_require_owner),
+):
+    with SessionLocal() as db:
+        session = repository.get_session(db, session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        messages = repository.get_messages(db, session_id, limit=max(1, min(limit, 100)))
+        messages.reverse()
+        return {
+            "success": True,
+            "session_id": session_id,
+            "messages": _serialize(messages),
+        }
+
+
 # ============================================================
 # CHAT
 # ============================================================
