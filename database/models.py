@@ -319,3 +319,29 @@ class Automation(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
     )
+
+
+# ============================================================
+# DEVELOPER PROPOSALS
+# ============================================================
+
+class DeveloperProposal(Base):
+    """Durable owner-scoped preview/apply record for Developer Mode."""
+
+    __tablename__ = "developer_proposals"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_key: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    task: Mapped[str] = mapped_column(Text, nullable=False)
+    workspace: Mapped[str] = mapped_column(Text, nullable=False)
+    preview_json: Mapped[str] = mapped_column(Text, nullable=False)
+    result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String, nullable=False, default="preview", index=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        index=True,
+    )
