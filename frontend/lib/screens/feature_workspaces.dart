@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
 
 class FeatureWorkspace extends StatefulWidget {
@@ -31,7 +34,206 @@ class _FeatureWorkspaceState extends State<FeatureWorkspace> {
 
 class VoiceListeningScreen extends StatelessWidget { const VoiceListeningScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Voice Listening',subtitle:'Hands-free command capture with explicit user control.',icon:Icons.mic,actions:['Start listening','Stop listening','Set auto-send']);}
 class VoiceResponseScreen extends StatelessWidget { const VoiceResponseScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Voice Response',subtitle:'Spoken SAGE answers with playback controls.',icon:Icons.volume_up,actions:['Play latest response','Pause response','Choose voice']);}
-class ChatScreen extends StatelessWidget { const ChatScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Chat',subtitle:'Persistent conversational workspace connected to SAGE tasks.',icon:Icons.chat_bubble_outline,actions:['New conversation','Continue last conversation','Attach context']);}
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({required this.api, super.key});
+  final SageApi api;
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final _input = TextEditingController();
+  final _scroll = ScrollController();
+  final List<Map<String, String>> _messages = <Map<String, String>>[];
+  String? _sessionId;
+  String? _taskId;
+  Timer? _poller;
+  bool _sending = false;
+  String _status = 'Ready';
+
+  @override
+  void initState() {
+    super.initState();
+    _newSession();
+  }
+
+  Future<void> _newSession() async {
+    try {
+      final session = await widget.api.createSession();
+      final value = session['session'];
+      if (value is Map) _sessionId = value['id']?.toString();
+    } catch (_) {
+      if (mounted) setState(() => _status = 'Could not start chat');
+    }
+  }
+
+  Future<void> _loadHistory() async {
+    final id = _sessionId;
+    if (id == null) return;
+    try {
+      final items = await widget.api.sessionMessages(id);
+      if (!mounted) return;
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(items.whereType<Map>().map((item) => {
+                'role': (item['role'] ?? '').toString(),
+                'content': (item['content'] ?? '').toString(),
+              }));
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _send() async {
+    final text = _input.text.trim();
+    if (text.isEmpty || _sending) return;
+    if (_sessionId == null) await _newSession();
+    final sessionId = _sessionId;
+    if (sessionId == null) return;
+
+    setState(() {
+      _sending = true;
+      _status = 'Queued';
+      _messages.add({'role': 'user', 'content': text});
+      _input.clear();
+    });
+
+    try {
+      final response = await widget.api.submitCommand(text, sessionId: sessionId);
+      final task = response['task'];
+      _taskId = task is Map ? task['id']?.toString() : null;
+      if (_taskId != null) _startPolling();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _status = 'Could not queue command';
+        _messages.add({'role': 'system', 'content': error.toString()});
+      });
+    }
+  }
+
+  void _startPolling() {
+    _poller?.cancel();
+    _poller = Timer.periodic(const Duration(seconds: 2), (_) => _pollTask());
+    _pollTask();
+  }
+
+  Future<void> _pollTask() async {
+    final id = _taskId;
+    if (id == null) return;
+    try {
+      final task = await widget.api.task(id);
+      final status = (task['status'] ?? 'unknown').toString().toLowerCase();
+      final result = task['result']?.toString();
+      final error = task['error']?.toString();
+      if (!mounted) return;
+      setState(() {
+        _status = status.toUpperCase();
+        if (status == 'completed' && result != null && result.isNotEmpty) {
+          _messages.add({'role': 'assistant', 'content': result});
+        } else if (status == 'failed' && error != null) {
+          _messages.add({'role': 'system', 'content': error});
+        }
+        _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
+      });
+      if (!_sending) {
+        _poller?.cancel();
+        _loadHistory();
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _poller?.cancel();
+    _input.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: SageTheme.voidBlack,
+      appBar: AppBar(
+        title: const Text('SAGE Chat'),
+        backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(onPressed: _loadHistory, icon: const Icon(Icons.refresh)),
+          IconButton(onPressed: _newSession, icon: const Icon(Icons.add_comment_outlined)),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _messages.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Talk to SAGE. Every command enters the durable execution pipeline.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: SageTheme.textSecondary),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final item = _messages[index];
+                      final role = item['role'] ?? 'system';
+                      final isUser = role == 'user';
+                      return Align(
+                        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 620),
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isUser ? SageTheme.blue.withValues(alpha: .24) : SageTheme.cyan.withValues(alpha: .08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: SageTheme.cyan.withValues(alpha: .12)),
+                          ),
+                          child: SelectableText(
+                            item['content'] ?? '',
+                            style: const TextStyle(color: SageTheme.textPrimary, height: 1.45),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _input,
+                    minLines: 1,
+                    maxLines: 5,
+                    enabled: !_sending,
+                    onSubmitted: (_) => _send(),
+                    decoration: InputDecoration(
+                      hintText: 'Ask SAGE to do something…',
+                      suffixText: _status,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                IconButton.filled(
+                  onPressed: _sending ? null : _send,
+                  icon: const Icon(Icons.arrow_upward),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 class AppsScreen extends StatelessWidget { const AppsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Apps',subtitle:'Connected tools and future integrations in one control surface.',icon:Icons.apps,actions:['Browse connected apps','Connect an app','Manage permissions']);}
 class EarningsScreen extends StatelessWidget { const EarningsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Earnings',subtitle:'Track completed work, payouts and creator income.',icon:Icons.trending_up,actions:['View earnings','View pending payouts','Open earnings history']);}
 class MarketplaceScreen extends StatelessWidget { const MarketplaceScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Marketplace',subtitle:'Discover services, tools and SAGE-powered work.',icon:Icons.storefront,actions:['Browse marketplace','View saved items','Open seller tools']);}
