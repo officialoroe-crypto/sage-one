@@ -41,7 +41,7 @@ def test_developer_login_is_disabled_by_default(monkeypatch):
     request = Mock()
     request.client.host = "127.0.0.1"
     try:
-        api.developer_login(request, api.DeveloperLoginRequest(phone="+9779800000000"))
+        api.developer_login(request, api.DeveloperLoginRequest(label="local-owner"))
     except HTTPException as exc:
         assert exc.status_code == 404
     else:
@@ -66,3 +66,12 @@ def test_private_owner_onboarding_allows_missing_phone():
         help_intent="Build SAGE ONE", capabilities=[], memory_consent=False,
     )
     assert request.phone is None
+
+
+def test_phone_send_request_requires_phone():
+    import pydantic
+    try:
+        api.PhoneRequest.model_validate({})
+    except pydantic.ValidationError:
+        return
+    raise AssertionError("OTP send requests must require a phone number")

@@ -1,4 +1,3 @@
-// ignore_for_file: use_null_aware_elements
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -78,7 +77,7 @@ class IdentityClient {
   Future<Map<String, dynamic>> onboardingOptions() async => _authorized('GET', '/identity/onboarding/options');
   Future<Map<String, dynamic>> sendPhoneOtp(String phone) async => _authorized('POST', '/identity/phone/send', body: {'phone': phone});
   Future<Map<String, dynamic>> verifyPhoneOtp(String challengeId, String code) async => _authorized('POST', '/identity/phone/verify', body: {'challenge_id': challengeId, 'code': code});
-  Future<Map<String, dynamic>> completeOnboarding({required String name, String? phone, required String address, required int age, required String helpIntent, required List<String> capabilities, required bool memoryConsent}) async => _authorized('POST', '/identity/onboarding', body: {'name': name, if (phone != null) 'phone': phone, 'address': address, 'age': age, 'basic_info': <String, dynamic>{}, 'help_intent': helpIntent, 'capabilities': capabilities, 'memory_consent': memoryConsent});
+  Future<Map<String, dynamic>> completeOnboarding({required String name, String? phone, required String address, required int age, required String helpIntent, required List<String> capabilities, required bool memoryConsent}) async => _authorized('POST', '/identity/onboarding', body: {'name': name, ...? (phone == null ? null : {'phone': phone}), 'address': address, 'age': age, 'basic_info': <String, dynamic>{}, 'help_intent': helpIntent, 'capabilities': capabilities, 'memory_consent': memoryConsent});
 
   Future<Map<String, dynamic>> _authorized(String method, String path, {Map<String, dynamic>? body}) async {
     final idToken = await token();
