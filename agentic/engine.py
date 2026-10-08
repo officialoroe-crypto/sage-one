@@ -117,6 +117,7 @@ class SQLAlchemyActionLogStore:
         try:
             row = self._model(
                 id=action_id,
+                owner_key=request.owner_key,
                 session_id=request.session_id,
                 task_id=request.task_id,
                 mission_id=request.mission_id,

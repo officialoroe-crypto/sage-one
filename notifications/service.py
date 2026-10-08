@@ -22,6 +22,7 @@ def create_task_notification(
     *,
     success: bool,
     body: str | None = None,
+    owner_key: str | None = None,
 ):
     status = "completed" if success else "failed"
     title = "SAGE task completed" if success else "SAGE task failed"
@@ -39,6 +40,7 @@ def create_task_notification(
             notification_type=f"task.{status}",
             task_id=task.get("id"),
             session_id=task.get("session_id"),
+            owner_key=owner_key or task.get("owner_key"),
         )
         event_store.emit(
             event_type="NotificationCreated",
@@ -60,6 +62,7 @@ def list_notifications(
     session_id: str | None = None,
     unread_only: bool = False,
     limit: int = 50,
+    owner_key: str | None = None,
 ):
     db = SessionLocal()
     try:
@@ -70,24 +73,25 @@ def list_notifications(
                 session_id=session_id,
                 unread_only=unread_only,
                 limit=limit,
+                owner_key=owner_key,
             )
         ]
     finally:
         db.close()
 
 
-def mark_read(notification_id: str):
+def mark_read(notification_id: str, owner_key: str | None = None):
     db = SessionLocal()
     try:
-        item = repository.mark_notification_read(db, notification_id)
+        item = repository.mark_notification_read(db, notification_id, owner_key=owner_key)
         return serialize(item) if item else None
     finally:
         db.close()
 
 
-def mark_all_read(session_id: str | None = None):
+def mark_all_read(session_id: str | None = None, owner_key: str | None = None):
     db = SessionLocal()
     try:
-        return repository.mark_all_notifications_read(db, session_id=session_id)
+        return repository.mark_all_notifications_read(db, session_id=session_id, **({"owner_key": owner_key} if owner_key is not None else {}))
     finally:
         db.close()

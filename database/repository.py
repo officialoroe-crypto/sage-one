@@ -557,9 +557,11 @@ class SageRepository:
         arguments: dict | None = None,
         permission_allowed: bool = False,
         permission_reason: str | None = None,
+        owner_key: str | None = None,
     ) -> ActionLog:
         action = ActionLog(
             id=str(uuid.uuid4()),
+            owner_key=owner_key,
             session_id=session_id,
             task_id=task_id,
             tool=tool,
@@ -667,8 +669,12 @@ class SageRepository:
         tool: str | None = None,
         status: str | None = None,
         limit: int = 100,
+        owner_key: str | None = None,
     ) -> list[ActionLog]:
         query = db.query(ActionLog)
+
+        if owner_key is not None:
+            query = query.filter(ActionLog.owner_key == owner_key)
 
         if session_id:
             query = query.filter(
@@ -710,9 +716,11 @@ class SageRepository:
         notification_type: str = "task",
         task_id: str | None = None,
         session_id: str | None = None,
+        owner_key: str | None = None,
     ) -> Notification:
         notification = Notification(
             id=str(uuid.uuid4()),
+            owner_key=owner_key,
             task_id=task_id,
             session_id=session_id,
             notification_type=notification_type,
@@ -730,8 +738,11 @@ class SageRepository:
         session_id: str | None = None,
         unread_only: bool = False,
         limit: int = 50,
+        owner_key: str | None = None,
     ) -> list[Notification]:
         query = db.query(Notification)
+        if owner_key is not None:
+            query = query.filter(Notification.owner_key == owner_key)
         if session_id:
             query = query.filter(Notification.session_id == session_id)
         if unread_only:
@@ -747,6 +758,7 @@ class SageRepository:
         self,
         db: DBSession,
         notification_id: str,
+        owner_key: str | None = None,
     ) -> Notification | None:
         notification = (
             db.query(Notification)
@@ -764,8 +776,11 @@ class SageRepository:
         self,
         db: DBSession,
         session_id: str | None = None,
+        owner_key: str | None = None,
     ) -> int:
         query = db.query(Notification).filter(Notification.read_at.is_(None))
+        if owner_key is not None:
+            query = query.filter(Notification.owner_key == owner_key)
         if session_id:
             query = query.filter(Notification.session_id == session_id)
         notifications = query.all()

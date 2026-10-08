@@ -56,6 +56,7 @@ class Memory(Base):
 class Mission(Base):
     __tablename__ = "missions"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     goal: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String, default="planning", nullable=False, index=True)
     priority: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
@@ -117,6 +118,7 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     task_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     session_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     notification_type: Mapped[str] = mapped_column(String, nullable=False, default="task")
@@ -248,6 +250,7 @@ class ExecutionEvent(Base):
 class ActionLog(Base):
     __tablename__ = "action_logs"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     session_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     task_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     mission_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
@@ -278,6 +281,7 @@ class ResearchRecord(Base):
     __tablename__ = "research_records"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     task_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     session_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     question: Mapped[str] = mapped_column(Text, nullable=False, index=True)

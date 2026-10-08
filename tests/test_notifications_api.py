@@ -31,7 +31,7 @@ def test_notification_can_be_marked_read(monkeypatch):
         "task_id": "task-1",
         "read": True,
     }
-    monkeypatch.setattr("app.main.mark_read", lambda notification_id: expected)
+    monkeypatch.setattr("app.main.mark_read", lambda notification_id, owner_key=None: expected)
 
     response = client.post("/notifications/n-1/read")
 
@@ -40,7 +40,7 @@ def test_notification_can_be_marked_read(monkeypatch):
 
 
 def test_missing_notification_returns_404(monkeypatch):
-    monkeypatch.setattr("app.main.mark_read", lambda notification_id: None)
+    monkeypatch.setattr("app.main.mark_read", lambda notification_id, owner_key=None: None)
 
     response = client.post("/notifications/missing/read")
 
@@ -48,7 +48,7 @@ def test_missing_notification_returns_404(monkeypatch):
 
 
 def test_mark_all_notifications_read(monkeypatch):
-    monkeypatch.setattr("app.main.mark_all_read", lambda session_id=None: 3)
+    monkeypatch.setattr("app.main.mark_all_read", lambda session_id=None, owner_key=None: 3)
 
     response = client.post("/notifications/read-all")
 

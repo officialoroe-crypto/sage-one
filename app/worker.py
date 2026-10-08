@@ -231,6 +231,7 @@ class SageWorker:
                     result,
                     task_id=task['id'],
                     session_id=session_id,
+                    **({'owner_key': task['owner_key']} if task.get('owner_key') else {}),
                 )
                 result = {
                     **result,

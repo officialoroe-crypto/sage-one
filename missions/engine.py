@@ -41,6 +41,7 @@ class MissionEngine:
         goal: str,
         session_id: str | None = None,
         priority: int = 3,
+        owner_key: str | None = None,
     ):
 
         mission_id = str(uuid.uuid4())
@@ -49,6 +50,7 @@ class MissionEngine:
 
             mission = Mission(
                 id=mission_id,
+                owner_key=owner_key,
                 goal=goal,
                 status="planning",
                 priority=priority,
@@ -74,7 +76,8 @@ class MissionEngine:
 
     def get_mission(
         self,
-        mission_id: str
+        mission_id: str,
+        owner_key: str | None = None,
     ):
 
         with SessionLocal() as db:
@@ -82,7 +85,8 @@ class MissionEngine:
             mission = (
                 db.query(Mission)
                 .filter(
-                    Mission.id == mission_id
+                    Mission.id == mission_id,
+                    *([Mission.owner_key == owner_key] if owner_key is not None else []),
                 )
                 .first()
             )

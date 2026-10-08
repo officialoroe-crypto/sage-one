@@ -938,6 +938,7 @@ def execute_tool(
                 owner_authorized=True,
                 verify=True,
                 source="api_tools_execute",
+                owner_key=f"{_claims['auth_provider']}:{_claims['auth_subject']}",
             )
         ).to_dict()
 
@@ -997,11 +998,12 @@ def set_permission(
 # ============================================================
 
 @app.get("/audit")
-def audit():
+def audit(_claims: dict[str, Any] = Depends(_require_owner)):
     db = SessionLocal()
 
     try:
-        actions = repository.get_actions(db)
+        owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
+        actions = repository.get_actions(db, owner_key=owner_key)
 
         return {
             "success": True,
@@ -1114,17 +1116,27 @@ def cancel_task(
     }
 
 
+
+
+def _owned_mission_id(mission_id: str, claims: dict[str, Any]) -> str:
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    mission = mission_engine.get_mission(mission_id, owner_key=owner_key)
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    return mission_id
+
 # ============================================================
 # MISSIONS
 # ============================================================
 
 @app.post("/missions")
-def create_mission(request: MissionCreateRequest):
+def create_mission(request: MissionCreateRequest, claims: dict[str, Any] = Depends(_require_owner)):
 
     mission = mission_engine.create_mission(
         goal=request.goal,
         priority=request.priority,
         session_id=request.session_id,
+        owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
     )
 
     return {
@@ -1134,9 +1146,9 @@ def create_mission(request: MissionCreateRequest):
 
 
 @app.get("/missions/{mission_id}")
-def get_mission(mission_id: str):
+def get_mission(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
-    mission = mission_engine.get_mission(mission_id)
+    mission = mission_engine.get_mission(mission_id, owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}")
 
     if not mission:
         raise HTTPException(
@@ -1173,8 +1185,9 @@ def plan_mission(request: MissionPlanRequest):
 
 
 @app.get("/missions/{mission_id}/tasks")
-def mission_tasks(mission_id: str):
+def mission_tasks(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
+    _owned_mission_id(mission_id, claims)
     return {
         "success": True,
         "tasks": _serialize(
@@ -1184,8 +1197,9 @@ def mission_tasks(mission_id: str):
 
 
 @app.get("/missions/{mission_id}/ready")
-def mission_ready_tasks(mission_id: str):
+def mission_ready_tasks(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
+    _owned_mission_id(mission_id, claims)
     return {
         "success": True,
         "tasks": _serialize(
@@ -1201,8 +1215,10 @@ def create_mission_task(
     description: str,
     agent: str = "general",
     priority: int = 3,
+    claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, claims)
     task = mission_engine.create_task(
         mission_id=mission_id,
         title=title,
@@ -1222,7 +1238,14 @@ def create_mission_task(
 # ============================================================
 
 @app.post("/missions/tasks/{task_id}/start")
-def start_task(task_id: str):
+def start_task(task_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     return {
         "success": True,
@@ -1236,7 +1259,13 @@ def start_task(task_id: str):
 def complete_task(
     task_id: str,
     request: TaskStatusRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
 ):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     return {
         "success": True,
@@ -1253,7 +1282,13 @@ def complete_task(
 def fail_task(
     task_id: str,
     request: TaskStatusRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
 ):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     error = request.error or "Task failed."
 
@@ -1269,7 +1304,14 @@ def fail_task(
 
 
 @app.post("/missions/tasks/{task_id}/verify")
-def verify_task(task_id: str):
+def verify_task(task_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     """
     Manual verification endpoint.
@@ -1296,8 +1338,9 @@ def verify_task(task_id: str):
 # ============================================================
 
 @app.post("/missions/{mission_id}/refresh")
-def refresh_mission(mission_id: str):
+def refresh_mission(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
+    _owned_mission_id(mission_id, claims)
     return {
         "success": True,
         "mission": _serialize(
@@ -1319,6 +1362,7 @@ def execute_mission(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
     try:
         result = execution_engine.execute_mission(
             mission_id=mission_id,
@@ -1342,6 +1386,7 @@ def execute_next_task(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
     try:
         result = execution_engine.execute_next(
             mission_id,
@@ -1388,6 +1433,8 @@ def get_mission_trace(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
+
     return _serialize(
         execution_trace.get_mission_trace(
             mission_id
@@ -1401,6 +1448,8 @@ def get_mission_result(
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, _claims)
+
     return _serialize(
         execution_trace.get_mission_result(
             mission_id
@@ -1413,6 +1462,8 @@ def get_trace_summary(
     mission_id: str,
     _claims: dict[str, Any] = Depends(_require_owner),
 ):
+
+    _owned_mission_id(mission_id, _claims)
 
     trace = execution_trace.get_mission_trace(
         mission_id
@@ -1436,6 +1487,7 @@ def get_trace_summary(
 
 @app.get("/notifications")
 def get_notifications(
+    claims: dict[str, Any] = Depends(_require_owner),
     session_id: Optional[str] = None,
     unread_only: bool = False,
     limit: int = 50,
@@ -1446,23 +1498,26 @@ def get_notifications(
             session_id=session_id,
             unread_only=unread_only,
             limit=limit,
+            owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
         ),
     }
 
 
 @app.post("/notifications/{notification_id}/read")
-def read_notification(notification_id: str):
-    notification = mark_read(notification_id)
+def read_notification(notification_id: str, _claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
+    notification = mark_read(notification_id, owner_key=owner_key)
     if notification is None:
         raise HTTPException(status_code=404, detail="Notification not found")
     return {"success": True, "notification": notification}
 
 
 @app.post("/notifications/read-all")
-def read_all_notifications(session_id: Optional[str] = None):
+def read_all_notifications(session_id: Optional[str] = None, _claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
     return {
         "success": True,
-        "marked_read": mark_all_read(session_id=session_id),
+        "marked_read": mark_all_read(session_id=session_id, owner_key=owner_key),
     }
 
 

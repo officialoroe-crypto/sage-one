@@ -14,6 +14,7 @@ class ActionRequest:
     task_id: str | None = None
     mission_id: str | None = None
     parent_action_id: str | None = None
+    owner_key: str | None = None
     owner_authorized: bool = False
     verify: bool = True
     source: str = "agent"
