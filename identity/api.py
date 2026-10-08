@@ -82,6 +82,11 @@ class MemoryUpdateRequest(BaseModel):
 def _profile_from_claims(claims: dict[str, Any]) -> dict[str, Any]:
     return get_or_create_authenticated_profile(claims)
 
+
+def _requires_phone_verification(claims: dict[str, Any], profile: dict[str, Any]) -> bool:
+    """External identities require verified phone; private owner mode does not."""
+    return not bool(claims.get("owner_mode")) and not bool(profile.get("phone_verified"))
+
 @router.post("/dev-login")
 def developer_login(request: Request, payload: DeveloperLoginRequest):
     if not settings.DEVELOPER_MODE:
@@ -142,7 +147,7 @@ def complete_onboarding(request: OnboardingRequest, claims: dict[str, Any] = Dep
     profile = _profile_from_claims(claims)
     capabilities = validate_capabilities(request.capabilities)
     private_owner = bool(claims.get("owner_mode"))
-    if not private_owner and not profile["phone_verified"]:
+    if _requires_phone_verification(claims, profile):
         raise HTTPException(status_code=409, detail="Phone verification is required before onboarding can be completed.")
     if not private_owner and profile["phone"] != request.phone:
         raise HTTPException(status_code=409, detail="The verified phone number must match onboarding.")
