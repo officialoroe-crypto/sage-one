@@ -14,11 +14,16 @@ class CreateScreen extends StatefulWidget {
 class _CreateScreenState extends State<CreateScreen> {
   final _projectName = TextEditingController();
   final _description = TextEditingController();
+  final _videoTitle = TextEditingController();
+  final _videoSubtitle = TextEditingController();
+  final _videoCta = TextEditingController(text: 'Contact us on WhatsApp');
   String _projectType = 'content';
   List<dynamic> _workspaces = const [];
   String? _workspaceId;
   bool _loading = true;
   bool _creating = false;
+  String? _lastProjectId;
+  String? _lastProjectName;
 
   static const _contentStages = [
     'idea', 'script', 'audio', 'images', 'video', 'edit',
@@ -114,6 +119,12 @@ class _CreateScreenState extends State<CreateScreen> {
       }
 
       if (!mounted) return;
+      setState(() {
+        _lastProjectId = project is Map ? project['id']?.toString() : null;
+        _lastProjectName = name;
+        _videoTitle.text = name;
+        _videoSubtitle.text = _description.text.trim();
+      });
       _projectName.clear();
       _description.clear();
       final workspaceName = _workspaces
@@ -122,6 +133,37 @@ class _CreateScreenState extends State<CreateScreen> {
           .firstOrNull ?? 'workspace';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$name created in $workspaceName.')),
+      );
+    } catch (error) {
+      if (mounted) _error(error);
+    } finally {
+      if (mounted) setState(() => _creating = false);
+    }
+  }
+
+  Future<void> _generateVideo() async {
+    final projectId = _lastProjectId;
+    if (projectId == null || _creating) return;
+    setState(() => _creating = true);
+    try {
+      final result = await widget.api.createWorkflowVideo(
+        projectId: projectId,
+        title: _videoTitle.text.trim().isEmpty
+            ? (_lastProjectName ?? 'SAGE Demo')
+            : _videoTitle.text.trim(),
+        subtitle: _videoSubtitle.text.trim(),
+        cta: _videoCta.text.trim(),
+      );
+      final asset = result['asset'];
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            asset is Map
+                ? 'Video created. Open its asset link from the project.'
+                : 'Video created.',
+          ),
+        ),
       );
     } catch (error) {
       if (mounted) _error(error);
@@ -143,6 +185,9 @@ class _CreateScreenState extends State<CreateScreen> {
   void dispose() {
     _projectName.dispose();
     _description.dispose();
+    _videoTitle.dispose();
+    _videoSubtitle.dispose();
+    _videoCta.dispose();
     super.dispose();
   }
 
@@ -331,6 +376,63 @@ class _CreateScreenState extends State<CreateScreen> {
             label: Text(_creating ? 'Building…' : 'Create Project'),
           ),
         ),
+        if (_lastProjectId != null) ...[
+          const SizedBox(height: 28),
+          _sectionLabel('SAGE VIDEO'),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Create a real MP4 inside SAGE',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'This first renderer creates a lightweight cinematic demo video without leaving SAGE.',
+                      style: TextStyle(color: SageTheme.textSecondary, height: 1.4),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _videoTitle,
+                    decoration: const InputDecoration(labelText: 'Video title'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _videoSubtitle,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Video message',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _videoCta,
+                    decoration: const InputDecoration(labelText: 'Call to action'),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _creating ? null : _generateVideo,
+                      icon: const Icon(Icons.movie_creation_outlined),
+                      label: Text(_creating ? 'Rendering…' : 'Generate Demo Video'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
