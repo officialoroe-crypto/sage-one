@@ -28,7 +28,7 @@ class _SparkWalletState extends State<SparkWalletScreen>{
       _row('Lifetime earned',data!['spark']?['lifetime_earned']),
       _row('Lifetime spent',data!['spark']?['lifetime_spent']),
       const SizedBox(height:20),const Text('Spark ledger',style:TextStyle(fontSize:20,fontWeight:FontWeight.w800)),
-      ...(data!['ledger'] is List?data!['ledger'] as List:const []).map((e)=>ListTile(
+      ...(data!['ledger'] is List?data!['ledger'] as List:const []).whereType<Map>().map((e)=>ListTile(
         title:Text(e['reason']?.toString()??'Spark movement'),
         subtitle:Text(e['created_at']?.toString()??''),
         trailing:Text(e['delta']?.toString()??'0'),
@@ -48,7 +48,7 @@ class _TransactionsState extends State<TransactionsScreen>{
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Transactions',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
     if(error!=null)Text('Transaction error: ${error.toString()}'),
-    ...items.map((e)=>Card(child:ListTile(title:Text(e['reason']?.toString()??'Spark movement'),subtitle:Text(e['reference']?.toString()??e['created_at']?.toString()??''),trailing:Text(e['delta']?.toString()??'0')))),
+    ...items.whereType<Map>().map((e)=>Card(child:ListTile(title:Text(e['reason']?.toString()??'Spark movement'),subtitle:Text(e['reference']?.toString()??e['created_at']?.toString()??''),trailing:Text(e['delta']?.toString()??'0')))),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('No Spark transactions yet.')),
   ])));
 }
@@ -68,7 +68,7 @@ class _EvolutionFinalState extends State<EvolutionFinalScreen>{
       Text("Stage: ${data!['evolution']?['stage']?.toString() ?? 'LOW'}"),
       Text("Achievement: ${data!['evolution']?['lifetime_achievement']?.toString() ?? '0'}"),
       const SizedBox(height:12),
-      LinearProgressIndicator(value:((data!['evolution']?['progress']?['ratio']??0) as num).toDouble()),
+      LinearProgressIndicator(value:(((data!['evolution']?['progress']?['ratio']??0) as num).toDouble()).clamp(0.0,1.0)),
       const SizedBox(height:24),const Text('Canonical tiers',style:TextStyle(fontSize:20,fontWeight:FontWeight.w800)),
       ...tiers.map((e)=>ListTile(title:Text(e['tier']?.toString()??''),trailing:Text(e['threshold']?.toString()??'0'))),
     ] else if(error==null)const Center(child:CircularProgressIndicator()),
@@ -132,7 +132,7 @@ class _NotificationsFinalState extends State<NotificationsFinalScreen>{
   @override Widget build(BuildContext c)=>_Page(title:'Notifications',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
     Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('Activity',style:TextStyle(fontSize:20,fontWeight:FontWeight.w800)),TextButton(onPressed:()async{await widget.api.markAllNotificationsRead();await load();},child:const Text('Mark all read'))]),
     if(error!=null)Text('Notification error: ${error.toString()}'),
-    ...items.map((n)=>Card(child:ListTile(title:Text(n['title']?.toString()??n['message']?.toString()??'SAGE update'),subtitle:Text(n['created_at']?.toString()??''),trailing:IconButton(icon:const Icon(Icons.done),onPressed:()=>read(n['id'].toString()))))),
+    ...items.whereType<Map>().map((n)=>Card(child:ListTile(title:Text(n['title']?.toString()??n['message']?.toString()??'SAGE update'),subtitle:Text(n['created_at']?.toString()??''),trailing:IconButton(icon:const Icon(Icons.done),onPressed:()=>read(n['id'].toString()))))),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('You are all caught up.')),
   ])));
 }
@@ -164,7 +164,7 @@ class _FileManagerFinalState extends State<FileManagerFinalScreen>{
   @override Widget build(BuildContext c)=>_Page(title:'File Manager',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
     const Text('Task artifacts',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),
     if(error!=null)Text('File manager error: ${error.toString()}'),
-    ...items.map((t){final a=t is Map&&t['artifact'] is Map?t['artifact']:null;return a==null?const SizedBox.shrink():Card(child:ListTile(title:Text(a['name']?.toString()??'Artifact'),subtitle:Text(a['mime_type']?.toString()??''),onTap:() async {
+    ...items.whereType<Map>().map((t){final a=t['artifact'] is Map?t['artifact']:null;return a==null?const SizedBox.shrink():Card(child:ListTile(title:Text(a['name']?.toString()??'Artifact'),subtitle:Text(a['mime_type']?.toString()??''),onTap:() async {
   final raw = a['url'] ?? a['uri'];
   final uri = raw == null ? null : Uri.tryParse(raw.toString());
   if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
@@ -196,14 +196,14 @@ class _AiStudioFinalState extends State<AiStudioFinalScreen>{
   Future<void> createWorkspace()async{
     final n=TextEditingController(),s=TextEditingController();
     final ok=await showDialog<bool>(context:context,builder:(c)=>AlertDialog(title:const Text('Create workspace'),content:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:n,decoration:const InputDecoration(labelText:'Name')),TextField(controller:s,decoration:const InputDecoration(labelText:'Slug'))]),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,true),child:const Text('Create'))]));
-    if(ok==true){try{await widget.api.createWorkflowWorkspace(name:n.text.trim(),slug:s.text.trim());await load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Create failed: ${e.toString()}')));}}
+    if(ok==true){if(n.text.trim().isEmpty||s.text.trim().isEmpty){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Workspace name and slug are required.')));}else{try{await widget.api.createWorkflowWorkspace(name:n.text.trim(),slug:s.text.trim());await load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Create failed: ${e.toString()}')));}}}
     n.dispose();s.dispose();
   }
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'AI Studio',body:ListView(padding:const EdgeInsets.all(20),children:[
     Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('Workflow Studio',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),FilledButton.icon(onPressed:createWorkspace,icon:const Icon(Icons.add),label:const Text('Workspace'))]),
     if(error!=null)Text('AI Studio error: ${error.toString()}'),
-    ...items.map((w)=>Card(child:ListTile(title:Text(w['name']?.toString()??w['slug']?.toString()??'Workspace'),subtitle:Text(w['workspace_type']?.toString()??'personal')))),
+    ...items.whereType<Map>().map((w)=>Card(child:ListTile(title:Text(w['name']?.toString()??w['slug']?.toString()??'Workspace'),subtitle:Text(w['workspace_type']?.toString()??'personal')))),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('No workspaces yet.')),
   ]));
 }
