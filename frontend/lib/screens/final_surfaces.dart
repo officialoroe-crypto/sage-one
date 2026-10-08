@@ -80,15 +80,18 @@ class ProfileFinalScreen extends StatefulWidget {
   @override State<ProfileFinalScreen> createState()=>_ProfileFinalState();
 }
 class _ProfileFinalState extends State<ProfileFinalScreen>{
-  final name=TextEditingController(),intent=TextEditingController(); bool saving=false;
-  Future<void> load()async{try{final d=await widget.api.profileMe();final p=d['profile'] is Map?Map<String,dynamic>.from(d['profile']):{};name.text=p['name']?.toString()??'';intent.text=p['help_intent']?.toString()??'';if(mounted)setState((){});}catch(e){_msg('Profile load failed: ${e.toString()}');}}
-  Future<void> save()async{setState(()=>saving=true);try{await widget.api.updateProfile(name:name.text.trim(),helpIntent:intent.text.trim());_msg('Profile saved.');}catch(e){_msg('Profile save failed: ${e.toString()}');}finally{if(mounted)setState(()=>saving=false);}}
+  final name=TextEditingController(),intent=TextEditingController(),address=TextEditingController(),age=TextEditingController(); bool saving=false; bool memoryConsent=false;
+  Future<void> load()async{try{final d=await widget.api.profileMe();final p=d['profile'] is Map?Map<String,dynamic>.from(d['profile']):{};name.text=p['name']?.toString()??'';intent.text=p['help_intent']?.toString()??'';address.text=p['address']?.toString()??'';age.text=p['age']?.toString()??'';memoryConsent=p['memory_consent']==true;if(mounted)setState((){});}catch(e){_msg('Profile load failed: ${e.toString()}');}}
+  Future<void> save()async{setState(()=>saving=true);try{await widget.api.updateProfile(name:name.text.trim(),address:address.text.trim(),age:int.tryParse(age.text.trim()),helpIntent:intent.text.trim(),memoryConsent:memoryConsent);_msg('Profile saved.');}catch(e){_msg('Profile save failed: ${e.toString()}');}finally{if(mounted)setState(()=>saving=false);}}
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   @override void initState(){super.initState();load();}
-  @override void dispose(){name.dispose();intent.dispose();super.dispose();}
+  @override void dispose(){name.dispose();intent.dispose();address.dispose();age.dispose();super.dispose();}
   @override Widget build(BuildContext c)=>_Page(title:'Profile',body:ListView(padding:const EdgeInsets.all(20),children:[
     TextField(controller:name,decoration:const InputDecoration(labelText:'Name')),
+    const SizedBox(height:12),TextField(controller:address,decoration:const InputDecoration(labelText:'Address')),
+    const SizedBox(height:12),TextField(controller:age,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Age')),
     const SizedBox(height:12),TextField(controller:intent,maxLines:3,decoration:const InputDecoration(labelText:'SAGE help intent')),
+    SwitchListTile(contentPadding:EdgeInsets.zero,title:const Text('Memory consent'),subtitle:const Text('Allow SAGE to remember useful preferences.'),value:memoryConsent,onChanged:(v)=>setState(()=>memoryConsent=v)),
     const SizedBox(height:16),FilledButton(onPressed:saving?null:save,child:Text(saving?'Saving…':'Save profile')),
   ]));
 }
