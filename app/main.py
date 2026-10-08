@@ -587,6 +587,9 @@ def command(
         with SessionLocal() as db:
             session_id = repository.create_session(db)
 
+    with SessionLocal() as db:
+        repository.add_message(db, session_id, "user", request.message)
+
     agent_name = agents.choose(request.message)
     if not agents.exists(agent_name):
         agent_name = "general"
