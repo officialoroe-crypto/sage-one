@@ -25,7 +25,7 @@ class GoogleLoginRequest(BaseModel):
     id_token: str = Field(min_length=1, max_length=10000)
 
 class PhoneRequest(BaseModel):
-    phone: str | None = Field(default=None, min_length=5, max_length=30)
+    phone: str = Field(min_length=5, max_length=30)
 
 class OTPVerifyRequest(BaseModel):
     challenge_id: str = Field(min_length=1, max_length=200)
