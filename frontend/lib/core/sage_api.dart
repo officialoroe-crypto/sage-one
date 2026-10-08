@@ -159,6 +159,26 @@ class SageApi {
         'metadata': metadata ?? <String, dynamic>{},
       });
 
+  Future<Map<String, dynamic>> createWorkflowVideo({
+    required String projectId,
+    required String title,
+    String subtitle = '',
+    String cta = '',
+    double durationSeconds = 5.0,
+    int width = 720,
+    int height = 1280,
+    int fps = 24,
+  }) async =>
+      _authorizedPost('/workflow/projects/$projectId/video', {
+        'title': title,
+        'subtitle': subtitle,
+        'cta': cta,
+        'duration_seconds': durationSeconds,
+        'width': width,
+        'height': height,
+        'fps': fps,
+      });
+
   Future<List<dynamic>> workflowAssets(String projectId) async {
     final data = await _authorizedGet('/workflow/projects/$projectId/assets');
     final items = data['assets'] ?? data['items'] ?? data;
