@@ -1,6 +1,6 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-09-27
+Last updated: 2026-10-08
 Current main: fbc5b1c5d0949a17ad3fb0fc2b662e1e24dc1682
 
 ## Identity
@@ -38,6 +38,11 @@ Implemented:
 - Provider routing: Groq, Cerebras, Gemini through Google's OpenAI-compatible API, controlled Ollama fallback.
 - CPU/resource protection that avoids automatic heavy local Ollama takeover.
 - Durable notifications and Flutter task polling.
+- Unified Chat `/command` loop persists session history and carries owner/project context through the durable worker.
+- Completed durable tasks index project results and consent-gated experience memory.
+- Device voice commands now use speech-to-text + TTS while submitting through the same durable `/command` path.
+- Owner Developer Mode now has a real Flutter preview/approval surface and durable owner-scoped proposal records that survive API restarts.
+- Project detail can queue project-scoped SAGE commands directly into the execution loop.
 - Authenticated Google identity foundation.
 - Phone OTP state machine + provider abstraction.
 - User profile/onboarding/memory foundation, plus private mobile memory review/add/delete UI.
