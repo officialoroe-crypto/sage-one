@@ -14,11 +14,11 @@ Production frontend: Flutter. Canonical design source: owner-supplied composite 
 | 06 | Profile creation | Existing onboarding profile flow; visual pass pending |
 | 07 | Welcome to SAGE ONE / first-run completion | Planned |
 | 08 | Home / Command Center | Existing functional screen; visual redesign in PR #122, overlaps PR #112 |
-| 09 | Voice listening mode | Pending |
-| 10 | Voice response mode | Pending |
-| 11 | Chat interface | Pending |
+| 09 | Voice listening mode | Implemented — device speech-to-text command capture |
+| 10 | Voice response mode | Implemented — device TTS for durable task results |
+| 11 | Chat interface | Implemented — persistent session + durable `/command` polling |
 | 12 | Research / search interface | Existing research screen; visual pass pending |
-| 13 | Results and completed-task artifact reveal | Partial implementation in PR #122; CI repair in progress |
+| 13 | Results and completed-task artifact reveal | Implemented — task result + project artifact persistence |
 | 14 | Apps Hub | Pending |
 | 15 | Earnings interface | Pending |
 | 16 | Marketplace | Pending |
@@ -51,7 +51,7 @@ Evolution is now a first-class part of SAGE ONE, not a separate product or isola
 
 ## Rules
 
-- Complete one phase as a reviewable PR or a tightly related small phase batch.
+- Complete one phase as a reviewable PR or a tightly related small phase batch. Core execution, voice and owner developer-control batches are now merged/validated on main.
 - Never mark a phase complete until Flutter CI passes and its screen is manually/reference reviewed.
 - Preserve current backend APIs and private-owner path.
 - Do not invent missing reference artwork or claim pixel-perfect parity without the actual source assets.
