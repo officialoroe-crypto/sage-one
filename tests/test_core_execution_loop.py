@@ -210,6 +210,7 @@ def test_tasks_are_owner_scoped_for_reads_and_cancellation():
             description="private task",
             owner_key="developer:owner-a",
         )
+        task_a_id = task_a.id
     with SessionLocal() as db:
         task_b = repository.create_task(
             db=db,
@@ -217,7 +218,6 @@ def test_tasks_are_owner_scoped_for_reads_and_cancellation():
             description="private task",
             owner_key="developer:owner-b",
         )
-        task_a_id = task_a.id
         task_b_id = task_b.id
 
     from tasks.engine import tasks
