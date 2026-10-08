@@ -38,6 +38,8 @@ class Message(Base):
 class Memory(Base):
     __tablename__ = "memories"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    profile_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     memory_type: Mapped[str] = mapped_column(String, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     importance: Mapped[float] = mapped_column(Float, default=0.5)
