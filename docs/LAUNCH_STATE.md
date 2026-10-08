@@ -1,7 +1,7 @@
 # SAGE ONE Launch State
 
 Last reconciled: 2026-10-08
-Canonical main: `b1d76fa22545d44f743bda9c2589af8ed8150269`
+Canonical main: `3a8bc13da4d141383fb0c3395550ec808ad27b0e`
 
 ## Priority 0 — Core runtime
 **Status: IMPLEMENTED + CI VERIFIED**
@@ -35,7 +35,7 @@ The product is private-first and owner-scoped. The next real-world step is devic
 Developer Mode is available to the owner. Preview is non-mutating; applying a proposal requires an explicit approval action. Proposals are durable and owner-scoped.
 
 ## CI / release evidence
-Main `b1d76fa` currently has successful SAGE CI, Android APK and God Mode Developer Website workflows.
+Main `3a8bc13` currently has successful SAGE CI, Android APK and God Mode Developer Website workflows.
 
 ## Explicitly deferred
 - Production SMS/OTP delivery.
