@@ -1,7 +1,7 @@
 # SAGE ONE Launch State
 
 Last reconciled: 2026-10-08
-Canonical main: `3a8bc13da4d141383fb0c3395550ec808ad27b0e`
+Canonical main after Session 3: `055d8eac6e73a10e49c429e5332dfe7fb0c05619`
 
 ## Priority 0 — Core runtime
 **Status: IMPLEMENTED + CI VERIFIED**
@@ -25,9 +25,15 @@ The shell exposes Command Center, Research, Tasks, Create, Projects, Memory, Evo
 The architecture supports research, persistent projects/assets/workflows and real task execution. Content/video and sales foundations exist, but a polished end-to-end business workflow still needs external integrations and production-grade publishing/analytics adapters.
 
 ## Priority 3 — Private deployment
-**Status: AUTOMATED RELEASE PATH HARDENED; PHYSICAL DEVICE VALIDATION REMAINS**
+**Status: AUTOMATED ANDROID RELEASE VALIDATION HARDENED; PHYSICAL DEVICE VALIDATION REMAINS**
 
-The product is private-first and owner-scoped. The next real-world step is device/runtime validation using the user's configured backend and Android build.
+The Android release workflow now:
+- validates the configured device-reachable backend URL;
+- runs Flutter analyzer and tests;
+- builds both release APK and release App Bundle;
+- publishes both release artifacts for inspection/download from the workflow run.
+
+The Android emulator default remains `http://10.0.2.2:8010`. Physical devices must use the workflow dispatch `api_url` input or the `SAGE_ANDROID_API_URL` repository variable with a backend URL reachable by that device.
 
 ## Priority 4 — Developer Mode
 **Status: IMPLEMENTED + SAFETY-GATED**
@@ -35,7 +41,7 @@ The product is private-first and owner-scoped. The next real-world step is devic
 Developer Mode is available to the owner. Preview is non-mutating; applying a proposal requires an explicit approval action. Proposals are durable and owner-scoped.
 
 ## CI / release evidence
-Main has successful SAGE CI, Android APK and God Mode Developer Website workflows. The Android workflow now uses an Android-emulator-reachable host default (`10.0.2.2`) while still allowing an explicit backend URL for physical devices.
+Main has successful SAGE CI, Android release validation and God Mode Developer Website workflows. Android release validation covers both APK and AAB outputs and keeps backend endpoint configuration explicit.
 
 ## Explicitly deferred
 - Production SMS/OTP delivery.
@@ -43,4 +49,5 @@ Main has successful SAGE CI, Android APK and God Mode Developer Website workflow
 - Full public/multi-tenant architecture.
 - Broad third-party integrations.
 - Production payment-provider integration.
+- Production signing/keystore secrets and store publishing.
 - Pixel-perfect visual parity where original artwork/assets are not present.
