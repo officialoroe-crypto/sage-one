@@ -1259,7 +1259,6 @@ def start_task(task_id: str,
 def complete_task(
     task_id: str,
     request: TaskStatusRequest,
-,
     claims: dict[str, Any] = Depends(_require_owner),
 ):
 
@@ -1283,7 +1282,6 @@ def complete_task(
 def fail_task(
     task_id: str,
     request: TaskStatusRequest,
-,
     claims: dict[str, Any] = Depends(_require_owner),
 ):
 
