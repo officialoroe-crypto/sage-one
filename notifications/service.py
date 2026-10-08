@@ -80,18 +80,18 @@ def list_notifications(
         db.close()
 
 
-def mark_read(notification_id: str):
+def mark_read(notification_id: str, owner_key: str | None = None):
     db = SessionLocal()
     try:
-        item = repository.mark_notification_read(db, notification_id)
+        item = repository.mark_notification_read(db, notification_id, owner_key=owner_key)
         return serialize(item) if item else None
     finally:
         db.close()
 
 
-def mark_all_read(session_id: str | None = None):
+def mark_all_read(session_id: str | None = None, owner_key: str | None = None):
     db = SessionLocal()
     try:
-        return repository.mark_all_notifications_read(db, session_id=session_id)
+        return repository.mark_all_notifications_read(db, session_id=session_id, owner_key=owner_key)
     finally:
         db.close()
