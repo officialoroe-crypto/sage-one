@@ -242,23 +242,26 @@ class SageRepository:
         self,
         db: DBSession,
         task_id: str,
+        owner_key: str | None = None,
     ) -> Task | None:
-        return (
-            db.query(Task)
-            .filter(Task.id == task_id)
-            .first()
-        )
+        query = db.query(Task).filter(Task.id == task_id)
+        if owner_key is not None:
+            query = query.filter(Task.owner_key == owner_key)
+        return query.first()
 
     def get_tasks(
         self,
         db: DBSession,
         status: str | None = None,
         limit: int = 100,
+        owner_key: str | None = None,
     ) -> list[Task]:
         query = db.query(Task)
 
         if status:
             query = query.filter(Task.status == status)
+        if owner_key is not None:
+            query = query.filter(Task.owner_key == owner_key)
 
         return (
             query
@@ -274,9 +277,10 @@ class SageRepository:
         self,
         db: DBSession,
         task_id: str,
+        owner_key: str | None = None,
         **updates: Any,
     ) -> Task | None:
-        task = self.get_task(db, task_id)
+        task = self.get_task(db, task_id, owner_key=owner_key)
 
         if not task:
             return None

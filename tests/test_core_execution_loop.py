@@ -199,3 +199,31 @@ def test_session_migration_contains_owner_context_columns():
     columns = {item["name"] for item in inspect(engine).get_columns("sessions")}
     assert "profile_id" in columns
     assert "owner_key" in columns
+
+
+def test_tasks_are_owner_scoped_for_reads_and_cancellation():
+    fresh_db()
+    with SessionLocal() as db:
+        task_a = repository.create_task(
+            db=db,
+            title="Owner A",
+            description="private task",
+            owner_key="developer:owner-a",
+        )
+        task_a_id = task_a.id
+    with SessionLocal() as db:
+        task_b = repository.create_task(
+            db=db,
+            title="Owner B",
+            description="private task",
+            owner_key="developer:owner-b",
+        )
+        task_b_id = task_b.id
+
+    from tasks.engine import tasks
+    assert tasks.get(task_a_id, owner_key="developer:owner-a") is not None
+    assert tasks.get(task_a_id, owner_key="developer:owner-b") is None
+    assert len(tasks.list(owner_key="developer:owner-a")) == 1
+    assert tasks.cancel(task_a_id, owner_key="developer:owner-b") is None
+    assert tasks.cancel(task_a_id, owner_key="developer:owner-a")["status"] == "cancelled"
+    assert tasks.get(task_b_id, owner_key="developer:owner-b") is not None
