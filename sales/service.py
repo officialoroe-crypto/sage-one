@@ -66,7 +66,7 @@ class SalesEngine:
         )
         return {
             "success": True,
-            "workflow": ["discovery", "audit", "score", "lead", "intelligence", "outreach_draft"],
+            "workflow": ["discovery", "audit", "score", "lead", "intelligence", "outreach_draft", "approval", "history", "customer"],
             "lead": {
                 "business_name": business_name.strip(),
                 "website": website,
