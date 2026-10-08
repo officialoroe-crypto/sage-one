@@ -1116,6 +1116,15 @@ def cancel_task(
     }
 
 
+
+
+def _owned_mission_id(mission_id: str, claims: dict[str, Any]) -> str:
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    mission = mission_engine.get_mission(mission_id, owner_key=owner_key)
+    if not mission:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    return mission_id
+
 # ============================================================
 # MISSIONS
 # ============================================================
@@ -1176,8 +1185,9 @@ def plan_mission(request: MissionPlanRequest):
 
 
 @app.get("/missions/{mission_id}/tasks")
-def mission_tasks(mission_id: str):
+def mission_tasks(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
+    _owned_mission_id(mission_id, claims)
     return {
         "success": True,
         "tasks": _serialize(
@@ -1187,8 +1197,9 @@ def mission_tasks(mission_id: str):
 
 
 @app.get("/missions/{mission_id}/ready")
-def mission_ready_tasks(mission_id: str):
+def mission_ready_tasks(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
+    _owned_mission_id(mission_id, claims)
     return {
         "success": True,
         "tasks": _serialize(
@@ -1204,8 +1215,10 @@ def create_mission_task(
     description: str,
     agent: str = "general",
     priority: int = 3,
+    claims: dict[str, Any] = Depends(_require_owner),
 ):
 
+    _owned_mission_id(mission_id, claims)
     task = mission_engine.create_task(
         mission_id=mission_id,
         title=title,
@@ -1299,8 +1312,9 @@ def verify_task(task_id: str):
 # ============================================================
 
 @app.post("/missions/{mission_id}/refresh")
-def refresh_mission(mission_id: str):
+def refresh_mission(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
+    _owned_mission_id(mission_id, claims)
     return {
         "success": True,
         "mission": _serialize(
