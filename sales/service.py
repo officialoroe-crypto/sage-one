@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from sqlalchemy.orm import Session as DBSession
 
-from database.models import SalesActivity, SalesLead
+from sales.models import SalesActivity, SalesLead
 from web.reader import WebReader
 
 
