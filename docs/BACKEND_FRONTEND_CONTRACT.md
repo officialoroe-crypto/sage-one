@@ -21,7 +21,8 @@ The Sales Engine is exposed under `/sales` and is owner/profile scoped through t
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | `/sales/discover` | Search for business candidates through the configured discovery provider. |
+| POST | `/sales/discover` | Search for business candidates through the configured discovery provider without persisting them. |
+| POST | `/sales/discover/leads` | Search and persist unique business candidates as profile-scoped sales leads. |
 | POST | `/sales/leads` | Create a durable sales lead. |
 | GET | `/sales/leads` | List the authenticated profile's leads, optionally filtered by status. |
 | GET | `/sales/leads/{lead_id}` | Retrieve one scoped lead. |
