@@ -97,23 +97,17 @@ void main() {
     expect(find.text('Evidence report ready.'), findsOneWidget);
   });
 
-  testWidgets('Research report exposes only valid HTTP(S) source actions', (tester) async {
-    final api = SageApi(client: _ResearchApiClient(), authToken: 'test-token');
-    await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: ResearchScreen(api: api))),
+  test('Research source validator accepts only HTTP(S) URLs', () {
+    expect(
+      researchSourceUri({'url': 'https://example.com/article'}).toString(),
+      'https://example.com/article',
     );
-    await tester.pump();
-    await tester.pumpAndSettle();
-
-    final history = find.text('Source validation');
-    expect(history, findsOneWidget);
-    await tester.tap(history);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Safe source'), findsOneWidget);
-    expect(find.text('https://example.com/article'), findsOneWidget);
-    expect(find.text('Blocked source'), findsOneWidget);
-    expect(find.text('No valid HTTP(S) URL'), findsNWidgets(2));
-    expect(find.text('Missing source'), findsOneWidget);
-  });
-}
+    expect(
+      researchSourceUri({'url': 'http://example.com/article'}).toString(),
+      'http://example.com/article',
+    );
+    expect(researchSourceUri({'url': 'javascript:alert(1)'}), isNull);
+    expect(researchSourceUri({'url': 'file:///tmp/report'}), isNull);
+    expect(researchSourceUri({'title': 'Missing source'}), isNull);
+    expect(researchSourceUri({'url': 'https:///missing-host'}), isNull);
+  });}
