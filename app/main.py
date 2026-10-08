@@ -564,7 +564,6 @@ def execute_background(
         agent_name = "general"
 
     profile = get_or_create_authenticated_profile(claims)
-    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     project_id = request.project_id
     if project_id:
         with SessionLocal() as db:
