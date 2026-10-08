@@ -18,6 +18,7 @@ import 'screens/memory.dart';
 import 'screens/evolution.dart';
 import 'theme/sage_theme.dart';
 import 'screens/feature_workspaces.dart';
+import 'screens/voice_mode.dart';
 import 'screens/voice_command.dart';
 import 'screens/developer_mode.dart';
 import 'screens/final_surfaces.dart' as final_surfaces;
