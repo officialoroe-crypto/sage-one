@@ -25,6 +25,8 @@ class Settings:
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    PAYMENT_PROVIDER = os.getenv("SAGE_PAYMENT_PROVIDER", "").strip()
+    PAYMENT_SECRET_KEY = os.getenv("SAGE_PAYMENT_SECRET_KEY", "").strip()
 
     # Private mode is the default only for development environments. Production
     # deployments must opt in explicitly and never inherit local owner access.

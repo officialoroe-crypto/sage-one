@@ -18,6 +18,7 @@ import 'screens/memory.dart';
 import 'screens/evolution.dart';
 import 'theme/sage_theme.dart';
 import 'screens/feature_workspaces.dart';
+import 'screens/final_surfaces.dart' as final_surfaces;
 
 void main() => runApp(const SageOneApp());
 
@@ -142,14 +143,14 @@ class _SageOneShellState extends State<SageOneShell> {
             ListTile(leading: const Icon(Icons.work_outline), title: const Text('Jobs'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const JobsScreen())); }),
             ListTile(leading: const Icon(Icons.school_outlined), title: const Text('Learning'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningScreen())); }),
             ListTile(leading: const Icon(Icons.groups_outlined), title: const Text('Community'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunityScreen())); }),
-            ListTile(leading: const Icon(Icons.folder_copy_outlined), title: const Text('File Manager'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const FileManagerScreen())); }),
-            ListTile(leading: const Icon(Icons.auto_awesome), title: const Text('AI Studio'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AiStudioScreen())); }),
-            ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: const Text('Spark Wallet'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const SparkWalletScreen())); }),
-            ListTile(leading: const Icon(Icons.payments_outlined), title: const Text('Payments'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentScreen())); }),
-            ListTile(leading: const Icon(Icons.receipt_long_outlined), title: const Text('Transactions'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const TransactionsScreen())); }),
-            ListTile(leading: const Icon(Icons.person_outline), title: const Text('Profile'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())); }),
-            ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())); }),
-            ListTile(leading: const Icon(Icons.notifications_none), title: const Text('Notifications'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())); }),
+            ListTile(leading: const Icon(Icons.folder_copy_outlined), title: const Text('File Manager'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.FileManagerFinalScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.auto_awesome), title: const Text('AI Studio'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.AiStudioFinalScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: const Text('Spark Wallet'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.SparkWalletScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.payments_outlined), title: const Text('Payments'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.PaymentFinalScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.receipt_long_outlined), title: const Text('Transactions'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.TransactionsScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.person_outline), title: const Text('Profile'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.ProfileFinalScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.SettingsFinalScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.notifications_none), title: const Text('Notifications'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.NotificationsFinalScreen(api: _api))); }),
 
           ],
         ),

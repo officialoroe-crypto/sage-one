@@ -60,6 +60,17 @@ class MemoryLearningRequest(BaseModel):
     candidates: list[MemoryLearningCandidate] = Field(default_factory=list, max_length=20)
 
 
+class ProfileUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    phone: str | None = Field(default=None, min_length=5, max_length=30)
+    address: str | None = Field(default=None, min_length=1, max_length=1000)
+    age: int | None = Field(default=None, ge=1, le=120)
+    basic_info: dict[str, Any] | None = None
+    help_intent: str | None = Field(default=None, min_length=1, max_length=2000)
+    capabilities: list[str] | None = Field(default=None, max_length=20)
+    memory_consent: bool | None = None
+
+
 class MemoryUpdateRequest(BaseModel):
     memory_type: str | None = None
     content: str | None = Field(default=None, min_length=1, max_length=5000)
@@ -97,6 +108,30 @@ def google_login(request: GoogleLoginRequest):
 @router.get("/me")
 def get_me(claims: dict[str, Any] = Depends(authenticate_request)):
     return {"success": True, "profile": _profile_from_claims(claims), "owner_mode": claims.get("owner_mode", False), "developer_mode": claims.get("developer_mode", False), "developer_label": claims.get("developer_label")}
+
+@router.patch("/me")
+def update_me(request: ProfileUpdateRequest, claims: dict[str, Any] = Depends(authenticate_request)):
+    if request.capabilities is not None:
+        capabilities = validate_capabilities(request.capabilities)
+    else:
+        capabilities = None
+    try:
+        profile = upsert_profile(
+            auth_provider=claims["auth_provider"],
+            auth_subject=claims["auth_subject"],
+            name=request.name,
+            phone=request.phone,
+            address=request.address,
+            age=request.age,
+            basic_info=request.basic_info,
+            help_intent=request.help_intent,
+            capabilities=capabilities,
+            memory_consent=request.memory_consent,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"success": True, "profile": profile}
+
 
 @router.get("/onboarding/options")
 def onboarding_options():

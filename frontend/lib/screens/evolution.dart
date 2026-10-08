@@ -261,7 +261,6 @@ class _CurrentRankCard extends StatelessWidget {
               height: 138,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: accent.withValues(alpha: .7), width: 1.4),
                 boxShadow: [BoxShadow(color: accent.withValues(alpha: .18), blurRadius: 30, spreadRadius: 2)],
                 gradient: RadialGradient(
                   colors: [accent.withValues(alpha: .24), const Color(0xFF050A13), Colors.black],
@@ -270,14 +269,6 @@ class _CurrentRankCard extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Container(
-                    width: 112,
-                    height: 112,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: accent.withValues(alpha: .28)),
-                    ),
-                  ),
                   Text(
                     'S',
                     style: TextStyle(
