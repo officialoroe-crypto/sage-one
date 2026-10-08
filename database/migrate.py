@@ -17,6 +17,11 @@ def migrate():
         tables = inspect(engine).get_table_names()
         print("ADDED: automations")
 
+    if "developer_proposals" not in tables:
+        models.DeveloperProposal.__table__.create(bind=engine, checkfirst=True)
+        tables = inspect(engine).get_table_names()
+        print("ADDED: developer_proposals")
+
     if "tasks" not in tables:
         print("TASK TABLE DOES NOT EXIST.")
         return
