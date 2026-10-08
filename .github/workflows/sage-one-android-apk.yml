@@ -6,7 +6,7 @@ on:
       api_url:
         description: "SAGE backend URL reachable from the Android device"
         required: false
-        default: "http://127.0.0.1:8010"
+        default: "http://10.0.2.2:8010"
         type: string
   push:
     branches: [main]
@@ -18,7 +18,7 @@ jobs:
       run:
         working-directory: frontend
     env:
-      SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://127.0.0.1:8010' }}
+      SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://10.0.2.2:8010' }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
