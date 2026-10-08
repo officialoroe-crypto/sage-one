@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
 Last updated: 2026-10-08
-Current main: b1d76fa22545d44f743bda9c2589af8ed8150269
+Current main: 3a8bc13da4d141383fb0c3395550ec808ad27b0e
 
 ## Identity
 - Project: SAGE ONE
@@ -64,7 +64,7 @@ Main contains the real private-first execution core:
 - Developer proposals are owner-scoped by trusted authenticated identity.
 - Public worker health does not expose private worker results.
 
-## Validation — main b1d76fa
+## Validation — main 3a8bc13
 Latest main push triggered and completed successfully:
 - SAGE CI — success
 - SAGE ONE Android APK — success
