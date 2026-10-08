@@ -21,6 +21,7 @@ class ResearchPersistence:
         *,
         task_id: str | None = None,
         session_id: str | None = None,
+        owner_key: str | None = None,
     ) -> dict[str, Any]:
         question = str(report.get("question", "")).strip()
         if not question:
@@ -40,6 +41,7 @@ class ResearchPersistence:
                 record = (
                     db.query(ResearchRecord)
                     .filter(ResearchRecord.task_id == task_id)
+                    .filter(ResearchRecord.owner_key == owner_key)
                     .order_by(ResearchRecord.created_at.desc())
                     .first()
                 )
@@ -48,6 +50,7 @@ class ResearchPersistence:
             if record is None:
                 record = ResearchRecord(
                     id=str(uuid.uuid4()),
+                    owner_key=owner_key,
                     task_id=task_id,
                     session_id=session_id,
                     question=question,
@@ -81,24 +84,26 @@ class ResearchPersistence:
         finally:
             db.close()
 
-    def get(self, research_id: str) -> dict[str, Any] | None:
+    def get(self, research_id: str, owner_key: str | None = None) -> dict[str, Any] | None:
         db = SessionLocal()
         try:
             record = (
                 db.query(ResearchRecord)
                 .filter(ResearchRecord.id == research_id)
+                .filter(*([ResearchRecord.owner_key == owner_key] if owner_key is not None else []))
                 .first()
             )
             return self._serialize(record) if record else None
         finally:
             db.close()
 
-    def get_by_task(self, task_id: str) -> dict[str, Any] | None:
+    def get_by_task(self, task_id: str, owner_key: str | None = None) -> dict[str, Any] | None:
         db = SessionLocal()
         try:
             record = (
                 db.query(ResearchRecord)
                 .filter(ResearchRecord.task_id == task_id)
+                .filter(*([ResearchRecord.owner_key == owner_key] if owner_key is not None else []))
                 .order_by(ResearchRecord.created_at.desc())
                 .first()
             )
@@ -111,10 +116,13 @@ class ResearchPersistence:
         *,
         session_id: str | None = None,
         limit: int = 50,
+        owner_key: str | None = None,
     ) -> list[dict[str, Any]]:
         db = SessionLocal()
         try:
             query = db.query(ResearchRecord)
+            if owner_key is not None:
+                query = query.filter(ResearchRecord.owner_key == owner_key)
             if session_id:
                 query = query.filter(ResearchRecord.session_id == session_id)
             records = (
