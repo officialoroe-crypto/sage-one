@@ -103,7 +103,7 @@ void main() {
       MaterialApp(home: Scaffold(body: ResearchScreen(api: api))),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     final history = find.text('Source validation');
     expect(history, findsOneWidget);
