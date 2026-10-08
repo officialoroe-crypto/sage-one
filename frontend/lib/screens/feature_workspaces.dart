@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/sage_theme.dart';
+import '../core/sage_api.dart';
 
 class FeatureWorkspace extends StatefulWidget {
   const FeatureWorkspace({required this.title, required this.subtitle, required this.icon, required this.actions, super.key});
@@ -29,9 +30,80 @@ class _FeatureWorkspaceState extends State<FeatureWorkspace> {
     ]));
 }
 
-class VoiceListeningScreen extends StatelessWidget { const VoiceListeningScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Voice Listening',subtitle:'Hands-free command capture with explicit user control.',icon:Icons.mic,actions:['Start listening','Stop listening','Set auto-send']);}
+class VoiceListeningScreen extends StatefulWidget {
+  const VoiceListeningScreen({super.key});
+  @override State<VoiceListeningScreen> createState() => _VoiceListeningScreenState();
+}
+class _VoiceListeningScreenState extends State<VoiceListeningScreen> {
+  final _controller = TextEditingController();
+  final _api = SageApi();
+  bool _busy = false;
+  String? _result;
+  @override void dispose(){ _controller.dispose(); _api.dispose(); super.dispose(); }
+  Future<void> _send() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _busy) return;
+    setState(()=>_busy=true);
+    try {
+      final data = await _api.chat(text);
+      final response = data['response'];
+      setState(()=>_result = response is Map ? (response['response'] ?? response['content'] ?? response).toString() : response.toString());
+    } catch(e) { setState(()=>_result='Command failed: $e'); }
+    finally { if(mounted) setState(()=>_busy=false); }
+  }
+  @override Widget build(BuildContext c)=>Scaffold(
+    backgroundColor:SageTheme.voidBlack,
+    appBar:AppBar(title:const Text('Voice Command'),backgroundColor:Colors.transparent),
+    body:ListView(padding:const EdgeInsets.all(20),children:[
+      const Text('VOICE CONTROL',style:TextStyle(color:SageTheme.cyan,fontSize:11,letterSpacing:2,fontWeight:FontWeight.w800)),
+      const SizedBox(height:8),
+      const Text('Give SAGE a command',style:TextStyle(color:SageTheme.textPrimary,fontSize:28,fontWeight:FontWeight.w800)),
+      const SizedBox(height:8),
+      const Text('This command surface uses the real SAGE chat pipeline. Microphone capture can feed the same command field without creating a second backend.',style:TextStyle(color:SageTheme.textSecondary,height:1.4)),
+      const SizedBox(height:24),
+      TextField(controller:_controller,maxLines:4,decoration:const InputDecoration(hintText:'Enter a voice-transcribed command…',border:OutlineInputBorder())),
+      const SizedBox(height:12),
+      FilledButton.icon(onPressed:_busy?null:_send,icon:const Icon(Icons.mic),label:Text(_busy?'Sending…':'Send command')),
+      if(_result!=null) ...[const SizedBox(height:20),Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(borderRadius:BorderRadius.all(Radius.circular(18)),border:Border.fromBorderSide(BorderSide(color:SageTheme.cyan))),child:Text(_result!,style:const TextStyle(color:SageTheme.textPrimary,height:1.45)))]
+    ]));
+}
 class VoiceResponseScreen extends StatelessWidget { const VoiceResponseScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Voice Response',subtitle:'Spoken SAGE answers with playback controls.',icon:Icons.volume_up,actions:['Play latest response','Pause response','Choose voice']);}
-class ChatScreen extends StatelessWidget { const ChatScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Chat',subtitle:'Persistent conversational workspace connected to SAGE tasks.',icon:Icons.chat_bubble_outline,actions:['New conversation','Continue last conversation','Attach context']);}
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
+  @override State<ChatScreen> createState()=>_ChatScreenState();
+}
+class _ChatScreenState extends State<ChatScreen> {
+  final _api=SageApi();
+  final _input=TextEditingController();
+  final _scroll=ScrollController();
+  final List<Map<String,String>> _messages=[];
+  String? _sessionId;
+  bool _busy=false;
+  @override void dispose(){_input.dispose();_scroll.dispose();_api.dispose();super.dispose();}
+  Future<void> _send() async {
+    final message=_input.text.trim();
+    if(message.isEmpty||_busy)return;
+    _input.clear();
+    setState((){_messages.add({'role':'user','text':message});_busy=true;});
+    try {
+      final data=await _api.chat(message,sessionId:_sessionId);
+      _sessionId=data['session_id']?.toString()??_sessionId;
+      final value=data['response'];
+      final text=value is Map ? (value['response']??value['content']??value).toString() : value.toString();
+      if(mounted)setState(()=>_messages.add({'role':'sage','text':text}));
+    } catch(e){if(mounted)setState(()=>_messages.add({'role':'error','text':'SAGE could not complete the request: $e'}));}
+    finally{if(mounted)setState(()=>_busy=false);}
+    if(mounted)WidgetsBinding.instance.addPostFrameCallback((_)=>_scrollToEnd());
+  }
+  void _scrollToEnd(){if(_scroll.hasClients)_scroll.animateTo(_scroll.position.maxScrollExtent,duration:const Duration(milliseconds:250),curve:Curves.easeOut);}
+  @override Widget build(BuildContext c)=>Scaffold(
+    backgroundColor:SageTheme.voidBlack,
+    appBar:AppBar(title:const Text('SAGE Chat'),backgroundColor:Colors.transparent,actions:[IconButton(onPressed:_busy?null:()=>setState(()=>_messages.clear()),icon:const Icon(Icons.add_comment_outlined))]),
+    body:Column(children:[
+      Expanded(child:_messages.isEmpty?const Center(child:Text('Ask SAGE to research, plan, remember, create or execute.',style:TextStyle(color:SageTheme.textSecondary))):ListView.builder(controller:_scroll,padding:const EdgeInsets.all(16),itemCount:_messages.length,itemBuilder:(context,i){final m=_messages[i];final sage=m['role']=='sage';return Align(alignment:sage?Alignment.centerLeft:Alignment.centerRight,child:Container(margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(14),constraints:const BoxConstraints(maxWidth:700),decoration:BoxDecoration(color:sage?SageTheme.surface:SageTheme.cyan.withValues(alpha:.12),borderRadius:BorderRadius.circular(18)),child:Text(m['text']??'',style:TextStyle(color:m['role']=='error'?SageTheme.error:SageTheme.textPrimary,height:1.4))));})),
+      SafeArea(top:false,child:Padding(padding:const EdgeInsets.fromLTRB(12,8,12,12),child:Row(crossAxisAlignment:CrossAxisAlignment.end,children:[Expanded(child:TextField(controller:_input,maxLines:4,minLines:1,decoration:const InputDecoration(hintText:'Message SAGE…',border:OutlineInputBorder()))),const SizedBox(width:8),IconButton.filled(onPressed:_busy?null:_send,icon:Icon(_busy?Icons.hourglass_top:Icons.arrow_upward))]))),
+    ]));
+}
 class AppsScreen extends StatelessWidget { const AppsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Apps',subtitle:'Connected tools and future integrations in one control surface.',icon:Icons.apps,actions:['Browse connected apps','Connect an app','Manage permissions']);}
 class EarningsScreen extends StatelessWidget { const EarningsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Earnings',subtitle:'Track completed work, payouts and creator income.',icon:Icons.trending_up,actions:['View earnings','View pending payouts','Open earnings history']);}
 class MarketplaceScreen extends StatelessWidget { const MarketplaceScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Marketplace',subtitle:'Discover services, tools and SAGE-powered work.',icon:Icons.storefront,actions:['Browse marketplace','View saved items','Open seller tools']);}
