@@ -26,6 +26,8 @@ class TaskEngine:
         parent_task_id: str | None = None,
         owner_key: str | None = None,
         premium_work_key: str | None = None,
+        profile_id: str | None = None,
+        project_id: str | None = None,
     ):
         priority = max(1, min(priority, 5))
         db = SessionLocal()
@@ -41,6 +43,8 @@ class TaskEngine:
                 parent_task_id=parent_task_id,
                 owner_key=owner_key,
                 premium_work_key=premium_work_key,
+                profile_id=profile_id,
+                project_id=project_id,
             )
             return self.serialize(task)
         finally:
