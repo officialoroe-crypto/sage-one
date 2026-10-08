@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, Integer, String, Text
+from sqlalchemy import DateTime, Float, Integer, String, Text  # noqa: F401
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.connection import Base
