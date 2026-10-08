@@ -203,12 +203,13 @@ def test_session_migration_contains_owner_context_columns():
 
 def test_tasks_are_owner_scoped_for_reads_and_cancellation():
     fresh_db()
-    task_a = repository.create_task(
-        db=SessionLocal(),
-        title="Owner A",
-        description="private task",
-        owner_key="developer:owner-a",
-    )
+    with SessionLocal() as db:
+        task_a = repository.create_task(
+            db=db,
+            title="Owner A",
+            description="private task",
+            owner_key="developer:owner-a",
+        )
     with SessionLocal() as db:
         task_b = repository.create_task(
             db=db,
