@@ -21,7 +21,7 @@ class _SparkWalletState extends State<SparkWalletScreen>{
   Future<void> load()async{try{final v=await widget.api.economyMe();if(mounted)setState(()=>data=v);}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Spark Wallet',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    if(error!=null)Text('Wallet error: '+error.toString(),style:const TextStyle(color:SageTheme.danger)),
+    if(error!=null)Text('Wallet error: '+error.toString(),style:const TextStyle(color:SageTheme.textSecondary)),
     if(data!=null)...[
       _row('Balance',data!['spark']?['balance']),
       _row('Lifetime earned',data!['spark']?['lifetime_earned']),
@@ -61,7 +61,7 @@ class _EvolutionFinalState extends State<EvolutionFinalScreen>{
   Future<void> load()async{try{final d=await widget.api.economyMe();final t=await widget.api.evolutionTiers();if(mounted)setState((){data=d;tiers=t;});}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Evolution',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    if(error!=null)Text('Evolution error: '+error.toString(),style:const TextStyle(color:SageTheme.danger)),
+    if(error!=null)Text('Evolution error: '+error.toString(),style:const TextStyle(color:SageTheme.textSecondary)),
     if(data!=null)...[
       Text('Tier: '+(data!['evolution']?['tier']?.toString()??'Bronze'),style:const TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
       Text('Stage: '+(data!['evolution']?['stage']?.toString()??'LOW')),
