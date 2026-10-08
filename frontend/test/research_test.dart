@@ -22,7 +22,8 @@ class _ResearchApiClient extends http.BaseClient {
       _ => jsonEncode({'detail': 'not found'}),
     };
     final status = request.url.path == '/execute/background' ||
-            request.url.path == '/tasks/research-1'
+            request.url.path == '/tasks/research-1' ||
+            request.url.path == '/tasks/research-1/cancel'
         ? 200
         : 404;
     return http.StreamedResponse(
@@ -58,7 +59,7 @@ void main() {
     expect(find.text('Evidence report ready.'), findsOneWidget);
   });
 
-  testWidgets('Research screen disables cancellation while request is in flight', (tester) async {
+  testWidgets('Research screen cancels an active task and refreshes status', (tester) async {
     final api = SageApi(client: _ResearchApiClient(), authToken: 'test-token');
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: ResearchScreen(api: api))));
     await tester.pump();
@@ -72,9 +73,8 @@ void main() {
     expect(cancel, findsOneWidget);
     await tester.tap(cancel);
     await tester.pump();
-    expect(find.text('CANCELLING…'), findsOneWidget);
-
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Research in progress'), findsOneWidget);
+    expect(find.text('Research complete'), findsOneWidget);
+
   });
 }
