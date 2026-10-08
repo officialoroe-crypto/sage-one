@@ -155,7 +155,8 @@ class _EvolutionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = Map<String, dynamic>.from(evolution['progress'] ?? {});
-    final ratio = ((progress['ratio'] as num?)?.toDouble() ?? 0).clamp(0.0, 1.0);
+    final ratioValue = progress['ratio'];
+    final ratio = ratioValue is num ? ratioValue.toDouble().clamp(0.0, 1.0) : 0.0;
     final current = evolution['tier'] ?? 'Bronze';
     final next = progress['next_tier'] ?? 'MAX';
 
