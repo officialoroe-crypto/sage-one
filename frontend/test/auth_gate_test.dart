@@ -4,10 +4,21 @@ import 'package:sage_one/screens/auth_gate.dart';
 
 void main() {
   group('AuthGate onboarding routing', () {
-    test('owner developer session bypasses onboarding even for a new profile', () {
+    test('new owner profile still requires onboarding', () {
       expect(
         shouldRequireOnboarding(
           {'onboarding_completed': false, 'phone_verified': false},
+          developerMode: true,
+          ownerMode: true,
+        ),
+        isTrue,
+      );
+    });
+
+    test('configured owner profile skips onboarding when complete', () {
+      expect(
+        shouldRequireOnboarding(
+          {'onboarding_completed': true, 'phone_verified': false},
           developerMode: true,
           ownerMode: true,
         ),
@@ -15,18 +26,7 @@ void main() {
       );
     });
 
-    test('owner session bypasses onboarding even without developer mode', () {
-      expect(
-        shouldRequireOnboarding(
-          {'onboarding_completed': false, 'phone_verified': false},
-          developerMode: false,
-          ownerMode: true,
-        ),
-        isFalse,
-      );
-    });
-
-    test('normal authenticated user still requires onboarding when incomplete', () {
+    test('normal authenticated user requires onboarding when incomplete', () {
       expect(
         shouldRequireOnboarding(
           {'onboarding_completed': false, 'phone_verified': false},
