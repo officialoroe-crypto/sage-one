@@ -42,6 +42,8 @@ def test_identity_and_world_routers_are_mounted_on_app():
     assert "/economy/owner/status" in paths
     assert "/economy/me" in paths
     assert "/economy/payment/status" in paths
+    assert "/workflow/projects/{project_id}/video" in paths
+    assert "/workflow/assets/{asset_id}/download" in paths
     assert "/world/status" in paths
     assert "/world/knowledge" in paths
     assert "/world/due" in paths
