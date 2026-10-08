@@ -287,6 +287,18 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<Map<String, dynamic>> developerPreview(String task, {String? workspace}) async =>
+      _authorizedPost('/developer/preview', {
+        'task': task,
+        if (workspace != null && workspace.isNotEmpty) 'workspace': workspace,
+      });
+
+  Future<Map<String, dynamic>> developerApply(String proposalId, {required bool approved}) async =>
+      _authorizedPost('/developer/apply', {
+        'proposal_id': proposalId,
+        'approved': approved,
+      });
+
   Future<Map<String, dynamic>> ownerStatus() async => _authorizedGet('/economy/owner/status');
   Future<List<dynamic>> ownerAudit({int limit = 100}) async {
     final data = await _authorizedGet('/economy/owner/audit?limit=$limit');
