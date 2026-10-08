@@ -36,7 +36,8 @@ Main contains the real private-first execution core:
 - World Intelligence has status, knowledge, due items and refresh UI.
 - Spark/Evolution foundations are backend-backed and exposed in Flutter.
 - Apps Hub/ecosystem surfaces, file manager, AI Studio, wallet, payments, transactions, profile, settings and notifications are exposed from the private shell.
-- Android APK and God Mode developer website workflows both succeed from main.
+- Android APK workflow and God Mode developer website workflow both succeed from main.
+- Android release workflow accepts an explicit device backend URL and uses an emulator-reachable host default.
 - SAGE CI passes Python compile/lint/tests plus Flutter analyzer/tests.
 
 ## Private-first owner mode
@@ -64,7 +65,7 @@ Main contains the real private-first execution core:
 - Developer proposals are owner-scoped by trusted authenticated identity.
 - Public worker health does not expose private worker results.
 
-## Validation — main 3a8bc13
+## Validation — current main
 Latest main push triggered and completed successfully:
 - SAGE CI — success
 - SAGE ONE Android APK — success
@@ -87,6 +88,7 @@ Several older feature branches and open PRs still exist. Their existence does no
 6. Automated visual regression for Evolution animation milestones.
 7. Broader external integrations and production release hardening.
 8. Manual device/reference review of the complete Flutter surface; CI cannot prove visual fidelity.
+9. Physical Android smoke test against the actual configured backend.
 
 ## Continuity rule
 Always inspect actual GitHub main and this file before architectural changes. Do not rely on stale branches or old chat state.
