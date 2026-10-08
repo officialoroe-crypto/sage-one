@@ -167,6 +167,9 @@ class AgentManager:
                 "prospect audit",
                 "outreach draft",
                 "qualify this business",
+                "audit this business",
+                "find prospects",
+                "discover businesses",
             ]
         ):
             return "sales"
