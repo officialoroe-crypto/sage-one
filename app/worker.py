@@ -12,6 +12,7 @@ from tasks.engine import tasks
 from world_intelligence.engine import world_intelligence
 from notifications.service import create_task_notification
 from database.connection import SessionLocal
+from database.repository import repository
 from database.models import Task
 from identity.memory_learning import learn_memory_candidates
 from identity.profile import SessionLocal as ProfileSessionLocal, UserProfile
@@ -67,6 +68,18 @@ class SageWorker:
         """Index completed work in the selected project and memory when consent allows."""
         project_id = task.get("project_id")
         profile_id = task.get("profile_id")
+
+        if task.get("session_id"):
+            try:
+                with SessionLocal() as db:
+                    repository.add_message(
+                        db,
+                        task["session_id"],
+                        "assistant",
+                        str(result),
+                    )
+            except Exception:
+                pass
 
         if project_id and profile_id:
             try:
