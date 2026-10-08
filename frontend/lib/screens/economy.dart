@@ -164,7 +164,7 @@ class _EvolutionCard extends StatelessWidget {
         const Spacer(),
         Text((progress['next_tier'] ?? 'MAX').toString() + '  •  ' + (progress['next_threshold'] ?? 'MAX').toString(), style: TextStyle(color: visual.accent, fontSize: 11, fontWeight: FontWeight.w700)),
       ]),
-    ]));
+    ])));
   }
 }
 
@@ -238,5 +238,5 @@ class _ErrorState extends StatelessWidget {
     const Text('SAGE Spark is unavailable right now', style: TextStyle(fontWeight: FontWeight.w700)),
     const SizedBox(height: 8), Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 11)),
     const SizedBox(height: 16), OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-  ]));
+  ])));
 }
