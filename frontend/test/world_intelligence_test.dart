@@ -38,20 +38,35 @@ class _WorldClient extends http.BaseClient {
         body = {'success': true};
     }
     final bytes = Uint8List.fromList(utf8.encode(jsonEncode(body)));
-    return http.StreamedResponse(Stream.value(bytes), 200, headers: {'content-type': 'application/json'});
+    return http.StreamedResponse(
+      Stream.value(bytes),
+      200,
+      headers: {'content-type': 'application/json'},
+    );
   }
 }
 
-SageApi _api() => SageApi(client: _WorldClient(), baseUrl: 'http://test', authToken: 'test-token');
+SageApi _api() => SageApi(
+      client: _WorldClient(),
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
 
 void main() {
   testWidgets('World Intelligence renders verified world state', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: WorldIntelligenceScreen(api: _api())));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SageTheme.dark(),
+        home: WorldIntelligenceScreen(api: _api()),
+      ),
+    );
     await tester.pumpAndSettle();
+
     expect(find.text('WORLD INTELLIGENCE'), findsOneWidget);
     expect(find.text('SAGE WORLD LAYER'), findsOneWidget);
     expect(find.text('Verified update'), findsOneWidget);
     expect(find.text('3 sources'), findsOneWidget);
     expect(find.text('AI'), findsWidgets);
+    expect(find.text('ON'), findsNWidgets(3));
   });
 }
