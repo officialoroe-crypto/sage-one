@@ -25,7 +25,7 @@ class GoogleLoginRequest(BaseModel):
     id_token: str = Field(min_length=1, max_length=10000)
 
 class PhoneRequest(BaseModel):
-    phone: str = Field(min_length=5, max_length=30)
+    phone: str | None = Field(default=None, min_length=5, max_length=30)
 
 class OTPVerifyRequest(BaseModel):
     challenge_id: str = Field(min_length=1, max_length=200)
@@ -33,7 +33,7 @@ class OTPVerifyRequest(BaseModel):
 
 class OnboardingRequest(BaseModel):
     name: str = Field(min_length=1, max_length=200)
-    phone: str = Field(min_length=5, max_length=30)
+    phone: str | None = Field(default=None, min_length=5, max_length=30)
     address: str = Field(min_length=1, max_length=1000)
     age: int = Field(ge=1, le=120)
     basic_info: dict[str, Any] = Field(default_factory=dict)
