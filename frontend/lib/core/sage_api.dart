@@ -27,6 +27,16 @@ class SageApi {
   final String? _authToken;
   final String baseUrl;
 
+  Future<Map<String, dynamic>> chat(String message, {String? sessionId, String? goal, String? task, String? project, Map<String, dynamic>? context}) async {
+    final body = <String, dynamic>{'message': message};
+    if (sessionId != null && sessionId.isNotEmpty) body['session_id'] = sessionId;
+    if (goal != null) body['goal'] = goal;
+    if (task != null) body['task'] = task;
+    if (project != null) body['project'] = project;
+    if (context != null) body['context'] = context;
+    return _authorizedPost('/chat', body);
+  }
+
   Future<Map<String, dynamic>> routing() async {
     final data = await _authorizedGet('/brain/routing');
     final routing = data['routing'];
