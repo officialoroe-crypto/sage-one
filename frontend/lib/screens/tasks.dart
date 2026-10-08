@@ -54,7 +54,7 @@ class _TasksScreenState extends State<TasksScreen> {
       final tasks = await widget.api.tasks();
       if (!mounted) return;
       setState(() {
-        _tasks = tasks;
+        _tasks = tasks.whereType<Map>().toList();
         _status = _TaskViewStatus.ready;
         _error = null;
       });
@@ -188,7 +188,9 @@ class _TasksScreenState extends State<TasksScreen> {
       _TaskViewStatus.ready when _tasks.isEmpty => const _Empty(
           text: 'No durable tasks yet.',
         ),
-      _TaskViewStatus.ready => RefreshIndicator(
+      _TaskViewStatus.ready => visibleTasks.isEmpty
+          ? _Empty(text: _filter == 'all' ? 'No durable tasks yet.' : 'No tasks match this filter.')
+          : RefreshIndicator(
           onRefresh: _loadTasks,
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
