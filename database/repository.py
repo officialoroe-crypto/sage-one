@@ -714,6 +714,7 @@ class SageRepository:
     ) -> Notification:
         notification = Notification(
             id=str(uuid.uuid4()),
+            owner_key=owner_key,
             task_id=task_id,
             session_id=session_id,
             notification_type=notification_type,
@@ -731,8 +732,11 @@ class SageRepository:
         session_id: str | None = None,
         unread_only: bool = False,
         limit: int = 50,
+        owner_key: str | None = None,
     ) -> list[Notification]:
         query = db.query(Notification)
+        if owner_key is not None:
+            query = query.filter(Notification.owner_key == owner_key)
         if session_id:
             query = query.filter(Notification.session_id == session_id)
         if unread_only:
