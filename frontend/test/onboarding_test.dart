@@ -32,18 +32,18 @@ void main() {
         developerMode: true,
         ownerMode: false,
       ),
-      isFalse,
+      isTrue,
     );
   });
 
-  test('owner mode bypasses onboarding', () {
+  test('owner mode still requires first-run onboarding', () {
     expect(
       shouldRequireOnboarding(
         const {'onboarding_completed': false},
         developerMode: false,
         ownerMode: true,
       ),
-      isFalse,
+      isTrue,
     );
   });
 }
