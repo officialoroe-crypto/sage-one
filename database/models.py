@@ -81,6 +81,8 @@ class Task(Base):
     agent: Mapped[str] = mapped_column(String, default="general", nullable=False)
     session_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     parent_task_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    profile_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    project_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     premium_work_key: Mapped[str | None] = mapped_column(String, nullable=True)
     mission_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
