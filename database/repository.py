@@ -560,6 +560,7 @@ class SageRepository:
     ) -> ActionLog:
         action = ActionLog(
             id=str(uuid.uuid4()),
+            owner_key=owner_key,
             session_id=session_id,
             task_id=task_id,
             tool=tool,
