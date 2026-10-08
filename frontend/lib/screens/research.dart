@@ -141,7 +141,7 @@ class _HistoryTile extends StatelessWidget {
       if (summary.isNotEmpty) ...[const SizedBox(height: 6), Text(summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.35))],
       const SizedBox(height: 8),
       Row(children: [Text('$sources sources  •  $claims claims', style: const TextStyle(color: Colors.white30, fontSize: 10, letterSpacing: .5)), const Spacer(), Text(updated, style: const TextStyle(color: Colors.white30, fontSize: 10))]),
-    ])));
+    ]))));
   }
   static String _relativeDate(dynamic value) {
     final date = DateTime.tryParse(value?.toString() ?? ''); if (date == null) return 'No timestamp';
