@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import uuid
 from typing import Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -721,7 +721,7 @@ def developer_apply(
         task = proposal.task
 
     result = DevelopmentAgent(workspace, apply_changes=True).apply(task)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     with SessionLocal() as db:
         proposal = db.query(DeveloperProposal).filter(
             DeveloperProposal.id == request.proposal_id,
