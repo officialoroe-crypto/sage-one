@@ -1238,7 +1238,14 @@ def create_mission_task(
 # ============================================================
 
 @app.post("/missions/tasks/{task_id}/start")
-def start_task(task_id: str):
+def start_task(task_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     return {
         "success": True,
@@ -1252,7 +1259,14 @@ def start_task(task_id: str):
 def complete_task(
     task_id: str,
     request: TaskStatusRequest,
+,
+    claims: dict[str, Any] = Depends(_require_owner),
 ):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     return {
         "success": True,
@@ -1269,7 +1283,14 @@ def complete_task(
 def fail_task(
     task_id: str,
     request: TaskStatusRequest,
+,
+    claims: dict[str, Any] = Depends(_require_owner),
 ):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     error = request.error or "Task failed."
 
@@ -1285,7 +1306,14 @@ def fail_task(
 
 
 @app.post("/missions/tasks/{task_id}/verify")
-def verify_task(task_id: str):
+def verify_task(task_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     """
     Manual verification endpoint.
