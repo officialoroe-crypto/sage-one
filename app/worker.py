@@ -10,6 +10,10 @@ from research.persistence import research_persistence
 from research.synthesis import research_synthesis_engine
 from tasks.engine import tasks
 from world_intelligence.engine import world_intelligence
+from sales.audit import auditor as sales_auditor
+from sales.scoring import score_opportunity
+from sales.service import build_outreach, build_sales_intelligence
+from sales.repository import add_activity as sales_add_activity, get_lead as sales_get_lead, update_lead as sales_update_lead
 from notifications.service import create_task_notification
 from database.connection import SessionLocal
 from database.models import Task
@@ -145,6 +149,35 @@ class SageWorker:
         agent = task.get('agent', 'general')
         session_id = task.get('session_id')
         priority = task.get('priority', 3)
+
+        # Sales audits are durable network work. Keep HTTP requests fast and
+        # perform the audit inside the leased background worker instead of the API thread.
+        if agent == 'sales':
+            lead_id = description.removeprefix('Sales audit:').strip()
+            with SessionLocal() as db:
+                lead = sales_get_lead(db, task.get('owner_profile_id', ''), lead_id)
+                if lead is None:
+                    # Owner/profile identity is carried in the task description fallback
+                    # because the worker task schema predates Sales Engine ownership.
+                    marker = description.split('|', 1)
+                    if len(marker) == 2:
+                        profile_id, lead_id = marker
+                        lead = sales_get_lead(db, profile_id.strip(), lead_id.strip())
+                if lead is None:
+                    raise RuntimeError('Sales lead not found for background audit.')
+                import json
+                social = json.loads(lead.social_urls_json) if lead.social_urls_json else {}
+                audit = sales_auditor.audit(lead.website_url, social)
+                score = score_opportunity(audit)
+                intelligence = build_sales_intelligence(lead.business_name, audit, score)
+                outreach = build_outreach(lead.business_name, intelligence)
+                updated = sales_update_lead(
+                    db, lead, audit=audit, score=score['score'],
+                    sales_intelligence=intelligence, outreach=outreach,
+                    status='qualified', last_audited_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc),
+                )
+                sales_add_activity(db, updated.id, 'audit_completed', {'score': score, 'background': True})
+                return {'success': True, 'lead_id': updated.id, 'score': score, 'status': updated.status}
 
         # World Intelligence refreshes are durable background work. The worker
         # owns the task lease while the bounded public-world refresh executes.
