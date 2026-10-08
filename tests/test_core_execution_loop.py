@@ -49,11 +49,12 @@ def test_command_creates_owned_durable_task_with_project_context():
             "Core execution-loop validation project.",
             {},
         )
+        project_id = project.id
 
     response = command(
         CommandRequest(
             message="Build the execution loop",
-            project_id=project.id,
+            project_id=project_id,
             priority=2,
         ),
         claims,
@@ -67,8 +68,8 @@ def test_command_creates_owned_durable_task_with_project_context():
     with SessionLocal() as db:
         stored = repository.get_task(db, task["id"])
         assert stored is not None
-        assert stored.profile_id == profile.id
-        assert stored.project_id == project.id
+        assert stored.profile_id == profile_id
+        assert stored.project_id == project_id
 
 
 def test_completed_task_indexes_project_result_and_learns_with_consent():
@@ -102,19 +103,20 @@ def test_completed_task_indexes_project_result_and_learns_with_consent():
             None,
             {},
         )
+        project_id = project.id
         task = repository.create_task(
             db=db,
             title="Persistent result",
             description="Produce a durable project result",
             profile_id=profile_id,
-            project_id=project.id,
+            project_id=project_id,
         )
 
     worker = SageWorker(worker_id="outcome-test")
     worker._persist_task_outcome(task.__dict__, {"success": True, "answer": "done"})
 
     with SessionLocal() as db:
-        assets = workflow_repository.list_assets(db, profile_id, project.id)
+        assets = workflow_repository.list_assets(db, profile_id, project_id)
         assert len(assets) == 1
         assert assets[0].asset_type == "text"
         assert assets[0].status == "completed"
