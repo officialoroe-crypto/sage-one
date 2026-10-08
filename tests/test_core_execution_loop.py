@@ -249,7 +249,7 @@ def test_legacy_memory_is_owner_scoped():
         __import__("app.main", fromlist=["MemoryRequest"]).MemoryRequest(
             content="private owner A memory",
             memory_type="fact",
-            importance=0.8,
+            importance=1,
             confidence=1.0,
             source="test",
         ),
