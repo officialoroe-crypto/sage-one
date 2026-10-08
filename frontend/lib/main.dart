@@ -20,6 +20,7 @@ import 'theme/sage_theme.dart';
 import 'screens/feature_workspaces.dart';
 import 'screens/voice_command.dart';
 import 'screens/developer_mode.dart';
+import 'screens/sales.dart';
 import 'screens/final_surfaces.dart' as final_surfaces;
 
 void main() => runApp(const SageOneApp());
@@ -148,6 +149,7 @@ class _SageOneShellState extends State<SageOneShell> {
             ListTile(leading: const Icon(Icons.work_outline), title: const Text('Jobs'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const JobsScreen())); }),
             ListTile(leading: const Icon(Icons.school_outlined), title: const Text('Learning'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningScreen())); }),
             ListTile(leading: const Icon(Icons.groups_outlined), title: const Text('Community'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunityScreen())); }),
+            ListTile(leading: const Icon(Icons.handshake_outlined), title: const Text('Sales'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => SalesScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.folder_copy_outlined), title: const Text('File Manager'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.FileManagerFinalScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.auto_awesome), title: const Text('AI Studio'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.AiStudioFinalScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: const Text('Spark Wallet'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.SparkWalletScreen(api: _api))); }),

@@ -239,6 +239,11 @@ class SalesRunRequest(BaseModel):
     session_id: Optional[str] = None
 
 
+class SalesFollowUpRequest(BaseModel):
+    note: str = Field(min_length=1, max_length=5000)
+    status: str = Field(default="planned", min_length=1, max_length=50)
+
+
 class PremiumTaskCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1, max_length=20000)
@@ -768,6 +773,37 @@ def command(
         "session_id": session_id,
         "task": task,
     }
+
+
+
+
+@app.post("/sales/leads/{lead_id}/follow-up")
+def add_sales_follow_up(
+    lead_id: str,
+    request: SalesFollowUpRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """Record a human follow-up without sending anything externally."""
+    owner_key = _developer_owner_key(claims)
+    with SessionLocal() as db:
+        lead = db.query(SalesLead).filter(
+            SalesLead.id == lead_id,
+            SalesLead.owner_key == owner_key,
+        ).first()
+        if lead is None:
+            raise HTTPException(status_code=404, detail="Sales lead not found.")
+        if lead.status == "customer":
+            raise HTTPException(status_code=409, detail="Customer lead is already converted.")
+        activity = SalesActivity(
+            id=str(uuid.uuid4()), lead_id=lead.id, owner_key=owner_key,
+            event_type="follow_up", status=request.status.strip() or "planned",
+            payload_json=json.dumps({"note": request.note.strip()}, ensure_ascii=False),
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(activity)
+        lead.updated_at = datetime.now(timezone.utc)
+        db.commit(); db.refresh(activity)
+        return {"success": True, "activity": _serialize(activity)}
 
 
 # ============================================================
