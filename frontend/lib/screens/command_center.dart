@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -171,7 +172,7 @@ class _CommandCenterState extends State<CommandCenter> with SingleTickerProvider
     child: Row(children: [
       SizedBox(width: 78, child: Row(children: List.generate(7, (index) {
         final phase = (_orbController.value + index / 7) * 3.14;
-        final height = 7 + 16 * (0.5 + 0.5 * (phase.sin()));
+        final height = 7 + 16 * (0.5 + 0.5 * math.sin(phase));
         return Container(width: 3, height: height, margin: const EdgeInsets.only(right: 4), decoration: BoxDecoration(color: SageTheme.cyan.withValues(alpha: .78), borderRadius: BorderRadius.circular(4)));
       }))),
       const SizedBox(width: 5),
