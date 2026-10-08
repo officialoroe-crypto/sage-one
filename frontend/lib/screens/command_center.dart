@@ -92,6 +92,7 @@ class _CommandCenterState extends State<CommandCenter>
       if (!mounted) return;
       final status = (task['status'] ?? 'unknown').toString().toLowerCase();
       final value = task['result'] ?? task['error'];
+      final terminal = {'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
 
       setState(() {
         _status = terminal ? 'Task complete' : 'SAGE is working…';
@@ -99,7 +100,14 @@ class _CommandCenterState extends State<CommandCenter>
         _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
       });
 
-      if (!_sending) _poller?.cancel();
+      if (!_sending) {
+        _poller?.cancel();
+        if (status == 'completed' && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Your task is complete. Open the result below.')),
+          );
+        }
+      }
     } catch (_) {
       if (mounted) setState(() => _status = 'Waiting for SAGE Core…');
     }
