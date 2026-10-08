@@ -1,5 +1,5 @@
 version: 1
-updated_at: 2026-10-08T11:20:00Z
+updated_at: 2026-10-08T13:30:00Z
 claims:
   - id: frontend-world-intelligence-v2
     agent: chatgpt
@@ -8,7 +8,10 @@ claims:
     scope:
       - frontend/lib/screens/world_intelligence.dart
       - frontend/test/world_intelligence_test.dart
+      - memory/AI_WORKING_CONTEXT.md
     objective: "Upgrade World Intelligence into a production-facing source-aware frontend surface without changing backend contracts."
-    status: in_progress
+    status: ready_for_review
     started_at: 2026-10-08T11:20:00Z
-    updated_at: 2026-10-08T11:20:00Z
+    updated_at: 2026-10-08T13:30:00Z
+    pr: 151
+    validation: "Dedicated Flutter widget regression test added; GitHub CI result pending."
