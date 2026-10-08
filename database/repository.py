@@ -152,10 +152,13 @@ class SageRepository:
         importance: float = 0.5,
         confidence: float = 1.0,
         source: str = "conversation",
+        owner_key: str | None = None,
+        profile_id: str | None = None,
     ) -> Memory:
         existing = (
             db.query(Memory)
             .filter(Memory.content == content)
+            .filter(Memory.owner_key == owner_key)
             .first()
         )
 
@@ -166,6 +169,8 @@ class SageRepository:
 
         memory = Memory(
             id=str(uuid.uuid4()),
+            owner_key=owner_key,
+            profile_id=profile_id,
             memory_type=memory_type,
             content=content,
             importance=importance,
@@ -184,9 +189,15 @@ class SageRepository:
         self,
         db: DBSession,
         limit: int = 20,
+        owner_key: str | None = None,
+        profile_id: str | None = None,
     ) -> list[Memory]:
-        return (
-            db.query(Memory)
+        query = db.query(Memory)
+        if owner_key is not None:
+            query = query.filter(Memory.owner_key == owner_key)
+        if profile_id is not None:
+            query = query.filter(Memory.profile_id == profile_id)
+        return (query
             .order_by(Memory.importance.desc())
             .limit(limit)
             .all()
