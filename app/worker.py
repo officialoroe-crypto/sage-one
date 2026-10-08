@@ -76,7 +76,7 @@ class SageWorker:
                         db,
                         task["session_id"],
                         "assistant",
-                        str(result),
+                        str(result.get("final") if isinstance(result, dict) and result.get("final") else result),
                     )
             except Exception:
                 pass
