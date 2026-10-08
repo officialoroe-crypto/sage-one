@@ -938,6 +938,7 @@ def execute_tool(
                 owner_authorized=True,
                 verify=True,
                 source="api_tools_execute",
+                owner_key=f"{_claims['auth_provider']}:{_claims['auth_subject']}",
             )
         ).to_dict()
 
@@ -1456,7 +1457,8 @@ def get_notifications(
 
 @app.post("/notifications/{notification_id}/read")
 def read_notification(notification_id: str, _claims: dict[str, Any] = Depends(_require_owner)):
-    notification = mark_read(notification_id)
+    owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
+    notification = mark_read(notification_id, owner_key=owner_key)
     if notification is None:
         raise HTTPException(status_code=404, detail="Notification not found")
     return {"success": True, "notification": notification}
@@ -1464,9 +1466,10 @@ def read_notification(notification_id: str, _claims: dict[str, Any] = Depends(_r
 
 @app.post("/notifications/read-all")
 def read_all_notifications(session_id: Optional[str] = None, _claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
     return {
         "success": True,
-        "marked_read": mark_all_read(session_id=session_id),
+        "marked_read": mark_all_read(session_id=session_id, owner_key=owner_key),
     }
 
 
