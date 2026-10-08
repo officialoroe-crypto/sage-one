@@ -27,6 +27,13 @@
 - [x] Apps Hub and ecosystem shell surfaces.
 - [x] File Manager / AI Studio / Wallet / Payments / Transactions / Profile / Settings / Notifications shell surfaces.
 
+## COMPLETE — PHASE 5 SALES EXECUTION
+- [x] Sales discovery and business audit workflow.
+- [x] Deterministic lead scoring and durable lead creation.
+- [x] Lead intelligence and approval-gated outreach preparation.
+- [x] Owner lead activity/history and customer conversion gate.
+- [x] Owner Flutter Sales pipeline/detail UI with human follow-up recording.
+
 ## REMAINING — EXTERNAL OR DEFERRED
 - [ ] Production SMS/OTP provider.
 - [ ] Long-lived Google web session refresh UX.
