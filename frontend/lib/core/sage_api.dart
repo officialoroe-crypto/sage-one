@@ -352,7 +352,7 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
-  Future<Map<String, dynamic>> salesLead(String leadId) async => _authorizedGet('/sales/leads/' + leadId);
+  Future<Map<String, dynamic>> salesLead(String leadId) async => _authorizedGet('/sales/leads/$leadId');
 
   Future<List<dynamic>> salesLeadHistory(String leadId) async {
     final data = await _authorizedGet('/sales/leads/$leadId/history');
@@ -361,13 +361,13 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>> approveSalesOutreach(String leadId) async =>
-      _authorizedPost('/sales/leads/' + leadId + '/approve-outreach', <String, dynamic>{});
+      _authorizedPost('/sales/leads/$leadId/approve-outreach', <String, dynamic>{});
 
   Future<Map<String, dynamic>> convertSalesCustomer(String leadId) async =>
-      _authorizedPost('/sales/leads/' + leadId + '/convert-customer', <String, dynamic>{});
+      _authorizedPost('/sales/leads/$leadId/convert-customer', <String, dynamic>{});
 
   Future<Map<String, dynamic>> addSalesFollowUp(String leadId, String note, {String status = 'planned'}) async =>
-      _authorizedPost('/sales/leads/' + leadId + '/follow-up', {'note': note, 'status': status});
+      _authorizedPost('/sales/leads/$leadId/follow-up', {'note': note, 'status': status});
 
   Future<Map<String, dynamic>> paymentStatus() async => _authorizedGet('/economy/payment/status');
 
