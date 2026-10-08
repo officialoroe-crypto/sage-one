@@ -64,6 +64,7 @@ void main() {
     expect(find.text('completed'), findsOneWidget);
     expect(find.text('Task ID'), findsOneWidget);
     expect(find.text('Research completed.'), findsOneWidget);
+  });
   testWidgets('Tasks screen shows a useful empty state for filters', (tester) async {
     final api = SageApi(client: _TasksApiClient(), authToken: 'test-token');
     await tester.pumpWidget(MaterialApp(home: TasksScreen(api: api)));
