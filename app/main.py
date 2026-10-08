@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
+import uuid
 from typing import Any, Optional
 from datetime import datetime
 from contextlib import asynccontextmanager
@@ -34,7 +36,9 @@ from economy.api import router as economy_api_router
 from workflows.api import router as workflow_api_router
 from app.worker_service import worker_service
 from config.settings import settings
-from identity.auth import authenticate_request
+from identity.auth import authenticate_request, get_or_create_authenticated_profile
+from workflows.repository import repository as workflow_repository
+from dev_agent.agent import DevelopmentAgent
 
 
 # ============================================================
@@ -148,6 +152,7 @@ class ChatRequest(BaseModel):
 
 class ExecuteRequest(BaseModel):
     goal: str
+    project_id: Optional[str] = None
     session_id: Optional[str] = None
     max_steps: int = Field(default=20, ge=1, le=100)
 
@@ -204,6 +209,23 @@ class TaskCreateRequest(BaseModel):
     agent: str = Field(default="general", min_length=1, max_length=100)
     session_id: Optional[str] = None
     parent_task_id: Optional[str] = None
+
+
+class CommandRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=20000)
+    session_id: Optional[str] = None
+    project_id: Optional[str] = None
+    priority: int = Field(default=3, ge=1, le=5)
+
+
+class DeveloperPreviewRequest(BaseModel):
+    task: str = Field(min_length=1, max_length=20000)
+    workspace: Optional[str] = None
+
+
+class DeveloperApplyRequest(BaseModel):
+    proposal_id: str = Field(min_length=1, max_length=100)
+    approved: bool = False
 
 
 class PremiumTaskCreateRequest(BaseModel):
@@ -376,6 +398,25 @@ def get_session(session_id: str):
         db.close()
 
 
+@app.get("/session/{session_id}/messages")
+def get_session_messages(
+    session_id: str,
+    limit: int = 50,
+    _claims: dict[str, Any] = Depends(_require_owner),
+):
+    with SessionLocal() as db:
+        session = repository.get_session(db, session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        messages = repository.get_messages(db, session_id, limit=max(1, min(limit, 100)))
+        messages.reverse()
+        return {
+            "success": True,
+            "session_id": session_id,
+            "messages": _serialize(messages),
+        }
+
+
 # ============================================================
 # CHAT
 # ============================================================
@@ -511,6 +552,13 @@ def execute_background(
     if not agents.exists(agent_name):
         agent_name = "general"
 
+    profile = get_or_create_authenticated_profile(claims)
+    project_id = request.project_id
+    if project_id:
+        with SessionLocal() as db:
+            if workflow_repository.get_project(db, profile["id"], project_id) is None:
+                raise HTTPException(status_code=404, detail="Project not found.")
+
     task = tasks.create(
         title=request.goal.strip()[:120],
         description=request.goal.strip(),
@@ -518,6 +566,8 @@ def execute_background(
         agent=agent_name,
         session_id=request.session_id,
         owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
+        profile_id=profile["id"],
+        project_id=project_id,
     )
 
     return {
@@ -525,6 +575,123 @@ def execute_background(
         "status": "queued",
         "message": "Execution queued for the durable background worker.",
         "task": task,
+    }
+
+
+# ============================================================
+# UNIFIED COMMAND EXECUTION
+# ============================================================
+
+@app.post("/command")
+def command(
+    request: CommandRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """Queue a user command into the same durable execution path used by SAGE."""
+    profile = get_or_create_authenticated_profile(claims)
+    project_id = request.project_id
+    if project_id:
+        with SessionLocal() as db:
+            if workflow_repository.get_project(db, profile["id"], project_id) is None:
+                raise HTTPException(status_code=404, detail="Project not found.")
+
+    session_id = request.session_id
+    if not session_id:
+        with SessionLocal() as db:
+            session_id = repository.create_session(db)
+
+    with SessionLocal() as db:
+        repository.add_message(db, session_id, "user", request.message)
+
+    agent_name = agents.choose(request.message)
+    if not agents.exists(agent_name):
+        agent_name = "general"
+
+    task = tasks.create(
+        title=request.message.strip()[:120],
+        description=request.message.strip(),
+        priority=request.priority,
+        agent=agent_name,
+        session_id=session_id,
+        owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
+        profile_id=profile["id"],
+        project_id=project_id,
+    )
+    return {
+        "success": True,
+        "status": "queued",
+        "session_id": session_id,
+        "task": task,
+    }
+
+
+# ============================================================
+# OWNER DEVELOPER MODE
+# ============================================================
+
+_DEVELOPER_PROPOSALS: dict[str, dict[str, Any]] = {}
+
+
+def _developer_workspace(requested: Optional[str]) -> Path:
+    configured = requested or os.getenv("SAGE_WORKSPACE")
+    workspace = Path(configured).expanduser().resolve() if configured else Path(__file__).resolve().parent.parent
+    if not workspace.exists() or not workspace.is_dir():
+        raise HTTPException(status_code=400, detail="Developer workspace does not exist.")
+    return workspace
+
+
+@app.post("/developer/preview")
+def developer_preview(
+    request: DeveloperPreviewRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """Inspect and plan a code change without writing files."""
+    if not settings.DEVELOPER_MODE:
+        raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
+    workspace = _developer_workspace(request.workspace)
+    result = DevelopmentAgent(str(workspace), apply_changes=False).plan(request.task)
+    proposal_id = str(uuid.uuid4())
+    _DEVELOPER_PROPOSALS[proposal_id] = {
+        "id": proposal_id,
+        "task": request.task,
+        "workspace": str(workspace),
+        "preview": result,
+        "approved": False,
+    }
+    return {
+        "success": True,
+        "proposal_id": proposal_id,
+        "status": "preview",
+        "requires_approval": True,
+        "proposal": result,
+    }
+
+
+@app.post("/developer/apply")
+def developer_apply(
+    request: DeveloperApplyRequest,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """Apply exactly one previously previewed proposal after explicit approval."""
+    if not settings.DEVELOPER_MODE:
+        raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
+    if not request.approved:
+        raise HTTPException(status_code=400, detail="Explicit approval is required.")
+    proposal = _DEVELOPER_PROPOSALS.get(request.proposal_id)
+    if proposal is None:
+        raise HTTPException(status_code=404, detail="Developer proposal not found.")
+    if proposal.get("applied"):
+        raise HTTPException(status_code=409, detail="Developer proposal was already applied.")
+
+    result = DevelopmentAgent(proposal["workspace"], apply_changes=True).apply(proposal["task"])
+    proposal["approved"] = True
+    proposal["applied"] = True
+    proposal["result"] = result
+    return {
+        "success": bool(result.get("success")),
+        "proposal_id": proposal["id"],
+        "status": "applied" if result.get("success") else "failed",
+        "result": result,
     }
 
 

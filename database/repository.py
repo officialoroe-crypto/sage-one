@@ -202,6 +202,8 @@ class SageRepository:
         session_id: str | None = None,
         parent_task_id: str | None = None,
         max_retries: int = 3,
+        profile_id: str | None = None,
+        project_id: str | None = None,
         owner_key: str | None = None,
         premium_work_key: str | None = None,
     ) -> Task:
@@ -216,6 +218,8 @@ class SageRepository:
             agent=agent,
             session_id=session_id,
             parent_task_id=parent_task_id,
+            profile_id=profile_id,
+            project_id=project_id,
             owner_key=owner_key,
             premium_work_key=premium_work_key,
             progress=0,

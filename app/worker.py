@@ -12,7 +12,11 @@ from tasks.engine import tasks
 from world_intelligence.engine import world_intelligence
 from notifications.service import create_task_notification
 from database.connection import SessionLocal
+from database.repository import repository
 from database.models import Task
+from identity.memory_learning import learn_memory_candidates
+from identity.profile import SessionLocal as ProfileSessionLocal, UserProfile
+from workflows.repository import repository as workflow_repository
 from economy.models import PremiumSparkTransaction
 from economy.service import reserve_premium_work, settle_premium_sparks, refund_premium_sparks
 from sqlalchemy import select
@@ -59,6 +63,67 @@ class SageWorker:
         with SessionLocal() as db:
             reserve_premium_work(db, owner_key, self._premium_operation_key(task["id"]),
                                  work_key, metadata={"task_id": task["id"]})
+
+    def _persist_task_outcome(self, task, result):
+        """Index completed work in the selected project and memory when consent allows."""
+        project_id = task.get("project_id")
+        profile_id = task.get("profile_id")
+
+        if task.get("session_id"):
+            try:
+                with SessionLocal() as db:
+                    repository.add_message(
+                        db,
+                        task["session_id"],
+                        "assistant",
+                        str(result.get("final") if isinstance(result, dict) and result.get("final") else result),
+                    )
+            except Exception:
+                pass
+
+        if project_id and profile_id:
+            try:
+                with SessionLocal() as db:
+                    project = workflow_repository.get_project(db, profile_id, project_id)
+                    if project is not None:
+                        research_id = result.get("research_id") if isinstance(result, dict) else None
+                        workflow_repository.create_asset(
+                            db,
+                            project,
+                            name=f"Research result: {task['title'][:160]}" if research_id else f"Task result: {task['title'][:160]}",
+                            asset_type="research" if research_id else "text",
+                            status="completed",
+                            metadata={
+                                "task_id": task["id"],
+                                "source": "durable_task",
+                                "research_id": research_id,
+                                "result": str(result)[:12000],
+                            },
+                        )
+            except Exception:
+                # Execution durability wins; project indexing is additive.
+                pass
+
+        if profile_id:
+            try:
+                with ProfileSessionLocal() as db:
+                    row = db.query(UserProfile).filter(UserProfile.id == profile_id).first()
+                    memory_consent = bool(row.memory_consent) if row else False
+
+                if memory_consent:
+                    learn_memory_candidates(
+                        profile_id=profile_id,
+                        memory_consent=True,
+                        candidates=[{
+                            "memory_type": "experience",
+                            "content": f"Completed SAGE task: {task['title'][:240]}",
+                            "importance": 0.35,
+                            "confidence": 1.0,
+                        }],
+                    )
+            except Exception:
+                # Memory learning is consent-gated and must never break task settlement.
+                pass
 
     def _finalize_premium_for_task(self, task, success):
         if not task or not task.get("premium_work_key") or not task.get("owner_key"):
@@ -261,6 +326,7 @@ class SageWorker:
             )
 
             if completed is not None:
+                self._persist_task_outcome(task, result)
                 self._finalize_premium_for_task(task, success=True)
                 try:
                     create_task_notification(completed, success=True)

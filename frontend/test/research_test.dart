@@ -45,6 +45,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Flutter reliability');
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Research in progress'), findsOneWidget);
     expect(find.text('TASK  research-1'), findsOneWidget);

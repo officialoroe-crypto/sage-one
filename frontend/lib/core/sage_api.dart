@@ -1,3 +1,4 @@
+// ignore_for_file: use_null_aware_elements
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -41,12 +42,37 @@ class SageApi {
     return data;
   }
 
-  Future<Map<String, dynamic>> submitBackground(String prompt) async {
-    final data = await _authorizedPost('/execute/background', {'goal': prompt});
+  Future<Map<String, dynamic>> submitBackground(String prompt, {String? projectId}) async {
+    final data = await _authorizedPost('/execute/background', {
+      'goal': prompt,
+      if (projectId case final id?) 'project_id': id,
+    });
     final task = data['task'];
-    if (task is Map) data['task_id'] = task['id'] ?? task['task_id'];
+    final taskMap = task is Map ? task : null;
+    data['task_id'] = taskMap?['id'] ?? taskMap?['task_id'] ?? data['task_id'];
     return data;
   }
+
+  Future<Map<String, dynamic>> submitCommand(
+    String message, {
+    String? sessionId,
+    String? projectId,
+    int priority = 3,
+  }) async =>
+      _authorizedPost('/command', {
+        'message': message,
+        if (sessionId case final id?) 'session_id': id,
+        if (projectId case final id?) 'project_id': id,
+        'priority': priority,
+      });
+
+  Future<List<dynamic>> sessionMessages(String sessionId, {int limit = 50}) async {
+    final data = await _authorizedGet('/session/$sessionId/messages?limit=$limit');
+    final items = data['messages'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createSession() async => _authorizedPost('/session', <String, dynamic>{});
 
   Future<Map<String, dynamic>> workerHealth() async => _authorizedGet('/worker/health');
   Future<Map<String, dynamic>> brainHealth() async => _authorizedGet('/brain/health');

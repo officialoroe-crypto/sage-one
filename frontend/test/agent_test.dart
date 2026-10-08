@@ -47,6 +47,7 @@ void main() {
     expect(runButton, findsOneWidget);
     await tester.tap(runButton);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('System check running'), findsOneWidget);
     expect(find.text('TASK  agent-1'), findsOneWidget);
