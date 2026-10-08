@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
@@ -132,5 +133,16 @@ class _SalesLeadScreenState extends State<SalesLeadScreen> {
           subtitle: Text(item['created_at']?.toString() ?? ''), trailing: Text(item['status']?.toString() ?? '')); }),
       ])));
   }
-  Map<String, dynamic> _jsonMap(dynamic value) => value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
+  Map<String, dynamic> _jsonMap(dynamic value) {
+    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is String && value.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(value);
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {
+        // Malformed persisted JSON must not break the lead detail surface.
+      }
+    }
+    return <String, dynamic>{};
+  }
 }
