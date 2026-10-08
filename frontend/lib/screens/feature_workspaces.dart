@@ -57,10 +57,27 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _newSession() async {
+    _poller?.cancel();
+    if (mounted) {
+      setState(() {
+        _sessionId = null;
+        _taskId = null;
+        _sending = false;
+        _status = 'Starting new session…';
+        _messages.clear();
+      });
+    }
     try {
       final session = await widget.api.createSession();
       final value = session['session'];
-      if (value is Map) _sessionId = value['id']?.toString();
+      final id = value is Map ? value['id']?.toString() : null;
+      if (id == null || id.isEmpty) throw Exception('SAGE did not return a session id.');
+      if (mounted) {
+        setState(() {
+          _sessionId = id;
+          _status = 'Ready';
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _status = 'Could not start chat');
     }
@@ -100,7 +117,9 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final response = await widget.api.submitCommand(text, sessionId: sessionId);
       final task = response['task'];
-      _taskId = task is Map ? task['id']?.toString() : null;
+      _taskId = task is Map
+          ? (task['id'] ?? task['task_id'])?.toString()
+          : response['task_id']?.toString();
       if (_taskId != null) _startPolling();
     } catch (error) {
       if (!mounted) return;
