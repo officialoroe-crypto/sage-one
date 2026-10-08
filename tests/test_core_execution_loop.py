@@ -159,7 +159,7 @@ def test_sessions_are_owner_scoped_and_command_rejects_foreign_session():
         "developer_mode": True,
     }
 
-    from app.main import create_session, get_session, command
+    from app.main import get_session, command
     with SessionLocal() as db:
         session_id = repository.create_session(
             db,
