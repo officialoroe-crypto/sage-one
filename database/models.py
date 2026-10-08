@@ -13,6 +13,8 @@ from database.connection import Base
 class Session(Base):
     __tablename__ = "sessions"
     id: Mapped[str] = mapped_column(String, primary_key=True)
+    profile_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
