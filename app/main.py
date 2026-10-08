@@ -997,11 +997,12 @@ def set_permission(
 # ============================================================
 
 @app.get("/audit")
-def audit():
+def audit(_claims: dict[str, Any] = Depends(_require_owner)):
     db = SessionLocal()
 
     try:
-        actions = repository.get_actions(db)
+        owner_key = f"{_claims['auth_provider']}:{_claims['auth_subject']}"
+        actions = repository.get_actions(db, owner_key=owner_key)
 
         return {
             "success": True,
@@ -1119,12 +1120,13 @@ def cancel_task(
 # ============================================================
 
 @app.post("/missions")
-def create_mission(request: MissionCreateRequest):
+def create_mission(request: MissionCreateRequest, claims: dict[str, Any] = Depends(_require_owner)):
 
     mission = mission_engine.create_mission(
         goal=request.goal,
         priority=request.priority,
         session_id=request.session_id,
+        owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
     )
 
     return {
@@ -1134,9 +1136,9 @@ def create_mission(request: MissionCreateRequest):
 
 
 @app.get("/missions/{mission_id}")
-def get_mission(mission_id: str):
+def get_mission(mission_id: str, claims: dict[str, Any] = Depends(_require_owner)):
 
-    mission = mission_engine.get_mission(mission_id)
+    mission = mission_engine.get_mission(mission_id, owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}")
 
     if not mission:
         raise HTTPException(
@@ -1436,6 +1438,7 @@ def get_trace_summary(
 
 @app.get("/notifications")
 def get_notifications(
+    claims: dict[str, Any] = Depends(_require_owner),
     session_id: Optional[str] = None,
     unread_only: bool = False,
     limit: int = 50,
@@ -1446,12 +1449,13 @@ def get_notifications(
             session_id=session_id,
             unread_only=unread_only,
             limit=limit,
+            owner_key=f"{claims['auth_provider']}:{claims['auth_subject']}",
         ),
     }
 
 
 @app.post("/notifications/{notification_id}/read")
-def read_notification(notification_id: str):
+def read_notification(notification_id: str, _claims: dict[str, Any] = Depends(_require_owner)):
     notification = mark_read(notification_id)
     if notification is None:
         raise HTTPException(status_code=404, detail="Notification not found")
@@ -1459,7 +1463,7 @@ def read_notification(notification_id: str):
 
 
 @app.post("/notifications/read-all")
-def read_all_notifications(session_id: Optional[str] = None):
+def read_all_notifications(session_id: Optional[str] = None, _claims: dict[str, Any] = Depends(_require_owner)):
     return {
         "success": True,
         "marked_read": mark_all_read(session_id=session_id),
