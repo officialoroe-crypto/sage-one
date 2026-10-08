@@ -22,6 +22,16 @@ def migrate():
         tables = inspect(engine).get_table_names()
         print("ADDED: developer_proposals")
 
+    if "sessions" in tables:
+        session_columns = {column["name"] for column in inspector.get_columns("sessions")}
+        with engine.begin() as connection:
+            if "profile_id" not in session_columns:
+                connection.execute(text("ALTER TABLE sessions ADD COLUMN profile_id VARCHAR"))
+                print("ADDED: sessions.profile_id")
+            if "owner_key" not in session_columns:
+                connection.execute(text("ALTER TABLE sessions ADD COLUMN owner_key VARCHAR"))
+                print("ADDED: sessions.owner_key")
+
     if "tasks" not in tables:
         print("TASK TABLE DOES NOT EXIST.")
         return
