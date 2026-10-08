@@ -35,10 +35,11 @@ class SageOneApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: SageTheme.dark(),
       home: SageSplashScreen(
-        child: AuthGate(
-          identity: null,
-          childBuilder: (identity) => SageOneShell(api: _api),
-        ),
+        child: _api != null
+            ? SageOneShell(api: _api)
+            : AuthGate(
+                childBuilder: (identity) => SageOneShell(),
+              ),
       ),
     );
   }
