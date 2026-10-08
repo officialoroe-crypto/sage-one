@@ -17,6 +17,18 @@ def migrate():
         tables = inspect(engine).get_table_names()
         print("ADDED: automations")
 
+    if "sales_leads" not in tables:
+        from sales.models import SalesLead
+        SalesLead.__table__.create(bind=engine, checkfirst=True)
+        tables = inspect(engine).get_table_names()
+        print("ADDED: sales_leads")
+
+    if "sales_activities" not in tables:
+        from sales.models import SalesActivity
+        SalesActivity.__table__.create(bind=engine, checkfirst=True)
+        tables = inspect(engine).get_table_names()
+        print("ADDED: sales_activities")
+
     if "developer_proposals" not in tables:
         models.DeveloperProposal.__table__.create(bind=engine, checkfirst=True)
         tables = inspect(engine).get_table_names()
