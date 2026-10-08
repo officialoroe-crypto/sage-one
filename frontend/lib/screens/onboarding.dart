@@ -8,12 +8,14 @@ class OnboardingScreen extends StatefulWidget {
     required this.identity,
     required this.onComplete,
     this.initialProfile,
+    this.privateOwnerMode = false,
     super.key,
   });
 
   final IdentityClient identity;
   final VoidCallback onComplete;
   final Map<String, dynamic>? initialProfile;
+  final bool privateOwnerMode;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -168,6 +170,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _next() async {
     if (_step == 0) {
+      if (widget.privateOwnerMode) {
+        setState(() {
+          _step = 1;
+          _error = null;
+        });
+        return;
+      }
       if (_challengeId == null) {
         await _sendOtp();
       } else {
@@ -295,6 +304,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_step == 0) {
       if (_sendingOtp) return 'Sending code…';
       if (_verifyingOtp) return 'Verifying…';
+      if (widget.privateOwnerMode) return 'Continue';
       return _challengeId == null ? 'Send verification code' : 'Verify phone';
     }
     if (_saving) return 'Preparing your workspace…';
@@ -377,17 +387,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: [
         _heading(
           'SECURE IDENTITY',
-          'Verify your phone.',
-          'Your verified number protects your SAGE ONE identity and completes the first layer of your workspace.',
+          widget.privateOwnerMode ? 'Start with your context.' : 'Verify your phone.',
+          widget.privateOwnerMode
+              ? 'Private Owner Mode does not require Google, SMS or OTP. You can add a phone later when external identity providers are configured.'
+              : 'Your verified number protects your SAGE ONE identity and completes the first layer of your workspace.',
           Icons.verified_user_outlined,
         ),
-        _field(
+        if (!widget.privateOwnerMode) _field(
           _phoneController,
           'Phone number',
           Icons.phone_outlined,
           keyboardType: TextInputType.phone,
         ),
-        if (_challengeId != null) ...[
+        if (!widget.privateOwnerMode && _challengeId != null) ...[
           _field(
             _otpController,
             '6-digit verification code',
