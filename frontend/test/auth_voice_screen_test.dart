@@ -64,6 +64,17 @@ SageApi _api() => SageApi(
 );
 
 void main() {
+  test('Identity and SAGE clients share the Android emulator API default', () {
+    final identity = IdentityClient(client: _ConfigClient());
+    final api = SageApi(client: _ApiClient());
+
+    expect(identity.baseUrl, 'http://10.0.2.2:8010');
+    expect(api.baseUrl, identity.baseUrl);
+
+    identity.dispose();
+    api.dispose();
+  });
+
   testWidgets('Login uses the private owner entry when backend developer mode is enabled', (tester) async {
     final identity = IdentityClient(client: _ConfigClient(), baseUrl: 'http://test');
     await tester.pumpWidget(MaterialApp(
