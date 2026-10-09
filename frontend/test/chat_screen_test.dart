@@ -32,24 +32,39 @@ class _DeferredCommandClient extends http.BaseClient {
   final Completer<http.StreamedResponse> commandResponse =
       Completer<http.StreamedResponse>();
   final List<String> requestPaths = <String>[];
+  int sessionCount = 0;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
     requestPaths.add('${request.method} $path');
+
     if (request.method == 'POST' && path == '/command') {
       return commandResponse.future;
     }
 
+    if (request.method == 'POST' && path == '/session') {
+      sessionCount++;
+      final payload = {
+        'success': true,
+        'session': {'id': 'session-$sessionCount'},
+      };
+      return http.StreamedResponse(
+        Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(payload)))),
+        200,
+        headers: {'content-type': 'application/json'},
+        request: request,
+      );
+    }
+
     final dynamic payload = switch ('${request.method} $path') {
-      'POST /session' => {'success': true, 'session': {'id': 'session-1'}},
       'GET /tasks/task-1' => {
           'success': true,
           'task': {'id': 'task-1', 'status': 'running'},
         },
       _ => {'error': 'not found'},
     };
-    final status = path == '/session' || path == '/tasks/task-1' ? 200 : 404;
+    final status = path == '/tasks/task-1' ? 200 : 404;
     return http.StreamedResponse(
       Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(payload)))),
       status,
@@ -111,5 +126,50 @@ void main() {
     expect(tester.takeException(), isNull);
     api.dispose();
   });
+
+  testWidgets(
+    'Chat ignores a pending command after the user starts a new session',
+    (tester) async {
+      final client = _DeferredCommandClient();
+      final api = SageApi(
+        client: client,
+        baseUrl: 'http://test',
+        authToken: 'test-token',
+      );
+      await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
+      await tester.pumpAndSettle();
+      expect(client.sessionCount, 1);
+
+      await tester.enterText(find.byType(TextField), 'Queue a command');
+      await tester.tap(find.byIcon(Icons.arrow_upward));
+      await tester.pump();
+      expect(client.requestPaths, contains('POST /command'));
+
+      // Start another conversation before the first command response arrives.
+      await tester.tap(find.byIcon(Icons.add_comment_outlined));
+      await tester.pumpAndSettle();
+      expect(client.sessionCount, 2);
+      expect(find.text('Queue a command'), findsNothing);
+
+      client.commandResponse.complete(http.StreamedResponse(
+        Stream.value(Uint8List.fromList(utf8.encode(jsonEncode({
+          'success': true,
+          'task': {'id': 'task-1', 'status': 'queued'},
+        })))),
+        200,
+        headers: {'content-type': 'application/json'},
+      ));
+
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 3));
+      expect(client.requestPaths, isNot(contains('GET /tasks/task-1')));
+      expect(find.text('Queue a command'), findsNothing);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      api.dispose();
+    },
+  );
+
 
 }
