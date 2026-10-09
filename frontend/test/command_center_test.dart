@@ -59,7 +59,11 @@ void main() {
 
     await tester.enterText(find.byType(TextField).first, 'Run a safe test command');
     await tester.pump();
-    await tester.ensureVisible(find.text('Execute'));
+    await tester.scrollUntilVisible(
+      find.text('Execute'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Execute'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
