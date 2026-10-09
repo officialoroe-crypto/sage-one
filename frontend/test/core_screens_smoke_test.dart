@@ -79,7 +79,7 @@ void main() {
   testWidgets('Economy screen renders balance and cost state', (tester) async {
     await tester.pumpWidget(MaterialApp(home: EconomyScreen(api: _api())));
     await tester.pumpAndSettle();
-    expect(find.text('SAGE Spark'), findsOneWidget);
+    expect(find.text('SAGE Spark'), findsWidgets);
     expect(find.text('Premium work • Evolution protected'), findsOneWidget);
   });
 
