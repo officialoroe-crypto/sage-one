@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -53,25 +54,32 @@ class _MemoryReviewApi extends SageApi {
       };
 
   @override
-  Future<List<dynamic>> profileMemories() async => [_learned];
+  Future<List<dynamic>> profileMemories() =>
+      SynchronousFuture<List<dynamic>>([_learned]);
 
   @override
-  Future<List<dynamic>> profileMemoryReview() async =>
-      confirmed ? <dynamic>[] : <dynamic>[_learned];
+  Future<List<dynamic>> profileMemoryReview() =>
+      SynchronousFuture<List<dynamic>>(
+        confirmed ? <dynamic>[] : <dynamic>[_learned],
+      );
 
   @override
   Future<Map<String, dynamic>> updateProfileMemory(
     String memoryId, {
     required bool confirmed,
-  }) async {
+  }) {
     this.confirmed = confirmed;
-    return {'success': true, 'memory': _learned};
+    return SynchronousFuture<Map<String, dynamic>>(
+      {'success': true, 'memory': _learned},
+    );
   }
 
   @override
-  Future<Map<String, dynamic>> deleteProfileMemory(String memoryId) async {
+  Future<Map<String, dynamic>> deleteProfileMemory(String memoryId) {
     confirmed = true;
-    return {'success': true, 'deleted': true};
+    return SynchronousFuture<Map<String, dynamic>>(
+      {'success': true, 'deleted': true},
+    );
   }
 }
 
