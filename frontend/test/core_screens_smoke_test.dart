@@ -14,9 +14,12 @@ import 'package:sage_one/screens/projects.dart';
 import 'package:sage_one/screens/world_intelligence.dart';
 
 class _ScreenSmokeClient extends http.BaseClient {
+  int worldRefreshRequests = 0;
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
+    if (path == '/world/refresh' && request.method == 'POST') worldRefreshRequests++;
     final dynamic body = switch (path) {
       '/workflow/workspaces' => {'success': true, 'workspaces': []},
       '/economy/me' => {
@@ -126,6 +129,24 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('World refresh button sends the refresh request', (tester) async {
+    final client = _ScreenSmokeClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: WorldIntelligenceScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Refresh world knowledge'));
+    await tester.pumpAndSettle();
+
+    expect(client.worldRefreshRequests, 1);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
 
   testWidgets('Projects screen renders the empty workspace state', (tester) async {
