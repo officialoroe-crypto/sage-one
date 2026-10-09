@@ -72,9 +72,9 @@ class _FeatureWorkspaceState extends State<FeatureWorkspace> {
         ]),
       ),
       const SizedBox(height: 20),
-      Card(
+      const Card(
         child: ListTile(
-          leading: const Icon(Icons.info_outline, color: SageTheme.textSecondary),
+          leading: Icon(Icons.info_outline, color: SageTheme.textSecondary),
           title: const Text('Integration status'),
           subtitle: const Text(
             'Interface available • Live actions not connected yet',
