@@ -34,6 +34,9 @@ class _AgentScreenState extends State<AgentScreen> {
     try {
       final response = await widget.api.submitBackground('Agent system check');
       final taskId = response['task_id'] ?? response['id'];
+      if (taskId == null || taskId.toString().isEmpty) {
+        throw Exception('SAGE did not return a task id.');
+      }
       if (!mounted) return;
       setState(() {
         _taskId = taskId?.toString();
