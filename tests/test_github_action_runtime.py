@@ -1,7 +1,8 @@
 from pathlib import Path
 
 
-WORKFLOWS = Path(__file__).parents[1] / ".github" / "workflows"
+ROOT = Path(__file__).parents[1]
+WORKFLOWS = ROOT / ".github" / "workflows"
 
 
 def test_python_setup_action_uses_node24_compatible_major():
@@ -17,3 +18,11 @@ def test_workflow_actions_use_current_compatible_majors():
     assert "actions/checkout@v6" in android
     assert "actions/upload-artifact@v5" in android
     assert "actions/checkout@v6" in pages
+
+
+def test_github_workflows_pin_runner_image_to_ubuntu_24_04():
+    for path in WORKFLOWS.glob("*.yml"):
+        content = path.read_text(encoding="utf-8")
+        if "runs-on:" in content:
+            assert "runs-on: ubuntu-latest" not in content, path.name
+            assert "runs-on: ubuntu-24.04" in content, path.name
