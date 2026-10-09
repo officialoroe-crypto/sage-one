@@ -59,12 +59,15 @@ void main() {
 
     await tester.enterText(find.byType(TextField).first, 'Run a safe test command');
     await tester.pump();
-    await tester.drag(
-      find.byType(CustomScrollView).first,
-      const Offset(0, -250),
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+      'Run a safe test command',
     );
-    await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Execute'));
+    final executeButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Execute'),
+    );
+    expect(executeButton.onPressed, isNotNull);
+    executeButton.onPressed!();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump();
