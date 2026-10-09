@@ -140,6 +140,7 @@ void main() {
     expect(find.text('Add a memory'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).last, 'Remember this preference');
+    await tester.pump();
     final saveButton = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Save memory'),
     );
