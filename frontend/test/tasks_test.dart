@@ -10,8 +10,11 @@ class _TasksApiClient extends http.BaseClient {
   _TasksApiClient({this.includeActiveTask = true});
 
   final bool includeActiveTask;
+  int cancelRequests = 0;
   @override
+  
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (request.url.path == '/tasks/task-123/cancel') cancelRequests++;
     final body = switch (request.url.path) {
       '/tasks' => jsonEncode({
           'tasks': [
@@ -22,6 +25,7 @@ class _TasksApiClient extends http.BaseClient {
             },
           ],
         }),
+      '/tasks/task-123/cancel' => jsonEncode({'success': true}),
       '/tasks/task-123' => jsonEncode({
           'id': 'task-123',
           'title': 'Research: Flutter reliability',
@@ -33,7 +37,8 @@ class _TasksApiClient extends http.BaseClient {
       _ => jsonEncode({'detail': 'not found'}),
     };
     final status = request.url.path == '/tasks' ||
-            request.url.path == '/tasks/task-123'
+            request.url.path == '/tasks/task-123' ||
+            request.url.path == '/tasks/task-123/cancel'
         ? 200
         : 404;
     return http.StreamedResponse(
@@ -68,6 +73,21 @@ void main() {
     expect(find.text('Task ID'), findsOneWidget);
     expect(find.text('Research completed.'), findsOneWidget);
   });
+  testWidgets('Cancel task sends a request to the backend', (tester) async {
+    final client = _TasksApiClient();
+    final api = SageApi(client: client, authToken: 'test-token');
+    await tester.pumpWidget(MaterialApp(home: TasksScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Cancel task'));
+    await tester.pumpAndSettle();
+
+    expect(client.cancelRequests, 1);
+    expect(find.text('Cancellation requested'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
   testWidgets('Tasks screen shows a useful empty state for filters', (tester) async {
     final api = SageApi(
       client: _TasksApiClient(includeActiveTask: false),
