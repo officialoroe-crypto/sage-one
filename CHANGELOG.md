@@ -1,5 +1,13 @@
 # SAGE ONE — CHANGELOG
 
+## 2026-10-08 — Session 4 Production Hardening / Android Release Validation
+- Hardened the Android release workflow with bounded runtime, concurrency cancellation, and Flutter dependency caching.
+- Validated the configured Android-reachable backend URL before building and rejected URLs containing embedded credentials.
+- Added release App Bundle generation alongside the release APK.
+- Published both Android release artifacts with 14-day retention.
+- Expanded regression coverage for the Android release workflow contract.
+- Kept production signing/keystore configuration, store publishing, and physical-device QA explicitly deferred until real credentials and device/backend access are available.
+
 ## 2026-09-22 — Full Repository Audit / Security Hardening
 - Audited all Python and Flutter/Dart source files in the current repository tree with CI compilation, linting, tests, and targeted source scans.
 - Made verified Evolution settlement transactional and idempotent.
