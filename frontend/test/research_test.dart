@@ -8,9 +8,14 @@ import 'package:sage_one/screens/research.dart';
 
 class _ResearchApiClient extends http.BaseClient {
   int polls = 0;
+  int cancelRequests = 0;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (request.url.path == '/tasks/research-1/cancel') {
+      cancelRequests++;
+      return _json(request, {'success': true});
+    }
     if (request.url.path == '/execute/background') {
       return _json(request, {'task_id': 'research-1'});
     }
@@ -95,6 +100,30 @@ void main() {
 
     expect(find.text('Research complete'), findsOneWidget);
     expect(find.text('Evidence report ready.'), findsOneWidget);
+  });
+
+  testWidgets('Research cancel button reaches the task cancellation API', (tester) async {
+    final client = _ResearchApiClient();
+    final api = SageApi(client: client, authToken: 'test-token');
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: ResearchScreen(api: api))),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'Cancel this research');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('CANCEL'), findsOneWidget);
+
+    await tester.tap(find.text('CANCEL'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(client.cancelRequests, 1);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
 
   test('Research source validator accepts only HTTP(S) URLs', () {
