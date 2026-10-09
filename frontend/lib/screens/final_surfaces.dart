@@ -82,7 +82,21 @@ class ProfileFinalScreen extends StatefulWidget {
 class _ProfileFinalState extends State<ProfileFinalScreen>{
   final name=TextEditingController(),intent=TextEditingController(),address=TextEditingController(),age=TextEditingController(); bool saving=false; bool memoryConsent=false;
   Future<void> load()async{try{final d=await widget.api.profileMe();if(!mounted)return;final p=d['profile'] is Map?Map<String,dynamic>.from(d['profile']):{};name.text=p['name']?.toString()??'';intent.text=p['help_intent']?.toString()??'';address.text=p['address']?.toString()??'';age.text=p['age']?.toString()??'';memoryConsent=p['memory_consent']==true;setState((){});}catch(e){_msg('Profile load failed: ${e.toString()}');}}
-  Future<void> save()async{setState(()=>saving=true);try{await widget.api.updateProfile(name:name.text.trim(),address:address.text.trim(),age:int.tryParse(age.text.trim()),helpIntent:intent.text.trim(),memoryConsent:memoryConsent);_msg('Profile saved.');}catch(e){_msg('Profile save failed: ${e.toString()}');}finally{if(mounted)setState(()=>saving=false);}}
+  Future<void> save()async{
+    final cleanName=name.text.trim();
+    final cleanAddress=address.text.trim();
+    final cleanIntent=intent.text.trim();
+    final ageText=age.text.trim();
+    final parsedAge=ageText.isEmpty?null:int.tryParse(ageText);
+    if(cleanName.isEmpty){_msg('Enter your name.');return;}
+    if(cleanAddress.isEmpty){_msg('Enter your address.');return;}
+    if(cleanIntent.isEmpty){_msg('Enter what you want SAGE to help with.');return;}
+    if(ageText.isNotEmpty&&(parsedAge==null||parsedAge<1||parsedAge>120)){_msg('Enter an age from 1 to 120, or leave it blank.');return;}
+    setState(()=>saving=true);
+    try{await widget.api.updateProfile(name:cleanName,address:cleanAddress,age:parsedAge,helpIntent:cleanIntent,memoryConsent:memoryConsent);_msg('Profile saved.');}
+    catch(e){_msg('Profile save failed: ${e.toString()}');}
+    finally{if(mounted)setState(()=>saving=false);}
+  }
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   @override void initState(){super.initState();load();}
   @override void dispose(){name.dispose();intent.dispose();address.dispose();age.dispose();super.dispose();}

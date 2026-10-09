@@ -7,8 +7,11 @@ import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/screens/sales.dart';
 
 class _SalesClient extends http.BaseClient {
+  final List<String> requestPaths = <String>[];
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    requestPaths.add(request.url.path);
     dynamic body;
     if (request.url.path == '/sales/leads') {
       body = {'success': true, 'leads': [{
@@ -34,11 +37,11 @@ class _SalesClient extends http.BaseClient {
   }
 }
 
-SageApi _api() => SageApi(client: _SalesClient(), baseUrl: 'http://test', authToken: 'test');
-
 void main() {
   testWidgets('sales pipeline renders a lead and opens its detail', (tester) async {
-    await tester.pumpWidget(MaterialApp(home: SalesScreen(api: _api())));
+    final client = _SalesClient();
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test');
+    await tester.pumpWidget(MaterialApp(home: SalesScreen(api: api)));
     await tester.pumpAndSettle();
     expect(find.text('Lead pipeline'), findsOneWidget);
     expect(find.text('Demo Hardware'), findsOneWidget);
@@ -55,5 +58,9 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Approve outreach'));
+    await tester.pumpAndSettle();
+    expect(client.requestPaths, contains('/sales/leads/lead-1/approve-outreach'));
   });
 }

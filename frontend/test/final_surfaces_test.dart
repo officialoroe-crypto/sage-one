@@ -10,10 +10,14 @@ import 'package:sage_one/screens/final_surfaces.dart';
 
 class _FinalSurfaceClient extends http.BaseClient {
   int markAllReadRequests = 0;
+  int profilePatchRequests = 0;
+  int markReadRequests = 0;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
     if (path == '/notifications/read-all') markAllReadRequests++;
+    if (path == '/notifications/notice-1/read') markReadRequests++;
+    if (path == '/identity/me' && request.method == 'PATCH') profilePatchRequests++;
     dynamic body = <String, dynamic>{'success': true};
 
     if (path == '/economy/me') {
@@ -54,7 +58,9 @@ class _FinalSurfaceClient extends http.BaseClient {
         }
       };
     } else if (path == '/notifications') {
-      body = {'success': true, 'notifications': []};
+      body = {'success': true, 'notifications': [
+        {'id': 'notice-1', 'title': 'Task completed', 'message': 'Task completed', 'created_at': '2026-10-08T00:00:00Z'}
+      ]};
     } else if (path == '/economy/payment/status') {
       body = {
         'success': true,
@@ -111,6 +117,31 @@ void main() {
       expect(find.text(labels[i]), findsOneWidget);
     }
   });
+  testWidgets('Profile validates required fields before sending an update', (tester) async {
+    final client = _FinalSurfaceClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: ProfileFinalScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save profile'));
+    await tester.pumpAndSettle();
+    expect(client.profilePatchRequests, 0);
+    expect(find.text('Enter your address.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).at(1), '12 Demo Road');
+    await tester.pump();
+    await tester.tap(find.text('Save profile'));
+    await tester.pumpAndSettle();
+    expect(client.profilePatchRequests, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
   testWidgets('AI Studio workspace dialog validates input and cancels safely', (tester) async {
     final api = _api();
     await tester.pumpWidget(MaterialApp(home: AiStudioFinalScreen(api: api)));
@@ -137,6 +168,24 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('Notification read button calls the backend', (tester) async {
+    final client = _FinalSurfaceClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: NotificationsFinalScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.done));
+    await tester.pumpAndSettle();
+
+    expect(client.markReadRequests, 1);
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
   });
