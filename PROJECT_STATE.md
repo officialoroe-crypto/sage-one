@@ -95,3 +95,14 @@ Always inspect actual GitHub main and this file before architectural changes. Do
 - GitHub main is the synchronization source of truth.
 - `AI_COLLABORATION.md` defines claims, path locks, handoffs, reconciliation and branch/PR rules.
 - Do not silently overwrite another active agent's work.
+
+
+## 2026-10-09 execution update — Google sign-in null server client
+
+- Latest inspected PR: #195, branch `fix/android-google-signin-client-config-current-main`, base `main`, head at inspection `9cfdae4b0446af20a3794a46507b794c6a36fe27`. PR was open and mergeable; do not treat as merged until rechecked.
+- Verified CI run `37908001367`: Python and Flutter jobs completed successfully, including Python compile/lint/tests and Flutter analyzer/tests.
+- Verified Android release run `37908001368`: analyzer, Flutter tests, API URL validation, APK build, App Bundle build and artifact upload completed successfully.
+- Code change in #195 initializes Android Google Sign-In with a server/web OAuth client ID from `GET /identity/config` when no build-time `SAGE_GOOGLE_SERVER_CLIENT_ID` is present. If the backend has no `GOOGLE_CLIENT_ID`, it returns a configuration-specific message instead of passing null into the Google SDK.
+- These CI results prove code/build validation only. They do NOT prove the installed APK can reach the configured backend or that Google sign-in succeeds on the physical Huawei device. PR review list was empty when checked.
+- Do not promise this can never recur without runtime verification. The exact reported null-server-client error should be prevented by this initialization path, provided the phone's installed build contains this code and its configured `SAGE_API_URL` reaches the same running backend that serves `/identity/config`.
+- Required closeout: run review + CI on the final PR head; merge only when required checks/review policy is satisfied; build/download the artifact with the verified physical-device API URL; install and test on Huawei; if any error remains, capture fresh logs and record the new error category. Never ask the owner to paste OAuth tokens, ID tokens, auth codes or client secrets.
