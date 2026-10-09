@@ -95,6 +95,8 @@ void main() {
     final api = _MemoryReviewApi();
 
     await tester.pumpWidget(MaterialApp(home: MemoryScreen(api: api)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
 
     expect(find.text('NEEDS YOUR REVIEW'), findsOneWidget);
@@ -102,6 +104,8 @@ void main() {
     expect(find.text('Keep memory'), findsOneWidget);
 
     await tester.tap(find.text('Keep memory'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
 
     expect(find.text('NEEDS YOUR REVIEW'), findsNothing);
