@@ -176,3 +176,35 @@ Always inspect actual GitHub main and this file before architectural changes. Do
 - The repository already has a shared AI collaboration/control-plane system, including work claims, handoff contracts, overlap/stale-claim controls, and CI coordination enforcement. Continue using and extending this system rather than creating a parallel handoff process.
 - The repository's durable execution core and unified Chat `/command` loop are implemented as listed above; do not restart them just to document this incident.
 - Do not silently overwrite another active agent's work.
+
+
+## Google Sign-In incident — deeper code audit (2026-10-09)
+
+### Confirmed findings
+- The current `main` version of `frontend/lib/core/identity_client.dart` only fetches `/identity/config` inside `if (kIsWeb)`. On Android, when `SAGE_GOOGLE_SERVER_CLIENT_ID` is empty, `serverClientId` stays null and is passed to `GoogleSignIn.instance.initialize(...)`. This is a direct front-end defect consistent with the exact reported `serverClientId must be provided on Android` error.
+- PR #195 contains the intended Android fallback: when the build-time server client ID is missing, it fetches `google_client_id` from the backend config and passes it as `serverClientId`. PR #195 is open, not merged, at head `9cfdae4b0446af20a3794a46507b794c6a36fe27`.
+- The PR #195 Android Release workflow run #37908001368 passed Flutter analysis, Flutter tests, APK build, AAB build and artifact upload. Artifact ID: `11605936415`. This proves the branch builds; it does not prove Google sign-in succeeds on the user's physical phone.
+- PR #195 CI checks for the current head were successful, but an earlier Android workflow run #37907727946 failed at Flutter analysis on an earlier merge-ref attempt. Do not confuse that older failed run with the later successful run #37908001368.
+- A manual Android Release run #37908676882 on older branch `fix/android-google-signin-client-config` succeeded and uploaded artifact `11605183841`. Its code includes the backend-config fallback, but its `IdentityClient` base URL default is `http://localhost:8010`; that default is not suitable for a physical phone unless an appropriate ADB reverse is configured. The exact `api_url` input used for the user's tested APK has not been independently verified.
+- Backend `identity/api.py` exposes `GET /identity/config` with `google_client_id: settings.GOOGLE_CLIENT_ID`. Backend `identity/auth.py` verifies the submitted Google ID token against `settings.GOOGLE_CLIENT_ID`. `config/settings.py` loads that value from environment `GOOGLE_CLIENT_ID`. The user reported that their phone browser could see a client ID at the config URL, which is positive evidence for that endpoint at that time, but not proof the installed APK is using that exact URL/config.
+- The error happens during Google Sign-In initialization, before the app submits an ID token to `POST /identity/google`. Therefore the immediate error is in Android client initialization/configuration or the installed APK/build/runtime path, not the backend's ID-token verification handler. Backend audience configuration can still become a second issue after this initialization error is fixed.
+- The official Flutter `google_sign_in_android` documentation confirms that when not using Firebase `google-services.json`, the Web application OAuth client ID must be supplied as `serverClientId`. It also lists missing/incorrect server client ID, package name and signing SHA as common configuration issues.
+
+### Most likely reasons the same error persisted
+1. The phone still has an APK built from `main` or another artifact that does not contain the fallback.
+2. The APK was built from the fixed branch but the user installed a different/older ZIP or APK.
+3. The installed APK uses a different `SAGE_API_URL` than the endpoint the user checked in the phone browser.
+4. The fixed APK reaches a config endpoint returning no `google_client_id`; the current PR code should report a clearer backend configuration error in this case, so the exact original plugin error would make stale/wrong APK or another initialization path especially important to check.
+5. After the immediate error is removed, Google Cloud Android OAuth package name/signing SHA or backend token audience may still require validation.
+
+### Required next verification — do not guess
+1. Do not tell the user to keep repeating the same workflow without identifying the artifact. Ask them to install specifically artifact `11605936415` from run #37908001368, or use a new manually dispatched build of PR #195 with the verified physical-device API URL.
+2. Verify current backend URL/port from the machine running the server. If using the previously reported LAN endpoint, confirm `http://192.168.254.3:8000/identity/config` is still correct and reachable from the phone. Do not assume the IP/port is unchanged.
+3. Confirm the exact `api_url` passed to the build. The workflow's physical-device-safe configuration must match the live backend. Its default `http://127.0.0.1:8010` requires ADB reverse and a backend on port 8010; it does not directly reach a PC's LAN address from the phone.
+4. Install the chosen APK using ADB and verify the install command output and device package before testing. Remove old ambiguity by checking the ZIP's timestamp and APK path.
+5. Re-test Google sign-in. If the same error persists on the verified PR #195 APK, capture fresh Android logs and add temporary safe diagnostic logging for which configuration branch is selected and whether a non-empty public client ID was retrieved. Never log tokens or secrets.
+6. If the Google account selection completes but the backend rejects the ID token, then diagnose `GOOGLE_CLIENT_ID` audience, Android package name and SHA-1/SHA-256 signing fingerprints against Google Cloud OAuth configuration.
+7. Keep PR #195 unmerged until current CI and physical-device validation requirements are satisfied. Do not claim fixed until sign-in succeeds on the phone.
+
+### Audit scope and limitation
+This was a targeted audit of the authentication client, login screen, auth gate, backend identity config/token-verification paths, settings, Android build workflow, frontend README, identity API tests, Android workflow tests, PR #195 diff and available workflow runs. It was not a literal line-by-line audit of every unrelated repository file or access to the user's current phone runtime.
