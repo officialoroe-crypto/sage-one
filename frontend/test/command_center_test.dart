@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/main.dart';
+import 'package:sage_one/screens/command_center.dart';
 
 class _FakeApiClient extends http.BaseClient {
   int markAllReadRequests = 0;
@@ -53,8 +54,7 @@ void main() {
   testWidgets('Execute button queues a command through the backend', (tester) async {
     final client = _FakeApiClient();
     final api = SageApi(client: client);
-    await tester.pumpWidget(SageOneApp(api: api));
-    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pumpWidget(MaterialApp(home: CommandCenter(api: api)));
     await tester.pump();
 
     await tester.enterText(find.byType(TextField).first, 'Run a safe test command');
@@ -64,7 +64,7 @@ void main() {
       const Offset(0, -250),
     );
     await tester.pump();
-    await tester.tap(find.text('Execute'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Execute'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump();
