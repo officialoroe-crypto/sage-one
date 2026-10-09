@@ -113,9 +113,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Add a memory'), findsOneWidget);
 
+    await tester.enterText(find.byType(TextField).last, 'Remember this preference');
+    final saveButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Save memory'),
+    );
+    expect(saveButton.onPressed, isNotNull);
+
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(find.text('Add a memory'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
 }
