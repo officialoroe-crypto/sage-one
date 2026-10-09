@@ -11,13 +11,17 @@ import 'package:sage_one/screens/final_surfaces.dart';
 class _FinalSurfaceClient extends http.BaseClient {
   int markAllReadRequests = 0;
   int profilePatchRequests = 0;
+  int profileGetRequests = 0;
   int markReadRequests = 0;
+  bool failProfileLoad = false;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
     if (path == '/notifications/read-all') markAllReadRequests++;
     if (path == '/notifications/notice-1/read') markReadRequests++;
     if (path == '/identity/me' && request.method == 'PATCH') profilePatchRequests++;
+    if (path == '/identity/me' && request.method == 'GET') profileGetRequests++;
+    var status = 200;
     dynamic body = <String, dynamic>{'success': true};
 
     if (path == '/economy/me') {
@@ -47,16 +51,24 @@ class _FinalSurfaceClient extends http.BaseClient {
           {'tier': 'Silver', 'threshold': 1000, 'order': 2}
         ]
       };
-    } else if (path == '/identity/me') {
-      body = {
-        'success': true,
-        'profile': {
-          'id': 'profile-1',
-          'name': 'SAGE User',
-          'help_intent': 'Build SAGE',
-          'basic_info': {'settings': {'notifications': true, 'compact_mode': false}}
-        }
-      };
+    } else if (path == '/identity/me' && request.method == 'GET') {
+      if (failProfileLoad) {
+        status = 503;
+        body = {'detail': 'profile service unavailable'};
+      } else {
+        body = {
+          'success': true,
+          'profile': {
+            'id': 'profile-1',
+            'name': 'SAGE User',
+            'help_intent': 'Build SAGE',
+            'basic_info': {
+              'saved_preference': 'keep-this',
+              'settings': {'notifications': true, 'compact_mode': false}
+            }
+          }
+        };
+      }
     } else if (path == '/notifications') {
       body = {'success': true, 'notifications': [
         {'id': 'notice-1', 'title': 'Task completed', 'message': 'Task completed', 'created_at': '2026-10-08T00:00:00Z'}
@@ -77,7 +89,12 @@ class _FinalSurfaceClient extends http.BaseClient {
     }
 
     final bytes = Uint8List.fromList(utf8.encode(jsonEncode(body)));
-    return http.StreamedResponse(Stream.value(bytes), 200, headers: {'content-type': 'application/json'});
+    return http.StreamedResponse(
+      Stream.value(bytes),
+      status,
+      headers: {'content-type': 'application/json'},
+      request: request,
+    );
   }
 }
 
@@ -171,6 +188,49 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
   });
+
+  testWidgets(
+    'Settings cannot overwrite a profile when loading fails and can retry',
+    (tester) async {
+      final client = _FinalSurfaceClient()..failProfileLoad = true;
+      final api = SageApi(
+        client: client,
+        baseUrl: 'http://test',
+        authToken: 'test-token',
+      );
+      await tester.pumpWidget(MaterialApp(home: SettingsFinalScreen(api: api)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Settings could not be loaded'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+      expect(client.profilePatchRequests, 0);
+      expect(
+        tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Save settings'),
+        ).onPressed,
+        isNull,
+      );
+
+      client.failProfileLoad = false;
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(client.profileGetRequests, 2);
+      expect(
+        tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Save settings'),
+        ).onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.text('Save settings'));
+      await tester.pumpAndSettle();
+
+      expect(client.profilePatchRequests, 1);
+      expect(find.text('Settings saved.'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      api.dispose();
+    },
+  );
 
   testWidgets('Settings save persists updated preferences', (tester) async {
     final client = _FinalSurfaceClient();
