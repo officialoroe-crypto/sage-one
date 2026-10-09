@@ -48,5 +48,12 @@ void main() {
     expect(find.text('Approve outreach'), findsOneWidget);
     expect(find.text('Record follow-up'), findsOneWidget);
     expect(find.text('Activity history'), findsOneWidget);
+
+    await tester.tap(find.text('Record follow-up'));
+    await tester.pumpAndSettle();
+    expect(find.text('What happened / next step'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }

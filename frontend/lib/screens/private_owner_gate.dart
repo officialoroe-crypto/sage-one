@@ -9,21 +9,23 @@ import '../core/identity_client.dart';
 /// multi-user/public mode, but they are deliberately not part of the private
 /// app entry path.
 class PrivateOwnerGate extends StatefulWidget {
-  const PrivateOwnerGate({required this.child, super.key});
+  const PrivateOwnerGate({required this.child, this.identity, super.key});
 
   final Widget child;
+  final IdentityClient? identity;
 
   @override
   State<PrivateOwnerGate> createState() => _PrivateOwnerGateState();
 }
 
 class _PrivateOwnerGateState extends State<PrivateOwnerGate> {
-  final IdentityClient _identity = IdentityClient();
+  late final IdentityClient _identity;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _identity = widget.identity ?? IdentityClient();
     _enter();
   }
 

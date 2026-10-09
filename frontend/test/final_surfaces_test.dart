@@ -111,6 +111,36 @@ void main() {
       expect(find.text(labels[i]), findsOneWidget);
     }
   });
+  testWidgets('AI Studio workspace dialog validates input and cancels safely', (tester) async {
+    final api = _api();
+    await tester.pumpWidget(MaterialApp(home: AiStudioFinalScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Workspace'));
+    await tester.pumpAndSettle();
+    expect(find.text('Create workspace'), findsOneWidget);
+
+    final createButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Create'),
+    );
+    expect(createButton.onPressed, isNull);
+
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), 'Demo workspace');
+    await tester.enterText(fields.at(1), 'demo-workspace');
+    await tester.pump();
+    expect(
+      tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Create')).onPressed,
+      isNotNull,
+    );
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
   testWidgets('Notifications mark-all-read button calls the backend', (tester) async {
     final client = _FinalSurfaceClient();
     final api = SageApi(

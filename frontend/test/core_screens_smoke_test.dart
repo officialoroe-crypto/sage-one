@@ -112,6 +112,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Smoke Test Project'), findsOneWidget);
     expect(find.text('ASSET GRAPH'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Add asset'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add workflow asset'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byTooltip('Run SAGE command'));
+    await tester.pumpAndSettle();
+    expect(find.text('Run SAGE in this project'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Projects screen renders the empty workspace state', (tester) async {

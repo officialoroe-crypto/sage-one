@@ -71,7 +71,15 @@ class _AuthGateState extends State<AuthGate> {
         _loading = false;
       });
     } catch (_) {
-      await _identity.signOut();
+      // Clearing a stale local session must not depend on the identity
+      // provider being reachable or configured (for example in private
+      // owner mode without Google sign-in).
+      try {
+        await _identity.signOut();
+      } catch (_) {
+        // IdentityClient clears its stored token in a finally block. A
+        // provider sign-out error must not leave the app on an endless loader.
+      }
       if (mounted) {
         setState(() {
           _profile = null;

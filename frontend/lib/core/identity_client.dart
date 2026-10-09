@@ -7,7 +7,19 @@ import 'package:http/http.dart' as http;
 
 class IdentityClient {
   IdentityClient({http.Client? client, FlutterSecureStorage? storage, String? baseUrl})
-      : _client = client ?? http.Client(), _storage = storage ?? const FlutterSecureStorage(), baseUrl = baseUrl ?? const String.fromEnvironment('SAGE_API_URL', defaultValue: 'http://localhost:8010');
+      : _client = client ?? http.Client(),
+        _storage = storage ?? const FlutterSecureStorage(),
+        baseUrl = baseUrl ?? _defaultBaseUrl();
+
+  static String _defaultBaseUrl() {
+    const configured = String.fromEnvironment('SAGE_API_URL');
+    if (configured.isNotEmpty) return configured;
+    if (kIsWeb) return 'http://localhost:8010';
+    // Android emulators reach the host machine through 10.0.2.2. Physical
+    // devices must pass SAGE_API_URL explicitly (for example localhost with
+    // adb reverse, or a reachable HTTPS backend URL).
+    return 'http://10.0.2.2:8010';
+  }
 
   static const _tokenKey = 'sage.identity.token';
   static const _googleServerClientId = String.fromEnvironment('SAGE_GOOGLE_SERVER_CLIENT_ID');

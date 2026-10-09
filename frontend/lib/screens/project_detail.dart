@@ -19,6 +19,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   List<dynamic> _relations = const [];
   List<dynamic> _workflows = const [];
   bool _commandBusy = false;
+  final TextEditingController _projectCommandController = TextEditingController();
+  final TextEditingController _assetNameController = TextEditingController();
 
   String get _projectId => widget.project['id']?.toString() ?? '';
 
@@ -30,13 +32,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
   Future<void> _runProjectCommand() async {
     if (_projectId.isEmpty || _commandBusy) return;
-    final controller = TextEditingController();
+    _projectCommandController.clear();
     final command = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Run SAGE in this project'),
         content: TextField(
-          controller: controller,
+          controller: _projectCommandController,
           autofocus: true,
           minLines: 2,
           maxLines: 5,
@@ -48,7 +50,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           FilledButton(
             onPressed: () {
-              final value = controller.text.trim();
+              final value = _projectCommandController.text.trim();
               if (value.isNotEmpty) Navigator.pop(dialogContext, value);
             },
             child: const Text('Queue'),
@@ -56,7 +58,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ],
       ),
     );
-    controller.dispose();
     if (command == null || command.isEmpty) return;
 
     setState(() => _commandBusy = true);
@@ -81,7 +82,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
   Future<void> _addAsset() async {
     if (_projectId.isEmpty) return;
-    final name = TextEditingController();
+    _assetNameController.clear();
     var assetType = 'image';
     final created = await showDialog<bool>(
       context: context,
@@ -92,7 +93,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: name,
+                controller: _assetNameController,
                 autofocus: true,
                 decoration: const InputDecoration(labelText: 'Asset name'),
               ),
@@ -121,7 +122,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             ),
             FilledButton(
               onPressed: () async {
-                final value = name.text.trim();
+                final value = _assetNameController.text.trim();
                 if (value.isEmpty) return;
                 try {
                   await widget.api.createWorkflowAsset(
@@ -144,7 +145,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ),
       ),
     );
-    name.dispose();
     if (created == true && mounted) await _load();
   }
 
@@ -252,6 +252,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
     );
     if (created == true && mounted) await _load();
+  }
+
+  @override
+  void dispose() {
+    _projectCommandController.dispose();
+    _assetNameController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {

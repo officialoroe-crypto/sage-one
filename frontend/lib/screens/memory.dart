@@ -12,11 +12,6 @@ class MemoryScreen extends StatefulWidget {
 }
 
 class _MemoryScreenState extends State<MemoryScreen> {
-  static const _types = <String>[
-    'fact', 'interest', 'inference', 'skill', 'skill_evidence',
-    'goal', 'preference', 'experience',
-  ];
-
   bool _loading = true;
   bool _saving = false;
   String? _error;
@@ -57,69 +52,23 @@ class _MemoryScreenState extends State<MemoryScreen> {
   }
 
   Future<void> _addMemory() async {
-    final content = TextEditingController();
-    String type = 'fact';
-    final accepted = await showDialog<bool>(
+    final memory = await showDialog<Map<String, String>>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add a memory'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  initialValue: type,
-                  decoration: const InputDecoration(labelText: 'Memory type'),
-                  items: _types.map((value) => DropdownMenuItem(
-                    value: value,
-                    child: Text(value.replaceAll('_', ' ')),
-                  )).toList(),
-                  onChanged: (value) {
-                    if (value != null) setDialogState(() => type = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: content,
-                  autofocus: true,
-                  minLines: 3,
-                  maxLines: 6,
-                  maxLength: 5000,
-                  decoration: const InputDecoration(
-                    labelText: 'What should SAGE remember?',
-                    alignLabelWithHint: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(
-                dialogContext, content.text.trim().isNotEmpty,
-              ),
-              child: const Text('Save memory'),
-            ),
-          ],
-        ),
-      ),
+      builder: (_) => const _AddMemoryDialog(),
     );
-    if (accepted != true || content.text.trim().isEmpty) {
-      content.dispose();
-      return;
-    }
+    if (!mounted || memory == null) return;
+
+    final content = memory['content']?.trim() ?? '';
+    if (content.isEmpty) return;
+
     setState(() => _saving = true);
     try {
-      await widget.api.createProfileMemory(memoryType: type, content: content.text.trim());
-      content.dispose();
+      await widget.api.createProfileMemory(
+        memoryType: memory['type'] ?? 'fact',
+        content: content,
+      );
       await _load();
     } catch (error) {
-      content.dispose();
       if (mounted) setState(() => _error = error.toString());
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -338,4 +287,84 @@ class _MemoryScreenState extends State<MemoryScreen> {
       ),
     );
   }
+}
+
+
+/// Owns its text controller for the full lifetime of the dialog route. Flutter
+/// keeps the route mounted during its reverse transition after Navigator.pop,
+/// so the controller must not be disposed by the awaiting caller immediately.
+class _AddMemoryDialog extends StatefulWidget {
+  const _AddMemoryDialog();
+
+  @override
+  State<_AddMemoryDialog> createState() => _AddMemoryDialogState();
+}
+
+class _AddMemoryDialogState extends State<_AddMemoryDialog> {
+  static const _types = <String>[
+    'fact', 'interest', 'inference', 'skill', 'skill_evidence',
+    'goal', 'preference', 'experience',
+  ];
+
+  final TextEditingController _content = TextEditingController();
+  String _type = 'fact';
+
+  @override
+  void dispose() {
+    _content.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Add a memory'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: _type,
+                decoration: const InputDecoration(labelText: 'Memory type'),
+                items: _types
+                    .map((value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(value.replaceAll('_', ' ')),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) setState(() => _type = value);
+                },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _content,
+                autofocus: true,
+                onChanged: (_) => setState(() {}),
+                minLines: 3,
+                maxLines: 6,
+                maxLength: 5000,
+                decoration: const InputDecoration(
+                  labelText: 'What should SAGE remember?',
+                  alignLabelWithHint: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: _content.text.trim().isEmpty
+                ? null
+                : () => Navigator.pop(context, {
+                      'type': _type,
+                      'content': _content.text.trim(),
+                    }),
+            child: const Text('Save memory'),
+          ),
+        ],
+      );
 }
