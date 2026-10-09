@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:sage_one/core/identity_client.dart';
 import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/screens/login.dart';
+import 'package:sage_one/screens/memory.dart';
 import 'package:sage_one/screens/private_owner_gate.dart';
 import 'package:sage_one/screens/voice_command.dart';
 import 'package:sage_one/screens/voice_mode.dart';
@@ -102,4 +103,19 @@ void main() {
     expect(find.byType(Scaffold), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('Memory screen renders saved-memory controls and opens its add dialog', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: MemoryScreen(api: _api())));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PERSONAL MEMORY'), findsOneWidget);
+    expect(find.text('What SAGE remembers'), findsOneWidget);
+    await tester.tap(find.text('Add memory'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add a memory'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add a memory'), findsNothing);
+  });
+
 }
