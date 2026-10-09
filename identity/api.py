@@ -187,6 +187,18 @@ def get_profile_memory(claims: dict[str, Any] = Depends(authenticate_request)):
     profile = _profile_from_claims(claims)
     return {"success": True, "memories": list_memory(profile["id"])}
 
+@router.get("/memory/review")
+def get_profile_memory_review(claims: dict[str, Any] = Depends(authenticate_request)):
+    """List only unconfirmed memories created by consent-gated automatic learning."""
+    profile = _profile_from_claims(claims)
+    candidates = list_memory(profile["id"], limit=1000)
+    pending = [
+        memory for memory in candidates
+        if memory.get("source") == "auto_learning" and not memory.get("confirmed", False)
+    ]
+    return {"success": True, "memories": pending, "count": len(pending)}
+
+
 @router.post("/memory")
 def create_profile_memory(request: MemoryCreateRequest, claims: dict[str, Any] = Depends(authenticate_request)):
     profile = _profile_from_claims(claims)
