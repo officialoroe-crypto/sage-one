@@ -6,8 +6,10 @@ import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/main.dart';
 
 class _FakeApiClient extends http.BaseClient {
+  int markAllReadRequests = 0;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (request.url.path == '/notifications/read-all') markAllReadRequests++;
     final body = switch (request.url.path) {
       '/brain/routing' => jsonEncode({'provider': 'test-provider'}),
       '/execute/background' => jsonEncode({'task_id': 'test-task'}),
@@ -41,3 +43,17 @@ void main() {
     expect(find.text('Build content'), findsNothing);
   });
 }
+
+
+  testWidgets('opening Tasks does not mark notifications read', (tester) async {
+    final client = _FakeApiClient();
+    final api = SageApi(client: client);
+    await tester.pumpWidget(SageOneApp(api: api));
+    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump();
+
+    await tester.tap(find.text('Tasks'));
+    await tester.pump();
+
+    expect(client.markAllReadRequests, 0);
+  });
