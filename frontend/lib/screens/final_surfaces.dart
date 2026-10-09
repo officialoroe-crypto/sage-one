@@ -114,16 +114,135 @@ class SettingsFinalScreen extends StatefulWidget {
   const SettingsFinalScreen({required this.api,super.key}); final SageApi api;
   @override State<SettingsFinalScreen> createState()=>_SettingsFinalState();
 }
-class _SettingsFinalState extends State<SettingsFinalScreen>{
-  bool notifications=true,compact=false,saving=false; Map<String,dynamic> basic={};
-  Future<void> load()async{try{final d=await widget.api.profileMe();final p=Map<String,dynamic>.from(d['profile']);basic=p['basic_info'] is Map?Map<String,dynamic>.from(p['basic_info']):{};final s=basic['settings'] is Map?Map<String,dynamic>.from(basic['settings']):{};if(mounted)setState((){notifications=s['notifications']??true;compact=s['compact_mode']??false;});}catch(_){}} 
-  Future<void> save()async{setState(()=>saving=true);try{basic['settings']={'notifications':notifications,'compact_mode':compact};await widget.api.updateProfile(basicInfo:basic);if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Settings saved.')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Settings save failed: ${e.toString()}')));}finally{if(mounted)setState(()=>saving=false);}}
-  @override void initState(){super.initState();load();}
-  @override Widget build(BuildContext c)=>_Page(title:'Settings',body:ListView(padding:const EdgeInsets.all(20),children:[
-    SwitchListTile(title:const Text('Notifications'),value:notifications,onChanged:(v)=>setState(()=>notifications=v)),
-    SwitchListTile(title:const Text('Compact mode'),value:compact,onChanged:(v)=>setState(()=>compact=v)),
-    FilledButton(onPressed:saving?null:save,child:Text(saving?'Saving…':'Save settings')),
-  ]));
+class _SettingsFinalState extends State<SettingsFinalScreen> {
+  bool notifications = true;
+  bool compact = false;
+  bool saving = false;
+  bool loading = true;
+  bool _loaded = false;
+  Object? _loadError;
+  Map<String, dynamic> basic = <String, dynamic>{};
+
+  Future<void> load() async {
+    setState(() {
+      loading = true;
+      _loadError = null;
+    });
+    try {
+      final response = await widget.api.profileMe();
+      if (!mounted) return;
+
+      final rawProfile = response['profile'];
+      if (rawProfile is! Map) {
+        throw const FormatException('The profile response did not include profile data.');
+      }
+      final profile = Map<String, dynamic>.from(rawProfile);
+      final rawBasic = profile['basic_info'];
+      final nextBasic = rawBasic is Map
+          ? Map<String, dynamic>.from(rawBasic)
+          : <String, dynamic>{};
+      final rawSettings = nextBasic['settings'];
+      final settings = rawSettings is Map
+          ? Map<String, dynamic>.from(rawSettings)
+          : <String, dynamic>{};
+
+      setState(() {
+        basic = nextBasic;
+        notifications = settings['notifications'] is bool
+            ? settings['notifications'] as bool
+            : true;
+        compact = settings['compact_mode'] is bool
+            ? settings['compact_mode'] as bool
+            : false;
+        _loaded = true;
+        loading = false;
+        _loadError = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loaded = false;
+        loading = false;
+        _loadError = error;
+      });
+    }
+  }
+
+  Future<void> save() async {
+    // Never replace basic_info with defaults when the saved profile could
+    // not be loaded. Keep the write path gated on a successful profile read.
+    if (!_loaded || saving) return;
+    setState(() => saving = true);
+    try {
+      basic['settings'] = {
+        'notifications': notifications,
+        'compact_mode': compact,
+      };
+      await widget.api.updateProfile(basicInfo: basic);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Settings saved.')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Settings save failed: ${error.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  @override
+  Widget build(BuildContext context) => _Page(
+        title: 'Settings',
+        body: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            if (loading) const LinearProgressIndicator(),
+            if (_loadError != null)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.error_outline),
+                  title: const Text('Settings could not be loaded'),
+                  subtitle: const Text(
+                    'Your existing profile was not changed. Retry loading before saving settings.',
+                  ),
+                  trailing: TextButton(
+                    onPressed: loading ? null : load,
+                    child: const Text('Retry'),
+                  ),
+                ),
+              ),
+            SwitchListTile(
+              title: const Text('Notifications'),
+              value: notifications,
+              onChanged: !_loaded || saving
+                  ? null
+                  : (value) => setState(() => notifications = value),
+            ),
+            SwitchListTile(
+              title: const Text('Compact mode'),
+              value: compact,
+              onChanged: !_loaded || saving
+                  ? null
+                  : (value) => setState(() => compact = value),
+            ),
+            FilledButton(
+              onPressed: !_loaded || saving ? null : save,
+              child: Text(saving ? 'Saving…' : 'Save settings'),
+            ),
+          ],
+        ),
+      );
 }
 
 class NotificationsFinalScreen extends StatefulWidget {
