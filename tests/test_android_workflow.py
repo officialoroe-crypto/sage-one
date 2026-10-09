@@ -11,7 +11,7 @@ def test_android_release_workflow_has_endpoint_override_and_release_outputs():
     assert "api_url:" in text
     assert "SAGE_ANDROID_API_URL" in text
     assert 'dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"' in text
-    assert "http://10.0.2.2:8010" in text
+    assert "http://127.0.0.1:8010" in text
     assert "timeout-minutes: 30" in text
     assert "concurrency:" in text
     assert "cache: true" in text
