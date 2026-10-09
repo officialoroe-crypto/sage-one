@@ -106,7 +106,7 @@ jobs:
         run: flutter build appbundle --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: sage-one-android-release
           retention-days: 14
