@@ -37,8 +37,6 @@ class _SalesClient extends http.BaseClient {
   }
 }
 
-SageApi _api() => SageApi(client: _SalesClient(), baseUrl: 'http://test', authToken: 'test');
-
 void main() {
   testWidgets('sales pipeline renders a lead and opens its detail', (tester) async {
     final client = _SalesClient();
