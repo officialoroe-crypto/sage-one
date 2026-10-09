@@ -75,8 +75,8 @@ class _FeatureWorkspaceState extends State<FeatureWorkspace> {
       const Card(
         child: ListTile(
           leading: Icon(Icons.info_outline, color: SageTheme.textSecondary),
-          title: const Text('Integration status'),
-          subtitle: const Text(
+          title: Text('Integration status'),
+          subtitle: Text(
             'Interface available • Live actions not connected yet',
           ),
         ),
