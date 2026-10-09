@@ -12,11 +12,6 @@ class MemoryScreen extends StatefulWidget {
 }
 
 class _MemoryScreenState extends State<MemoryScreen> {
-  static const _types = <String>[
-    'fact', 'interest', 'inference', 'skill', 'skill_evidence',
-    'goal', 'preference', 'experience',
-  ];
-
   bool _loading = true;
   bool _saving = false;
   String? _error;
