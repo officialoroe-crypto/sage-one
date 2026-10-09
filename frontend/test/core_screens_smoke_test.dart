@@ -73,7 +73,7 @@ void main() {
   testWidgets('Create screen renders against the backend contract', (tester) async {
     await tester.pumpWidget(MaterialApp(home: CreateScreen(api: _api())));
     await tester.pumpAndSettle();
-    expect(find.text('Create'), findsOneWidget);
+    expect(find.text('CREATE'), findsOneWidget);
   });
 
   testWidgets('Economy screen renders balance and cost state', (tester) async {
@@ -111,7 +111,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Smoke Test Project'), findsOneWidget);
-    expect(find.text('Add workflow asset'), findsOneWidget);
+    expect(find.text('ASSET GRAPH'), findsOneWidget);
   });
 
   testWidgets('Projects screen renders the empty workspace state', (tester) async {
