@@ -38,7 +38,7 @@
 - [ ] Production SMS/OTP provider.
 - [ ] Long-lived Google web session refresh UX.
 - [ ] Local/provider-backed premium lifecycle smoke test on the user's configured environment.
-- [ ] Owner-facing consent-driven memory candidate review UX (backend pending-review API added; Flutter review UI remains).
+- [x] Owner-facing consent-driven memory candidate review UX: pending auto-learned memories can be kept or rejected; API client regression tests cover review and confirmation.
 - [ ] Full multi-tenant ownership if SAGE becomes public/shared.
 - [ ] Broader third-party integrations and permissioned publishing adapters.
 - [ ] Analytics → improve feedback loop.
@@ -53,7 +53,7 @@
 - [x] Overlap checks and explicit takeover.
 - [x] Compact current-work/status view.
 - [x] CI coordination enforcement.
-- [ ] Pre-PR consistency checks against current main.
+- [x] Pre-PR consistency check: SAGE CI rejects PR branches that do not contain current main.
 
 ## VALIDATION
 - [x] Python compile/lint/tests on main.

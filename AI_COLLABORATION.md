@@ -49,6 +49,9 @@ Parallel work is allowed only when scopes are genuinely disjoint. Example: AI A 
 ## Integration rule
 Only integrate through PR review/CI. If a branch is stale, update it from `main` safely before integration. Resolve conflicts by understanding both changes, not by blindly choosing one side.
 
+## Automated PR base consistency guard
+SAGE CI runs a preflight on pull requests. It fetches current `origin/main` and the PR head, then verifies that current main is an ancestor of the PR branch. If main has advanced past the branch, CI fails with an explicit instruction to update the branch. This prevents stale-base integration from silently reaching merge.
+
 ## Runtime vs developer coordination
 This is a developer collaboration control plane, separate from SAGE's runtime Permission Engine. Runtime permission determines whether SAGE may perform an owner action; developer locks determine whether an AI may edit a project scope.
 
@@ -58,8 +61,8 @@ This is a developer collaboration control plane, separate from SAGE's runtime Pe
 3. Path-overlap detection.
 4. Stale-claim detection and explicit takeover.
 5. Handoff records.
-6. Pre-PR consistency checks.
-7. Optional CI enforcement.
+6. Pre-PR consistency checks — enforced in SAGE CI by verifying current main is an ancestor of the PR head.
+7. CI enforcement for stale PR bases — implemented.
 8. Compact current-work status usable by any AI.
 
 The goal is that a second AI can join the repository, understand current state, see locks, choose safe work, and continue without needing this conversation.

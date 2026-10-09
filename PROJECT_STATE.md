@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
 Last updated: 2026-10-09
-Current main: c57c36c60d0056099f5bdc715405c9400fa8bd45
+Current main: f42e81209b43a8ebc007b80630d84b01c97a692c
 
 ## Identity
 - Project: SAGE ONE
@@ -27,18 +27,18 @@ Main contains the real private-first execution core:
 - Durable notifications and Flutter task polling/filtering.
 - Unified Chat `/command` loop with persistent session history and owner/project context.
 - Completed durable tasks can index project results and consented experience memory.
-- Device voice capture and TTS use the same durable command path.
+- SAGE Voice wake listening, capture and TTS use the same durable command path; Android release validation ensures microphone permission.
 - Owner Developer Mode provides non-mutating preview plus explicit approval-gated apply.
 - Developer proposals are durable and owner-scoped across API restarts.
 - Project detail can queue project-scoped commands.
 - Sales Engine is executable end-to-end: discovery → audit → score → durable lead → intelligence → approval-gated outreach → activity history → customer conversion.
 - Owner Sales UI exposes lead pipeline, lead detail, approval, customer conversion and human follow-up recording; it never sends external outreach automatically.
 - Authenticated identity/profile/onboarding/memory foundations exist.
-- Private mobile Memory screen supports profile-scoped read/add/delete.
+- Private mobile Memory screen supports profile-scoped read/add/delete and a pending review queue for unconfirmed auto-learned memories, with keep/reject actions.
 - World Intelligence has status, knowledge, due items and refresh UI.
 - Spark/Evolution foundations are backend-backed and exposed in Flutter.
 - Apps Hub/ecosystem surfaces, file manager, AI Studio, wallet, payments, transactions, profile, settings and notifications are exposed from the private shell.
-- Android APK workflow and God Mode developer website workflow both succeed from main.
+- Final frontend bulk PR #186 is merged. Its exact head passed SAGE CI (214 Python tests; 27 Flutter tests) and Android APK/AAB release validation; the release artifact was uploaded.
 - Android release workflow accepts an explicit device backend URL and uses an emulator-reachable host default.
 - SAGE CI passes Python compile/lint/tests plus Flutter analyzer/tests.
 
@@ -67,15 +67,12 @@ Main contains the real private-first execution core:
 - Developer proposals are owner-scoped by trusted authenticated identity.
 - Public worker health does not expose private worker results.
 
-## Validation — current main
-Latest main push triggered and completed successfully:
-- SAGE CI — success
-- SAGE ONE Android APK — success
-- SAGE ONE God Mode Developer Website — success
-
-Latest verified workflow run IDs:
-- Phase 5 PR SAGE CI: 37832532613 (Python + Flutter PASS)
-- Main release workflows must be rechecked after the Phase 5 merge.
+## Validation — latest integrated state
+- Current main: `f42e81209b43a8ebc007b80630d84b01c97a692c`.
+- SAGE CI after merge: PASS — run #37886992614.
+- God Mode Developer Website after merge: PASS — run #37886992587.
+- Android release validation on the exact PR head: PASS; APK/AAB artifact uploaded — run #37886497229.
+- Android release validation on the merge commit was running when this file was last reconciled — run #37886992592.
 
 ## Important coordination truth
 Several older feature branches and open PRs still exist. Their existence does not mean their work is absent from main. Current main must be treated as the canonical implementation; stale branches should be reconciled or closed only after their changes are compared with main.
@@ -84,9 +81,9 @@ Several older feature branches and open PRs still exist. Their existence does no
 1. Production SMS/OTP provider credentials and delivery.
 2. Long-lived Google web token/session refresh UX.
 3. Smoke-test the premium lifecycle against the user's configured local database/provider setup.
-4. Broader consent-driven memory candidate review/UX.
+4. Broader analytics-driven feedback improvement loop.
 5. Full multi-tenant isolation only if SAGE becomes a shared public service.
-6. Automated visual regression for Evolution animation milestones.
+6. Pixel-level visual regression for Evolution animation milestones (existing tests verify the 13-stage catalog, intensity behavior, safe fallback and transition identity, but are not screenshot goldens).
 7. Broader external integrations and production release hardening.
 8. Manual device/reference review of the complete Flutter surface; CI cannot prove visual fidelity.
 9. Physical Android smoke test against the actual configured backend.
