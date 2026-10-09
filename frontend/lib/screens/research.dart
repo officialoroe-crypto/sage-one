@@ -62,6 +62,9 @@ class _ResearchScreenState extends State<ResearchScreen> {
       final response = await widget.api.submitBackground('Research: $value');
       final task = response['task'];
       final taskId = task is Map ? task['id'] : response['task_id'] ?? response['id'];
+      if (taskId == null || taskId.toString().isEmpty) {
+        throw Exception('SAGE did not return a task id.');
+      }
       if (!mounted) return;
       setState(() {
         _taskId = taskId?.toString();
