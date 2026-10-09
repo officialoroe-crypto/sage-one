@@ -228,4 +228,14 @@ This was a targeted audit of the authentication client, login screen, auth gate,
 
 - PR #196 CI run `37911205477` and Android release run `37911205435` failed Flutter analysis at `identity_client.dart:84:24`: analyzer reported an unnecessary null comparison after flow promotion.
 - Removed only the redundant `serverClientId == null` term; retained the non-empty/blank guard before Google plugin initialization. Follow-up commit: `7bd448e722ab6986954b92317d15ed8988961bd2`.
-- Required now: wait for and inspect new SAGE CI + Android release checks for this exact head. The earlier failures remain valid historical results; do not call CI green until the new runs pass.
+- Follow-up checks for corrected head f06eca91487a3bef24b2bb4cc9ba3b9cd2a028ab passed: SAGE CI run 37911444875 (Python + Flutter) and Android release run 37911444896 (analyze, tests, APK, AAB, artifact upload). The earlier failures remain historical and were corrected.
+
+
+### Latest launch-readiness check (2026-10-09)
+
+- PR #196 current head at check: f06eca91487a3bef24b2bb4cc9ba3b9cd2a028ab; PR remains open and unmerged.
+- SAGE CI run #37911444875: PASS (Python and Flutter jobs).
+- Android release run #37911444896: PASS; analyzer, Flutter tests, release APK build, AAB build, and artifact upload all passed.
+- Artifact #11607570229 was uploaded from that successful Android release run. Its build log explicitly records SAGE_ANDROID_API_URL=http://127.0.0.1:8010; this loopback URL is not suitable for a normal physical phone unless an intentional ADB reverse setup is configured. Do not hand this artifact to the user as a phone-ready build without fixing/revalidating the API URL.
+- Therefore source/CI/release compilation is green, but Google Sign-In remains NOT VERIFIED on a physical device and the current release artifact is not confirmed usable on the user's phone. Before a device build, verify backend host/port and /identity/config, then dispatch Android Release with the phone-reachable URL (candidate only: http://192.168.254.3:8000, must be rechecked). Install that exact artifact and test end-to-end sign-in.
+- Public launch remains NO-GO until device auth, full critical-path QA, production backend/deployment, secrets and OAuth configuration, privacy/security review, monitoring/backups, store signing/listing/compliance, and payment/KYC legal/provider requirements applicable to the released scope are addressed.
