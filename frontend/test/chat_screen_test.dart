@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -26,6 +27,38 @@ class _MissingTaskIdClient extends http.BaseClient {
   }
 }
 
+
+class _DeferredCommandClient extends http.BaseClient {
+  final Completer<http.StreamedResponse> commandResponse =
+      Completer<http.StreamedResponse>();
+  final List<String> requestPaths = <String>[];
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final path = request.url.path;
+    requestPaths.add('${request.method} $path');
+    if (request.method == 'POST' && path == '/command') {
+      return commandResponse.future;
+    }
+
+    final dynamic payload = switch ('${request.method} $path') {
+      'POST /session' => {'success': true, 'session': {'id': 'session-1'}},
+      'GET /tasks/task-1' => {
+          'success': true,
+          'task': {'id': 'task-1', 'status': 'running'},
+        },
+      _ => {'error': 'not found'},
+    };
+    final status = path == '/session' || path == '/tasks/task-1' ? 200 : 404;
+    return http.StreamedResponse(
+      Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(payload)))),
+      status,
+      headers: {'content-type': 'application/json'},
+      request: request,
+    );
+  }
+}
+
 void main() {
   testWidgets('Chat reports a missing task ID instead of remaining stuck', (tester) async {
     final api = SageApi(
@@ -43,4 +76,40 @@ void main() {
     expect(find.text('Could not queue command'), findsOneWidget);
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
   });
+  
+  testWidgets('Chat does not poll a task when a command returns after disposal',
+      (tester) async {
+    final client = _DeferredCommandClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Queue a command');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+
+    expect(client.requestPaths, contains('POST /command'));
+
+    // Simulate leaving the screen while submitCommand is still awaiting HTTP.
+    await tester.pumpWidget(const SizedBox.shrink());
+    client.commandResponse.complete(http.StreamedResponse(
+      Stream.value(Uint8List.fromList(utf8.encode(jsonEncode({
+        'success': true,
+        'task': {'id': 'task-1', 'status': 'queued'},
+      })))),
+      200,
+      headers: {'content-type': 'application/json'},
+    ));
+
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    expect(client.requestPaths, isNot(contains('GET /tasks/task-1')));
+    expect(tester.takeException(), isNull);
+    api.dispose();
+  });
+
 }
