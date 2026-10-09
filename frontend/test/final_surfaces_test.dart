@@ -172,6 +172,27 @@ void main() {
     api.dispose();
   });
 
+  testWidgets('Settings save persists updated preferences', (tester) async {
+    final client = _FinalSurfaceClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: SettingsFinalScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(SwitchListTile).at(1));
+    await tester.pump();
+    await tester.tap(find.text('Save settings'));
+    await tester.pumpAndSettle();
+
+    expect(client.profilePatchRequests, 1);
+    expect(find.text('Settings saved.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
   testWidgets('Notification read button calls the backend', (tester) async {
     final client = _FinalSurfaceClient();
     final api = SageApi(

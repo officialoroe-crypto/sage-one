@@ -16,13 +16,30 @@ import 'package:sage_one/screens/world_intelligence.dart';
 class _ScreenSmokeClient extends http.BaseClient {
   int worldRefreshRequests = 0;
   int ownerSparkSetRequests = 0;
+  int workspaceCreateRequests = 0;
+  int projectCreateRequests = 0;
+  int workflowCreateRequests = 0;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
     if (path == '/world/refresh' && request.method == 'POST') worldRefreshRequests++;
     if (path == '/economy/owner/spark/set' && request.method == 'POST') ownerSparkSetRequests++;
-    final dynamic body = switch (path) {
+    final dynamic body;
+    if (request.method == 'POST' && path == '/workflow/workspaces') {
+      workspaceCreateRequests++;
+      body = {
+        'success': true,
+        'workspace': {'id': 'workspace-1', 'name': 'Personal', 'slug': 'personal'},
+      };
+    } else if (request.method == 'POST' && path == '/workflow/workspaces/workspace-1/projects') {
+      projectCreateRequests++;
+      body = {'success': true, 'project': {'id': 'project-1', 'name': 'Button audit project'}};
+    } else if (request.method == 'POST' && path == '/workflow/projects/project-1/workflows') {
+      workflowCreateRequests++;
+      body = {'success': true, 'workflow': {'id': 'workflow-1'}};
+    } else {
+      body = switch (path) {
       '/workflow/workspaces' => {'success': true, 'workspaces': []},
       '/economy/me' => {
           'success': true,
@@ -58,7 +75,8 @@ class _ScreenSmokeClient extends http.BaseClient {
       '/world/knowledge' => {'success': true, 'knowledge': []},
       '/world/due' => {'success': true, 'topics': []},
       _ => {'success': true, 'items': []},
-    };
+      };
+    }
     return http.StreamedResponse(
       Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(body)))),
       200,
@@ -79,6 +97,34 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: CreateScreen(api: _api())));
     await tester.pumpAndSettle();
     expect(find.text('CREATE'), findsOneWidget);
+  });
+
+  testWidgets('Create flow persists workspace, project and content workflow', (tester) async {
+    final client = _ScreenSmokeClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: CreateScreen(api: api))));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Initialize Personal'));
+    await tester.pumpAndSettle();
+    expect(client.workspaceCreateRequests, 1);
+
+    await tester.enterText(find.byType(TextField).first, 'Button audit project');
+    await tester.pump();
+    await tester.ensureVisible(find.text('Create Project'));
+    await tester.tap(find.text('Create Project'));
+    await tester.pumpAndSettle();
+
+    expect(client.projectCreateRequests, 1);
+    expect(client.workflowCreateRequests, 1);
+    expect(find.text('Button audit project created in Personal.'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
 
   testWidgets('Economy screen renders balance and cost state', (tester) async {
