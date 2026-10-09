@@ -106,7 +106,7 @@ void main() {
       baseUrl: 'http://test',
       authToken: 'test-token',
     );
-    await tester.pumpWidget(MaterialApp(home: CreateScreen(api: api)));
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: CreateScreen(api: api))));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Initialize Personal'));
