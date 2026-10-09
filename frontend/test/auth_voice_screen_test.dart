@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:sage_one/core/identity_client.dart';
 import 'package:sage_one/core/sage_api.dart';
+import 'package:sage_one/screens/auth_gate.dart';
 import 'package:sage_one/screens/login.dart';
 import 'package:sage_one/screens/memory.dart';
 import 'package:sage_one/screens/private_owner_gate.dart';
@@ -37,6 +38,24 @@ class _ExistingSessionIdentity extends IdentityClient {
   @override
   Future<Map<String, dynamic>> devLogin({String label = 'local-owner'}) async =>
       {'success': true, 'token': 'test-token'};
+
+  @override
+  void dispose() {}
+}
+
+
+class _ExpiredSessionIdentity extends IdentityClient {
+  _ExpiredSessionIdentity()
+      : super(client: _ConfigClient(), baseUrl: 'http://test');
+
+  @override
+  Future<String?> token() async => 'expired-token';
+
+  @override
+  Future<Map<String, dynamic>> me() async => throw Exception('expired token');
+
+  @override
+  Future<void> signOut() async => throw Exception('provider sign-out failed');
 
   @override
   void dispose() {}
@@ -87,6 +106,24 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     identity.dispose();
+  });
+
+
+  testWidgets('AuthGate returns to login when provider sign-out fails', (tester) async {
+    final identity = _ExpiredSessionIdentity();
+    await tester.pumpWidget(MaterialApp(
+      home: AuthGate(
+        identity: identity,
+        childBuilder: (_) => const Scaffold(body: Text('Inside SAGE')),
+      ),
+    ));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('Enter SAGE Owner Mode'), findsOneWidget);
+    expect(find.text('Inside SAGE'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('Private owner gate enters the supplied workspace with an existing session', (tester) async {
