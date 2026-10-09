@@ -118,6 +118,7 @@ void main() {
       ),
     ));
     await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
 
     expect(find.text('Enter SAGE Owner Mode'), findsOneWidget);
     expect(find.text('Inside SAGE'), findsNothing);
