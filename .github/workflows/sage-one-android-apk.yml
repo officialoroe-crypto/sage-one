@@ -28,7 +28,7 @@ jobs:
       SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://10.0.2.2:8010' }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -91,7 +91,7 @@ jobs:
         run: flutter build appbundle --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sage-one-android-release
           retention-days: 14
