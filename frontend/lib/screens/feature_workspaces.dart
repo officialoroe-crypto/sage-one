@@ -112,6 +112,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _sessionId;
   String? _taskId;
   Timer? _poller;
+  int _sessionGeneration = 0;
   bool _sending = false;
   String _status = 'Ready';
 
@@ -122,12 +123,15 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _newSession() async {
+    // Increment the generation before clearing state so any pending command,
+    // task poll or history request from the previous session becomes stale.
+    final generation = ++_sessionGeneration;
     _poller?.cancel();
     if (mounted) {
       setState(() {
         _sessionId = null;
         _taskId = null;
-        _sending = false;
+        _sending = true;
         _status = 'Starting new session…';
         _messages.clear();
       });
@@ -136,24 +140,36 @@ class _ChatScreenState extends State<ChatScreen> {
       final session = await widget.api.createSession();
       final value = session['session'];
       final id = value is Map ? value['id']?.toString() : null;
-      if (id == null || id.isEmpty) throw Exception('SAGE did not return a session id.');
-      if (mounted) {
-        setState(() {
-          _sessionId = id;
-          _status = 'Ready';
-        });
+      if (id == null || id.isEmpty) {
+        throw Exception('SAGE did not return a session id.');
       }
+      if (!mounted || generation != _sessionGeneration) return;
+      setState(() {
+        _sessionId = id;
+        _sending = false;
+        _status = 'Ready';
+      });
     } catch (_) {
-      if (mounted) setState(() => _status = 'Could not start chat');
+      if (!mounted || generation != _sessionGeneration) return;
+      setState(() {
+        _sending = false;
+        _status = 'Could not start chat';
+      });
     }
   }
 
-  Future<void> _loadHistory() async {
-    final id = _sessionId;
-    if (id == null) return;
+  Future<void> _loadHistory({
+    required int generation,
+    required String sessionId,
+  }) async {
+    if (generation != _sessionGeneration || sessionId != _sessionId) return;
     try {
-      final items = await widget.api.sessionMessages(id);
-      if (!mounted) return;
+      final items = await widget.api.sessionMessages(sessionId);
+      if (!mounted ||
+          generation != _sessionGeneration ||
+          sessionId != _sessionId) {
+        return;
+      }
       setState(() {
         _messages
           ..clear()
@@ -165,12 +181,22 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (_) {}
   }
 
+  Future<void> _refreshHistory() async {
+    final sessionId = _sessionId;
+    if (sessionId == null || _sending) return;
+    await _loadHistory(
+      generation: _sessionGeneration,
+      sessionId: sessionId,
+    );
+  }
+
   Future<void> _send() async {
     final text = _input.text.trim();
     if (text.isEmpty || _sending) return;
     if (_sessionId == null) await _newSession();
     final sessionId = _sessionId;
-    if (sessionId == null) return;
+    if (sessionId == null || _sending) return;
+    final generation = _sessionGeneration;
 
     setState(() {
       _sending = true;
@@ -181,9 +207,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final response = await widget.api.submitCommand(text, sessionId: sessionId);
-      // The route may be disposed while the request is in flight. Avoid
-      // creating a polling timer after dispose has already run.
-      if (!mounted) return;
+      // Leaving the screen or opening a new session invalidates this response.
+      if (!mounted || generation != _sessionGeneration) return;
       final task = response['task'];
       _taskId = task is Map
           ? (task['id'] ?? task['task_id'])?.toString()
@@ -191,9 +216,9 @@ class _ChatScreenState extends State<ChatScreen> {
       if (_taskId == null || _taskId!.isEmpty) {
         throw Exception('SAGE did not return a task id.');
       }
-      _startPolling();
+      _startPolling(generation: generation, sessionId: sessionId);
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _sessionGeneration) return;
       setState(() {
         _sending = false;
         _status = 'Could not queue command';
@@ -202,21 +227,35 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _startPolling() {
+  void _startPolling({
+    required int generation,
+    required String sessionId,
+  }) {
     _poller?.cancel();
-    _poller = Timer.periodic(const Duration(seconds: 2), (_) => _pollTask());
-    _pollTask();
+    _poller = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => _pollTask(generation: generation, sessionId: sessionId),
+    );
+    _pollTask(generation: generation, sessionId: sessionId);
   }
 
-  Future<void> _pollTask() async {
+  Future<void> _pollTask({
+    required int generation,
+    required String sessionId,
+  }) async {
+    if (generation != _sessionGeneration || sessionId != _sessionId) return;
     final id = _taskId;
     if (id == null) return;
     try {
       final task = await widget.api.task(id);
+      if (!mounted ||
+          generation != _sessionGeneration ||
+          sessionId != _sessionId) {
+        return;
+      }
       final status = (task['status'] ?? 'unknown').toString().toLowerCase();
       final result = task['result']?.toString();
       final error = task['error']?.toString();
-      if (!mounted) return;
       setState(() {
         _status = status.toUpperCase();
         if (status == 'completed' && result != null && result.isNotEmpty) {
@@ -228,10 +267,14 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       if (!_sending) {
         _poller?.cancel();
-        _loadHistory();
+        _loadHistory(generation: generation, sessionId: sessionId);
       }
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted ||
+          generation != _sessionGeneration ||
+          sessionId != _sessionId) {
+        return;
+      }
       setState(() => _status = 'Connection issue • retrying');
     }
   }
@@ -252,7 +295,10 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Text('SAGE Chat'),
         backgroundColor: Colors.transparent,
         actions: [
-          IconButton(onPressed: _loadHistory, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: _sessionId == null || _sending ? null : _refreshHistory,
+            icon: const Icon(Icons.refresh),
+          ),
           IconButton(onPressed: _newSession, icon: const Icon(Icons.add_comment_outlined)),
         ],
       ),
