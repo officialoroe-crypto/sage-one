@@ -40,7 +40,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('SAGE did not return a task id.'), findsOneWidget);
+    expect(find.text('Could not queue command'), findsOneWidget);
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
   });
 }
