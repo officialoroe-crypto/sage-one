@@ -7,11 +7,12 @@ def test_android_release_workflow_has_endpoint_override_and_release_outputs():
     text = WORKFLOW.read_text(encoding="utf-8")
 
     assert "workflow_dispatch:" in text
+    assert "pull_request:" in text
     assert "api_url:" in text
     assert "SAGE_ANDROID_API_URL" in text
     assert 'dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"' in text
     assert "http://10.0.2.2:8010" in text
-    assert "timeout-minutes: 20" in text
+    assert "timeout-minutes: 30" in text
     assert "concurrency:" in text
     assert "cache: true" in text
     assert "parsed.hostname" in text
