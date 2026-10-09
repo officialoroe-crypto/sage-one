@@ -65,6 +65,7 @@ class SalesLeadScreen extends StatefulWidget {
 }
 class _SalesLeadScreenState extends State<SalesLeadScreen> {
   late Map<String, dynamic> lead; List history = []; Object? error; bool busy = false;
+  final TextEditingController _followUpController = TextEditingController();
   Future<void> load() async {
     try {
       final current = await widget.api.salesLead(lead['id'].toString());
@@ -85,23 +86,23 @@ class _SalesLeadScreenState extends State<SalesLeadScreen> {
     finally { if (mounted) setState(() => busy = false); }
   }
   Future<void> addFollowUp() async {
-    final controller = TextEditingController();
+    _followUpController.clear();
     final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
       title: const Text('Record follow-up'),
-      content: TextField(controller: controller, maxLines: 4, autofocus: true, decoration: const InputDecoration(labelText: 'What happened / next step')),
+      content: TextField(controller: _followUpController, maxLines: 4, autofocus: true, decoration: const InputDecoration(labelText: 'What happened / next step')),
       actions: [
         TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
         FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Save')),
       ],
     ));
-    if (ok == true && controller.text.trim().isNotEmpty) {
-      try { await widget.api.addSalesFollowUp(lead['id'].toString(), controller.text.trim()); await load(); }
+    if (ok == true && _followUpController.text.trim().isNotEmpty) {
+      try { await widget.api.addSalesFollowUp(lead['id'].toString(), _followUpController.text.trim()); await load(); }
       catch (e) { _message('Follow-up failed: $e'); }
     }
-    controller.dispose();
   }
   void _message(String value) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value))); }
   @override void initState() { super.initState(); lead = Map<String, dynamic>.from(widget.lead); load(); }
+  @override void dispose() { _followUpController.dispose(); super.dispose(); }
   @override Widget build(BuildContext context) {
     final outreach = _jsonMap(lead['outreach_json']); final audit = _jsonMap(lead['audit_json']);
     final gaps = audit['gaps'] is List ? (audit['gaps'] as List).map((e) => e.toString()).toList() : <String>[];
