@@ -185,7 +185,10 @@ class _ChatScreenState extends State<ChatScreen> {
       _taskId = task is Map
           ? (task['id'] ?? task['task_id'])?.toString()
           : response['task_id']?.toString();
-      if (_taskId != null) _startPolling();
+      if (_taskId == null || _taskId!.isEmpty) {
+        throw Exception('SAGE did not return a task id.');
+      }
+      _startPolling();
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -224,7 +227,10 @@ class _ChatScreenState extends State<ChatScreen> {
         _poller?.cancel();
         _loadHistory();
       }
-    } catch (_) {}
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _status = 'Connection issue • retrying');
+    }
   }
 
   @override
