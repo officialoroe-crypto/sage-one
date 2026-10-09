@@ -43,16 +43,35 @@ class IdentityClient {
     if (_googleInitialized) return;
     String? clientId;
     String? serverClientId = _googleServerClientId.isEmpty ? null : _googleServerClientId;
-    if (kIsWeb) {
+    // Android needs a server/web OAuth client ID. Load the public ID from
+    // backend configuration when no build-time value was supplied.
+    if (kIsWeb || serverClientId == null) {
       final response = await _client.get(Uri.parse('$baseUrl/identity/config'));
       final data = _decode(response);
       _developerMode = data['developer_mode'] == true;
       final configuredClientId = data['google_client_id'];
-      if (configuredClientId is! String || configuredClientId.isEmpty) throw Exception('Google web client ID is not configured on SAGE.');
-      clientId = configuredClientId;
+      if (configuredClientId is! String || configuredClientId.isEmpty) {
+        throw Exception(
+          'Google sign-in is not configured on the SAGE backend. '
+          'Set GOOGLE_CLIENT_ID to the Google Cloud Web application OAuth '
+          'client ID, then restart the backend.',
+        );
+      }
+      if (kIsWeb) clientId = configuredClientId;
       serverClientId ??= configuredClientId;
     }
-    await GoogleSignIn.instance.initialize(clientId: clientId, serverClientId: serverClientId);
+
+    if (serverClientId == null || serverClientId.isEmpty) {
+      throw Exception(
+        'Google sign-in needs a server/web OAuth client ID. '
+        'Configure GOOGLE_CLIENT_ID on the SAGE backend.',
+      );
+    }
+
+    await GoogleSignIn.instance.initialize(
+      clientId: clientId,
+      serverClientId: serverClientId,
+    );
     _googleInitialized = true;
   }
 
