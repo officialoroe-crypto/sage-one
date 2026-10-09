@@ -61,7 +61,7 @@ class IdentityClient {
       serverClientId ??= configuredClientId;
     }
 
-    if (serverClientId == null || serverClientId.isEmpty) {
+    if (serverClientId.isEmpty) {
       throw Exception(
         'Google sign-in needs a server/web OAuth client ID. '
         'Configure GOOGLE_CLIENT_ID on the SAGE backend.',
