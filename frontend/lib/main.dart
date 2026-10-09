@@ -85,12 +85,8 @@ class _SageOneShellState extends State<SageOneShell> {
     } catch (_) {}
   }
 
-  Future<void> _openTasks() async {
+  void _openTasks() {
     setState(() => _index = 2);
-    try {
-      await _api.markAllNotificationsRead();
-      if (mounted) setState(() => _hasUnreadNotifications = false);
-    } catch (_) {}
   }
 
   Future<void> _openMore() async {
