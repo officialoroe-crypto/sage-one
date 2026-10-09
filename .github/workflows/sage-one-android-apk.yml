@@ -53,14 +53,14 @@ jobs:
               marker = '<manifest xmlns:android="http://schemas.android.com/apk/res/android">'
               if marker not in content:
                   raise SystemExit("Android manifest root element was not found")
-              content = content.replace(marker, marker + "\\n" + permission, 1)
+              content = content.replace(marker, marker + "\n" + permission, 1)
 
           # This Huawei development APK reaches the PC backend through ADB
           # reverse over HTTP. Android release builds block cleartext traffic
           # by default unless the generated manifest opts in.
           if "android:usesCleartextTraffic=" not in content:
               content, replacements = re.subn(
-                  r"<application\\b",
+                  r"<application\b",
                   '<application android:usesCleartextTraffic="true"',
                   content,
                   count=1,
