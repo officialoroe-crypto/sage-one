@@ -40,6 +40,23 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.sageone --project-name sage_one --no-pub .
 
+      - name: Enable microphone permission for SAGE Voice
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest.read_text(encoding="utf-8")
+          permission = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />'
+          if permission not in content:
+              marker = '<manifest xmlns:android="http://schemas.android.com/apk/res/android">'
+              if marker not in content:
+                  raise SystemExit("Android manifest root element was not found")
+              content = content.replace(marker, marker + "\n" + permission, 1)
+              manifest.write_text(content, encoding="utf-8")
+          print("SAGE Voice microphone permission is present")
+          PY
+
       - name: Remove generated Flutter sample test
         run: rm -f test/widget_test.dart
 

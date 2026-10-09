@@ -261,6 +261,12 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<List<dynamic>> profileMemoryReview() async {
+    final data = await _authorizedGet('/identity/memory/review');
+    final items = data['memories'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
   Future<Map<String, dynamic>> createProfileMemory({
     required String memoryType,
     required String content,
@@ -271,6 +277,12 @@ class SageApi {
         'source': 'user',
         'confirmed': true,
       });
+
+  Future<Map<String, dynamic>> updateProfileMemory(
+    String memoryId, {
+    required bool confirmed,
+  }) async =>
+      _authorizedPatch('/identity/memory/$memoryId', {'confirmed': confirmed});
 
   Future<Map<String, dynamic>> deleteProfileMemory(String memoryId) async =>
       _authorizedDelete('/identity/memory/$memoryId');

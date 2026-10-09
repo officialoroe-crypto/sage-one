@@ -18,7 +18,7 @@ import 'screens/memory.dart';
 import 'screens/evolution.dart';
 import 'theme/sage_theme.dart';
 import 'screens/feature_workspaces.dart';
-import 'screens/voice_command.dart';
+import 'screens/voice_mode.dart';
 import 'screens/developer_mode.dart';
 import 'screens/sales.dart';
 import 'screens/final_surfaces.dart' as final_surfaces;
@@ -141,7 +141,7 @@ class _SageOneShellState extends State<SageOneShell> {
             ListTile(leading: const Icon(Icons.code), title: const Text('Developer Mode'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => DeveloperModeScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Identity Verification'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const KycScreen())); }),
             ListTile(leading: const Icon(Icons.flag_outlined), title: const Text('First Run'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const FirstRunScreen())); }),
-            ListTile(leading: const Icon(Icons.mic), title: const Text('Voice'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => VoiceCommandScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.mic), title: const Text('Voice'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => SageVoiceScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.chat_bubble_outline), title: const Text('Chat'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.apps), title: const Text('Apps'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AppsScreen())); }),
             ListTile(leading: const Icon(Icons.trending_up), title: const Text('Earnings'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const EarningsScreen())); }),

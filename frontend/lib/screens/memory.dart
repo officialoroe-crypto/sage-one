@@ -21,6 +21,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
   bool _saving = false;
   String? _error;
   List<dynamic> _memories = const [];
+  List<dynamic> _pendingMemories = const [];
 
   @override
   void initState() {
@@ -30,15 +31,19 @@ class _MemoryScreenState extends State<MemoryScreen> {
 
   Future<void> _load() async {
     try {
-      final items = await widget.api.profileMemories();
+      final results = await Future.wait([
+        widget.api.profileMemories(),
+        widget.api.profileMemoryReview(),
+      ]);
       if (!mounted) return;
-      final validMemories = items
+      List<Map<String, dynamic>> normalize(List<dynamic> items) => items
           .whereType<Map>()
           .where((item) => item['id'] != null && item['content'] != null)
           .map((item) => Map<String, dynamic>.from(item))
           .toList(growable: false);
       setState(() {
-        _memories = validMemories;
+        _memories = normalize(results[0]);
+        _pendingMemories = normalize(results[1]);
         _loading = false;
         _error = null;
       });
@@ -148,8 +153,31 @@ class _MemoryScreenState extends State<MemoryScreen> {
     }
   }
 
+  Future<void> _confirmMemory(Map item) async {
+    final id = item['id']?.toString();
+    if (id == null) return;
+    setState(() => _saving = true);
+    try {
+      await widget.api.updateProfileMemory(id, confirmed: true);
+      await _load();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pendingIds = _pendingMemories
+        .whereType<Map>()
+        .map((item) => item['id']?.toString())
+        .whereType<String>()
+        .toSet();
+    final savedMemories = _memories.where((item) {
+      if (item is! Map) return false;
+      return !pendingIds.contains(item['id']?.toString());
+    }).toList(growable: false);
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _load,
@@ -183,6 +211,66 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 label: Text(_saving ? 'Saving…' : 'Add memory'),
               ),
             ),
+            if (_pendingMemories.isNotEmpty) ...[
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  const Icon(Icons.fact_check_outlined, color: SageTheme.cyan),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text('NEEDS YOUR REVIEW', style: TextStyle(
+                      fontSize: 11, letterSpacing: 1.6,
+                      color: SageTheme.cyan, fontWeight: FontWeight.w800,
+                    )),
+                  ),
+                  Text('${_pendingMemories.length} pending',
+                    style: const TextStyle(color: SageTheme.textSecondary, fontSize: 11)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              for (final item in _pendingMemories)
+                if (item is Map<String, dynamic>)
+                  Card(
+                    key: ValueKey('memory-review-${item['id']}'),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (item['memory_type']?.toString() ?? 'memory')
+                                .replaceAll('_', ' ').toUpperCase(),
+                            style: const TextStyle(
+                              color: SageTheme.cyan, fontSize: 10,
+                              letterSpacing: 1.2, fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(item['content']?.toString() ?? '',
+                            style: const TextStyle(height: 1.4)),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilledButton.icon(
+                                onPressed: _saving ? null : () => _confirmMemory(item),
+                                icon: const Icon(Icons.check, size: 18),
+                                label: const Text('Keep memory'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: _saving ? null : () => _deleteMemory(item),
+                                icon: const Icon(Icons.delete_outline, size: 18),
+                                label: const Text('Reject'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 12),
               Card(child: Padding(
@@ -196,14 +284,14 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 padding: EdgeInsets.symmetric(vertical: 70),
                 child: Center(child: CircularProgressIndicator()),
               )
-            else if (_memories.isEmpty)
+            else if (savedMemories.isEmpty && _pendingMemories.isEmpty)
               const Card(child: Padding(
                 padding: EdgeInsets.all(18),
                 child: Text('No saved memories yet. Add one when you want SAGE to remember something.',
                   style: TextStyle(color: SageTheme.textSecondary, height: 1.45)),
               ))
             else
-              for (final raw in _memories)
+              for (final raw in savedMemories)
                 if (raw is Map<String, dynamic>)
                   Card(
                     margin: const EdgeInsets.only(bottom: 10),
