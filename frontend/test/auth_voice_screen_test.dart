@@ -43,8 +43,11 @@ class _ExistingSessionIdentity extends IdentityClient {
 }
 
 class _ApiClient extends http.BaseClient {
+  final List<String> requestPaths = <String>[];
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    requestPaths.add(request.url.path);
     return http.StreamedResponse(
       Stream.value(Uint8List.fromList(utf8.encode(jsonEncode({'success': true})))),
       200,
@@ -103,6 +106,29 @@ void main() {
     expect(find.byType(Scaffold), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Saving a memory calls the identity API', (tester) async {
+    final client = _ApiClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: MemoryScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add memory'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'SAGE should remember this');
+    await tester.tap(find.text('Save memory'));
+    await tester.pumpAndSettle();
+
+    expect(client.requestPaths, contains('/identity/memory'));
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
   testWidgets('Memory screen renders saved-memory controls and opens its add dialog', (tester) async {
     await tester.pumpWidget(MaterialApp(home: MemoryScreen(api: _api())));
     await tester.pumpAndSettle();
