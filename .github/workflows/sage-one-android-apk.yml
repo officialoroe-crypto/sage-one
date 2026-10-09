@@ -8,17 +8,19 @@ on:
         required: false
         default: "http://10.0.2.2:8010"
         type: string
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
 
 concurrency:
-  group: sage-one-android-release
+  group: sage-one-android-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   release-validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: frontend
