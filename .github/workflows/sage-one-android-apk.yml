@@ -40,9 +40,10 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.sageone --project-name sage_one --no-pub .
 
-      - name: Enable microphone permission for SAGE Voice
+      - name: Configure microphone permission and local HTTP API access
         run: |
           python - <<'PY'
+          import re
           from pathlib import Path
 
           manifest = Path("android/app/src/main/AndroidManifest.xml")
@@ -52,9 +53,23 @@ jobs:
               marker = '<manifest xmlns:android="http://schemas.android.com/apk/res/android">'
               if marker not in content:
                   raise SystemExit("Android manifest root element was not found")
-              content = content.replace(marker, marker + "\n" + permission, 1)
-              manifest.write_text(content, encoding="utf-8")
-          print("SAGE Voice microphone permission is present")
+              content = content.replace(marker, marker + "\\n" + permission, 1)
+
+          # This Huawei development APK reaches the PC backend through ADB
+          # reverse over HTTP. Android release builds block cleartext traffic
+          # by default unless the generated manifest opts in.
+          if "android:usesCleartextTraffic=" not in content:
+              content, replacements = re.subn(
+                  r"<application\\b",
+                  '<application android:usesCleartextTraffic="true"',
+                  content,
+                  count=1,
+              )
+              if replacements != 1:
+                  raise SystemExit("Android application element was not found")
+
+          manifest.write_text(content, encoding="utf-8")
+          print("SAGE Voice permission and local HTTP API access are configured")
           PY
 
       - name: Remove generated Flutter sample test
