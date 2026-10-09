@@ -16,8 +16,11 @@ def test_workflow_actions_use_current_compatible_majors():
     pages = (WORKFLOWS / "sage-one-god-mode-pages.yml").read_text(encoding="utf-8")
 
     assert "actions/checkout@v6" in android
-    assert "actions/upload-artifact@v5" in android
+    assert "actions/upload-artifact@v7" in android
+    assert "actions/upload-artifact@v5" not in android
     assert "actions/checkout@v6" in pages
+    assert "actions/upload-pages-artifact@v5" in pages
+    assert "actions/deploy-pages@v5" in pages
 
 
 def test_github_workflows_pin_runner_image_to_ubuntu_24_04():
