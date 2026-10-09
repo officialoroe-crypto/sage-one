@@ -10,26 +10,91 @@ class FeatureWorkspace extends StatefulWidget {
   @override State<FeatureWorkspace> createState() => _FeatureWorkspaceState();
 }
 class _FeatureWorkspaceState extends State<FeatureWorkspace> {
-  String? _message;
-  @override Widget build(BuildContext context) => Scaffold(
+  Future<void> _explainAction(String action) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(action),
+        content: Text(
+          '${widget.title} is present in the SAGE ONE interface, but this action is not connected to a live workflow yet. '
+          'It will not report success or change account data until its backend integration is implemented.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Understood'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
     backgroundColor: SageTheme.voidBlack,
     appBar: AppBar(title: Text(widget.title), backgroundColor: Colors.transparent),
     body: ListView(padding: const EdgeInsets.all(20), children: [
-      Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF0C2344), Color(0xFF07101E)]),
-        borderRadius: BorderRadius.circular(24), border: Border.all(color: SageTheme.cyan.withValues(alpha: .18))),
+      Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF0C2344), Color(0xFF07101E)]),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: SageTheme.cyan.withValues(alpha: .18)),
+        ),
         child: Row(children: [
-          Container(width: 54,height:54,alignment:Alignment.center,decoration:BoxDecoration(shape:BoxShape.circle,color:SageTheme.cyan.withValues(alpha:.1)),child:Icon(widget.icon,color:SageTheme.cyan)),
-          const SizedBox(width:16), Expanded(child: Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text(widget.title,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800,color:SageTheme.textPrimary)),const SizedBox(height:5),Text(widget.subtitle,style:const TextStyle(color:SageTheme.textSecondary,fontSize:12,height:1.4))
-          ]))
-        ])),
-      const SizedBox(height:20),
-      ...widget.actions.map((a)=>Padding(padding:const EdgeInsets.only(bottom:10),child:FilledButton.tonalIcon(
-        onPressed:()=>setState(()=>_message='$a is ready in SAGE ONE.'),
-        icon:const Icon(Icons.arrow_forward),label:Align(alignment:Alignment.centerLeft,child:Text(a))))),
-      if(_message!=null) ...[const SizedBox(height:18),Text(_message!,style:const TextStyle(color:SageTheme.success,fontWeight:FontWeight.w700))]
-    ]));
+          Container(
+            width: 54,
+            height: 54,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: SageTheme.cyan.withValues(alpha: .1),
+            ),
+            child: Icon(widget.icon, color: SageTheme.cyan),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.title, style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: SageTheme.textPrimary,
+              )),
+              const SizedBox(height: 5),
+              Text(widget.subtitle, style: const TextStyle(
+                color: SageTheme.textSecondary,
+                fontSize: 12,
+                height: 1.4,
+              )),
+            ],
+          )),
+        ]),
+      ),
+      const SizedBox(height: 20),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.info_outline, color: SageTheme.textSecondary),
+          title: const Text('Integration status'),
+          subtitle: const Text(
+            'Interface available • Live actions not connected yet',
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      ...widget.actions.map((action) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: FilledButton.tonalIcon(
+          onPressed: () => _explainAction(action),
+          icon: const Icon(Icons.info_outline),
+          label: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(action),
+          ),
+        ),
+      )),
+    ]),
+  );
 }
 
 class ChatScreen extends StatefulWidget {
