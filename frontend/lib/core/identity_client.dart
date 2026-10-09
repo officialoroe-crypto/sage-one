@@ -81,7 +81,7 @@ class IdentityClient {
 
     // This guard is intentionally before plugin initialization so Android can
     // never pass null/empty serverClientId into GoogleSignIn.initialize().
-    if (serverClientId == null || serverClientId.trim().isEmpty) {
+    if (serverClientId.trim().isEmpty) {
       throw Exception(
         'Google sign-in needs a server/web OAuth client ID. '
         'Configure SAGE_GOOGLE_SERVER_CLIENT_ID at build time or set '
