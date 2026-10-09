@@ -258,12 +258,11 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
       if (state == 'COMPLETED') {
         var spoken = 'Your task is complete.';
         if (result != null && result.isNotEmpty) {
-          spoken += ' ' +
-              (result.length > 160 ? result.substring(0, 160) : result);
+          spoken += ' ${result.length > 160 ? result.substring(0, 160) : result}';
         }
         await _speak(spoken);
       } else {
-        await _speak('The task ended with status ' + state + '.');
+        await _speak('The task ended with status $state.');
       }
 
       if (_wakeMode && mounted) await _restartWakeListening();
