@@ -181,6 +181,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final response = await widget.api.submitCommand(text, sessionId: sessionId);
+      // The route may be disposed while the request is in flight. Avoid
+      // creating a polling timer after dispose has already run.
+      if (!mounted) return;
       final task = response['task'];
       _taskId = task is Map
           ? (task['id'] ?? task['task_id'])?.toString()
