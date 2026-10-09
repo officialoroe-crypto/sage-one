@@ -43,7 +43,9 @@
 - [ ] Broader third-party integrations and permissioned publishing adapters.
 - [ ] Analytics → improve feedback loop.
 - [ ] Automated Evolution visual regression.
-- [x] CI release hardening: Android build uses an emulator-reachable host API default and supports explicit device API override.
+- [x] CI release hardening: Flutter clients share the Android emulator default and the Android APK workflow supports an explicit device API URL (the Huawei workflow default requires ADB reverse).
+- [ ] Full button-by-button interaction audit with HTTP-method/path assertions and loading/error/cancel regression coverage.
+- [ ] Live backend connectivity smoke test against the configured private environment.
 - [ ] Manual Android/device QA (requires physical device/backend access).
 
 ## DEVELOPMENT CONTROL PLANE
