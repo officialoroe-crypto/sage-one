@@ -53,7 +53,11 @@ void main() {
 
   testWidgets('Execute button queues a command through the backend', (tester) async {
     final client = _FakeApiClient();
-    final api = SageApi(client: client);
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
     await tester.pumpWidget(MaterialApp(home: CommandCenter(api: api)));
     await tester.pump();
 
