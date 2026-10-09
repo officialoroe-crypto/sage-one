@@ -17,6 +17,8 @@ def test_android_release_workflow_has_endpoint_override_and_release_outputs():
     assert "cache: true" in text
     assert "parsed.hostname" in text
     assert "Credentials must not be embedded" in text
+    assert "usesCleartextTraffic" in text
+    assert "local HTTP API access" in text
     assert "flutter analyze" in text
     assert "flutter test" in text
     assert "flutter build apk --release" in text
