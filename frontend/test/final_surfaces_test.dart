@@ -9,9 +9,11 @@ import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/screens/final_surfaces.dart';
 
 class _FinalSurfaceClient extends http.BaseClient {
+  int markAllReadRequests = 0;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
+    if (path == '/notifications/read-all') markAllReadRequests++;
     dynamic body = <String, dynamic>{'success': true};
 
     if (path == '/economy/me') {
@@ -109,4 +111,20 @@ void main() {
       expect(find.text(labels[i]), findsOneWidget);
     }
   });
+  testWidgets('Notifications mark-all-read button calls the backend', (tester) async {
+    final client = _FinalSurfaceClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: NotificationsFinalScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Mark all read'));
+    await tester.pumpAndSettle();
+
+    expect(client.markAllReadRequests, 1);
+  });
+
 }

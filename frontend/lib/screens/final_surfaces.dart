@@ -133,7 +133,18 @@ class _NotificationsFinalState extends State<NotificationsFinalScreen>{
 }
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Notifications',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('Activity',style:TextStyle(fontSize:20,fontWeight:FontWeight.w800)),TextButton(onPressed:()async{await widget.api.markAllNotificationsRead();await load();},child:const Text('Mark all read'))]),
+    Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('Activity',style:TextStyle(fontSize:20,fontWeight:FontWeight.w800)),TextButton(onPressed:()async{
+      try {
+        await widget.api.markAllNotificationsRead();
+        await load();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not mark notifications read: ${e.toString()}')),
+          );
+        }
+      }
+    },child:const Text('Mark all read'))]),
     if(error!=null)Text('Notification error: ${error.toString()}'),
     ...items.map((n)=>Card(child:ListTile(title:Text(n['title']?.toString()??n['message']?.toString()??'SAGE update'),subtitle:Text(n['created_at']?.toString()??''),trailing:IconButton(icon:const Icon(Icons.done),onPressed:()=>read(n['id'].toString()))))),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('You are all caught up.')),

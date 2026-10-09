@@ -59,6 +59,9 @@ class _CommandCenterState extends State<CommandCenter>
     try {
       final result = await widget.api.submitBackground(prompt);
       final taskId = result['task_id'] ?? result['id'];
+      if (taskId == null || taskId.toString().isEmpty) {
+        throw Exception('SAGE did not return a task id.');
+      }
       if (!mounted) return;
 
       setState(() {

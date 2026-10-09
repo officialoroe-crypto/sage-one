@@ -105,7 +105,9 @@ class _VoiceCommandScreenState extends State<VoiceCommandScreen> {
       final task = response['task'];
       final taskMap = task is Map ? Map<String, dynamic>.from(task) : null;
       _taskId = (taskMap?['id'] ?? response['task_id'])?.toString();
-      if (_taskId == null) throw Exception('SAGE did not return a task id.');
+      if (_taskId == null || _taskId!.isEmpty) {
+        throw Exception('SAGE did not return a task id.');
+      }
 
       if (mounted) setState(() => _status = 'SAGE is working…');
       _poller?.cancel();

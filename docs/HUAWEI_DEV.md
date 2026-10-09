@@ -35,7 +35,7 @@ cd C:\SageOne\sage_core
 C:\SageOne\Backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
 
-Then install the GitHub Actions artifact `sage-one-huawei-dev-apk`.
+Then install the GitHub Actions artifact `sage-one-android-release` from the successful **SAGE ONE Android Release** run. It is built for the phone-to-PC ADB reverse tunnel shown above. For an Android emulator, manually run the workflow with `api_url` set to `http://10.0.2.2:8010`.
 
 ## Developer flow
 

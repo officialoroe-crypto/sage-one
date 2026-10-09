@@ -6,7 +6,7 @@ on:
       api_url:
         description: "SAGE backend URL reachable from the Android device"
         required: false
-        default: "http://10.0.2.2:8010"
+        default: "http://127.0.0.1:8010"
         type: string
   pull_request:
     branches: [main]
@@ -19,13 +19,13 @@ concurrency:
 
 jobs:
   release-validation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
         working-directory: frontend
     env:
-      SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://10.0.2.2:8010' }}
+      SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://127.0.0.1:8010' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -40,9 +40,10 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.sageone --project-name sage_one --no-pub .
 
-      - name: Enable microphone permission for SAGE Voice
+      - name: Configure microphone permission and local HTTP API access
         run: |
           python - <<'PY'
+          import re
           from pathlib import Path
 
           manifest = Path("android/app/src/main/AndroidManifest.xml")
@@ -53,8 +54,22 @@ jobs:
               if marker not in content:
                   raise SystemExit("Android manifest root element was not found")
               content = content.replace(marker, marker + "\n" + permission, 1)
-              manifest.write_text(content, encoding="utf-8")
-          print("SAGE Voice microphone permission is present")
+
+          # This Huawei development APK reaches the PC backend through ADB
+          # reverse over HTTP. Android release builds block cleartext traffic
+          # by default unless the generated manifest opts in.
+          if "android:usesCleartextTraffic=" not in content:
+              content, replacements = re.subn(
+                  r"<application\b",
+                  '<application android:usesCleartextTraffic="true"',
+                  content,
+                  count=1,
+              )
+              if replacements != 1:
+                  raise SystemExit("Android application element was not found")
+
+          manifest.write_text(content, encoding="utf-8")
+          print("SAGE Voice permission and local HTTP API access are configured")
           PY
 
       - name: Remove generated Flutter sample test
