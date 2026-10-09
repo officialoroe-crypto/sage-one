@@ -81,7 +81,7 @@ class ProfileFinalScreen extends StatefulWidget {
 }
 class _ProfileFinalState extends State<ProfileFinalScreen>{
   final name=TextEditingController(),intent=TextEditingController(),address=TextEditingController(),age=TextEditingController(); bool saving=false; bool memoryConsent=false;
-  Future<void> load()async{try{final d=await widget.api.profileMe();final p=d['profile'] is Map?Map<String,dynamic>.from(d['profile']):{};name.text=p['name']?.toString()??'';intent.text=p['help_intent']?.toString()??'';address.text=p['address']?.toString()??'';age.text=p['age']?.toString()??'';memoryConsent=p['memory_consent']==true;if(mounted)setState((){});}catch(e){_msg('Profile load failed: ${e.toString()}');}}
+  Future<void> load()async{try{final d=await widget.api.profileMe();if(!mounted)return;final p=d['profile'] is Map?Map<String,dynamic>.from(d['profile']):{};name.text=p['name']?.toString()??'';intent.text=p['help_intent']?.toString()??'';address.text=p['address']?.toString()??'';age.text=p['age']?.toString()??'';memoryConsent=p['memory_consent']==true;setState((){});}catch(e){_msg('Profile load failed: ${e.toString()}');}}
   Future<void> save()async{setState(()=>saving=true);try{await widget.api.updateProfile(name:name.text.trim(),address:address.text.trim(),age:int.tryParse(age.text.trim()),helpIntent:intent.text.trim(),memoryConsent:memoryConsent);_msg('Profile saved.');}catch(e){_msg('Profile save failed: ${e.toString()}');}finally{if(mounted)setState(()=>saving=false);}}
   void _msg(String s){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s)));}
   @override void initState(){super.initState();load();}
@@ -206,14 +206,27 @@ class AiStudioFinalScreen extends StatefulWidget {
 }
 class _AiStudioFinalState extends State<AiStudioFinalScreen>{
   List items=[]; Object? error;
+  final TextEditingController _workspaceName = TextEditingController();
+  final TextEditingController _workspaceSlug = TextEditingController();
   Future<void> load()async{try{final v=await widget.api.workflowWorkspaces();if(mounted)setState(()=>items=v);}catch(e){if(mounted)setState(()=>error=e);}}
   Future<void> createWorkspace()async{
-    final n=TextEditingController(),s=TextEditingController();
-    final ok=await showDialog<bool>(context:context,builder:(c)=>AlertDialog(title:const Text('Create workspace'),content:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:n,decoration:const InputDecoration(labelText:'Name')),TextField(controller:s,decoration:const InputDecoration(labelText:'Slug'))]),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),FilledButton(onPressed:()=>Navigator.pop(c,true),child:const Text('Create'))]));
-    if(ok==true){try{await widget.api.createWorkflowWorkspace(name:n.text.trim(),slug:s.text.trim());await load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Create failed: ${e.toString()}')));}}
-    n.dispose();s.dispose();
+    _workspaceName.clear();
+    _workspaceSlug.clear();
+    final ok=await showDialog<bool>(context:context,builder:(c)=>StatefulBuilder(builder:(c,setDialogState)=>AlertDialog(
+      title:const Text('Create workspace'),
+      content:Column(mainAxisSize:MainAxisSize.min,children:[
+        TextField(controller:_workspaceName,onChanged:(_)=>setDialogState((){}),decoration:const InputDecoration(labelText:'Name')),
+        TextField(controller:_workspaceSlug,onChanged:(_)=>setDialogState((){}),decoration:const InputDecoration(labelText:'Slug')),
+      ]),
+      actions:[
+        TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('Cancel')),
+        FilledButton(onPressed:_workspaceName.text.trim().isEmpty||_workspaceSlug.text.trim().isEmpty?null:()=>Navigator.pop(c,true),child:const Text('Create')),
+      ],
+    )));
+    if(ok==true){try{await widget.api.createWorkflowWorkspace(name:_workspaceName.text.trim(),slug:_workspaceSlug.text.trim());await load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Create failed: ${e.toString()}')));}}
   }
   @override void initState(){super.initState();load();}
+  @override void dispose(){_workspaceName.dispose();_workspaceSlug.dispose();super.dispose();}
   @override Widget build(BuildContext c)=>_Page(title:'AI Studio',body:ListView(padding:const EdgeInsets.all(20),children:[
     Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('Workflow Studio',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),FilledButton.icon(onPressed:createWorkspace,icon:const Icon(Icons.add),label:const Text('Workspace'))]),
     if(error!=null)Text('AI Studio error: ${error.toString()}'),
