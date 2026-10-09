@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
 Last updated: 2026-10-09
-Current main: b1f22d4b074a73f041b4b5db956b6b8848726e26
+Current main at incident-fix branch creation: 133c5a5f9c8d051e31e9a5d6e7f4aa5e15b99c19
 
 ## Identity
 - Project: SAGE ONE
@@ -208,3 +208,17 @@ Always inspect actual GitHub main and this file before architectural changes. Do
 
 ### Audit scope and limitation
 This was a targeted audit of the authentication client, login screen, auth gate, backend identity config/token-verification paths, settings, Android build workflow, frontend README, identity API tests, Android workflow tests, PR #195 diff and available workflow runs. It was not a literal line-by-line audit of every unrelated repository file or access to the user's current phone runtime.
+
+
+## Google Sign-In incident — implementation update (2026-10-09)
+
+- Confirmed the defect still existed on main at branch creation: `initializeGoogle()` fetched `/identity/config` only for web, so Android could pass a null `serverClientId` to the Google Sign-In plugin.
+- Fix branch: `fix/android-google-signin-runtime-config-20261009`.
+- Pull request: https://github.com/officialoroe-crypto/sage-one/pull/196
+- Fix commit: `3764fcfcbda065ad68accf3b4cd60f8d04bc39ef`.
+- Code now loads `google_client_id` from `/identity/config` on Android when the build-time `SAGE_GOOGLE_SERVER_CLIENT_ID` is absent; rejects missing/blank IDs before plugin initialization; and bounds configuration fetch to 12 seconds with an actionable reachability error.
+- This is a source-code fix proposal, not yet integrated into main. PR #196 is open and must pass current SAGE CI and Android release validation.
+- Device-specific release requirement: build the APK with the backend URL reachable from the physical phone. The previously reported candidate `http://192.168.254.3:8000` must be re-verified at build time; emulator defaults such as `10.0.2.2` and loopback URLs are not valid phone LAN URLs.
+- Backend prerequisite: `GOOGLE_CLIENT_ID` must be the Google Cloud **Web application** OAuth client ID. It is a public client ID, not a client secret.
+- Regression acceptance: install the exact artifact from the validated run, tap Continue with Google, confirm the Android plugin no longer emits `Server client must be provided on Android null`, and complete the backend token exchange. If OAuth then fails at token verification, investigate package/signing SHA and audience separately.
+- Status remains **OPEN / NOT DEVICE-VERIFIED**. Never claim this incident fixed until the exact installed APK completes a physical-device sign-in.
