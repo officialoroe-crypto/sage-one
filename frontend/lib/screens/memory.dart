@@ -344,6 +344,7 @@ class _AddMemoryDialogState extends State<_AddMemoryDialog> {
               TextField(
                 controller: _content,
                 autofocus: true,
+                onChanged: (_) => setState(() {}),
                 minLines: 3,
                 maxLines: 6,
                 maxLength: 5000,
