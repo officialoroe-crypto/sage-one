@@ -15,11 +15,13 @@ import 'package:sage_one/screens/world_intelligence.dart';
 
 class _ScreenSmokeClient extends http.BaseClient {
   int worldRefreshRequests = 0;
+  int ownerSparkSetRequests = 0;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
     if (path == '/world/refresh' && request.method == 'POST') worldRefreshRequests++;
+    if (path == '/economy/owner/spark/set' && request.method == 'POST') ownerSparkSetRequests++;
     final dynamic body = switch (path) {
       '/workflow/workspaces' => {'success': true, 'workspaces': []},
       '/economy/me' => {
@@ -98,6 +100,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('SAGE Owner Console'), findsOneWidget);
     expect(find.text('SET SPARK'), findsOneWidget);
+  });
+
+  testWidgets('Owner Console SET SPARK action calls the owner API', (tester) async {
+    final client = _ScreenSmokeClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: OwnerConsoleScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('SET SPARK'));
+    await tester.tap(find.text('SET SPARK'));
+    await tester.pumpAndSettle();
+
+    expect(client.ownerSparkSetRequests, 1);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
 
   testWidgets('Project detail loads assets, relations and workflows', (tester) async {
