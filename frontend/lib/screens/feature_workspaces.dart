@@ -181,6 +181,15 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (_) {}
   }
 
+  Future<void> _refreshHistory() async {
+    final sessionId = _sessionId;
+    if (sessionId == null || _sending) return;
+    await _loadHistory(
+      generation: _sessionGeneration,
+      sessionId: sessionId,
+    );
+  }
+
   Future<void> _send() async {
     final text = _input.text.trim();
     if (text.isEmpty || _sending) return;
@@ -286,7 +295,10 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Text('SAGE Chat'),
         backgroundColor: Colors.transparent,
         actions: [
-          IconButton(onPressed: _loadHistory, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: _sessionId == null || _sending ? null : _refreshHistory,
+            icon: const Icon(Icons.refresh),
+          ),
           IconButton(onPressed: _newSession, icon: const Icon(Icons.add_comment_outlined)),
         ],
       ),
