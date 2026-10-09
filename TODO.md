@@ -47,6 +47,7 @@
 - [ ] Full button-by-button interaction audit with HTTP-method/path assertions and loading/error/cancel regression coverage.
 - [ ] Live backend connectivity smoke test against the configured private environment.
 - [ ] Manual Android/device QA (requires physical device/backend access).
+- [ ] Resolve physical Android Google Sign-In incident: PR #196 loads and validates server client ID before plugin initialization; a redundant-null-check analyzer failure was corrected in commit `7bd448e722ab6986954b92317d15ed8988961bd2`. Recheck CI on the final head, build with verified phone-reachable API URL, and complete physical-device sign-in before marking fixed.
 
 ## DEVELOPMENT CONTROL PLANE
 - [x] Machine-readable AI work claims.
