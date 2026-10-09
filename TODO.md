@@ -67,3 +67,11 @@
 
 ## PRINCIPLE
 Do not mark an item complete because code exists alone. Mark it complete when the runtime path is real and the relevant verification evidence exists.
+
+
+## ACTIVE BLOCKER — PHYSICAL ANDROID GOOGLE SIGN-IN (2026-10-09)
+- [ ] Review and merge current-main fix PR #195 only after its final-head CI and repository review requirements pass: https://github.com/officialoroe-crypto/sage-one/pull/195
+- [x] Android initialization now fetches the public server/web OAuth client ID from `/identity/config` if the build did not provide `SAGE_GOOGLE_SERVER_CLIENT_ID`.
+- [x] Historical verification on PR head `9cfdae4b0446af20a3794a46507b794c6a36fe27`: SAGE CI run `37908001367` passed Python + Flutter jobs; Android release run `37908001368` passed analyzer/tests, API URL validation, APK/AAB build and artifact upload. Recheck after any new commit because these results are for the recorded head only.
+- [ ] Build/install the final artifact with a verified reachable physical-device `SAGE_API_URL`; test Continue with Google on the Huawei phone and confirm authenticated profile/session restore.
+- [ ] Record the real device outcome and logs. CI/build success is not a substitute for device verification.
