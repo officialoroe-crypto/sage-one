@@ -38,7 +38,7 @@
 - [ ] Production SMS/OTP provider.
 - [ ] Long-lived Google web session refresh UX.
 - [ ] Local/provider-backed premium lifecycle smoke test on the user's configured environment.
-- [ ] Broader consent-driven memory candidate review UX.
+- [ ] Owner-facing consent-driven memory candidate review UX (backend pending-review API added; Flutter review UI remains).
 - [ ] Full multi-tenant ownership if SAGE becomes public/shared.
 - [ ] Broader third-party integrations and permissioned publishing adapters.
 - [ ] Analytics → improve feedback loop.
