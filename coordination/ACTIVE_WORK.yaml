@@ -1,5 +1,5 @@
 version: 1
-updated_at: 2026-10-09T05:15:00Z
+updated_at: 2026-10-09T05:17:00Z
 claims:
   - id: evolution-pixel-regression-20261009
     agent: ChatGPT
@@ -10,6 +10,6 @@ claims:
       - frontend/test/evolution_transition_test.dart
       - TODO.md
     objective: Add deterministic raster-pixel regression checks for all 13 Evolution stages and intensity variants without changing runtime behavior.
-    status: in_progress
+    status: blocked
     started_at: 2026-10-09T05:15:00Z
-    updated_at: 2026-10-09T05:15:00Z
+    updated_at: 2026-10-09T05:17:00Z
