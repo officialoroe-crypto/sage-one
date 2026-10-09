@@ -33,7 +33,13 @@ def test_memory_review_endpoint_only_returns_unconfirmed_auto_learning(monkeypat
             "confirmed": False,
         },
     ]
-    monkeypatch.setattr(api, "list_memory", lambda _profile_id, limit=100: memories)
+    monkeypatch.setattr(
+        api,
+        "list_memory",
+        lambda profile_id, limit=100: [
+            item for item in memories if item["profile_id"] == profile_id
+        ],
+    )
 
     result = api.get_profile_memory_review(
         {"auth_provider": "developer", "auth_subject": "owner"}
