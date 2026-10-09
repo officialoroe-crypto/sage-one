@@ -215,10 +215,17 @@ This was a targeted audit of the authentication client, login screen, auth gate,
 - Confirmed the defect still existed on main at branch creation: `initializeGoogle()` fetched `/identity/config` only for web, so Android could pass a null `serverClientId` to the Google Sign-In plugin.
 - Fix branch: `fix/android-google-signin-runtime-config-20261009`.
 - Pull request: https://github.com/officialoroe-crypto/sage-one/pull/196
-- Fix commit: `3764fcfcbda065ad68accf3b4cd60f8d04bc39ef`.
+- Initial fix commit: `3764fcfcbda065ad68accf3b4cd60f8d04bc39ef`; follow-up lint fix: `7bd448e722ab6986954b92317d15ed8988961bd2`.
 - Code now loads `google_client_id` from `/identity/config` on Android when the build-time `SAGE_GOOGLE_SERVER_CLIENT_ID` is absent; rejects missing/blank IDs before plugin initialization; and bounds configuration fetch to 12 seconds with an actionable reachability error.
 - This is a source-code fix proposal, not yet integrated into main. PR #196 is open and must pass current SAGE CI and Android release validation.
 - Device-specific release requirement: build the APK with the backend URL reachable from the physical phone. The previously reported candidate `http://192.168.254.3:8000` must be re-verified at build time; emulator defaults such as `10.0.2.2` and loopback URLs are not valid phone LAN URLs.
 - Backend prerequisite: `GOOGLE_CLIENT_ID` must be the Google Cloud **Web application** OAuth client ID. It is a public client ID, not a client secret.
 - Regression acceptance: install the exact artifact from the validated run, tap Continue with Google, confirm the Android plugin no longer emits `Server client must be provided on Android null`, and complete the backend token exchange. If OAuth then fails at token verification, investigate package/signing SHA and audience separately.
 - Status remains **OPEN / NOT DEVICE-VERIFIED**. Never claim this incident fixed until the exact installed APK completes a physical-device sign-in.
+
+
+### Follow-up CI failure and correction (2026-10-09)
+
+- PR #196 CI run `37911205477` and Android release run `37911205435` failed Flutter analysis at `identity_client.dart:84:24`: analyzer reported an unnecessary null comparison after flow promotion.
+- Removed only the redundant `serverClientId == null` term; retained the non-empty/blank guard before Google plugin initialization. Follow-up commit: `7bd448e722ab6986954b92317d15ed8988961bd2`.
+- Required now: wait for and inspect new SAGE CI + Android release checks for this exact head. The earlier failures remain valid historical results; do not call CI green until the new runs pass.
