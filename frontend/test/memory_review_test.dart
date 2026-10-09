@@ -68,8 +68,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
 
-    print('Memory screen text nodes: ${tester.widgetList<Text>(find.byType(Text)).map((item) => item.data).toList()}');
-    expect(find.text('NEEDS YOUR REVIEW'), findsOneWidget);
+    expect(
+      find.text('NEEDS YOUR REVIEW'),
+      findsOneWidget,
+      reason: 'Current text nodes: ${tester.widgetList<Text>(find.byType(Text)).map((item) => item.data).toList()}',
+    );
     expect(find.text('Prefers concise practical answers'), findsOneWidget);
     expect(find.text('Keep memory'), findsOneWidget);
 
