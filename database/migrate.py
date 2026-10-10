@@ -1,6 +1,7 @@
 from sqlalchemy import inspect, text
 from database.connection import engine
 from database import models  # noqa: F401
+from jobs import models as job_models  # noqa: F401
 
 
 def migrate():
