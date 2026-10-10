@@ -8,6 +8,12 @@ def migrate():
     inspector = inspect(engine)
     tables = inspector.get_table_names()
 
+    for job_model in (job_models.JobPosting, job_models.JobApplication):
+        if job_model.__tablename__ not in tables:
+            job_model.__table__.create(bind=engine, checkfirst=True)
+            tables = inspect(engine).get_table_names()
+            print(f"ADDED: {job_model.__tablename__}")
+
     if "execution_events" not in tables:
         models.ExecutionEvent.__table__.create(bind=engine, checkfirst=True)
         tables = inspect(engine).get_table_names()
