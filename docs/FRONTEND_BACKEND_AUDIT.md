@@ -8,7 +8,7 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 
 ## Latest baseline
 
-- Current main baseline at the website-first QA checkpoint: `5d8efe7c61ed9691be66d83b77ec9de79fbcfaaf`.
+- Current main baseline before this corrective PR: `2b0872b6da04db35c83872cf9adfd3857537aa57`.
 - PR #201 merged as `ad769fdc66ed55d098019bdb38634550abbf2f2e`; the latest PR-head SAGE CI and Android Release passed. Artifact `11664548324` was uploaded by [run 38036670372](https://github.com/officialoroe-crypto/sage-one/actions/runs/38036670372).
 - PR #202 More-menu fix merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed.
 - PR #218 marketing-site work merged as `3d951d2c7ffb3ed1d1ec70edb64c09d29432f4b4`. [Pages run 38058717863](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058717863) successfully deployed a combined marketing-page + Flutter-web artifact (`11671519061`). This deployed the app before web/mobile QA was complete and is being corrected.
