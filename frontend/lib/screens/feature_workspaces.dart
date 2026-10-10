@@ -503,7 +503,657 @@ class _ChatScreenState extends State<ChatScreen> {
 class AppsScreen extends StatelessWidget { const AppsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Apps',subtitle:'Connected tools and future integrations in one control surface.',icon:Icons.apps,actions:['Browse connected apps','Connect an app','Manage permissions']);}
 class EarningsScreen extends StatelessWidget { const EarningsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Earnings',subtitle:'Track completed work, payouts and creator income.',icon:Icons.trending_up,actions:['View earnings','View pending payouts','Open earnings history']);}
 class MarketplaceScreen extends StatelessWidget { const MarketplaceScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Marketplace',subtitle:'Discover services, tools and SAGE-powered work.',icon:Icons.storefront,actions:['Browse marketplace','View saved items','Open seller tools']);}
-class JobsScreen extends StatelessWidget { const JobsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Jobs',subtitle:'Work opportunities and execution-ready job workflows.',icon:Icons.work_outline,actions:['Find jobs','Track applications','Open active work']);}
+class JobsScreen extends StatefulWidget {
+  const JobsScreen({required this.api, super.key});
+  final SageApi api;
+
+  @override
+  State<JobsScreen> createState() => _JobsScreenState();
+}
+
+class _JobsScreenState extends State<JobsScreen> {
+  final _query = TextEditingController();
+  final _location = TextEditingController(text: 'Nepal');
+  List<Map<String, dynamic>> _items = <Map<String, dynamic>>[];
+  String _view = 'find';
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _query.dispose();
+    _location.dispose();
+    super.dispose();
+  }
+
+  Map<String, dynamic> _map(dynamic value) =>
+      value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      List<Map<String, dynamic>> items;
+      if (_view == 'applications') {
+        final values = await widget.api.myJobApplications();
+        items = values.whereType<Map>().map((value) => Map<String, dynamic>.from(value)).toList();
+      } else {
+        final result = await widget.api.listJobs(
+          query: _view == 'find' ? _query.text : null,
+          location: _view == 'find' ? _location.text : null,
+          mine: _view == 'posts',
+          limit: 50,
+        );
+        final values = result['jobs'];
+        items = values is List
+            ? values.whereType<Map>().map((value) => Map<String, dynamic>.from(value)).toList()
+            : <Map<String, dynamic>>[];
+      }
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loading = false;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = error.toString();
+      });
+    }
+  }
+
+  void _selectView(String view) {
+    if (_view == view) return;
+    setState(() => _view = view);
+    _load();
+  }
+
+  String _salary(Map<String, dynamic> job) {
+    final low = job['salary_min'];
+    final high = job['salary_max'];
+    if (low == null && high == null) return 'Salary not specified';
+    if (low != null && high != null) return 'NPR $low–$high / month';
+    if (low != null) return 'From NPR $low / month';
+    return 'Up to NPR $high / month';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: SageTheme.voidBlack,
+      appBar: AppBar(
+        title: const Text('JOBS • NEPAL'),
+        backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(
+            tooltip: 'Refresh jobs',
+            onPressed: _loading ? null : _load,
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip: 'Post a job',
+            onPressed: _createJob,
+            icon: const Icon(Icons.add_business_outlined),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0C2344), Color(0xFF07101E)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: SageTheme.cyan.withValues(alpha: .2)),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Find work. Build your future.', style: TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.w800, color: SageTheme.textPrimary,
+                  )),
+                  SizedBox(height: 6),
+                  Text(
+                    'Search opportunities across Nepal or publish a role for your team. Salary ranges are displayed in NPR.',
+                    style: TextStyle(color: SageTheme.textSecondary, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Find jobs'),
+                  selected: _view == 'find',
+                  onSelected: (_) => _selectView('find'),
+                ),
+                ChoiceChip(
+                  label: const Text('My applications'),
+                  selected: _view == 'applications',
+                  onSelected: (_) => _selectView('applications'),
+                ),
+                ChoiceChip(
+                  label: const Text('My posts'),
+                  selected: _view == 'posts',
+                  onSelected: (_) => _selectView('posts'),
+                ),
+              ],
+            ),
+          ),
+          if (_view == 'find')
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _query,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _load(),
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      labelText: 'Role, company or skill',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _location,
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: (_) => _load(),
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.place_outlined),
+                            labelText: 'Location',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        tooltip: 'Search jobs',
+                        onPressed: _loading ? null : _load,
+                        icon: const Icon(Icons.search),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.cloud_off, size: 36, color: SageTheme.failure),
+                              const SizedBox(height: 12),
+                              Text(_error!, textAlign: TextAlign.center),
+                              const SizedBox(height: 12),
+                              FilledButton.tonalIcon(
+                                onPressed: _load,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : _items.isEmpty
+                        ? _emptyState()
+                        : RefreshIndicator(
+                            onRefresh: _load,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                              itemCount: _items.length,
+                              itemBuilder: (context, index) => _itemCard(_items[index]),
+                            ),
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    final message = switch (_view) {
+      'applications' => 'You have not applied to any jobs yet.',
+      'posts' => 'You have not posted any jobs yet. Use the plus button to publish your first opening.',
+      _ => 'No jobs matched this search. Try a different role or location, or check again later.',
+    };
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(34),
+      children: [
+        const Icon(Icons.work_outline, size: 42, color: SageTheme.cyan),
+        const SizedBox(height: 14),
+        Text(message, textAlign: TextAlign.center, style: const TextStyle(color: SageTheme.textSecondary)),
+      ],
+    );
+  }
+
+  Widget _itemCard(Map<String, dynamic> item) {
+    final isApplication = _view == 'applications';
+    final job = isApplication ? _map(item['job']) : item;
+    final title = job['title']?.toString() ?? 'Job opening';
+    final company = job['company_name']?.toString() ?? 'Employer';
+    final location = job['location']?.toString() ?? 'Nepal';
+    final type = (job['employment_type']?.toString() ?? 'full-time').replaceAll('-', ' ');
+    final isOwner = job['is_owner'] == true;
+    final status = item['status']?.toString();
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          if (_view == 'posts') {
+            _showApplicants(job);
+          } else if (_view == 'find') {
+            _showJob(job);
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: SageTheme.cyan.withValues(alpha: .1),
+                    ),
+                    child: const Icon(Icons.work_outline, color: SageTheme.cyan),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 3),
+                        Text(company, style: const TextStyle(color: SageTheme.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  if (isApplication && status != null)
+                    _statusChip(status)
+                  else if (_view == 'posts')
+                    _statusChip('${job['application_count'] ?? 0} applicants'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 6,
+                children: [
+                  _meta(Icons.place_outlined, location),
+                  _meta(Icons.schedule, type),
+                  _meta(Icons.payments_outlined, _salary(job)),
+                ],
+              ),
+              if (_view == 'posts') ...[
+                const SizedBox(height: 10),
+                const Text('Tap to review applicants', style: TextStyle(color: SageTheme.cyan, fontSize: 12)),
+              ] else if (_view == 'find' && isOwner) ...[
+                const SizedBox(height: 8),
+                const Text('Your job post', style: TextStyle(color: SageTheme.cyan, fontSize: 12)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _meta(IconData icon, String text) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: SageTheme.textSecondary),
+          const SizedBox(width: 4),
+          Text(text, style: const TextStyle(color: SageTheme.textSecondary, fontSize: 12)),
+        ],
+      );
+
+  Widget _statusChip(String status) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: SageTheme.violet.withValues(alpha: .12),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(status, style: const TextStyle(color: SageTheme.violet, fontSize: 10, fontWeight: FontWeight.w700)),
+      );
+
+  Future<void> _showJob(Map<String, dynamic> job) async {
+    final note = TextEditingController();
+    var busy = false;
+    String? errorMessage;
+    final applied = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(job['title']?.toString() ?? 'Job details'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(job['company_name']?.toString() ?? 'Employer', style: const TextStyle(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                Text('${job['location'] ?? 'Nepal'} • ${job['work_mode'] ?? 'on-site'}'),
+                const SizedBox(height: 10),
+                Text(_salary(job), style: const TextStyle(color: SageTheme.cyan)),
+                const SizedBox(height: 12),
+                Text(job['description']?.toString() ?? ''),
+                if ((job['skills'] as List? ?? const []).isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text('Skills: ${(job['skills'] as List).join(', ')}'),
+                ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: note,
+                  minLines: 2,
+                  maxLines: 5,
+                  decoration: const InputDecoration(labelText: 'Short note (optional)'),
+                  onChanged: (_) => setDialogState(() => errorMessage = null),
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(errorMessage!, style: const TextStyle(color: SageTheme.failure)),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: busy ? null : () => Navigator.pop(dialogContext, false),
+              child: const Text('Close'),
+            ),
+            FilledButton(
+              onPressed: busy || job['is_owner'] == true
+                  ? null
+                  : () async {
+                      setDialogState(() {
+                        busy = true;
+                        errorMessage = null;
+                      });
+                      try {
+                        await widget.api.applyToJob(
+                          job['id'].toString(),
+                          coverNote: note.text.trim().isEmpty ? null : note.text.trim(),
+                        );
+                        if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() {
+                            busy = false;
+                            errorMessage = 'Could not apply: $error';
+                          });
+                        }
+                      }
+                    },
+              child: busy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+    note.dispose();
+    if (applied == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Application submitted.')));
+      if (_view == 'applications') _load();
+    }
+  }
+
+  Future<void> _showApplicants(Map<String, dynamic> job) async {
+    List<Map<String, dynamic>> applicants;
+    try {
+      final values = await widget.api.jobApplications(job['id'].toString());
+      applicants = values.whereType<Map>().map((value) => Map<String, dynamic>.from(value)).toList();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not load applicants: $error')));
+      return;
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text('Applicants • ${job['title'] ?? 'Job'}'),
+          content: SizedBox(
+            width: 440,
+            child: applicants.isEmpty
+                ? const Text('No applications yet.')
+                : ListView(
+                    shrinkWrap: true,
+                    children: applicants.map((application) {
+                      final current = application['status']?.toString() ?? 'submitted';
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(application['applicant_name']?.toString() ?? 'SAGE User', style: const TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text(application['cover_note']?.toString() ?? 'No note supplied.'),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<String>(
+                                value: current,
+                                decoration: const InputDecoration(labelText: 'Application status'),
+                                items: const [
+                                  DropdownMenuItem(value: 'submitted', child: Text('Submitted')),
+                                  DropdownMenuItem(value: 'reviewing', child: Text('Reviewing')),
+                                  DropdownMenuItem(value: 'shortlisted', child: Text('Shortlisted')),
+                                  DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
+                                  DropdownMenuItem(value: 'accepted', child: Text('Accepted')),
+                                ],
+                                onChanged: (value) async {
+                                  if (value == null || value == current) return;
+                                  try {
+                                    await widget.api.updateJobApplicationStatus(
+                                      job['id'].toString(),
+                                      application['id'].toString(),
+                                      value,
+                                    );
+                                    final index = applicants.indexWhere((item) => item['id'] == application['id']);
+                                    if (index >= 0) {
+                                      applicants[index] = {...applicants[index], 'status': value};
+                                      setDialogState(() {});
+                                    }
+                                  } catch (error) {
+                                    if (dialogContext.mounted) {
+                                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                        SnackBar(content: Text('Could not update application: $error')),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createJob() async {
+    final title = TextEditingController();
+    final company = TextEditingController();
+    final description = TextEditingController();
+    final location = TextEditingController(text: 'Kathmandu, Nepal');
+    final salaryMin = TextEditingController();
+    final salaryMax = TextEditingController();
+    final skills = TextEditingController();
+    var employmentType = 'full-time';
+    var workMode = 'on-site';
+    var busy = false;
+    String? errorMessage;
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final canCreate = title.text.trim().length >= 3 &&
+              company.text.trim().isNotEmpty &&
+              description.text.trim().length >= 20 &&
+              location.text.trim().isNotEmpty &&
+              !busy;
+          return AlertDialog(
+            title: const Text('Post a job'),
+            content: SizedBox(
+              width: 480,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(controller: title, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Job title (required)')),
+                    TextField(controller: company, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Company / employer (required)')),
+                    TextField(controller: description, minLines: 3, maxLines: 6, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Description (at least 20 characters)')),
+                    TextField(controller: location, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Location')),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      value: employmentType,
+                      decoration: const InputDecoration(labelText: 'Employment type'),
+                      items: const [
+                        DropdownMenuItem(value: 'full-time', child: Text('Full-time')),
+                        DropdownMenuItem(value: 'part-time', child: Text('Part-time')),
+                        DropdownMenuItem(value: 'contract', child: Text('Contract')),
+                        DropdownMenuItem(value: 'internship', child: Text('Internship')),
+                        DropdownMenuItem(value: 'freelance', child: Text('Freelance')),
+                      ],
+                      onChanged: (value) => setDialogState(() => employmentType = value ?? 'full-time'),
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: workMode,
+                      decoration: const InputDecoration(labelText: 'Work mode'),
+                      items: const [
+                        DropdownMenuItem(value: 'on-site', child: Text('On-site')),
+                        DropdownMenuItem(value: 'hybrid', child: Text('Hybrid')),
+                        DropdownMenuItem(value: 'remote', child: Text('Remote')),
+                      ],
+                      onChanged: (value) => setDialogState(() => workMode = value ?? 'on-site'),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(child: TextField(controller: salaryMin, keyboardType: TextInputType.number, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Min salary (NPR)'))),
+                        const SizedBox(width: 8),
+                        Expanded(child: TextField(controller: salaryMax, keyboardType: TextInputType.number, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Max salary (NPR)'))),
+                      ],
+                    ),
+                    TextField(controller: skills, decoration: const InputDecoration(labelText: 'Skills (comma separated)')),
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(errorMessage!, style: const TextStyle(color: SageTheme.failure)),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: busy ? null : () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: canCreate
+                    ? () async {
+                        final low = int.tryParse(salaryMin.text.trim());
+                        final high = int.tryParse(salaryMax.text.trim());
+                        if ((salaryMin.text.trim().isNotEmpty && low == null) ||
+                            (salaryMax.text.trim().isNotEmpty && high == null) ||
+                            (low != null && low < 0) ||
+                            (high != null && high < 0) ||
+                            (low != null && high != null && high < low)) {
+                          setDialogState(() {
+                            errorMessage = 'Enter valid non-negative salaries; maximum must not be less than minimum.';
+                          });
+                          return;
+                        }
+                        setDialogState(() {
+                          busy = true;
+                          errorMessage = null;
+                        });
+                        try {
+                          await widget.api.createJob(
+                            title: title.text.trim(),
+                            companyName: company.text.trim(),
+                            description: description.text.trim(),
+                            location: location.text.trim(),
+                            employmentType: employmentType,
+                            workMode: workMode,
+                            salaryMin: low,
+                            salaryMax: high,
+                            skills: skills.text.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).take(20).toList(),
+                          );
+                          if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                        } catch (error) {
+                          if (dialogContext.mounted) {
+                            setDialogState(() {
+                              busy = false;
+                              errorMessage = 'Could not create job: $error';
+                            });
+                          }
+                        }
+                      }
+                    : null,
+                child: busy
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Publish job'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    title.dispose();
+    company.dispose();
+    description.dispose();
+    location.dispose();
+    salaryMin.dispose();
+    salaryMax.dispose();
+    skills.dispose();
+    if (created == true && mounted) {
+      setState(() => _view = 'posts');
+      await _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Job published.')));
+    }
+  }
+}
+
 class LearningScreen extends StatelessWidget { const LearningScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Learning',subtitle:'Personal learning paths, progress and AI mentorship.',icon:Icons.school_outlined,actions:['Continue learning','Browse paths','View progress']);}
 class CommunityScreen extends StatelessWidget { const CommunityScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Community',subtitle:'Private-first collaboration and future SAGE community spaces.',icon:Icons.groups_outlined,actions:['Open community','Create a post','View activity']);}
 class FileManagerScreen extends StatelessWidget { const FileManagerScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'File Manager',subtitle:'Organize SAGE artifacts, project files and exports.',icon:Icons.folder_copy_outlined,actions:['Browse files','Recent artifacts','Export workspace']);}
