@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/screens/final_surfaces.dart';
+import 'package:sage_one/theme/sage_theme.dart';
 
 class _FinalSurfaceClient extends http.BaseClient {
   int markAllReadRequests = 0;
@@ -182,6 +183,10 @@ SageApi _api() => SageApi(
 );
 
 void main() {
+  tearDown(() {
+    SageTheme.mode.value = ThemeMode.dark;
+  });
+
   testWidgets('final economy, profile, settings, notification and payment surfaces render', (tester) async {
     final screens = <Widget>[
       SparkWalletScreen(api: _api()),
@@ -357,17 +362,22 @@ void main() {
 
     await tester.tap(find.byType(SwitchListTile).at(1));
     await tester.pump();
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Light').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save settings'));
     await tester.pumpAndSettle();
 
     expect(client.profilePatchRequests, 1);
+    expect(SageTheme.mode.value, ThemeMode.light);
     final savedBasicInfo =
         client.lastProfilePatch?['basic_info'] as Map<String, dynamic>;
     final savedSettings =
         savedBasicInfo['settings'] as Map<String, dynamic>;
     expect(savedSettings['notifications'], isTrue);
     expect(savedSettings['compact_mode'], isTrue);
-    expect(savedSettings['theme_mode'], 'system');
+    expect(savedSettings['theme_mode'], 'light');
     expect(savedSettings['custom_setting'], 'preserve-me');
     expect(savedBasicInfo['saved_preference'], 'keep-this');
     expect(find.text('Settings saved.'), findsOneWidget);
