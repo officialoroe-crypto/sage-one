@@ -25,9 +25,10 @@ class _NavigationClient extends http.BaseClient {
 }
 
 class _MenuRouteCase {
-  const _MenuRouteCase(this.title, this.firstAction);
+  const _MenuRouteCase(this.title, this.firstAction, {this.placeholder = true});
   final String title;
   final String firstAction;
+  final bool placeholder;
 }
 
 void main() {
@@ -35,7 +36,7 @@ void main() {
     'More menu navigates to Jobs, Marketplace, Learning and Community',
     (tester) async {
       const routes = <_MenuRouteCase>[
-        _MenuRouteCase('Jobs', 'Find jobs'),
+        _MenuRouteCase('Jobs', 'Find work. Build your future.', placeholder: false),
         _MenuRouteCase('Marketplace', 'Browse marketplace'),
         _MenuRouteCase('Learning', 'Continue learning'),
         _MenuRouteCase('Community', 'Open community'),
@@ -63,6 +64,14 @@ void main() {
         await tester.tap(menuItem);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
+
+        if (!route.placeholder) {
+          expect(find.text('JOBS • NEPAL'), findsOneWidget);
+          expect(find.text(route.firstAction), findsOneWidget);
+          await tester.pumpWidget(const SizedBox.shrink());
+          api.dispose();
+          continue;
+        }
 
         expect(find.text('Integration status'), findsOneWidget);
         expect(
