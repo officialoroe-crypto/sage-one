@@ -9,6 +9,7 @@ import 'package:sage_one/screens/jobs_marketplace.dart';
 
 class _OpportunitiesClient extends http.BaseClient {
   final List<String> requests = <String>[];
+  final List<Uri> requestUris = <Uri>[];
 
   final Map<String, dynamic> job = {
     'id': 'job-1',
@@ -40,6 +41,7 @@ class _OpportunitiesClient extends http.BaseClient {
     final method = request.method;
     final path = request.url.path;
     requests.add('$method $path');
+    requestUris.add(request.url);
 
     dynamic body;
     var status = 200;
@@ -157,6 +159,29 @@ void main() {
     api.dispose();
   });
 
+  testWidgets('Jobs search forwards location filter to the backend', (tester) async {
+    final client = _OpportunitiesClient();
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
+    await tester.pumpWidget(MaterialApp(home: JobsScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byHintText('Search title, company or description'), 'Flutter');
+    await tester.enterText(find.byHintText('Filter by city, district or Remote'), 'Kathmandu');
+    await tester.tap(find.byTooltip('Search jobs'));
+    await tester.pumpAndSettle();
+
+    expect(
+      client.requestUris.any((uri) =>
+          uri.path == '/jobs' &&
+          uri.queryParameters['query'] == 'Flutter' &&
+          uri.queryParameters['location'] == 'Kathmandu'),
+      isTrue,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+
   testWidgets('Marketplace lets a buyer send a seller inquiry', (tester) async {
     final client = _OpportunitiesClient();
     final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
@@ -176,6 +201,33 @@ void main() {
 
     expect(client.requests, contains('POST /marketplace/listings/listing-1/inquiries'));
     expect(find.text('Your inquiry was sent to the seller.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('Marketplace filters by category and location', (tester) async {
+    final client = _OpportunitiesClient();
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
+    await tester.pumpWidget(MaterialApp(home: MarketplaceScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byHintText('Search items, services and courses'), 'Honda');
+    await tester.enterText(find.byHintText('City or district'), 'Lalitpur');
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Vehicles').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Search marketplace'));
+    await tester.pumpAndSettle();
+
+    expect(
+      client.requestUris.any((uri) =>
+          uri.path == '/marketplace/listings' &&
+          uri.queryParameters['query'] == 'Honda' &&
+          uri.queryParameters['category'] == 'vehicles' &&
+          uri.queryParameters['location'] == 'Lalitpur'),
+      isTrue,
+    );
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
   });
