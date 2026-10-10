@@ -12,7 +12,6 @@ class _JobsClient extends http.BaseClient {
   final List<Map<String, dynamic>> postedJobs = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> applications = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> applicationUpdates = <Map<String, dynamic>>[];
-  int _nextJob = 1;
 
   Map<String, dynamic> _publicJob() => <String, dynamic>{
         'id': 'job-1',
@@ -80,7 +79,6 @@ class _JobsClient extends http.BaseClient {
         jsonDecode((request as http.Request).body) as Map,
       );
       postedJobs.add(posted);
-      _nextJob++;
       payload = {'success': true, 'job': _createdJob(postedJobs.last)};
     } else if (request.method == 'POST' && path == '/jobs/job-1/applications') {
       final body = Map<String, dynamic>.from(
