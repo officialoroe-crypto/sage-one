@@ -80,3 +80,12 @@ Owner explicitly ordered that each assistant reply in the active workflow must b
 - Website: https://officialoroe-crypto.github.io/sage-one/
 - Still unverified: Pages deployment includes merged code; blank-phone onboarding returns 200; key pages/buttons work; Google sign-in works. Developer mode may route to Owner Mode.
 - Next actions: verify latest Pages deployment, hard-refresh website, test onboarding with phone blank, confirm backend returns 200; inspect Network response if 422. Then test primary navigation, profile/memory consent, relevant buttons/links, and Google login separately. Only then resume Android.
+
+## Current checkpoint — Public marketing website launch (2026-10-11)
+- Owner authorized creation and launch of the public SAGE ONE marketing website using a free deployment path, auditing the repository first and avoiding duplicate work.
+- Audit found the existing static landing page in `website/`; it was not necessary to create a second website. Existing Pages workflow previously deployed only the Flutter app at the root, which would conflict with the marketing page.
+- PR #217: https://github.com/officialoroe-crypto/sage-one/pull/217 (branch `feature/public-marketing-site-launch-20261011`).
+- Changes: SEO/Open Graph metadata, orbital favicon, public CTA to the app path, honest wording that some features are still in development, reduced-motion/accessibility fallback, combined artifact layout with marketing page at `/sage-one/` and Flutter app at `/sage-one/app/`, automatic main deployment on website/frontend changes, and PR validation separated from protected deployment.
+- CI status when checked: PR workflow run #185 initially failed with no job steps/logs available through the connector; likely environment/job initialization issue, not yet root-caused. Workflow was then refactored into separate build and deploy jobs in commit `e99bb5380ea36f70a1085c9a87221cf8359e0b4f`. No workflow run was yet visible for this latest commit at the last check.
+- Not verified: passing CI, merged PR, GitHub Pages configuration, successful deployment, live page rendering, or app deep link. Do not say the site is launched until verified.
+- Next: retrieve fresh PR checks for latest head, fix any actual CI failure, merge only after checks pass, then confirm deployment URL and test landing page plus `/app/` route. Do not resume Android until website verification is complete.
