@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from world_intelligence.engine import DEFAULT_TOPICS, world_intelligence
 from tasks.engine import tasks
 from permissions.engine import permissions
+from identity.auth import authenticate_request
 
 
 router = APIRouter(prefix="/world", tags=["world-intelligence"])
@@ -38,8 +39,13 @@ def world_due():
 
 
 @router.post("/refresh")
-def world_refresh(request: WorldRefreshRequest):
+def world_refresh(
+    request: WorldRefreshRequest,
+    claims: dict = Depends(authenticate_request),
+):
     """Queue a durable bounded world refresh instead of doing AI work in HTTP."""
+    if not claims.get("owner_mode", False):
+        raise HTTPException(status_code=403, detail="SAGE Owner Authority is required.")
     try:
         decision = permissions.check("world.learn", risk="low", owner_authorized=True)
         if not decision.allowed:
@@ -81,7 +87,12 @@ def world_refresh(request: WorldRefreshRequest):
 
 
 @router.post("/upgrade-proposals")
-def create_upgrade_proposal(request: UpgradeProposalRequest):
+def create_upgrade_proposal(
+    request: UpgradeProposalRequest,
+    claims: dict = Depends(authenticate_request),
+):
+    if not claims.get("owner_mode", False):
+        raise HTTPException(status_code=403, detail="SAGE Owner Authority is required.")
     try:
         return world_intelligence.propose_upgrade(
             title=request.title,
