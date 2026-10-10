@@ -13,7 +13,17 @@ class _FinalSurfaceClient extends http.BaseClient {
   int profilePatchRequests = 0;
   int profileGetRequests = 0;
   int markReadRequests = 0;
+  int economyGetRequests = 0;
+  int notificationGetRequests = 0;
+  int paymentStatusGetRequests = 0;
+  int tasksGetRequests = 0;
+  int workspaceGetRequests = 0;
   bool failProfileLoad = false;
+  bool failEconomyLoad = false;
+  bool failNotificationLoad = false;
+  bool failPaymentStatusLoad = false;
+  bool failTasksLoad = false;
+  bool failWorkspaceLoad = false;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
@@ -88,6 +98,24 @@ class _FinalSurfaceClient extends http.BaseClient {
       body = {'success': true, 'workspaces': []};
     }
 
+    if (request.method == 'GET') {
+      if (path == '/economy/me') {
+        economyGetRequests++;
+        if (failEconomyLoad) { status = 503; body = {'detail': 'economy unavailable'}; }
+      } else if (path == '/notifications') {
+        notificationGetRequests++;
+        if (failNotificationLoad) { status = 503; body = {'detail': 'notifications unavailable'}; }
+      } else if (path == '/economy/payment/status') {
+        paymentStatusGetRequests++;
+        if (failPaymentStatusLoad) { status = 503; body = {'detail': 'payment status unavailable'}; }
+      } else if (path == '/tasks') {
+        tasksGetRequests++;
+        if (failTasksLoad) { status = 503; body = {'detail': 'tasks unavailable'}; }
+      } else if (path == '/workflow/workspaces') {
+        workspaceGetRequests++;
+        if (failWorkspaceLoad) { status = 503; body = {'detail': 'workspaces unavailable'}; }
+      }
+    }
     final bytes = Uint8List.fromList(utf8.encode(jsonEncode(body)));
     return http.StreamedResponse(
       Stream.value(bytes),
@@ -96,6 +124,27 @@ class _FinalSurfaceClient extends http.BaseClient {
       request: request,
     );
   }
+}
+
+
+class _FinalSurfaceRetryCase {
+  const _FinalSurfaceRetryCase({
+    required this.label,
+    required this.errorPrefix,
+    required this.successText,
+    required this.build,
+    required this.fail,
+    required this.recover,
+    required this.requests,
+  });
+
+  final String label;
+  final String errorPrefix;
+  final String successText;
+  final Widget Function(SageApi api) build;
+  final void Function(_FinalSurfaceClient client) fail;
+  final void Function(_FinalSurfaceClient client) recover;
+  final int Function(_FinalSurfaceClient client) requests;
 }
 
 SageApi _api() => SageApi(
@@ -285,6 +334,95 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(client.markAllReadRequests, 1);
+  });
+
+
+  testWidgets('final surfaces recover and clear errors after a successful retry',
+      (tester) async {
+    final scenarios = <_FinalSurfaceRetryCase>[
+      _FinalSurfaceRetryCase(
+        label: 'wallet', errorPrefix: 'Wallet error:', successText: 'Balance',
+        build: (api) => SparkWalletScreen(api: api),
+        fail: (client) => client.failEconomyLoad = true,
+        recover: (client) => client.failEconomyLoad = false,
+        requests: (client) => client.economyGetRequests,
+      ),
+      _FinalSurfaceRetryCase(
+        label: 'transactions', errorPrefix: 'Transaction error:',
+        successText: 'Test grant',
+        build: (api) => TransactionsScreen(api: api),
+        fail: (client) => client.failEconomyLoad = true,
+        recover: (client) => client.failEconomyLoad = false,
+        requests: (client) => client.economyGetRequests,
+      ),
+      _FinalSurfaceRetryCase(
+        label: 'evolution', errorPrefix: 'Evolution error:', successText: 'Tier: Silver',
+        build: (api) => EvolutionFinalScreen(api: api),
+        fail: (client) => client.failEconomyLoad = true,
+        recover: (client) => client.failEconomyLoad = false,
+        requests: (client) => client.economyGetRequests,
+      ),
+      _FinalSurfaceRetryCase(
+        label: 'notifications', errorPrefix: 'Notification error:', successText: 'Task completed',
+        build: (api) => NotificationsFinalScreen(api: api),
+        fail: (client) => client.failNotificationLoad = true,
+        recover: (client) => client.failNotificationLoad = false,
+        requests: (client) => client.notificationGetRequests,
+      ),
+      _FinalSurfaceRetryCase(
+        label: 'payments', errorPrefix: 'Payment status error:', successText: 'Not configured',
+        build: (api) => PaymentFinalScreen(api: api),
+        fail: (client) => client.failPaymentStatusLoad = true,
+        recover: (client) => client.failPaymentStatusLoad = false,
+        requests: (client) => client.paymentStatusGetRequests,
+      ),
+      _FinalSurfaceRetryCase(
+        label: 'file manager', errorPrefix: 'File manager error:',
+        successText: 'No task artifacts found yet.',
+        build: (api) => FileManagerFinalScreen(api: api),
+        fail: (client) => client.failTasksLoad = true,
+        recover: (client) => client.failTasksLoad = false,
+        requests: (client) => client.tasksGetRequests,
+      ),
+      _FinalSurfaceRetryCase(
+        label: 'AI Studio', errorPrefix: 'AI Studio error:', successText: 'No workspaces yet.',
+        build: (api) => AiStudioFinalScreen(api: api),
+        fail: (client) => client.failWorkspaceLoad = true,
+        recover: (client) => client.failWorkspaceLoad = false,
+        requests: (client) => client.workspaceGetRequests,
+      ),
+    ];
+
+    for (final scenario in scenarios) {
+      final client = _FinalSurfaceClient();
+      scenario.fail(client);
+      final api = SageApi(
+        client: client,
+        baseUrl: 'http://test',
+        authToken: 'test-token',
+      );
+      await tester.pumpWidget(MaterialApp(home: scenario.build(api)));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining(scenario.errorPrefix), findsOneWidget,
+          reason: 'Initial load error should be shown');
+      expect(find.text('Retry'), findsOneWidget,
+          reason: 'A retry button should be visible');
+
+      scenario.recover(client);
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(scenario.requests(client), 2,
+          reason: 'Retry should issue another GET');
+      expect(find.textContaining(scenario.errorPrefix), findsNothing,
+          reason: 'Successful retry should clear the old error');
+      expect(find.textContaining(scenario.successText), findsOneWidget,
+          reason: 'Recovered content should be visible');
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      api.dispose();
+    }
   });
 
 }

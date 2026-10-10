@@ -8,11 +8,11 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 
 ## Latest baseline
 
-- Current main at audit start: `8fde9c3322711b075c210da7af77154cb591c35b`.
-- SAGE CI, Android Release, and Developer Website workflow runs for that main commit were successful.
+- Current main after the security and navigation merges: `876168e7d85c5e035e31c23523d2e18baa06a16a`.
+- PR #203 owner-authorization fix merged as `a085bac6600957019c5a0ef84ce4f0579ae51a5c`; SAGE CI and Android Release passed on its head.
+- PR #202 More-menu navigation and placeholder-action tests merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed on its head.
 - PR #192 is merged. It fixed memory dialog controller lifetime, stale-session recovery, project/sales dialog controller lifetime, profile loading lifecycle, and AI Studio workspace validation.
 - The route-contract test checks recognized Flutter API paths against FastAPI routes. It is a static contract check, not a live-server integration test.
-- Follow-up security fix under review: PR #203 requires owner claims before World Intelligence refresh and upgrade-proposal mutations. Its CI result is pending at the time of this update.
 
 ## Screen-to-backend map
 
@@ -54,9 +54,15 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 | KYC / Identity Verification | Buttons show explicit not-connected explanation | No provider-backed KYC workflow wired from this screen | Placeholder; provider/legal setup required |
 | First Run | Buttons show explicit not-connected explanation | No live setup workflow wired from this screen | Placeholder |
 
-## Confirmed security finding
+## High-priority frontend remediation (PR #201)
 
-The main FastAPI app boundary verifies an identity token for protected routes, but identity does not automatically mean owner authority. Before PR #203, World Intelligence mutation handlers passed `owner_authorized=True` to the permission engine without checking the caller's actual `owner_mode` claim. PR #203 adds the owner claim check to refresh and upgrade-proposal creation and adds regression tests. Do not call this fixed until PR CI passes and the change is merged.
+The branch adds retry/error-clearing UI for Spark Wallet, Transactions, Evolution, Notifications, Payments, File Manager, and AI Studio; form validation and retained input for project commands, workflow assets, and sales follow-ups; Chat session/history/command recovery with a five-consecutive-failure cap on automatic task-status polling; and exception handling when opening artifact URLs.
+
+On pre-sync branch head `0c219950dc07cb48e6119c91fa5e6f3699edde8b`, SAGE CI passed (218 Python tests, Flutter analysis, and 61 Flutter tests). Android Release passed analysis, tests, API URL validation, APK build, App Bundle build, and artifact upload (artifact `11662524316`). Because main advanced afterward, the branch must be synchronized and both workflows rerun before merge; these results are evidence for the pre-sync head only.
+
+## Confirmed security fix
+
+World Intelligence refresh and global upgrade-proposal creation now require the authenticated caller's `owner_mode` claim. PR #203 added these checks and regression tests asserting that non-owner claims receive HTTP 403; the owner refresh test is preserved. PR #203 is merged, and its SAGE CI and Android Release runs passed. This is an authorization boundary; it should not be weakened by bypassing the claims check inside the permission engine.
 
 ## Runtime and device connection requirements
 
@@ -79,10 +85,11 @@ The main FastAPI app boundary verifies an identity token for protected routes, b
 
 ## Next verification order
 
-1. Finish CI for PR #203 and merge only if required checks pass.
-2. Add/complete action-level tests for each live screen action: assert HTTP method/path, payload, success state, error state, loading state, and cancellation behavior.
-3. Keep placeholder actions explicitly labelled as not connected until their real backend/provider exists.
+1. Keep the high-priority recovery branch synchronized with current `main`; run both SAGE CI and Android Release on the synchronized head before merge.
+2. Add action-level tests for live screen actions: assert HTTP method/path, payload, success state, error state, loading state, and cancellation behavior.
+3. Keep placeholder integrations explicitly labelled as not connected until their real backend/provider exists.
 4. Re-run the screen-to-route contract test and compare every API method against its FastAPI route and response shape.
-5. Build the APK from the exact merged `main` commit using the intended Huawei ADB reverse configuration.
-6. Install that exact artifact on the Huawei phone and verify login, chat/task execution, memory, notifications, project actions, and voice on-device.
+5. Build the APK from the exact merged `main` commit, record the artifact ID, and install that exact APK on the Huawei phone using the intended API routing (`adb reverse tcp:8010 tcp:8010` for the local-host configuration).
+6. On-device, verify sign-in, API connectivity, chat/task execution, memory, notifications, project actions, and microphone/STT/TTS.
 7. Only after these checks pass, claim the private demo is end-to-end ready.
+

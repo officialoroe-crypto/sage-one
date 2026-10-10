@@ -74,6 +74,49 @@ class _DeferredCommandClient extends http.BaseClient {
   }
 }
 
+class _RecoverableChatClient extends http.BaseClient {
+  int sessionRequests = 0;
+  int historyRequests = 0;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    dynamic payload;
+    var status = 200;
+    if (request.method == 'POST' && request.url.path == '/session') {
+      sessionRequests++;
+      if (sessionRequests == 1) {
+        status = 503;
+        payload = {'detail': 'session temporarily unavailable'};
+      } else {
+        payload = {'success': true, 'session': {'id': 'session-recovered'}};
+      }
+    } else if (request.method == 'GET' &&
+        request.url.path == '/session/session-recovered/messages') {
+      historyRequests++;
+      if (historyRequests == 1) {
+        status = 503;
+        payload = {'detail': 'history temporarily unavailable'};
+      } else {
+        payload = {
+          'success': true,
+          'messages': [
+            {'role': 'assistant', 'content': 'Recovered chat history'},
+          ],
+        };
+      }
+    } else {
+      status = 404;
+      payload = {'detail': 'not found'};
+    }
+    return http.StreamedResponse(
+      Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(payload)))),
+      status,
+      headers: {'content-type': 'application/json'},
+      request: request,
+    );
+  }
+}
+
 void main() {
   testWidgets('Chat reports a missing task ID instead of remaining stuck', (tester) async {
     final api = SageApi(
@@ -90,6 +133,38 @@ void main() {
 
     expect(find.text('Could not queue command'), findsOneWidget);
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Check SAGE status');
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('Chat offers retry for session startup and history failures', (tester) async {
+    final client = _RecoverableChatClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Could not start chat.'), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(client.sessionRequests, 2);
+    expect(find.textContaining('Could not start chat.'), findsNothing);
+
+    await tester.tap(find.byTooltip('Refresh chat history'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Chat history could not load.'), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(client.historyRequests, 2);
+    expect(find.text('Recovered chat history'), findsOneWidget);
+    expect(find.textContaining('Chat history could not load.'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
   
   testWidgets('Chat does not poll a task when a command returns after disposal',
