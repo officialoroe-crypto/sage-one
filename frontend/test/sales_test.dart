@@ -58,6 +58,7 @@ void main() {
     final saveButton = find.widgetWithText(FilledButton, 'Save');
     expect(tester.widget<FilledButton>(saveButton).onPressed, isNull);
     await tester.enterText(find.byType(TextField), 'Called the business; follow up tomorrow.');
+    await tester.pump();
     expect(tester.widget<FilledButton>(saveButton).onPressed, isNotNull);
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
