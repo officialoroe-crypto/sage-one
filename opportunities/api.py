@@ -49,7 +49,7 @@ def _profile_identity(claims: dict[str, Any]) -> tuple[str, str]:
     profile_id = str(profile.get("id") or "").strip()
     if not profile_id:
         raise HTTPException(status_code=401, detail="Authenticated profile could not be loaded.")
-    display_name = str(profile.get("name") or claims.get("name") or claims.get("email") or "SAGE user").strip()
+    display_name = str(profile.get("name") or claims.get("name") or "SAGE user").strip()
     return profile_id, display_name or "SAGE user"
 
 
