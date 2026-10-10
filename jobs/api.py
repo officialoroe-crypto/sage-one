@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from database.connection import SessionLocal
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from jobs import repository
+from jobs.models import JobApplication
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -100,8 +101,8 @@ def list_jobs(
                 item,
                 viewer_owner_key=owner_key,
                 application_count=(
-                    db.query(repository.JobApplication)
-                    .filter(repository.JobApplication.job_id == item.id)
+                    db.query(JobApplication)
+                    .filter(JobApplication.job_id == item.id)
                     .count()
                     if item.owner_key == owner_key
                     else None
@@ -166,7 +167,7 @@ def get_job(job_id: str, claims: dict[str, Any] = Depends(authenticate_request))
         if job is None or (job.status != "published" and job.owner_key != owner_key):
             raise HTTPException(status_code=404, detail="Job not found.")
         application_count = (
-            db.query(repository.JobApplication).filter(repository.JobApplication.job_id == job.id).count()
+            db.query(JobApplication).filter(JobApplication.job_id == job.id).count()
             if job.owner_key == owner_key
             else None
         )
