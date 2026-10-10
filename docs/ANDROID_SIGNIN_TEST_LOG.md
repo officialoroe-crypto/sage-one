@@ -78,3 +78,29 @@ The Flutter project has no `frontend/android/` directory in this checkout. The f
 Inspect the commit/PR and workflow associated with `origin/fix/flutter-web-apk-builds` (commit `461cb29`) to learn how the repo previously handled generated Android files. Then reproduce the intended approach in an explicit feature branch based on the Google sign-in fix, preserving `identity_client.dart` and using the local API URL `http://127.0.0.1:8000`.
 
 Validation status remains: analyzer PASS, 56 tests PASS, APK build FAIL due to absent Android scaffold, physical-device Google sign-in NOT TESTED.
+
+
+## Existing repository precedent inspected — 2026-10-10
+
+Inspected commit `461cb29917799ce0230493ac5ea7bdedc8342f25` on remote branch `fix/flutter-web-apk-builds`. Its exact prior fix in `.github/workflows/sage-one-android-apk.yml` was to generate Android platform files before dependency resolution:
+
+```sh
+flutter create --platforms=android --org com.sageone --project-name sage_one --no-pub .
+```
+
+This confirms the intended Android package namespace is `com.sageone` and project name is `sage_one`. The old fix was a workflow-only change; do not cherry-pick the whole branch because comparison shows it diverges substantially from the current Google sign-in branch (175 commits behind, 2 commits ahead).
+
+### Recommended local recovery
+
+From `C:\\SageOne\\sage_core-android-signin-test\\frontend`, first create an explicit local feature branch based on current detached HEAD, then generate only the Android platform scaffold using the exact established command above via the direct Flutter tool snapshot. This is in the isolated test worktree; do not run it in `C:\\SageOne\\sage_core`.
+
+Direct tool invocation format:
+
+```bat
+cd /d C:\\SageOne\\sage_core-android-signin-test
+git switch -c fix/android-scaffold-signin-test
+cd frontend
+C:\\flutter\\bin\\cache\\dart-sdk\\bin\\dart.exe --packages=C:\\flutter\\packages\\flutter_tools\\.dart_tool\\package_config.json C:\\flutter\\bin\\cache\\flutter_tools.snapshot create --platforms=android --org com.sageone --project-name sage_one --no-pub .
+```
+
+After creation, inspect `git status --short`, confirm `android\\app\\build.gradle` exists, and inspect the generated Android application ID/manifest before building. Then run `pub get`, `analyze`, `test`, and the debug APK build with `--dart-define=SAGE_API_URL=http://127.0.0.1:8000`. Review the generated diff before committing; generated files are expected to be newly added. Never copy or cherry-pick the entire divergent old branch.
