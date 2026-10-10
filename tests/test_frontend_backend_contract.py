@@ -15,6 +15,7 @@ ROUTE_FILES = [
     ROOT / "workflows" / "api.py",
     ROOT / "world_intelligence" / "api.py",
     ROOT / "missions" / "api.py",
+    ROOT / "jobs" / "api.py",
 ]
 
 
@@ -52,6 +53,7 @@ def _client_endpoints() -> set[tuple[str, str]]:
         {
             ("GET", "/notifications"),
             ("GET", "/world/knowledge"),
+            ("GET", "/jobs"),
             ("POST", "/tools/execute"),
             ("GET", "/identity/config"),
             ("POST", "/identity/dev-login"),
