@@ -186,6 +186,10 @@ void main() {
     await tester.tap(find.byTooltip('Add asset'));
     await tester.pumpAndSettle();
     expect(find.text('Add workflow asset'), findsOneWidget);
+    final createButton = find.widgetWithText(FilledButton, 'Create');
+    expect(tester.widget<FilledButton>(createButton).onPressed, isNull);
+    await tester.enterText(find.byType(TextField), 'Storyboard thumbnail');
+    expect(tester.widget<FilledButton>(createButton).onPressed, isNotNull);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
@@ -193,6 +197,10 @@ void main() {
     await tester.tap(find.byTooltip('Run SAGE command'));
     await tester.pumpAndSettle();
     expect(find.text('Run SAGE in this project'), findsOneWidget);
+    final queueButton = find.widgetWithText(FilledButton, 'Queue');
+    expect(tester.widget<FilledButton>(queueButton).onPressed, isNull);
+    await tester.enterText(find.byType(TextField), 'Summarize this project');
+    expect(tester.widget<FilledButton>(queueButton).onPressed, isNotNull);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
