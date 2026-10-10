@@ -83,7 +83,12 @@ class _FinalSurfaceClient extends http.BaseClient {
             'help_intent': 'Build SAGE',
             'basic_info': {
               'saved_preference': 'keep-this',
-              'settings': {'notifications': true, 'compact_mode': false}
+              'settings': {
+                'notifications': true,
+                'compact_mode': false,
+                'theme_mode': 'system',
+                'custom_setting': 'preserve-me',
+              }
             }
           }
         };
@@ -356,6 +361,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(client.profilePatchRequests, 1);
+    final savedBasicInfo =
+        client.lastProfilePatch?['basic_info'] as Map<String, dynamic>;
+    final savedSettings =
+        savedBasicInfo['settings'] as Map<String, dynamic>;
+    expect(savedSettings['notifications'], isTrue);
+    expect(savedSettings['compact_mode'], isTrue);
+    expect(savedSettings['theme_mode'], 'system');
+    expect(savedSettings['custom_setting'], 'preserve-me');
+    expect(savedBasicInfo['saved_preference'], 'keep-this');
     expect(find.text('Settings saved.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
