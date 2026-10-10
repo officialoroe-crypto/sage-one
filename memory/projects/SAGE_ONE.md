@@ -167,3 +167,10 @@ PR #220 adds a public deployment guard requiring HTTPS SAGE_API_URL and passes i
 - Inspected `database/connection.py` on main: `SAGE_DATABASE_URL` environment variable overrides fallback `sqlite:///./sage_one.db`; a malformed or empty-but-present value causes this exact error.
 - Immediate smoke-test fix: Render service Environment → remove `SAGE_DATABASE_URL` entirely if no DB is configured, allowing SQLite fallback temporarily; or set it to the real PostgreSQL URL copied from the Render DB Connect page. Save and redeploy. Never put DB credentials in chat or public repo.
 - SQLite on Render Free is ephemeral and unsuitable for real user data. Configure durable storage before production use. After redeploy, retest `/health` and `/identity/config`; only then configure Actions variable `SAGE_API_URL` and run Pages workflow.
+
+
+## Render troubleshooting and Pages workflow navigation — 2026-10-11
+- Render startup crash: SQLAlchemy cannot parse URL in `database/connection.py`. Verified source reads `SAGE_DATABASE_URL` with SQLite fallback; invalid/empty variable overrides fallback. Remove it only if no database exists for temporary smoke testing, or correct it using the real DB connection URL. Never send credentials in chat. SQLite on Render Free is ephemeral, not for real user data.
+- User says repository Actions variable `SAGE_API_URL` has been added, but they cannot find the workflow. Workflow name is `SAGE ONE Public Website and Web App`, filename `.github/workflows/sage-one-god-mode-pages.yml`, direct UI URL https://github.com/officialoroe-crypto/sage-one/actions/workflows/sage-one-god-mode-pages.yml.
+- Do not run Pages workflow until backend startup is stable and `/health` + `/identity/config` have been rechecked after redeploy, and `SAGE_API_URL` is the actual HTTPS base URL. Workflow intentionally fails when the variable is missing or non-HTTPS.
+- Identity endpoint currently reported `developer_mode:false` and `owner_mode_available:false`; Google client ID field appeared blank/omitted. OAuth/owner login not verified; troubleshoot after service remains healthy.
