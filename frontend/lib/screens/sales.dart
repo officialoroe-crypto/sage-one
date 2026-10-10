@@ -87,18 +87,71 @@ class _SalesLeadScreenState extends State<SalesLeadScreen> {
   }
   Future<void> addFollowUp() async {
     _followUpController.clear();
-    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
-      title: const Text('Record follow-up'),
-      content: TextField(controller: _followUpController, maxLines: 4, autofocus: true, decoration: const InputDecoration(labelText: 'What happened / next step')),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
-        FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Save')),
-      ],
-    ));
-    if (ok == true && _followUpController.text.trim().isNotEmpty) {
-      try { await widget.api.addSalesFollowUp(lead['id'].toString(), _followUpController.text.trim()); await load(); }
-      catch (e) { _message('Follow-up failed: $e'); }
-    }
+    var submitting = false;
+    String? errorMessage;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Record follow-up'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _followUpController,
+                maxLines: 4,
+                autofocus: true,
+                onChanged: (_) => setDialogState(() => errorMessage = null),
+                decoration: const InputDecoration(
+                  labelText: 'What happened / next step',
+                ),
+              ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(errorMessage!, style: const TextStyle(color: SageTheme.failure)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: submitting ? null : () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: _followUpController.text.trim().isEmpty || submitting
+                  ? null
+                  : () async {
+                      final note = _followUpController.text.trim();
+                      setDialogState(() {
+                        submitting = true;
+                        errorMessage = null;
+                      });
+                      try {
+                        await widget.api.addSalesFollowUp(lead['id'].toString(), note);
+                        if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() {
+                            submitting = false;
+                            errorMessage = 'Follow-up failed: $error';
+                          });
+                        }
+                      }
+                    },
+              child: submitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok == true && mounted) await load();
   }
   void _message(String value) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value))); }
   @override void initState() { super.initState(); lead = Map<String, dynamic>.from(widget.lead); load(); }
