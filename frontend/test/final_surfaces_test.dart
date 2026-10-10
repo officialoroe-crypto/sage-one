@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
@@ -354,6 +355,19 @@ void main() {
 
 
   testWidgets('File Manager catches artifact-launcher exceptions', (tester) async {
+    const launcherChannel = MethodChannel('plugins.flutter.io/url_launcher');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(launcherChannel, (call) async {
+      throw PlatformException(
+        code: 'launcher-unavailable',
+        message: 'No browser configured for this test.',
+      );
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(launcherChannel, null);
+    });
+
     final client = _FinalSurfaceClient()..includeArtifact = true;
     final api = SageApi(
       client: client,
