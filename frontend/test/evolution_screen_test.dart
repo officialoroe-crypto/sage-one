@@ -96,11 +96,17 @@ void main() {
     expect(find.text('250 XP'), findsOneWidget);
     expect(find.text('750 XP to Gold'), findsOneWidget);
     expect(find.text('Next milestone: Gold at 1000 XP'), findsOneWidget);
-    expect(find.text('1  Bronze'), findsOneWidget);
-    expect(find.textContaining('Silver'), findsOneWidget);
-    expect(find.text('3  Gold'), findsOneWidget);
+    await tester.scrollUntilVisible(find.textContaining('Bronze'), 250);
+    expect(find.textContaining('Bronze'), findsOneWidget);
     expect(find.text('UNLOCKED'), findsOneWidget);
-    expect(find.text('LOCKED'), findsNWidgets(2));
+
+    await tester.scrollUntilVisible(find.textContaining('Silver'), 250);
+    expect(find.textContaining('Silver'), findsOneWidget);
+    expect(find.text('CURRENT'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.textContaining('Gold'), 250);
+    expect(find.textContaining('Gold'), findsWidgets);
+    expect(find.text('LOCKED'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
