@@ -106,7 +106,7 @@ void main() {
 
     await tester.scrollUntilVisible(find.textContaining('Gold'), 250);
     expect(find.textContaining('Gold'), findsWidgets);
-    expect(find.text('LOCKED'), findsOneWidget);
+    expect(find.text('LOCKED'), findsNWidgets(2));
 
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
