@@ -55,8 +55,13 @@ void main() {
     await tester.tap(find.text('Record follow-up'));
     await tester.pumpAndSettle();
     expect(find.text('What happened / next step'), findsOneWidget);
-    await tester.tap(find.text('Cancel'));
+    final saveButton = find.widgetWithText(FilledButton, 'Save');
+    expect(tester.widget<FilledButton>(saveButton).onPressed, isNull);
+    await tester.enterText(find.byType(TextField), 'Called the business; follow up tomorrow.');
+    expect(tester.widget<FilledButton>(saveButton).onPressed, isNotNull);
+    await tester.tap(saveButton);
     await tester.pumpAndSettle();
+    expect(client.requestPaths, contains('/sales/leads/lead-1/follow-up'));
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.text('Approve outreach'));
