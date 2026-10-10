@@ -84,8 +84,15 @@ Owner explicitly ordered that each assistant reply in the active workflow must b
 ## Current checkpoint — Public marketing website launch (2026-10-11)
 - Owner authorized creation and launch of the public SAGE ONE marketing website using a free deployment path, auditing the repository first and avoiding duplicate work.
 - Audit found the existing static landing page in `website/`; it was not necessary to create a second website. Existing Pages workflow previously deployed only the Flutter app at the root, which would conflict with the marketing page.
-- PR #217: https://github.com/officialoroe-crypto/sage-one/pull/217 (branch `feature/public-marketing-site-launch-20261011`).
+- PR #218: https://github.com/officialoroe-crypto/sage-one/pull/218 (branch `feature/public-marketing-site-launch-20261011-v2`).
 - Changes: SEO/Open Graph metadata, orbital favicon, public CTA to the app path, honest wording that some features are still in development, reduced-motion/accessibility fallback, combined artifact layout with marketing page at `/sage-one/` and Flutter app at `/sage-one/app/`, automatic main deployment on website/frontend changes, and PR validation separated from protected deployment.
 - CI status when checked: PR workflow run #185 initially failed with no job steps/logs available through the connector; likely environment/job initialization issue, not yet root-caused. Workflow was then refactored into separate build and deploy jobs in commit `e99bb5380ea36f70a1085c9a87221cf8359e0b4f`. No workflow run was yet visible for this latest commit at the last check.
 - Not verified: passing CI, merged PR, GitHub Pages configuration, successful deployment, live page rendering, or app deep link. Do not say the site is launched until verified.
 - Next: retrieve fresh PR checks for latest head, fix any actual CI failure, merge only after checks pass, then confirm deployment URL and test landing page plus `/app/` route. Do not resume Android until website verification is complete.
+
+## Latest website launch status — 2026-10-11
+- The first website launch PR #217 was closed because its branch fell behind main while the required continuity checkpoint was saved. No work was discarded; changes were reapplied on a fresh branch based on current main.
+- Active PR #218: https://github.com/officialoroe-crypto/sage-one/pull/218, branch `feature/public-marketing-site-launch-20261011-v2`.
+- Current Actions: website workflow run #187 is building; SAGE CI run #1791 has Python passing while Flutter tests are running; Android Release run #338 is running. Latest website job was still at Flutter SDK setup when last checked.
+- A prior PR workflow attempt failed before steps/logs were available; the workflow was refactored to separate build validation from protected deployment. Latest run has started normally but has not yet completed.
+- Deployment remains unverified. Do not merge until required checks pass; then verify GitHub Pages deployment and the `/sage-one/` marketing page plus `/sage-one/app/` link.
