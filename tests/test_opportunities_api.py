@@ -136,7 +136,7 @@ def test_job_listing_application_lifecycle_is_identity_scoped(opportunity_client
 
 
 def test_job_validation_and_duplicate_protection(opportunity_client):
-    client, _ = opportunity_client
+    client, identity = opportunity_client
     invalid_salary = client.post(
         "/jobs",
         json={
@@ -171,13 +171,9 @@ def test_job_validation_and_duplicate_protection(opportunity_client):
         },
     )
     assert created.status_code == 201
-    other_user = client.get(
-        f"/jobs/{created.json()['job']['id']}/applications",
-        headers={"x-test-identity": "other"},
-    )
-    # Route ownership is always derived from verified identity claims, not a client header.
-    assert other_user.status_code == 200
-    assert other_user.json()["applications"] == []
+    identity.update(auth_subject="other-employer", name="Other Employer")
+    other_user = client.get(f"/jobs/{created.json()['job']['id']}/applications")
+    assert other_user.status_code == 404
 
 
 def test_marketplace_listing_and_inquiry_lifecycle_is_identity_scoped(opportunity_client):
@@ -228,7 +224,7 @@ def test_marketplace_listing_and_inquiry_lifecycle_is_identity_scoped(opportunit
     assert buyer_items[0]["listing"]["title"] == "Used Honda scooter"
 
     identity.update(
-        auth_subject="test",
+        auth_subject="employer",
         name="Kathmandu Employer",
         email="employer@example.test",
     )
