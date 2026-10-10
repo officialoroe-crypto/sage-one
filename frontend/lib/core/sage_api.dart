@@ -299,6 +299,128 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<List<dynamic>> jobPostings({
+    String? query,
+    String? location,
+    String status = 'open',
+    int limit = 50,
+  }) async {
+    final parameters = <String, String>{
+      'status': status,
+      'limit': limit.toString(),
+    };
+    if (query != null && query.trim().isNotEmpty) parameters['query'] = query.trim();
+    if (location != null && location.trim().isNotEmpty) parameters['location'] = location.trim();
+    final uri = Uri.parse('$baseUrl/jobs').replace(queryParameters: parameters);
+    final data = await _authorizedGetUri(uri);
+    final items = data['jobs'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createJobPosting({
+    required String title,
+    required String company,
+    required String description,
+    required String location,
+    String employmentType = 'full_time',
+    double? salaryMinNpr,
+    double? salaryMaxNpr,
+  }) async =>
+      _authorizedPost('/jobs', {
+        'title': title,
+        'company': company,
+        'description': description,
+        'location': location,
+        'employment_type': employmentType,
+        'salary_min_npr': salaryMinNpr,
+        'salary_max_npr': salaryMaxNpr,
+      });
+
+  Future<List<dynamic>> myJobPostings() async {
+    final data = await _authorizedGet('/jobs/mine');
+    final items = data['jobs'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> applyForJob(
+    String jobId, {
+    String coverNote = '',
+  }) async =>
+      _authorizedPost('/jobs/$jobId/applications', {'cover_note': coverNote});
+
+  Future<List<dynamic>> myJobApplications() async {
+    final data = await _authorizedGet('/jobs/applications/mine');
+    final items = data['applications'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> jobApplications(String jobId) async =>
+      _authorizedGet('/jobs/$jobId/applications');
+
+  Future<Map<String, dynamic>> closeJobPosting(String jobId) async =>
+      _authorizedPost('/jobs/$jobId/close', <String, dynamic>{});
+
+  Future<List<dynamic>> marketplaceListings({
+    String? query,
+    String? category,
+    String? location,
+    String status = 'active',
+    int limit = 50,
+  }) async {
+    final parameters = <String, String>{
+      'status': status,
+      'limit': limit.toString(),
+    };
+    if (query != null && query.trim().isNotEmpty) parameters['query'] = query.trim();
+    if (category != null && category.trim().isNotEmpty) parameters['category'] = category.trim();
+    if (location != null && location.trim().isNotEmpty) parameters['location'] = location.trim();
+    final uri = Uri.parse('$baseUrl/marketplace/listings').replace(queryParameters: parameters);
+    final data = await _authorizedGetUri(uri);
+    final items = data['listings'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> createMarketplaceListing({
+    required String title,
+    required String category,
+    required String description,
+    required String location,
+    required double priceNpr,
+    String itemCondition = 'used',
+  }) async =>
+      _authorizedPost('/marketplace/listings', {
+        'title': title,
+        'category': category,
+        'description': description,
+        'location': location,
+        'price_npr': priceNpr,
+        'item_condition': itemCondition,
+      });
+
+  Future<List<dynamic>> myMarketplaceListings() async {
+    final data = await _authorizedGet('/marketplace/listings/mine');
+    final items = data['listings'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> inquireMarketplaceListing(
+    String listingId, {
+    required String message,
+  }) async =>
+      _authorizedPost('/marketplace/listings/$listingId/inquiries', {'message': message});
+
+  Future<List<dynamic>> myMarketplaceInquiries() async {
+    final data = await _authorizedGet('/marketplace/inquiries/mine');
+    final items = data['inquiries'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> marketplaceListingInquiries(String listingId) async =>
+      _authorizedGet('/marketplace/listings/$listingId/inquiries');
+
+  Future<Map<String, dynamic>> closeMarketplaceListing(String listingId) async =>
+      _authorizedPost('/marketplace/listings/$listingId/close', <String, dynamic>{});
+
   Future<Map<String, dynamic>> developerPreview(String task, {String? workspace}) async =>
       _authorizedPost('/developer/preview', {
         'task': task,
