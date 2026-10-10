@@ -68,3 +68,13 @@ Owner explicitly ordered that after every assistant reply, relevant conversation
 - Current Actions: website workflow run #187 was cancelled because its shared concurrency group conflicted with another workflow. The workflow now uses an isolated `sage-one-public-pages` group; latest website workflow run #190 is queued. SAGE CI run #1797 is queued and Android Release run #341 is pending. No latest run has completed yet.
 - A prior PR workflow attempt failed before steps/logs were available; the workflow was refactored to separate build validation from protected deployment. Latest run #190 is queued after isolating Pages concurrency; no successful build or deployment result is available yet.
 - Deployment remains unverified. Do not merge until required checks pass; then verify GitHub Pages deployment and the `/sage-one/` marketing page plus `/sage-one/app/` link.
+
+
+## Latest website launch checkpoint — 2026-10-10
+- Owner reaffirmed that making the SAGE ONE web application live is the top priority; laptop is lagging with Opera/ChatGPT consuming substantial CPU. Avoid local Flutter/Gradle builds and use GitHub Actions; suggested checking Opera's task manager (Shift+Esc where supported), closing unnecessary tabs/extensions, and Windows Task Manager sorted by CPU.
+- PR #218 merged successfully into `main` using squash merge: https://github.com/officialoroe-crypto/sage-one/pull/218. Merge commit: `3d951d2c7ffb3ed1d1ec70edb64c09d29432f4b4`.
+- Verified PR-head SAGE CI run #1801 succeeded: https://github.com/officialoroe-crypto/sage-one/actions/runs/38058424862.
+- Verified PR-head public website workflow run #192 succeeded: https://github.com/officialoroe-crypto/sage-one/actions/runs/38058424871. Flutter pub get, analyze, tests, web build under `/sage-one/app/`, and combined site packaging all passed. Upload/deploy steps were correctly skipped on pull_request.
+- Not yet verified: post-merge GitHub Pages deployment run, actual public page rendering, app deep link, or browser onboarding/auth flows. Attempts to access the live URLs via the available web fetch were blocked/unavailable, which is not proof the URLs are down.
+- Intended URLs remain https://officialoroe-crypto.github.io/sage-one/ (marketing site) and https://officialoroe-crypto.github.io/sage-one/app/ (web app). Do not call launch complete until a main-branch Pages deployment succeeds and the owner/browser confirms both URLs.
+- Next: inspect GitHub Actions deployment on main / Pages settings; then verify both URLs. Only after website verification resume onboarding/button checks and later Android Google sign-in. Do not use local heavy builds while CPU is high.
