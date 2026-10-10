@@ -93,6 +93,6 @@ Owner explicitly ordered that each assistant reply in the active workflow must b
 ## Latest website launch status — 2026-10-11
 - The first website launch PR #217 was closed because its branch fell behind main while the required continuity checkpoint was saved. No work was discarded; changes were reapplied on a fresh branch based on current main.
 - Active PR #218: https://github.com/officialoroe-crypto/sage-one/pull/218, branch `feature/public-marketing-site-launch-20261011-v2`.
-- Current Actions: website workflow run #187 is building; SAGE CI run #1791 has Python passing while Flutter tests are running; Android Release run #338 is running. Latest website job was still at Flutter SDK setup when last checked.
-- A prior PR workflow attempt failed before steps/logs were available; the workflow was refactored to separate build validation from protected deployment. Latest run has started normally but has not yet completed.
+- Current Actions: website workflow run #187 was cancelled because its shared concurrency group conflicted with another workflow. The workflow now uses an isolated `sage-one-public-pages` group; latest website workflow run #190 is queued. SAGE CI run #1797 is queued and Android Release run #341 is pending. No latest run has completed yet.
+- A prior PR workflow attempt failed before steps/logs were available; the workflow was refactored to separate build validation from protected deployment. Latest run #190 is queued after isolating Pages concurrency; no successful build or deployment result is available yet.
 - Deployment remains unverified. Do not merge until required checks pass; then verify GitHub Pages deployment and the `/sage-one/` marketing page plus `/sage-one/app/` link.
