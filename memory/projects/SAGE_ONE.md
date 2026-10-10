@@ -64,3 +64,19 @@ It should not blindly load the entire conversation archive into every request.
 
 ### Current next action
 The user said they will provide code so development can continue. Review the code they provide, identify the relevant SAGE ONE area, and proceed from this checkpoint without repeating completed checks.
+
+
+## Mandatory assistant continuity checkpoint
+Owner explicitly ordered that each assistant reply in the active workflow must be followed by a saved continuity update without another reminder. Follow memory/RULES.md. After each response, update this project checkpoint and memory/CURRENT_CONTEXT.md as appropriate, including current goal/constraints, work done and PR/commit/workflow links, verified versus assumed status, symptom/root cause/fix, failed or unverified checks, and next action with acceptance criteria. Never claim persistence if the write did not succeed. Keep public memory free of raw private transcripts, secrets, tokens, and sensitive owner data; if memory tools are unavailable, disclose the limitation and provide a portable checkpoint.
+
+## Current checkpoint — Website onboarding first (2026-10-11)
+- User chose to pause mobile app testing and finish website verification first.
+- Backend logs supplied by owner: GET /identity/config 200; POST /identity/dev-login 200; POST /identity/onboarding 422 twice.
+- Screenshot showed Memory Setup with a validation error requiring phone to have at least five characters. Exact request body was not captured.
+- Cause found in shared frontend/lib/core/identity_client.dart: a blank phone string could be included in the onboarding JSON.
+- PR #214 fixed this by omitting null/blank phone and trimming nonblank values; merged to main at dcd9de554a80dbcff18785228145ed414b77f8f6. https://github.com/officialoroe-crypto/sage-one/pull/214
+- Pre-merge CI run #38055455236 passed Flutter analysis/tests and Android artifact build. This is not browser verification.
+- Android workflow run #38056491244 was seen in progress after merge; do not resume mobile until website checks pass.
+- Website: https://officialoroe-crypto.github.io/sage-one/
+- Still unverified: Pages deployment includes merged code; blank-phone onboarding returns 200; key pages/buttons work; Google sign-in works. Developer mode may route to Owner Mode.
+- Next actions: verify latest Pages deployment, hard-refresh website, test onboarding with phone blank, confirm backend returns 200; inspect Network response if 422. Then test primary navigation, profile/memory consent, relevant buttons/links, and Google login separately. Only then resume Android.
