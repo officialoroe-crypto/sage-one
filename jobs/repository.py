@@ -68,7 +68,6 @@ class JobsRepository:
         }
         if include_candidate_details:
             result["applicant_name"] = application.applicant_name
-            result["applicant_profile_id"] = application.applicant_profile_id
         if job is not None:
             result["job"] = JobsRepository.serialize_job(job)
         return result
