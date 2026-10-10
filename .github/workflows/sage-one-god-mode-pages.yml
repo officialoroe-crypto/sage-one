@@ -2,6 +2,13 @@ name: SAGE ONE Public Website and Web App
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "website/**"
+      - "frontend/**"
+      - ".github/workflows/sage-one-god-mode-pages.yml"
   push:
     branches:
       - main
@@ -47,7 +54,9 @@ jobs:
           test -s public_site/index.html
           test -s public_site/app/index.html
       - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
         with:
           path: frontend/public_site
       - id: deployment
+        if: github.event_name != 'pull_request'
         uses: actions/deploy-pages@v5
