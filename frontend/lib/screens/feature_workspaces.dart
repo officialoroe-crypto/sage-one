@@ -97,6 +97,8 @@ class _FeatureWorkspaceState extends State<FeatureWorkspace> {
   );
 }
 
+enum _ChatRecoveryAction { session, command, history, taskStatus }
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({required this.api, super.key});
   final SageApi api;
@@ -106,6 +108,8 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  static const int _maxPollFailures = 5;
+
   final _input = TextEditingController();
   final _scroll = ScrollController();
   final List<Map<String, String>> _messages = <Map<String, String>>[];
@@ -113,8 +117,12 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _taskId;
   Timer? _poller;
   int _sessionGeneration = 0;
+  int _pollFailures = 0;
+  bool _pollInFlight = false;
   bool _sending = false;
   String _status = 'Ready';
+  String? _chatError;
+  _ChatRecoveryAction? _recoveryAction;
 
   @override
   void initState() {
@@ -123,16 +131,18 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _newSession() async {
-    // Increment the generation before clearing state so any pending command,
-    // task poll or history request from the previous session becomes stale.
+    // Invalidate in-flight work before clearing the previous conversation.
     final generation = ++_sessionGeneration;
     _poller?.cancel();
+    _pollFailures = 0;
     if (mounted) {
       setState(() {
         _sessionId = null;
         _taskId = null;
         _sending = true;
         _status = 'Starting new session…';
+        _chatError = null;
+        _recoveryAction = null;
         _messages.clear();
       });
     }
@@ -148,12 +158,16 @@ class _ChatScreenState extends State<ChatScreen> {
         _sessionId = id;
         _sending = false;
         _status = 'Ready';
+        _chatError = null;
+        _recoveryAction = null;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted || generation != _sessionGeneration) return;
       setState(() {
         _sending = false;
         _status = 'Could not start chat';
+        _chatError = 'Could not start chat. Check the API connection, then retry. Details: $error';
+        _recoveryAction = _ChatRecoveryAction.session;
       });
     }
   }
@@ -177,8 +191,24 @@ class _ChatScreenState extends State<ChatScreen> {
                 'role': (item['role'] ?? '').toString(),
                 'content': (item['content'] ?? '').toString(),
               }));
+        if (_recoveryAction == _ChatRecoveryAction.history) {
+          _chatError = null;
+          _recoveryAction = null;
+          _status = 'Ready';
+        }
       });
-    } catch (_) {}
+    } catch (error) {
+      if (!mounted ||
+          generation != _sessionGeneration ||
+          sessionId != _sessionId) {
+        return;
+      }
+      setState(() {
+        _status = 'History unavailable';
+        _chatError = 'Chat history could not load. Your session is still active. Retry to load it again. Details: $error';
+        _recoveryAction = _ChatRecoveryAction.history;
+      });
+    }
   }
 
   Future<void> _refreshHistory() async {
@@ -188,6 +218,31 @@ class _ChatScreenState extends State<ChatScreen> {
       generation: _sessionGeneration,
       sessionId: sessionId,
     );
+  }
+
+  void _retryRecovery() {
+    switch (_recoveryAction) {
+      case _ChatRecoveryAction.session:
+        _newSession();
+        break;
+      case _ChatRecoveryAction.command:
+        _send();
+        break;
+      case _ChatRecoveryAction.history:
+        _refreshHistory();
+        break;
+      case _ChatRecoveryAction.taskStatus:
+        final sessionId = _sessionId;
+        if (sessionId != null && _taskId != null) {
+          _startPolling(
+            generation: _sessionGeneration,
+            sessionId: sessionId,
+          );
+        }
+        break;
+      case null:
+        return;
+    }
   }
 
   Future<void> _send() async {
@@ -201,13 +256,14 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _sending = true;
       _status = 'Queued';
+      _chatError = null;
+      _recoveryAction = null;
       _messages.add({'role': 'user', 'content': text});
       _input.clear();
     });
 
     try {
       final response = await widget.api.submitCommand(text, sessionId: sessionId);
-      // Leaving the screen or opening a new session invalidates this response.
       if (!mounted || generation != _sessionGeneration) return;
       final task = response['task'];
       _taskId = task is Map
@@ -220,9 +276,19 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (error) {
       if (!mounted || generation != _sessionGeneration) return;
       setState(() {
+        if (_messages.isNotEmpty &&
+            _messages.last['role'] == 'user' &&
+            _messages.last['content'] == text) {
+          _messages.removeLast();
+        }
+        _input.value = TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
         _sending = false;
         _status = 'Could not queue command';
-        _messages.add({'role': 'system', 'content': error.toString()});
+        _chatError = 'Command was not queued. Your message has been restored so you can retry. Details: $error';
+        _recoveryAction = _ChatRecoveryAction.command;
       });
     }
   }
@@ -232,6 +298,15 @@ class _ChatScreenState extends State<ChatScreen> {
     required String sessionId,
   }) {
     _poller?.cancel();
+    _pollFailures = 0;
+    if (mounted) {
+      setState(() {
+        _sending = true;
+        _status = 'Waiting for task…';
+        _chatError = null;
+        _recoveryAction = null;
+      });
+    }
     _poller = Timer.periodic(
       const Duration(seconds: 2),
       (_) => _pollTask(generation: generation, sessionId: sessionId),
@@ -243,9 +318,14 @@ class _ChatScreenState extends State<ChatScreen> {
     required int generation,
     required String sessionId,
   }) async {
-    if (generation != _sessionGeneration || sessionId != _sessionId) return;
+    if (generation != _sessionGeneration ||
+        sessionId != _sessionId ||
+        _pollInFlight) {
+      return;
+    }
     final id = _taskId;
     if (id == null) return;
+    _pollInFlight = true;
     try {
       final task = await widget.api.task(id);
       if (!mounted ||
@@ -256,26 +336,43 @@ class _ChatScreenState extends State<ChatScreen> {
       final status = (task['status'] ?? 'unknown').toString().toLowerCase();
       final result = task['result']?.toString();
       final error = task['error']?.toString();
+      _pollFailures = 0;
       setState(() {
+        _chatError = null;
+        _recoveryAction = null;
         _status = status.toUpperCase();
         if (status == 'completed' && result != null && result.isNotEmpty) {
           _messages.add({'role': 'assistant', 'content': result});
-        } else if (status == 'failed' && error != null) {
+        } else if (status == 'failed' && error != null && error.isNotEmpty) {
           _messages.add({'role': 'system', 'content': error});
         }
         _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
       });
       if (!_sending) {
         _poller?.cancel();
-        _loadHistory(generation: generation, sessionId: sessionId);
+        await _loadHistory(generation: generation, sessionId: sessionId);
       }
-    } catch (_) {
+    } catch (error) {
       if (!mounted ||
           generation != _sessionGeneration ||
           sessionId != _sessionId) {
         return;
       }
-      setState(() => _status = 'Connection issue • retrying');
+      _pollFailures++;
+      if (_pollFailures >= _maxPollFailures) {
+        _poller?.cancel();
+        setState(() {
+          _status = 'Status check paused';
+          _chatError = 'SAGE has not confirmed the task status after $_maxPollFailures attempts. The task may still be running; retry the status check before sending another command. Details: $error';
+          _recoveryAction = _ChatRecoveryAction.taskStatus;
+        });
+      } else {
+        setState(() {
+          _status = 'Connection issue • retry $_pollFailures/$_maxPollFailures';
+        });
+      }
+    } finally {
+      _pollInFlight = false;
     }
   }
 
@@ -296,14 +393,45 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
+            tooltip: 'Refresh chat history',
             onPressed: _sessionId == null || _sending ? null : _refreshHistory,
             icon: const Icon(Icons.refresh),
           ),
-          IconButton(onPressed: _newSession, icon: const Icon(Icons.add_comment_outlined)),
+          IconButton(
+            tooltip: 'New chat session',
+            onPressed: _newSession,
+            icon: const Icon(Icons.add_comment_outlined),
+          ),
         ],
       ),
       body: Column(
         children: [
+          if (_chatError != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: SageTheme.failure),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _chatError!,
+                          style: const TextStyle(color: SageTheme.textPrimary),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: _recoveryAction == null ? null : _retryRecovery,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           Expanded(
             child: _messages.isEmpty
                 ? const Center(
@@ -371,6 +499,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
 class AppsScreen extends StatelessWidget { const AppsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Apps',subtitle:'Connected tools and future integrations in one control surface.',icon:Icons.apps,actions:['Browse connected apps','Connect an app','Manage permissions']);}
 class EarningsScreen extends StatelessWidget { const EarningsScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Earnings',subtitle:'Track completed work, payouts and creator income.',icon:Icons.trending_up,actions:['View earnings','View pending payouts','Open earnings history']);}
 class MarketplaceScreen extends StatelessWidget { const MarketplaceScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'Marketplace',subtitle:'Discover services, tools and SAGE-powered work.',icon:Icons.storefront,actions:['Browse marketplace','View saved items','Open seller tools']);}
