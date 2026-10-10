@@ -16,7 +16,7 @@ Use a Python web-service host that supports FastAPI. Configure:
 - **Database:** set `SAGE_DATABASE_URL` to a persistent PostgreSQL database URL before using this service for real user data. The default SQLite database may be ephemeral on cloud hosts; do not treat it as durable production storage.
 - Add any model-provider API keys only as private environment variables if the corresponding features are needed.
 
-The service must expose HTTPS and `GET /health` and `GET /identity/config` must respond successfully. Confirm CORS allows `https://officialoroe-crypto.github.io`; the backend's `_cors_origins()` configuration must include the public Pages origin.
+The service must expose HTTPS and `GET /health` and `GET /identity/config` must respond successfully. Set `SAGE_CORS_ORIGINS=https://officialoroe-crypto.github.io` in the host's environment settings (or confirm the default list still includes this origin). CORS must allow the public Pages origin.
 
 Free service plans may sleep, limit resources, or have storage restrictions. Confirm the host's current limits before relying on it for persistent data or always-on availability.
 
