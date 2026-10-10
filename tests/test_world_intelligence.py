@@ -50,9 +50,32 @@ def test_world_refresh_api_queues_durable_worker_task(monkeypatch):
             return {"id": "task-world-test", **kwargs}
 
     monkeypatch.setattr(api, "tasks", FakeTasks())
-    response = api.world_refresh(api.WorldRefreshRequest(topics=["AI"]))
+    response = api.world_refresh(
+        api.WorldRefreshRequest(topics=["AI"]), claims={"owner_mode": True}
+    )
 
     assert response["success"] is True
     assert response["status"] == "queued"
     assert response["task"]["agent"] == "world"
     assert created["priority"] == 4
+
+
+def test_world_mutations_reject_non_owner_claims():
+    import pytest
+    from fastapi import HTTPException
+    from world_intelligence import api
+
+    with pytest.raises(HTTPException) as refresh_error:
+        api.world_refresh(
+            api.WorldRefreshRequest(topics=["AI"]), claims={"owner_mode": False}
+        )
+    assert refresh_error.value.status_code == 403
+
+    with pytest.raises(HTTPException) as proposal_error:
+        api.create_upgrade_proposal(
+            api.UpgradeProposalRequest(
+                title="Test", reason="Test reason", benefit="Test benefit"
+            ),
+            claims={"owner_mode": False},
+        )
+    assert proposal_error.value.status_code == 403
