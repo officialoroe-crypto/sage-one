@@ -104,8 +104,6 @@ void main() {
 
     expect(client.requests, contains('POST /learning/lessons/digital-files-and-documents/complete'));
     expect(find.text('1 of 1 lessons • Beginner • 8 min'), findsOneWidget);
-    await tester.tap(find.text('Digital Foundations'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Files, folders and documents'));
     await tester.pumpAndSettle();
     expect(find.text('Completed'), findsOneWidget);
