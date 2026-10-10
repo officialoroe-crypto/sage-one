@@ -123,7 +123,7 @@ void main() {
 
     expect(client.followUpRequests, 2);
     expect(client.followUpPayloads.last['note'], note);
-    expect(find.text('Record follow-up'), findsNothing);
+    expect(find.text('What happened / next step'), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
