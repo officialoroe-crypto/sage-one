@@ -106,3 +106,9 @@ Owner explicitly ordered that each assistant reply in the active workflow must b
 - Not yet verified: post-merge GitHub Pages deployment run, actual public page rendering, app deep link, or browser onboarding/auth flows. Attempts to access the live URLs via the available web fetch were blocked/unavailable, which is not proof the URLs are down.
 - Intended URLs remain https://officialoroe-crypto.github.io/sage-one/ (marketing site) and https://officialoroe-crypto.github.io/sage-one/app/ (web app). Do not call launch complete until a main-branch Pages deployment succeeds and the owner/browser confirms both URLs.
 - Next: inspect GitHub Actions deployment on main / Pages settings; then verify both URLs. Only after website verification resume onboarding/button checks and later Android Google sign-in. Do not use local heavy builds while CPU is high.
+
+
+## Backend connection diagnosis — 2026-10-10
+- Owner ran `curl -i http://127.0.0.1:8010/identity/config`; curl returned error 7, could not connect. `netstat -ano | findstr :8010` produced no visible output, consistent with no process listening on port 8010 at that time.
+- This establishes that the local endpoint is unreachable; it does not yet establish whether the intended backend should run on 8010 or whether the public Pages app is mistakenly configured to call localhost.
+- Next: ask owner to list `C:\SageOne` and `C:\SageOne\Backend` (Git Bash: `cd /c/SageOne && ls`, then `ls /c/SageOne/Backend`) to identify actual local checkout/backend structure and startup instructions. Do not run a local Flutter/Gradle build; CPU is already high. If the error is from the public deployed web app, localhost is the visitor's machine and production must use a reachable HTTPS backend URL.
