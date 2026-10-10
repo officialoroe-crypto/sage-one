@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
@@ -24,6 +24,7 @@ class _FinalSurfaceClient extends http.BaseClient {
   bool failPaymentStatusLoad = false;
   bool failTasksLoad = false;
   bool failWorkspaceLoad = false;
+  bool includeArtifact = false;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
@@ -93,7 +94,21 @@ class _FinalSurfaceClient extends http.BaseClient {
         'message': 'Payment provider is not configured; no payment action is available.'
       };
     } else if (path == '/tasks') {
-      body = {'success': true, 'tasks': []};
+      body = {
+        'success': true,
+        'tasks': includeArtifact
+            ? [
+                {
+                  'id': 'task-artifact-1',
+                  'artifact': {
+                    'name': 'Readable report',
+                    'url': 'https://example.com/report.pdf',
+                    'mime_type': 'application/pdf',
+                  },
+                },
+              ]
+            : <dynamic>[],
+      };
     } else if (path == '/workflow/workspaces') {
       body = {'success': true, 'workspaces': []};
     }
@@ -336,6 +351,44 @@ void main() {
     expect(client.markAllReadRequests, 1);
   });
 
+
+
+  testWidgets('File Manager catches artifact-launcher exceptions', (tester) async {
+    const launcherChannel = MethodChannel('plugins.flutter.io/url_launcher');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(launcherChannel, (call) async {
+      throw PlatformException(
+        code: 'launcher-unavailable',
+        message: 'No browser configured for this test.',
+      );
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(launcherChannel, null);
+    });
+
+    final client = _FinalSurfaceClient()..includeArtifact = true;
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: FileManagerFinalScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Readable report'), findsOneWidget);
+    await tester.tap(find.text('Readable report'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('SAGE could not open this artifact.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
 
   testWidgets('final surfaces recover and clear errors after a successful retry',
       (tester) async {
