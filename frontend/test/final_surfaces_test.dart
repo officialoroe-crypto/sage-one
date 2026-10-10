@@ -26,7 +26,7 @@ class _FinalSurfaceClient extends http.BaseClient {
       lastProfileAuthorization = request.headers['authorization'];
       final rawBody = request is http.Request
           ? request.body
-          : utf8.decode(request.bodyBytes);
+          : utf8.decode(await request.finalize().toBytes());
       lastProfilePatch = Map<String, dynamic>.from(jsonDecode(rawBody) as Map);
     }
     if (path == '/identity/me' && request.method == 'GET') profileGetRequests++;
