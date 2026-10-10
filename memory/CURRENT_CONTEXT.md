@@ -107,3 +107,7 @@ Owner explicitly ordered that after every assistant reply, relevant conversation
 - Public Pages workflow `.github/workflows/sage-one-god-mode-pages.yml` currently runs `flutter build web --release --base-href /sage-one/app/` without `--dart-define=SAGE_API_URL=...`; it packages/deploys static website + Flutter app only, not FastAPI.
 - Repo root has no `README.md`; checks for root `render.yaml`, `railway.json`, `fly.toml`, and `backend/requirements.txt` / `Backend/requirements.txt` returned not found. This is not an exhaustive inventory of hosting docs or all possible service configuration.
 - Next: inspect repository docs and backend dependency/startup files for an existing hosting target. If none, choose a compatible HTTPS FastAPI host and configure its environment/database securely, then pass the actual service URL into the Pages Flutter build. Verify the public endpoint and CORS before calling web app live.
+
+
+## PR 220 checkpoint — 2026-10-11
+PR #220 (fix/public-web-api-deployment) adds an HTTPS SAGE_API_URL guard to the Pages deploy workflow, embeds it in the Flutter build, and documents backend hosting/database/CORS setup in docs/PUBLIC_API_DEPLOYMENT.md. CI runs #196, #357, and #1836 were pending at checkpoint time. No hosted API, database, Actions variable, merge, or live deployment exists yet. Do not claim the public app is fixed until these steps and live tests pass.
