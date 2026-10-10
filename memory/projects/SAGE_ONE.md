@@ -137,3 +137,9 @@ Owner explicitly ordered that each assistant reply in the active workflow must b
 
 ## PR 220 checkpoint — 2026-10-11
 PR #220 adds a public deployment guard requiring HTTPS SAGE_API_URL and passes it to Flutter web builds. It also documents backend host configuration, durable PostgreSQL, CORS and OAuth env. CI runs #196, #357 and #1836 were pending at checkpoint. No real API host, database, repository variable, merge, or live verification yet; do not call the public app fixed.
+
+
+## Public localhost error update — 2026-10-11
+- Browser console confirms `localhost:8010/identity/config` fails with `net::ERR_CONNECTION_REFUSED` on the public app. This matches the known production defect: without `SAGE_API_URL`, Flutter web points to the visitor's own machine.
+- PR #220 remains open: https://github.com/officialoroe-crypto/sage-one/pull/220. SAGE CI run #1836 passed; public website PR validation run #196 passed and skipped deploy as expected; Android Release run #357 was still building APK at last check.
+- No hosted HTTPS API URL, durable production database, or repository `SAGE_API_URL` Actions variable is configured yet. Do not call the public web app fixed. Next: complete PR synchronization/checks, then host backend and configure actual URL before a main-branch Pages deployment and live auth/onboarding tests.
