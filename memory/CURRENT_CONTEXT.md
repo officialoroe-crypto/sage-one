@@ -52,3 +52,12 @@ Owner explicitly ordered that after every assistant reply, relevant conversation
 - Not verified yet: deployed commit contains fix; website onboarding returns 200; post-onboarding pages/buttons work; Google sign-in works. Developer mode can route to Owner Mode instead of Google login.
 - Next: check GitHub Pages deployment status, hard-refresh website, complete onboarding with phone blank, and confirm backend POST /identity/onboarding returns 200. If 422, inspect Network request response. Then test key navigation/buttons and Google sign-in separately. Resume mobile only after website verification.
 - Avoid local Flutter/Gradle builds if laptop heats up; prefer GitHub Actions artifacts. Never store raw logs containing identifiers or secrets in public memory.
+
+## Active checkpoint — Public marketing website launch (2026-10-11)
+- Owner approved creating and launching the public SAGE ONE marketing website, free-first, without duplicating existing work.
+- Audit found an existing landing page at `website/index.html`, `website/styles.css`, and `website/app.js`; visual direction already matches the near-black/cyan/violet orbital SAGE identity. `website/README.md` described a website workflow path that was not found; the existing Pages workflow manually published the Flutter app at the root.
+- Open PR #217: https://github.com/officialoroe-crypto/sage-one/pull/217 on branch `feature/public-marketing-site-launch-20261011`.
+- Changes in PR: SEO/Open Graph metadata, orbital favicon, main CTA to `/sage-one/app/`, clearer statement that some capabilities remain in development, reduced-motion and IntersectionObserver fallback, and a combined Pages workflow publishing marketing site at `/sage-one/` and Flutter app at `/sage-one/app/`.
+- Workflow runs for PR head `aacd92e86abb4bfc7a17ec96426ef8f73212961c`: SAGE CI run #1779 queued, Android Release #334 queued, public website workflow #185 waiting when checked. No CI or deployment result yet.
+- Deployment is intentionally not called launched until checks pass, PR merges, and Pages/browser verification confirms the public URL. Do not resume mobile testing ahead of website verification.
+- Next: monitor PR #217 checks; fix failures; after successful checks merge as authorized by the owner's explicit launch request, verify Pages deployment, then ask owner to inspect the public page and confirm the web-app link. If Pages is configured for a custom domain or not GitHub Actions, adjust configuration rather than claim success.
