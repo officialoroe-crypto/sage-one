@@ -39,8 +39,8 @@ def test_identity_and_world_router_definitions_exist():
     assert "/marketplace/listings/mine" in opportunity_paths
     assert "/marketplace/inquiries/mine" in opportunity_paths
     learning_paths = {route.path for route in learning_router.routes}
-    assert "/paths" in learning_paths
-    assert "/lessons/{lesson_id}/complete" in learning_paths
+    assert "/learning/paths" in learning_paths
+    assert "/learning/lessons/{lesson_id}/complete" in learning_paths
 
 
 def test_identity_and_world_routers_are_mounted_on_app():
