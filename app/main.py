@@ -138,6 +138,7 @@ app.include_router(identity_api_router)
 app.include_router(world_api_router)
 app.include_router(economy_api_router)
 app.include_router(workflow_api_router)
+app.include_router(jobs_api_router)
 
 
 # ============================================================
