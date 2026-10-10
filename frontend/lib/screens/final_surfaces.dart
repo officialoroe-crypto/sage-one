@@ -39,7 +39,7 @@ class _Page extends StatelessWidget {
   const _Page({required this.title, required this.body});
   final String title; final Widget body;
   @override Widget build(BuildContext c)=>Scaffold(
-    backgroundColor:SageTheme.voidBlack,
+    backgroundColor:Theme.of(c).scaffoldBackgroundColor,
     appBar:AppBar(title:Text(title),backgroundColor:Colors.transparent),
     body:body,
   );
