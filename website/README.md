@@ -21,8 +21,8 @@ Then open `http://127.0.0.1:8080`.
 
 ## Deployment
 
-`.github/workflows/sage-one-website.yml` deploys the directory to GitHub Pages when changes reach `main` and the repository Pages configuration permits the deployment.
+`.github/workflows/sage-one-god-mode-pages.yml` builds the Flutter app and publishes one combined Pages artifact: the marketing site at `/sage-one/` and the app at `/sage-one/app/`. Pushes to `main` that change `website/**` or `frontend/**` trigger deployment; a manual workflow dispatch is also available. Repository Pages must be configured to use GitHub Actions.
 
 ## Design direction
 
-The website follows the SAGE ONE cinematic system: near-black foundation, cyan/blue/violet intelligence accents, gold for economy/premium signals, orbital-core motifs, restrained motion and responsive layouts.
+The website follows the SAGE ONE cinematic system: near-black foundation, cyan/blue/violet intelligence accents, gold for economy/premium signals, orbital-core motifs, restrained motion and responsive layouts. The landing page describes the product direction without claiming that unfinished integrations are already live.
