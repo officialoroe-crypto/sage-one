@@ -8,9 +8,10 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 
 ## Latest baseline
 
-- Current main after the security and navigation merges: `876168e7d85c5e035e31c23523d2e18baa06a16a`.
-- PR #203 owner-authorization fix merged as `a085bac6600957019c5a0ef84ce4f0579ae51a5c`; SAGE CI and Android Release passed on its head.
-- PR #202 More-menu navigation and placeholder-action tests merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed on its head.
+- Current main baseline after frontend recovery, navigation, owner-authorization and action-failure regression work: `ff646d0a0767ef927d77598ed7b13abb8f818068`.
+- PR #201 frontend recovery and form-validation work merged as `ad769fdc66ed55d098019bdb38634550abbf2f2e`; SAGE CI and Android Release passed.
+- PR #202 More-menu navigation and placeholder-action tests merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed.
+- Latest main SAGE CI run #1702 and Android Release run #282 passed on `ff646d0a0767ef927d77598ed7b13abb8f818068`; Android artifact `11664978073` is available until 2026-10-24.
 - PR #192 is merged. It fixed memory dialog controller lifetime, stale-session recovery, project/sales dialog controller lifetime, profile loading lifecycle, and AI Studio workspace validation.
 - The route-contract test checks recognized Flutter API paths against FastAPI routes. It is a static contract check, not a live-server integration test.
 
@@ -47,18 +48,18 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 | AI Studio | List/create workflow workspaces | `/workflow/workspaces` | Workspace creation is connected; broader prompt/agent-template features remain incomplete |
 | Apps | Buttons show explicit not-connected explanation | No live integration endpoint | Placeholder, truthfully labelled |
 | Earnings | Buttons show explicit not-connected explanation | No live earnings endpoint wired from this screen | Placeholder |
-| Marketplace | Buttons show explicit not-connected explanation | No live marketplace endpoint wired from this screen | Placeholder |
-| Jobs | Buttons show explicit not-connected explanation | No live jobs endpoint wired from this screen | Placeholder |
+| Marketplace | Browse listings, search, publish a listing, send buyer inquiry, view seller inquiries, close own listing | `/marketplace/listings`, `/marketplace/listings/mine`, `/marketplace/listings/{id}/inquiries`, `/marketplace/inquiries/mine` | MVP implementation on `feat/jobs-marketplace-mvp`; automated verification pending. Checkout/payment settlement intentionally not connected |
+| Jobs | Browse/search jobs, publish a job, apply, view own postings/applications and close a posting | `/jobs`, `/jobs/mine`, `/jobs/applications/mine`, `/jobs/{id}/applications` | MVP implementation on `feat/jobs-marketplace-mvp`; automated verification pending |
 | Learning | Buttons show explicit not-connected explanation | No live learning endpoint wired from this screen | Placeholder |
 | Community | Buttons show explicit not-connected explanation | No live community endpoint wired from this screen | Placeholder |
 | KYC / Identity Verification | Buttons show explicit not-connected explanation | No provider-backed KYC workflow wired from this screen | Placeholder; provider/legal setup required |
 | First Run | Buttons show explicit not-connected explanation | No live setup workflow wired from this screen | Placeholder |
 
-## High-priority frontend remediation (PR #201)
+## High-priority frontend remediation (PR #201 — merged)
 
-The branch adds retry/error-clearing UI for Spark Wallet, Transactions, Evolution, Notifications, Payments, File Manager, and AI Studio; form validation and retained input for project commands, workflow assets, and sales follow-ups; Chat session/history/command recovery with a five-consecutive-failure cap on automatic task-status polling; and exception handling when opening artifact URLs.
+The merged fix adds retry/error-clearing UI for Spark Wallet, Transactions, Evolution, Notifications, Payments, File Manager, and AI Studio; validation and retained input for project commands, workflow assets, and sales follow-ups; Chat session/history/command recovery with a five-consecutive-failure cap on automatic task-status polling; and exception handling when opening artifact URLs.
 
-On pre-sync branch head `0c219950dc07cb48e6119c91fa5e6f3699edde8b`, SAGE CI passed (218 Python tests, Flutter analysis, and 61 Flutter tests). Android Release passed analysis, tests, API URL validation, APK build, App Bundle build, and artifact upload (artifact `11662524316`). Because main advanced afterward, the branch must be synchronized and both workflows rerun before merge; these results are evidence for the pre-sync head only.
+The pre-merge PR checks passed: SAGE CI ran 218 Python tests, Flutter analysis, and 61 Flutter tests; Android Release passed analysis, tests, API URL validation, APK build, App Bundle build, and artifact upload. The latest main commit `ff646d0a0767ef927d77598ed7b13abb8f818068` has fresh passing SAGE CI and Android Release runs; its artifact is `11664978073`. These automated checks do not replace physical-device or provider verification.
 
 ## Confirmed security fix
 
@@ -74,7 +75,7 @@ World Intelligence refresh and global upgrade-proposal creation now require the 
 
 ## Known gaps / external dependencies
 
-- Marketplace, Jobs, Learning, Community, Apps, Earnings, KYC and First Run actions are placeholders.
+- Learning, Community, Apps, Earnings, KYC and First Run actions remain placeholders. Jobs/Marketplace MVP workflows are under implementation in `feat/jobs-marketplace-mvp`; do not treat that branch as deployed to main until its PR merges.
 - Payments reports provider status only; no live payment creation/settlement.
 - Production SMS/OTP provider and credentials.
 - Production Google OAuth/identity configuration and long-lived session UX.
@@ -85,9 +86,9 @@ World Intelligence refresh and global upgrade-proposal creation now require the 
 
 ## Next verification order
 
-1. Keep the high-priority recovery branch synchronized with current `main`; run both SAGE CI and Android Release on the synchronized head before merge.
-2. Add action-level tests for live screen actions: assert HTTP method/path, payload, success state, error state, loading state, and cancellation behavior.
-3. Keep placeholder integrations explicitly labelled as not connected until their real backend/provider exists.
+1. Complete CI review for `feat/jobs-marketplace-mvp`; verify persistence, validation, and cross-user privacy tests before merging the API/UI work.
+2. Extend Jobs/Marketplace Flutter tests for API failure, empty state, duplicate apply/inquiry, and ownership-denied responses.
+3. Add Learning and Community real workflows only when their data model and product behavior are defined; keep remaining placeholders clearly labelled.
 4. Re-run the screen-to-route contract test and compare every API method against its FastAPI route and response shape.
 5. Build the APK from the exact merged `main` commit, record the artifact ID, and install that exact APK on the Huawei phone using the intended API routing (`adb reverse tcp:8010 tcp:8010` for the local-host configuration).
 6. On-device, verify sign-in, API connectivity, chat/task execution, memory, notifications, project actions, and microphone/STT/TTS.
