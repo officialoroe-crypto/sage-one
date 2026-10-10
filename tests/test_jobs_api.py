@@ -114,6 +114,10 @@ def test_applications_are_unique_and_only_the_job_owner_can_manage_them(jobs_cli
     assert created.status_code == 200, created.text
     job_id = created.json()["job"]["id"]
 
+    own_application = client.post(f"/jobs/{job_id}/applications", json={})
+    assert own_application.status_code == 409
+    assert "own job posting" in own_application.json()["detail"]
+
     claims.update({"auth_subject": "candidate-b", "name": "Candidate B"})
     applied = client.post(
         f"/jobs/{job_id}/applications",
