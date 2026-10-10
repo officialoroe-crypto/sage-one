@@ -206,10 +206,15 @@ class _SettingsFinalState extends State<SettingsFinalScreen> {
     if (!_loaded || saving) return;
     setState(() => saving = true);
     try {
-      basic['settings'] = {
-        'notifications': notifications,
-        'compact_mode': compact,
-      };
+      // Update only settings owned by this screen. Preserve future or
+      // server-managed preferences (for example theme mode) that this UI
+      // does not expose yet.
+      final currentSettings = basic['settings'] is Map
+          ? Map<String, dynamic>.from(basic['settings'] as Map)
+          : <String, dynamic>{};
+      currentSettings['notifications'] = notifications;
+      currentSettings['compact_mode'] = compact;
+      basic['settings'] = currentSettings;
       await widget.api.updateProfile(basicInfo: basic);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
