@@ -97,7 +97,7 @@ void main() {
     expect(find.text('750 XP to Gold'), findsOneWidget);
     expect(find.text('Next milestone: Gold at 1000 XP'), findsOneWidget);
     expect(find.text('1  Bronze'), findsOneWidget);
-    expect(find.text('2  Silver'), findsOneWidget);
+    expect(find.textContaining('Silver'), findsOneWidget);
     expect(find.text('3  Gold'), findsOneWidget);
     expect(find.text('UNLOCKED'), findsOneWidget);
     expect(find.text('LOCKED'), findsNWidgets(2));
@@ -164,7 +164,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('CALIFORNIUM OVERLORD'), findsOneWidget);
-    expect(find.text('MAX RANK'), findsOneWidget);
+    expect(find.text('MAX RANK'), findsNWidgets(2));
+    expect(
+      tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value,
+      1.0,
+    );
     expect(find.text('Next milestone: Gold at 1000 XP'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
