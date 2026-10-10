@@ -66,6 +66,29 @@ def opportunity_client(tmp_path, monkeypatch) -> Iterator[tuple[TestClient, dict
         engine.dispose()
 
 
+def test_public_display_name_never_falls_back_to_email(monkeypatch):
+    from opportunities import api as opportunities_api
+
+    monkeypatch.setattr(
+        opportunities_api,
+        "get_or_create_authenticated_profile",
+        lambda claims: {"id": "profile-1", "name": None},
+    )
+
+    profile_id, display_name = opportunities_api._profile_identity(
+        {
+            "auth_provider": "google",
+            "auth_subject": "subject-1",
+            "name": None,
+            "email": "private-address@example.test",
+        }
+    )
+
+    assert profile_id == "profile-1"
+    assert display_name == "SAGE user"
+    assert "private-address@example.test" not in display_name
+
+
 def test_job_listing_application_lifecycle_is_identity_scoped(opportunity_client):
     client, identity = opportunity_client
 
