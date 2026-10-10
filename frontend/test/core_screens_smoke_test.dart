@@ -201,6 +201,7 @@ void main() {
     final queueButton = find.widgetWithText(FilledButton, 'Queue');
     expect(tester.widget<FilledButton>(queueButton).onPressed, isNull);
     await tester.enterText(find.byType(TextField), 'Summarize this project');
+    await tester.pump();
     expect(tester.widget<FilledButton>(queueButton).onPressed, isNotNull);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
