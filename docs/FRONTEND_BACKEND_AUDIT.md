@@ -1,69 +1,95 @@
 # SAGE ONE Frontend / Backend Audit
 
-Last updated: 2026-10-09
+Last updated: 2026-10-10
 
-## Purpose and audit rule
+## Audit rules
 
-This document records evidence, not assumptions. A screen rendering, a successful build, or a route existing in FastAPI does not by itself prove that every button works end-to-end. Distinguish automated test results from real-device/provider verification.
+This is an evidence log, not a claim that the app is end-to-end complete. A screen rendering, a successful build, a static route-contract check, or a route existing in FastAPI does not prove that a live user journey succeeds. Keep automated CI, mocked interaction tests, real-device behavior, and external-provider setup as separate verification categories.
 
-## Runtime warning cleanup and current CI evidence
+## Latest baseline
 
-Two historical SAGE CI runs (37962853764 and 37962862824) failed because `tests/test_github_action_runtime.py` still expected `actions/upload-artifact@v5` after the Android workflow had moved to v7. Commit `a74474fcc6b24d0e86dab9dd58d10af2277aa8c1` corrected the contract test to require v7 and reject v5; subsequent CI runs passed.
+- Current main after the security and navigation merges: `876168e7d85c5e035e31c23523d2e18baa06a16a`.
+- PR #203 owner-authorization fix merged as `a085bac6600957019c5a0ef84ce4f0579ae51a5c`; SAGE CI and Android Release passed on its head.
+- PR #202 More-menu navigation and placeholder-action tests merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed on its head.
+- PR #192 is merged. It fixed memory dialog controller lifetime, stale-session recovery, project/sales dialog controller lifetime, profile loading lifecycle, and AI Studio workspace validation.
+- The route-contract test checks recognized Flutter API paths against FastAPI routes. It is a static contract check, not a live-server integration test.
 
-Verified current main commit on 2026-10-09: `8fde9c3322711b075c210da7af77154cb591c35b`.
+## Screen-to-backend map
 
-- [SAGE CI run 1673](https://github.com/officialoroe-crypto/sage-one/actions/runs/37969437072): Python passed with 218 tests and one Starlette/httpx deprecation warning; Flutter analysis and 59 Flutter tests passed.
-- [Android Release run 257](https://github.com/officialoroe-crypto/sage-one/actions/runs/37969437080): analysis, Flutter tests, release APK, App Bundle, and artifact upload all passed.
+| Screen / entry | Frontend behavior and API methods | Backend route family | Audit status |
+|---|---|---|---|
+| Splash / app shell | Startup transition; bottom navigation; More menu | No direct API from splash; shell polls notifications | Navigation paths identified; full tap-by-tap test still open |
+| Login / Auth Gate / Private Owner Gate | Restore token, sign in, clear stale session, select private owner path | `/identity/config`, `/identity/dev-login`, `/identity/google`, `/identity/me` | Widget tests exist for login and stale-session fallback; Huawei run still required |
+| Onboarding | Profile setup, capabilities, OTP UI | `/identity/onboarding/options`, `/identity/onboarding`, `/identity/phone/send`, `/identity/phone/verify` | Backend calls exist; real OTP provider delivery requires external setup |
+| Language Selection | Local language selection UI | No direct backend call identified | Persist/restore behavior needs interaction review |
+| Command Center | Worker health, submit background task, poll task status | `/worker/health`, `/execute/background`, `/tasks/{task_id}` | API wiring identified; live worker path needs end-to-end test |
+| Agent | Submit background task and poll status | `/execute/background`, `/tasks/{task_id}` | API wiring identified; live worker path needs end-to-end test |
+| Voice Command | Submit spoken command and poll task | `/command`, `/tasks/{task_id}` | Mock tests exist; physical microphone/speech test pending |
+| Voice Mode | Submit background work and poll task | `/execute/background`, `/tasks/{task_id}` | Mock tests exist; physical microphone/STT/TTS test pending |
+| Research | Start research, retrieve history/result, inspect task, cancel | `/tools/execute` (research tools), `/execute/background`, `/tasks/{task_id}`, `/tasks/{task_id}/cancel` | Widget coverage exists; source/provider-backed live research not yet device-verified |
+| Tasks | List, refresh/poll, cancel tasks | `/tasks`, `/tasks/{task_id}`, `/tasks/{task_id}/cancel` | Widget coverage exists; live worker execution still needs testing |
+| Create | Create workspace, project, workflow | `/workflow/workspaces`, `/workflow/workspaces/{id}/projects`, `/workflow/projects/{id}/workflows` | Mock API tests exist |
+| Projects | List workspaces/projects and open project detail | `/workflow/workspaces`, `/workflow/workspaces/{id}/projects` | Mock API tests exist |
+| Project Detail | Commands, assets, relations, workflow definitions | `/command`, `/workflow/projects/{id}/assets`, `/workflow/projects/{id}/relations`, `/workflow/projects/{id}/workflows` | Mock API tests exist; each action still needs success/error/cancel coverage review |
+| Memory | List, review, add, confirm/update, delete memories | `/identity/memory`, `/identity/memory/review`, `/identity/memory/{id}` | Memory review and dialog regression tests exist |
+| Owner Console | Owner status/audit and Spark/evolution controls | `/economy/owner/status`, `/economy/owner/audit`, `/economy/owner/spark/*`, `/economy/owner/evolution/*` | Owner-gated backend routes and tests exist; UI error-path coverage needs review |
+| Economy | Wallet and premium-work cost reads | `/economy/me`, `/economy/costs` | Mock screen coverage exists |
+| Evolution | Wallet/evolution tiers and progress | `/economy/me`, `/economy/evolution/tiers` | Mock screen coverage exists |
+| World Intelligence | Status, knowledge, due topics, refresh | `/world/status`, `/world/knowledge`, `/world/due`, `/world/refresh` | Mock coverage exists; mutation owner-check fix is in PR #203 |
+| Sales | Leads, lead detail/history, approve outreach, convert, follow-up | `/sales/leads`, `/sales/leads/{id}`, `/sales/leads/{id}/history`, `/sales/leads/{id}/approve-outreach`, `/sales/leads/{id}/convert-customer`, `/sales/leads/{id}/follow-up` | Mock screen coverage exists; live provider/outreach behavior needs validation |
+| Spark Wallet | Read balance and ledger | `/economy/me` | Connected read-only surface; no claim of external monetary value |
+| Transactions | Display Spark ledger entries | `/economy/me` | Connected to internal ledger data; not a full external payment transaction history |
+| Profile | Load and save profile | `/identity/me` GET/PATCH | Form-validation and failure-path regression coverage should be confirmed in CI |
+| Settings | Read/update supported profile preferences | `/identity/me` GET/PATCH | API wiring exists; each setting's persistence must be verified |
+| Notifications | List, mark one read, mark all read | `/notifications`, `/notifications/{id}/read`, `/notifications/read-all` | Regression tests exist |
+| Payments | Read provider status only | `/economy/payment/status` | Intentionally no payment-creation action until a real provider is configured |
+| File Manager | Read tasks and display available task artifacts | `/tasks` | Artifact listing is connected; richer file browse/export actions are not established by this screen |
+| AI Studio | List/create workflow workspaces | `/workflow/workspaces` | Workspace creation is connected; broader prompt/agent-template features remain incomplete |
+| Apps | Buttons show explicit not-connected explanation | No live integration endpoint | Placeholder, truthfully labelled |
+| Earnings | Buttons show explicit not-connected explanation | No live earnings endpoint wired from this screen | Placeholder |
+| Marketplace | Buttons show explicit not-connected explanation | No live marketplace endpoint wired from this screen | Placeholder |
+| Jobs | Buttons show explicit not-connected explanation | No live jobs endpoint wired from this screen | Placeholder |
+| Learning | Buttons show explicit not-connected explanation | No live learning endpoint wired from this screen | Placeholder |
+| Community | Buttons show explicit not-connected explanation | No live community endpoint wired from this screen | Placeholder |
+| KYC / Identity Verification | Buttons show explicit not-connected explanation | No provider-backed KYC workflow wired from this screen | Placeholder; provider/legal setup required |
+| First Run | Buttons show explicit not-connected explanation | No live setup workflow wired from this screen | Placeholder |
 
-Current workflows use `actions/setup-python@v6`, `actions/checkout@v6`, `actions/upload-artifact@v7`, and pin Ubuntu runners to `ubuntu-24.04`. The latest inspected logs do not contain the old `setup-python@v5` / Node.js 20 annotation. The remaining warning in the latest Python job is from Starlette's TestClient/httpx compatibility path. Annotations attached to historical runs are not evidence that current main is failing.
+## High-priority frontend remediation (PR #201)
 
-## Automated checks that exist
+The branch adds retry/error-clearing UI for Spark Wallet, Transactions, Evolution, Notifications, Payments, File Manager, and AI Studio; form validation and retained input for project commands, workflow assets, and sales follow-ups; Chat session/history/command recovery with a five-consecutive-failure cap on automatic task-status polling; and exception handling when opening artifact URLs.
 
-- SAGE CI runs Python compile/lint/tests, Flutter analysis/tests, and the Flutter-to-FastAPI route-contract test.
-- Android release validation runs Flutter analysis/tests and builds APK/AAB artifacts.
-- The frontend has screen/widget smoke tests for the command center, research, tasks, create, projects/project detail, agent, owner console, economy/evolution, world intelligence, memory, sales, onboarding/auth, voice fallbacks, and final surfaces.
-- Some interactions have direct regression tests (for example notification mark-all-read, developer approval gating, memory review, workspace placeholder truthfulness, and the dialog/auth fixes listed below).
-- The route-contract test checks that recognized Flutter API paths map to FastAPI routes. It is a static contract check, not a live server integration test.
+On pre-sync branch head `0c219950dc07cb48e6119c91fa5e6f3699edde8b`, SAGE CI passed (218 Python tests, Flutter analysis, and 61 Flutter tests). Android Release passed analysis, tests, API URL validation, APK build, App Bundle build, and artifact upload (artifact `11662524316`). Because main advanced afterward, the branch must be synchronized and both workflows rerun before merge; these results are evidence for the pre-sync head only.
 
-## Fixes merged in PR #192
+## Confirmed security fix
 
-- Memory Add dialog owns its text controller for the full dialog-route lifetime; Save becomes enabled when content is entered.
-- Stale-session recovery returns to login even if identity-provider sign-out throws.
-- IdentityClient and SageApi use the same Android emulator default API host.
-- Project Detail command/asset and Sales follow-up dialogs no longer dispose text controllers during the route's dismissal animation.
-- Profile loading checks that the screen is still mounted before writing to its controllers.
-- AI Studio workspace creation validates required fields and keeps controllers alive during dismissal.
-- Regression tests cover these behaviors.
+World Intelligence refresh and global upgrade-proposal creation now require the authenticated caller's `owner_mode` claim. PR #203 added these checks and regression tests asserting that non-owner claims receive HTTP 403; the owner refresh test is preserved. PR #203 is merged, and its SAGE CI and Android Release runs passed. This is an authorization boundary; it should not be weakened by bypassing the claims check inside the permission engine.
 
-## Current audit branch
+## Runtime and device connection requirements
 
-Profile required-field and age validation is already present on main and covered by `frontend/test/final_surfaces_test.dart`; it is not a pending change.
-
-The follow-up audit fixes transient data-load recovery in Spark Wallet, Transactions, Evolution, Notifications, Payments, File Manager, and AI Studio. These screens now expose a Retry action after an initial read failure and clear stale error state after a retry succeeds. The new widget regression exercises failure → retry → recovered content for all seven screens. This work is on `audit/live-surface-error-recovery` and remains unmerged until its own CI passes. CI must pass before this change is merged.
-
-## Known connection requirements
-
+- Flutter Web / Windows desktop default: `http://localhost:8010`.
 - Android emulator default: `http://10.0.2.2:8010`.
-- The Huawei physical-device APK workflow compiles an explicit `SAGE_API_URL`, defaulting to `http://127.0.0.1:8010`. For that default, the phone must be connected through ADB reverse (`adb reverse tcp:8010 tcp:8010`) while the backend is running on the computer. A different reachable backend requires an explicit API URL.
-- The current Android artifact is a private development/testing build path using local HTTP. It is not a production-store release; production requires a deployed HTTPS backend and production signing/configuration.
-- GitHub Pages web builds without a public backend URL can only reach a backend that is reachable from the browser's own device (for example the owner's local backend). No public shared backend should be assumed.
+- Huawei physical-device development APK: `http://127.0.0.1:8010` with the backend running on the PC and `adb reverse tcp:8010 tcp:8010` active. Alternatively, build with a reachable backend URL.
+- The current Android artifact is a private development/testing path using local HTTP, not a production-store release. Production requires deployed HTTPS, production auth/configuration, signing, and release compliance.
+- GitHub Pages without a public backend URL can only access a backend reachable from the browser's device.
 
-## Not yet production-ready / requires external setup
+## Known gaps / external dependencies
 
-- Production SMS/OTP delivery provider and credentials.
-- Long-lived Google web session refresh UX and provider configuration.
-- Payment provider credentials and real payment creation/settlement.
-- Marketplace, Jobs, Learning, Community, Apps, Earnings, Identity Verification and First Run action buttons are interface placeholders. They explain that the live action is not connected and must not report false success.
+- Marketplace, Jobs, Learning, Community, Apps, Earnings, KYC and First Run actions are placeholders.
+- Payments reports provider status only; no live payment creation/settlement.
+- Production SMS/OTP provider and credentials.
+- Production Google OAuth/identity configuration and long-lived session UX.
 - Full multi-tenant isolation if SAGE becomes a shared public service.
-- Broader third-party integrations, permissioned publishing, and analytics feedback loop.
-- Physical Huawei test of sign-in, backend connectivity, microphone permission/STT, TTS, app restart/session restore, and task execution.
-- Full button-by-button interaction coverage and visual/reference regression are still in progress.
+- Broader third-party integrations, permissioned publishing, analytics feedback, and production monitoring/backups.
+- Physical Huawei test of owner login, backend connectivity, microphone permission/STT, TTS, app restart/session restore, and task execution.
+- Full button-by-button success/error/cancel coverage and visual/reference regression remain in progress.
 
 ## Next verification order
 
-1. Keep CI green and inspect the latest run, not historical annotations.
-2. Exercise each live screen action against a fake client and assert the expected HTTP method/path, success state, error state, and cancellation behavior.
+1. Keep the high-priority recovery branch synchronized with current `main`; run both SAGE CI and Android Release on the synchronized head before merge.
+2. Add action-level tests for live screen actions: assert HTTP method/path, payload, success state, error state, loading state, and cancellation behavior.
 3. Keep placeholder integrations explicitly labelled as not connected until their real backend/provider exists.
-4. Build the APK from the exact merged main commit.
-5. Install it on the Huawei phone with the configured API route, then verify login, chat/task execution, memory, notifications, project actions, and voice on-device.
-6. Only after those checks pass, claim the private demo is end-to-end ready.
+4. Re-run the screen-to-route contract test and compare every API method against its FastAPI route and response shape.
+5. Build the APK from the exact merged `main` commit, record the artifact ID, and install that exact APK on the Huawei phone using the intended API routing (`adb reverse tcp:8010 tcp:8010` for the local-host configuration).
+6. On-device, verify sign-in, API connectivity, chat/task execution, memory, notifications, project actions, and microphone/STT/TTS.
+7. Only after these checks pass, claim the private demo is end-to-end ready.
+

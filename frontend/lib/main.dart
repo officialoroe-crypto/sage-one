@@ -95,8 +95,10 @@ class _SageOneShellState extends State<SageOneShell> {
       backgroundColor: SageTheme.voidBlack,
       showDragHandle: true,
       builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             const ListTile(
               title: Text('SAGE ONE', style: TextStyle(
                 fontSize: 10, letterSpacing: 2,
@@ -155,7 +157,8 @@ class _SageOneShellState extends State<SageOneShell> {
             ListTile(leading: const Icon(Icons.settings_outlined), title: const Text('Settings'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.SettingsFinalScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.notifications_none), title: const Text('Notifications'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => final_surfaces.NotificationsFinalScreen(api: _api))); }),
 
-          ],
+            ],
+          ),
         ),
       ),
     );
