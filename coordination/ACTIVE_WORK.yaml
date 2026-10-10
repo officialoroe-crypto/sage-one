@@ -1,5 +1,5 @@
 version: 1
-updated_at: 2026-10-10T05:06:47Z
+updated_at: 2026-10-10T05:10:00Z
 claims:
   - id: evolution-pixel-regression-20261010
     agent: chatgpt
@@ -8,6 +8,6 @@ claims:
     scope:
       - frontend/test/evolution_visual_test.dart
     objective: Add deterministic raster regression coverage for all 13 Evolution visuals and intensity states
-    status: in_progress
+    status: blocked
     started_at: 2026-10-10T05:06:47Z
-    updated_at: 2026-10-10T05:06:47Z
+    updated_at: 2026-10-10T05:10:00Z
