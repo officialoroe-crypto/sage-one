@@ -83,6 +83,79 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<Map<String, dynamic>> listJobs({
+    String? query,
+    String? location,
+    String? employmentType,
+    bool mine = false,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final parameters = <String, String>{
+      'mine': mine.toString(),
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+      if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
+      if (location != null && location.trim().isNotEmpty) 'location': location.trim(),
+      if (employmentType != null && employmentType.isNotEmpty) 'employment_type': employmentType,
+    };
+    return _authorizedGetUri(Uri.parse('$baseUrl/jobs').replace(queryParameters: parameters));
+  }
+
+  Future<Map<String, dynamic>> createJob({
+    required String title,
+    required String companyName,
+    required String description,
+    required String location,
+    required String employmentType,
+    required String workMode,
+    int? salaryMin,
+    int? salaryMax,
+    List<String> skills = const [],
+  }) async =>
+      _authorizedPost('/jobs', {
+        'title': title.trim(),
+        'company_name': companyName.trim(),
+        'description': description.trim(),
+        'location': location.trim(),
+        'employment_type': employmentType,
+        'work_mode': workMode,
+        'salary_min': salaryMin,
+        'salary_max': salaryMax,
+        'skills': skills,
+      });
+
+  Future<Map<String, dynamic>> job(String jobId) async =>
+      _authorizedGet('/jobs/$jobId');
+
+  Future<Map<String, dynamic>> applyToJob(
+    String jobId, {
+    String? coverNote,
+  }) async =>
+      _authorizedPost('/jobs/$jobId/applications', {'cover_note': coverNote});
+
+  Future<List<dynamic>> myJobApplications() async {
+    final data = await _authorizedGet('/jobs/my-applications');
+    final items = data['applications'] ?? data['items'] ?? const [];
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<List<dynamic>> jobApplications(String jobId) async {
+    final data = await _authorizedGet('/jobs/$jobId/applications');
+    final items = data['applications'] ?? data['items'] ?? const [];
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> updateJobApplicationStatus(
+    String jobId,
+    String applicationId,
+    String status,
+  ) async =>
+      _authorizedPatch(
+        '/jobs/$jobId/applications/$applicationId',
+        {'status': status},
+      );
+
   Future<Map<String, dynamic>> cancelTask(String taskId) async =>
       _authorizedPost('/tasks/$taskId/cancel', <String, dynamic>{});
 
