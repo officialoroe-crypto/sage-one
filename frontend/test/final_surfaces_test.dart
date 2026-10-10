@@ -349,7 +349,7 @@ void main() {
       ),
       _FinalSurfaceRetryCase(
         label: 'transactions', errorPrefix: 'Transaction error:',
-        successText: 'No Spark transactions yet.',
+        successText: 'Test grant',
         build: (api) => TransactionsScreen(api: api),
         fail: (client) => client.failEconomyLoad = true,
         recover: (client) => client.failEconomyLoad = false,
