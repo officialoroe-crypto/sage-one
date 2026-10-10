@@ -12,7 +12,7 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 - PR #201 merged as `ad769fdc66ed55d098019bdb38634550abbf2f2e`; the latest PR-head SAGE CI and Android Release passed. Artifact `11664548324` was uploaded by [run 38036670372](https://github.com/officialoroe-crypto/sage-one/actions/runs/38036670372).
 - PR #202 More-menu fix merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed.
 - PR #218 marketing-site work merged as `3d951d2c7ffb3ed1d1ec70edb64c09d29432f4b4`. [Pages run 38058717863](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058717863) successfully deployed a combined marketing-page + Flutter-web artifact (`11671519061`). This deployed the app before web/mobile QA was complete and is being corrected.
-- Current main SAGE CI [run 38058766698](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766698) passed; Android Release [run 38058766769](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766769) was still running at the last check.
+- Current main SAGE CI [run 38059788205](https://github.com/officialoroe-crypto/sage-one/actions/runs/38059788205) passed; Android Release [run 38059788227](https://github.com/officialoroe-crypto/sage-one/actions/runs/38059788227) also passed. These runs are the baseline before the current release-boundary correction; the corrective PR must pass its own checks.
 - The route-contract test checks recognized Flutter API paths against FastAPI routes. It is a static contract check, not a live-server integration test.
 
 ## Screen-to-backend map
