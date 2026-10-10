@@ -19,14 +19,57 @@ class _ScreenSmokeClient extends http.BaseClient {
   int workspaceCreateRequests = 0;
   int projectCreateRequests = 0;
   int workflowCreateRequests = 0;
+  int projectCommandRequests = 0;
+  int workflowAssetCreateRequests = 0;
+  bool failProjectCommand = false;
+  bool failWorkflowAssetCreate = false;
+  final List<Map<String, dynamic>> projectCommandPayloads = <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> workflowAssetPayloads = <Map<String, dynamic>>[];
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
     if (path == '/world/refresh' && request.method == 'POST') worldRefreshRequests++;
     if (path == '/economy/owner/spark/set' && request.method == 'POST') ownerSparkSetRequests++;
+    var status = 200;
     final dynamic body;
-    if (request.method == 'POST' && path == '/workflow/workspaces') {
+    if (request.method == 'POST' && path == '/command') {
+      projectCommandRequests++;
+      if (request is http.Request) {
+        projectCommandPayloads.add(
+          Map<String, dynamic>.from(jsonDecode(request.body) as Map),
+        );
+      }
+      if (failProjectCommand) {
+        status = 503;
+        body = {'detail': 'command temporarily unavailable'};
+      } else {
+        body = {
+          'success': true,
+          'task': {'id': 'project-task-1'},
+        };
+      }
+    } else if (request.method == 'POST' &&
+        path == '/workflow/projects/project-1/assets') {
+      workflowAssetCreateRequests++;
+      if (request is http.Request) {
+        workflowAssetPayloads.add(
+          Map<String, dynamic>.from(jsonDecode(request.body) as Map),
+        );
+      }
+      if (failWorkflowAssetCreate) {
+        status = 503;
+        body = {'detail': 'asset service temporarily unavailable'};
+      } else {
+        final payload = workflowAssetPayloads.isEmpty
+            ? <String, dynamic>{}
+            : workflowAssetPayloads.last;
+        body = {
+          'success': true,
+          'asset': {'id': 'asset-1', 'name': payload['name']},
+        };
+      }
+    } else if (request.method == 'POST' && path == '/workflow/workspaces') {
       workspaceCreateRequests++;
       body = {
         'success': true,
@@ -79,7 +122,7 @@ class _ScreenSmokeClient extends http.BaseClient {
     }
     return http.StreamedResponse(
       Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(body)))),
-      200,
+      status,
       headers: {'content-type': 'application/json'},
       request: request,
     );
@@ -206,6 +249,100 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Project command preserves input and retries after an API failure',
+      (tester) async {
+    final client = _ScreenSmokeClient()..failProjectCommand = true;
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: ProjectDetailScreen(
+        api: api,
+        project: {
+          'id': 'project-1',
+          'workspace_id': 'workspace-1',
+          'name': 'Retry Test Project',
+          'project_type': 'general',
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Run SAGE command'));
+    await tester.pumpAndSettle();
+    const command = 'Summarize the project risks';
+    await tester.enterText(find.byType(TextField), command);
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Queue'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Could not queue project command:'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, command);
+    expect(client.projectCommandRequests, 1);
+
+    client.failProjectCommand = false;
+    await tester.tap(find.widgetWithText(FilledButton, 'Queue'));
+    await tester.pumpAndSettle();
+
+    expect(client.projectCommandRequests, 2);
+    expect(client.projectCommandPayloads.last['message'], command);
+    expect(client.projectCommandPayloads.last['project_id'], 'project-1');
+    expect(find.text('Run SAGE in this project'), findsNothing);
+    expect(find.text('Project task queued: project-task-1'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('Workflow asset creation preserves input and retries after an API failure',
+      (tester) async {
+    final client = _ScreenSmokeClient()..failWorkflowAssetCreate = true;
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: ProjectDetailScreen(
+        api: api,
+        project: {
+          'id': 'project-1',
+          'workspace_id': 'workspace-1',
+          'name': 'Retry Test Project',
+          'project_type': 'general',
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Add asset'));
+    await tester.pumpAndSettle();
+    const name = 'Storyboard thumbnail';
+    await tester.enterText(find.byType(TextField), name);
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Could not create asset:'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, name);
+    expect(client.workflowAssetCreateRequests, 1);
+
+    client.failWorkflowAssetCreate = false;
+    await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+    await tester.pumpAndSettle();
+
+    expect(client.workflowAssetCreateRequests, 2);
+    expect(client.workflowAssetPayloads.last['name'], name);
+    expect(client.workflowAssetPayloads.last['asset_type'], 'image');
+    expect(find.text('Add workflow asset'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
 
   testWidgets('World refresh button sends the refresh request', (tester) async {
