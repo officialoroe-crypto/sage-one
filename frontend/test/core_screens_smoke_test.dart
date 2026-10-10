@@ -189,6 +189,7 @@ void main() {
     final createButton = find.widgetWithText(FilledButton, 'Create');
     expect(tester.widget<FilledButton>(createButton).onPressed, isNull);
     await tester.enterText(find.byType(TextField), 'Storyboard thumbnail');
+    await tester.pump();
     expect(tester.widget<FilledButton>(createButton).onPressed, isNotNull);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
