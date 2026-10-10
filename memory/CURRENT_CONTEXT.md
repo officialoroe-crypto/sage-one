@@ -111,3 +111,10 @@ Owner explicitly ordered that after every assistant reply, relevant conversation
 
 ## PR 220 checkpoint — 2026-10-11
 PR #220 (fix/public-web-api-deployment) adds an HTTPS SAGE_API_URL guard to the Pages deploy workflow, embeds it in the Flutter build, and documents backend hosting/database/CORS setup in docs/PUBLIC_API_DEPLOYMENT.md. CI runs #196, #357, and #1836 were pending at checkpoint time. No hosted API, database, Actions variable, merge, or live deployment exists yet. Do not claim the public app is fixed until these steps and live tests pass.
+
+
+## Public localhost error update — 2026-10-11
+- Owner reports browser console `localhost:8010/identity/config:1 Failed to load resource: net::ERR_CONNECTION_REFUSED` on the public SAGE ONE web app.
+- Root cause remains confirmed: public Flutter web build has no `SAGE_API_URL`, so its fallback targets the visitor's own localhost. No hosted API URL or repository Actions variable has been configured yet.
+- PR #220: https://github.com/officialoroe-crypto/sage-one/pull/220. SAGE CI run #1836 (ID 38060338994) passed Python and Flutter jobs. Public Website/Web App run #196 (ID 38060338980) passed PR validation; deploy was skipped as expected on pull_request. Android Release run #357 (ID 38060338986) still building release APK when checked. PR remains open and not yet mergeable.
+- Next: finish PR branch synchronization/checks and review before merge. Public site will remain nonfunctional for API-backed features until an actual hosted HTTPS backend and persistent database are provisioned and `SAGE_API_URL` is configured. Never invent a service URL or claim live success.
