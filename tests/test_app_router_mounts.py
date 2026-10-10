@@ -2,6 +2,7 @@ from app.main import app
 from identity.api import router as identity_router
 from world_intelligence.api import router as world_router
 from economy.api import router as economy_router
+from opportunities.api import router as opportunities_router
 
 
 def _paths() -> set[str]:
@@ -28,6 +29,14 @@ def test_identity_and_world_router_definitions_exist():
     assert "/world/knowledge" in world_paths
     assert "/world/due" in world_paths
     assert "/world/refresh" in world_paths
+    opportunity_paths = {route.path for route in opportunities_router.routes}
+    assert "/jobs" in opportunity_paths
+    assert "/jobs/mine" in opportunity_paths
+    assert "/jobs/applications/mine" in opportunity_paths
+    assert "/jobs/{job_id}/applications" in opportunity_paths
+    assert "/marketplace/listings" in opportunity_paths
+    assert "/marketplace/listings/mine" in opportunity_paths
+    assert "/marketplace/inquiries/mine" in opportunity_paths
 
 
 def test_identity_and_world_routers_are_mounted_on_app():
@@ -46,6 +55,13 @@ def test_identity_and_world_routers_are_mounted_on_app():
     assert "/world/knowledge" in paths
     assert "/world/due" in paths
     assert "/world/refresh" in paths
+    assert "/jobs" in paths
+    assert "/jobs/mine" in paths
+    assert "/jobs/applications/mine" in paths
+    assert "/jobs/{job_id}/applications" in paths
+    assert "/marketplace/listings" in paths
+    assert "/marketplace/listings/mine" in paths
+    assert "/marketplace/inquiries/mine" in paths
 
 
 def test_app_keeps_mission_routes_separate_from_identity_and_world():

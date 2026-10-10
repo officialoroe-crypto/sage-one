@@ -15,6 +15,7 @@ ROUTE_FILES = [
     ROOT / "workflows" / "api.py",
     ROOT / "world_intelligence" / "api.py",
     ROOT / "missions" / "api.py",
+    ROOT / "opportunities" / "api.py",
 ]
 
 

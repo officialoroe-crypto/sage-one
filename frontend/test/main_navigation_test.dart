@@ -32,11 +32,9 @@ class _MenuRouteCase {
 
 void main() {
   testWidgets(
-    'More menu navigates to Jobs, Marketplace, Learning and Community',
+    'More menu navigates to Learning and Community placeholders',
     (tester) async {
       const routes = <_MenuRouteCase>[
-        _MenuRouteCase('Jobs', 'Find jobs'),
-        _MenuRouteCase('Marketplace', 'Browse marketplace'),
         _MenuRouteCase('Learning', 'Continue learning'),
         _MenuRouteCase('Community', 'Open community'),
       ];
