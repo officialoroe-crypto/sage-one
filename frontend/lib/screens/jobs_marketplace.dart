@@ -590,7 +590,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   bool _loading = false;
   Object? _error;
   List<dynamic> _items = const [];
+  String? _categoryFilter;
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _locationSearchController = TextEditingController();
   final TextEditingController _listingTitleController = TextEditingController();
   final TextEditingController _listingDescriptionController = TextEditingController();
   final TextEditingController _listingLocationController = TextEditingController();
@@ -606,6 +608,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _locationSearchController.dispose();
     _listingTitleController.dispose();
     _listingDescriptionController.dispose();
     _listingLocationController.dispose();
@@ -622,7 +625,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     });
     try {
       final items = switch (_mode) {
-        0 => await widget.api.marketplaceListings(query: _searchController.text),
+        0 => await widget.api.marketplaceListings(
+            query: _searchController.text,
+            category: _categoryFilter,
+            location: _locationSearchController.text,
+          ),
         1 => await widget.api.myMarketplaceListings(),
         _ => await widget.api.myMarketplaceInquiries(),
       };
@@ -920,6 +927,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     if (confirm != true) return;
     try {
       await widget.api.closeMarketplaceListing(listing['id'].toString());
+      if (!mounted) return;
       _message('Listing closed.');
       await _load();
     } catch (error) {
@@ -1056,23 +1064,65 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             if (_mode == 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onSubmitted: (_) => _load(),
-                        decoration: const InputDecoration(
-                          hintText: 'Search items, services and courses',
-                          prefixIcon: Icon(Icons.search),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onSubmitted: (_) => _load(),
+                            decoration: const InputDecoration(
+                              hintText: 'Search items, services and courses',
+                              prefixIcon: Icon(Icons.search),
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          tooltip: 'Search marketplace',
+                          onPressed: _load,
+                          icon: const Icon(Icons.search),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      tooltip: 'Search marketplace',
-                      onPressed: _load,
-                      icon: const Icon(Icons.search),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _categoryFilter ?? '',
+                            decoration: const InputDecoration(labelText: 'Category'),
+                            items: const [
+                              DropdownMenuItem(value: '', child: Text('All categories')),
+                              DropdownMenuItem(value: 'vehicles', child: Text('Vehicles')),
+                              DropdownMenuItem(value: 'electronics', child: Text('Electronics')),
+                              DropdownMenuItem(value: 'property', child: Text('Property')),
+                              DropdownMenuItem(value: 'services', child: Text('Services')),
+                              DropdownMenuItem(value: 'courses', child: Text('Courses')),
+                              DropdownMenuItem(value: 'home', child: Text('Home and living')),
+                              DropdownMenuItem(value: 'other', child: Text('Other')),
+                            ],
+                            onChanged: (value) {
+                              setState(() => _categoryFilter =
+                                  value == null || value.isEmpty ? null : value);
+                              _load();
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _locationSearchController,
+                            onSubmitted: (_) => _load(),
+                            decoration: const InputDecoration(
+                              labelText: 'Location',
+                              hintText: 'City or district',
+                              prefixIcon: Icon(Icons.location_on_outlined),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
