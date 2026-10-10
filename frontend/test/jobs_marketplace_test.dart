@@ -143,7 +143,7 @@ void main() {
     await tester.tap(find.text('Post a job'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Post a job'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).at(0), 'Junior Flutter Developer');
     await tester.enterText(find.byType(TextFormField).at(1), 'SAGE Demo');
     await tester.enterText(find.byType(TextFormField).at(2), 'Build mobile features.');
