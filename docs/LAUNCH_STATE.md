@@ -1,7 +1,17 @@
 # SAGE ONE Launch State
 
-Last reconciled: 2026-10-09
-Canonical main: `f42e81209b43a8ebc007b80630d84b01c97a692c`
+Last reconciled: 2026-10-10
+Canonical main at the latest inspected checkpoint: `5d8efe7c61ed9691be66d83b77ec9de79fbcfaaf`
+
+## Current website-first verification checkpoint — 2026-10-10
+
+- PR #201 and PR #202 are merged; their latest SAGE CI and Android release validations passed.
+- PR #218 merged and [Pages run 38058717863](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058717863) deployed artifact `11671519061`. This artifact combined the marketing landing page and Flutter web build at `/sage-one/app/`; the authenticated web app was therefore published before the required web + mobile QA sequence. Browser authentication and live backend behavior are not verified.
+- Root cause: the new workflow deployed on `push: main` and bundled `frontend/build/web` into the Pages artifact; the non-PR condition allowed automatic deployment.
+- Corrective branch `fix/hold-public-app-until-web-mobile-qa` switches public Pages content to marketing-only and gates deployment behind manual dispatch. Flutter web analysis/tests and a separate QA build artifact continue in CI. After the fix merges, manually redeploy marketing-only content to remove the app path from Pages.
+- SAGE CI passed on current pre-correction main: [run 38058766698](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766698). Android Release [run 38058766769](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766769) was in progress when last checked.
+- Website QA must precede mobile QA. Before running locally, reconcile API ports: Flutter defaults to `http://localhost:8010`, while an earlier backend checkpoint reported port `8000`; configure one explicit `SAGE_API_URL` after inspecting the actual backend launch configuration.
+
 
 ## Priority 0 — Core runtime
 **Status: IMPLEMENTED + CI VERIFIED**
@@ -41,7 +51,7 @@ The Android emulator default is `http://10.0.2.2:8010`. Physical devices must us
 
 Developer Mode is available to the owner. Preview is non-mutating; applying a proposal requires an explicit approval action. Proposals are durable and owner-scoped.
 
-## CI / release evidence
+## Historical CI / release evidence (older baseline)
 - Session 4 Android release validation: PASS; APK and AAB built and uploaded — [run #37884835156](https://github.com/officialoroe-crypto/sage-one/actions/runs/37884835156).
 - Final frontend bulk PR SAGE CI: PASS — 214 Python tests, Flutter analysis clean, 27 Flutter tests — [run #37886497211](https://github.com/officialoroe-crypto/sage-one/actions/runs/37886497211).
 - Final frontend bulk PR Android release validation: PASS; APK and AAB built and uploaded — [run #37886497229](https://github.com/officialoroe-crypto/sage-one/actions/runs/37886497229).

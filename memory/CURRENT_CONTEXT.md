@@ -80,30 +80,13 @@ Owner explicitly ordered that after every assistant reply, relevant conversation
 - Next: inspect GitHub Actions deployment on main / Pages settings; then verify both URLs. Only after website verification resume onboarding/button checks and later Android Google sign-in. Do not use local heavy builds while CPU is high.
 
 
-## Backend connection diagnosis — 2026-10-10
-- Owner ran `curl -i http://127.0.0.1:8010/identity/config`; curl returned error 7, could not connect. `netstat -ano | findstr :8010` produced no visible output, consistent with no process listening on port 8010 at that time.
-- This establishes that the local endpoint is unreachable; it does not yet establish whether the intended backend should run on 8010 or whether the public Pages app is mistakenly configured to call localhost.
-- Next: ask owner to list `C:\SageOne` and `C:\SageOne\Backend` (Git Bash: `cd /c/SageOne && ls`, then `ls /c/SageOne/Backend`) to identify actual local checkout/backend structure and startup instructions. Do not run a local Flutter/Gradle build; CPU is already high. If the error is from the public deployed web app, localhost is the visitor's machine and production must use a reachable HTTPS backend URL.
-
-
-## Backend folder discovery — 2026-10-10
-- Owner's Git Bash listing confirms `C:\SageOne` contains `Backend/`, `desktop-agent/`, `img-assets/`, `sage_core-android-signin-test/`, `Git/`, `docs/`, `sage_core/`, and `sage_one/`.
-- `C:\SageOne\Backend` contains `app/`, `memory/`, and `venv/`. This identifies a local backend environment but not yet its startup entrypoint, dependencies, or intended port.
-- The last connection check still showed no listener at `127.0.0.1:8010`. Previous context says backend had responded on port 8000; check port/config rather than assuming 8010 is correct.
-- Next low-cost diagnostic: list `C:\SageOne\Backend\app` and locate dependency/startup files (`requirements.txt`, `pyproject.toml`, `run*.bat`, `main.py`, `uvicorn` instructions) without activating the venv or running a build. Still need to establish whether the reported browser error is from local app or public GitHub Pages app; public deployment must never call localhost for shared users.
-
-
-## Public web API root cause confirmed — 2026-10-10
-- Owner confirmed the `ERR_CONNECTION_REFUSED` was on the public GitHub Pages app (`A`); local app (`B`) has not been opened.
-- Inspected `frontend/lib/core/identity_client.dart` and `frontend/lib/core/sage_api.dart` on main. Both use `String.fromEnvironment('SAGE_API_URL')`, but when unset their web default is hardcoded to `http://localhost:8010`.
-- This is a confirmed production configuration defect: for a public visitor, localhost points to that visitor's computer. The local curl failure on the owner's machine is separate and cannot fix the public app.
-- GitHub Pages workflow `.github/workflows/sage-one-god-mode-pages.yml` only builds and deploys static marketing + Flutter web assets; no backend service is deployed by this workflow. Therefore fixing frontend configuration alone requires a real reachable HTTPS API endpoint. Do not replace localhost with an invented URL, and do not claim the app is working until backend hosting/configuration and live smoke tests succeed.
-- Next: inspect repository for any already configured backend host/service and deployment docs/workflows. If none exists, choose a no-card/free-tier HTTPS backend host compatible with FastAPI and persistent database needs, explain any limits, deploy safely without exposing secrets, pass `--dart-define=SAGE_API_URL=https://...` to the Pages Flutter build, then verify `/identity/config`, CORS, authentication/onboarding, and public browser behavior. Avoid local heavy builds due laptop CPU.
-
-
-## Local identity endpoint verified — 2026-10-11
-- Owner ran `curl -i http://127.0.0.1:8000/identity/config`; received HTTP 200 from Uvicorn with `success:true`, `developer_mode:true`, and `owner_mode_available:true`. The response also included a Google OAuth client ID; do not copy it into public memory or logs.
-- This verifies only the local identity configuration endpoint on port 8000. It does not verify Google sign-in or onboarding end to end, nor does it fix the public Pages app.
-- Public Pages workflow `.github/workflows/sage-one-god-mode-pages.yml` currently runs `flutter build web --release --base-href /sage-one/app/` without `--dart-define=SAGE_API_URL=...`; it packages/deploys static website + Flutter app only, not FastAPI.
-- Repo root has no `README.md`; checks for root `render.yaml`, `railway.json`, `fly.toml`, and `backend/requirements.txt` / `Backend/requirements.txt` returned not found. This is not an exhaustive inventory of hosting docs or all possible service configuration.
-- Next: inspect repository docs and backend dependency/startup files for an existing hosting target. If none, choose a compatible HTTPS FastAPI host and configure its environment/database securely, then pass the actual service URL into the Pages Flutter build. Verify the public endpoint and CORS before calling web app live.
+## Active checkpoint — Public app release hold and website-first QA (2026-10-10)
+- Owner's release order is: verify the Flutter web application first, find/fix browser bugs, then verify the Android app, and only after both pass consider a public app release. A public marketing landing page is separate from public access to the authenticated app.
+- PR #201 merged as `ad769fdc66ed55d098019bdb38634550abbf2f2e`; its SAGE CI and Android Release checks passed. Android artifact `11664548324` was uploaded from run [38036670372](https://github.com/officialoroe-crypto/sage-one/actions/runs/38036670372).
+- PR #202 merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; its SAGE CI and Android Release checks passed.
+- Marketing-site PR #218 merged as `3d951d2c7ffb3ed1d1ec70edb64c09d29432f4b4`. The post-merge Pages run [38058717863](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058717863) succeeded and uploaded artifact `11671519061`. Important: that artifact contained both `website/` and the Flutter web build under `/sage-one/app/`, so the authenticated app bundle has been published to Pages earlier than the owner's release order allows. The live browser/authenticated backend journey has not been verified.
+- Root cause: PR #218 reintroduced a `push: main` deployment trigger and its deploy job ran on every non-PR event; the combined Pages artifact placed `frontend/build/web` at the public `app/` path. The earlier manual-only policy in PR #216 was therefore bypassed by the new workflow.
+- Corrective branch: `fix/hold-public-app-until-web-mobile-qa`. It changes Pages output to marketing-only; keeps Flutter analyze/tests and a web-build QA artifact in CI; makes actual Pages deployment manual-dispatch-only; removes the public app CTA while QA is pending; and fixes a literal `\\n` inserted between favicon and stylesheet links in `website/index.html`.
+- Next: verify CI on the corrective PR, merge the release-boundary fix, then run the manual Pages workflow to replace the combined public artifact with marketing-only content. Confirm the public app path is no longer published before beginning browser QA. Then test the local/staging Flutter web app against the actual backend, including blank-phone onboarding, navigation, Chat/task execution, profile/memory, and Google login. Do not resume Huawei/mobile QA until the web checklist is complete.
+- Backend port caveat: frontend source defaults to `http://localhost:8010`, while the owner's prior local checkpoint reported a backend responding on port `8000`. Confirm the active backend launch command/port before running local web QA; pass `--dart-define=SAGE_API_URL=http://localhost:PORT` consistently to the API and identity clients. Do not assume the port.
+- Latest verified main at checkpoint start: `5d8efe7c61ed9691be66d83b77ec9de79fbcfaaf`; SAGE CI [38058766698](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766698) passed. Android Release [38058766769](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766769) was still in progress when inspected.

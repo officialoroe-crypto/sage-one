@@ -1,6 +1,6 @@
 # SAGE ONE Frontend / Backend Audit
 
-Last updated: 2026-10-10
+Last updated: 2026-10-10 (website-first QA checkpoint)
 
 ## Audit rules
 
@@ -8,11 +8,11 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 
 ## Latest baseline
 
-- Current main baseline after frontend recovery, navigation, owner-authorization and action-failure regression work: `ff646d0a0767ef927d77598ed7b13abb8f818068`.
-- PR #201 frontend recovery and form-validation work merged as `ad769fdc66ed55d098019bdb38634550abbf2f2e`; SAGE CI and Android Release passed.
-- PR #202 More-menu navigation and placeholder-action tests merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed.
-- Latest main SAGE CI run #1702 and Android Release run #282 passed on `ff646d0a0767ef927d77598ed7b13abb8f818068`; Android artifact `11664978073` is available until 2026-10-24.
-- PR #192 is merged. It fixed memory dialog controller lifetime, stale-session recovery, project/sales dialog controller lifetime, profile loading lifecycle, and AI Studio workspace validation.
+- Current main baseline at the website-first QA checkpoint: `5d8efe7c61ed9691be66d83b77ec9de79fbcfaaf`.
+- PR #201 merged as `ad769fdc66ed55d098019bdb38634550abbf2f2e`; the latest PR-head SAGE CI and Android Release passed. Artifact `11664548324` was uploaded by [run 38036670372](https://github.com/officialoroe-crypto/sage-one/actions/runs/38036670372).
+- PR #202 More-menu fix merged as `876168e7d85c5e035e31c23523d2e18baa06a16a`; SAGE CI and Android Release passed.
+- PR #218 marketing-site work merged as `3d951d2c7ffb3ed1d1ec70edb64c09d29432f4b4`. [Pages run 38058717863](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058717863) successfully deployed a combined marketing-page + Flutter-web artifact (`11671519061`). This deployed the app before web/mobile QA was complete and is being corrected.
+- Current main SAGE CI [run 38058766698](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766698) passed; Android Release [run 38058766769](https://github.com/officialoroe-crypto/sage-one/actions/runs/38058766769) was still running at the last check.
 - The route-contract test checks recognized Flutter API paths against FastAPI routes. It is a static contract check, not a live-server integration test.
 
 ## Screen-to-backend map
@@ -48,9 +48,9 @@ This is an evidence log, not a claim that the app is end-to-end complete. A scre
 | AI Studio | List/create workflow workspaces | `/workflow/workspaces` | Workspace creation is connected; broader prompt/agent-template features remain incomplete |
 | Apps | Buttons show explicit not-connected explanation | No live integration endpoint | Placeholder, truthfully labelled |
 | Earnings | Buttons show explicit not-connected explanation | No live earnings endpoint wired from this screen | Placeholder |
-| Marketplace | Browse listings, search, publish a listing, send buyer inquiry, view seller inquiries, close own listing | `/marketplace/listings`, `/marketplace/listings/mine`, `/marketplace/listings/{id}/inquiries`, `/marketplace/inquiries/mine` | MVP implementation on `feat/jobs-marketplace-mvp`; automated verification pending. Checkout/payment settlement intentionally not connected |
-| Jobs | Browse/search jobs, publish a job, apply, view own postings/applications and close a posting | `/jobs`, `/jobs/mine`, `/jobs/applications/mine`, `/jobs/{id}/applications` | MVP implementation on `feat/jobs-marketplace-mvp`; automated verification pending |
-| Learning | Buttons show explicit not-connected explanation | No live learning endpoint wired from this screen | Placeholder |
+| Marketplace | Browse/search listings, publish listing, inquire, view seller inquiries, close own listing | `/marketplace/listings`, `/marketplace/listings/mine`, `/marketplace/listings/{id}/inquiries`, `/marketplace/inquiries/mine` | Backend-backed MVP merged via PR #210; add live web smoke tests, authorization/ownership and duplicate-inquiry checks. Checkout/payment settlement remains unconnected |
+| Jobs | Browse/search jobs, publish a job, apply, view own postings/applications and close a posting | `/jobs`, `/jobs/mine`, `/jobs/applications/mine`, `/jobs/{id}/applications` | Backend-backed MVP merged via PR #210; add live web smoke tests, authorization/ownership and duplicate-application checks |
+| Learning | Browse learning paths and save completed lesson progress | Learning-path and lesson-progress API methods in `SageApi` | Backend-backed learning MVP merged via PR #213; verify web persistence, error recovery and lesson-completion behavior against the live backend |
 | Community | Buttons show explicit not-connected explanation | No live community endpoint wired from this screen | Placeholder |
 | KYC / Identity Verification | Buttons show explicit not-connected explanation | No provider-backed KYC workflow wired from this screen | Placeholder; provider/legal setup required |
 | First Run | Buttons show explicit not-connected explanation | No live setup workflow wired from this screen | Placeholder |
@@ -75,7 +75,7 @@ World Intelligence refresh and global upgrade-proposal creation now require the 
 
 ## Known gaps / external dependencies
 
-- Learning, Community, Apps, Earnings, KYC and First Run actions remain placeholders. Jobs/Marketplace MVP workflows are under implementation in `feat/jobs-marketplace-mvp`; do not treat that branch as deployed to main until its PR merges.
+- Community, Apps, Earnings, KYC and First Run still expose placeholder actions. Jobs, Marketplace and Learning now have backend-backed MVP screens merged into main; live-browser/backend verification and edge-case regression remain required. Payment checkout/settlement is intentionally not connected.
 - Payments reports provider status only; no live payment creation/settlement.
 - Production SMS/OTP provider and credentials.
 - Production Google OAuth/identity configuration and long-lived session UX.
@@ -84,13 +84,13 @@ World Intelligence refresh and global upgrade-proposal creation now require the 
 - Physical Huawei test of owner login, backend connectivity, microphone permission/STT, TTS, app restart/session restore, and task execution.
 - Full button-by-button success/error/cancel coverage and visual/reference regression remain in progress.
 
-## Next verification order
+## Next verification order — website first, then mobile
 
-1. Complete CI review for `feat/jobs-marketplace-mvp`; verify persistence, validation, and cross-user privacy tests before merging the API/UI work.
-2. Extend Jobs/Marketplace Flutter tests for API failure, empty state, duplicate apply/inquiry, and ownership-denied responses.
-3. Add Learning and Community real workflows only when their data model and product behavior are defined; keep remaining placeholders clearly labelled.
-4. Re-run the screen-to-route contract test and compare every API method against its FastAPI route and response shape.
-5. Build the APK from the exact merged `main` commit, record the artifact ID, and install that exact APK on the Huawei phone using the intended API routing (`adb reverse tcp:8010 tcp:8010` for the local-host configuration).
-6. On-device, verify sign-in, API connectivity, chat/task execution, memory, notifications, project actions, and microphone/STT/TTS.
-7. Only after these checks pass, claim the private demo is end-to-end ready.
+1. Merge the release-boundary correction only after SAGE CI and public-site workflow validation pass. Run the manual Pages workflow to replace the combined public artifact with the marketing site only; verify the `/app/` route is no longer published.
+2. Run the Flutter web app locally against the actual backend. First resolve the known port discrepancy: Flutter web defaults to `http://localhost:8010`, while an earlier owner checkpoint showed the backend responding on port `8000`. Inspect the server command and provide a matching explicit `SAGE_API_URL` to both API and identity clients.
+3. Browser test onboarding with phone blank (PR #214's fix), auth/developer-mode routing, primary navigation, Chat/session/task lifecycle, profile/memory, Jobs, Marketplace, Learning, settings, notifications and form-validation errors. Record each case as pass/fail with console/network evidence.
+4. Check real backend persistence, response shapes and cross-user ownership boundaries for Jobs/Marketplace/Learning; the current CI mocks and static route-contract checks don't prove a live request succeeds.
+5. After website bugs are fixed, test Android using a new GitHub Actions artifact from the verified main commit. Verify backend reachability, sign-in, Chat/task execution, memory, notifications and project actions before voice/STT/TTS.
+6. Run the Huawei device checks only after web QA passes; use the known authorized ADB executable path and verify the intended port mapping rather than copying example output into the terminal.
+7. Only after web + mobile verification and external-provider checks pass should an authenticated app build be intentionally released publicly.
 
