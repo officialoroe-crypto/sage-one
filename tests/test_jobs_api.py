@@ -44,12 +44,16 @@ def jobs_client(monkeypatch: pytest.MonkeyPatch) -> Generator[tuple[TestClient, 
             "name": current.get("name"),
         },
     )
+    prior_auth_override = app.dependency_overrides.get(authenticate_request)
     app.dependency_overrides[authenticate_request] = lambda: claims
     client = TestClient(app)
     try:
         yield client, claims
     finally:
-        app.dependency_overrides.pop(authenticate_request, None)
+        if prior_auth_override is None:
+            app.dependency_overrides.pop(authenticate_request, None)
+        else:
+            app.dependency_overrides[authenticate_request] = prior_auth_override
         client.close()
         engine.dispose()
 
