@@ -6,9 +6,16 @@ Last updated: 2026-10-09
 
 This document records evidence, not assumptions. A screen rendering, a successful build, or a route existing in FastAPI does not by itself prove that every button works end-to-end. Distinguish automated test results from real-device/provider verification.
 
-## Runtime warning cleanup
+## Runtime warning cleanup and current CI evidence
 
-The old SAGE CI run cited by the owner reported `actions/setup-python@v5` and `ubuntu-latest`. The current workflow files use `actions/setup-python@v6`, `actions/checkout@v6`, `actions/upload-artifact@v5`, and pin Linux runners to `ubuntu-24.04`. The GitHub Action runtime test enforces these choices. Annotations attached to an older run remain visible in that run's history; inspect the latest run for current status.
+Two historical SAGE CI runs (37962853764 and 37962862824) failed because `tests/test_github_action_runtime.py` still expected `actions/upload-artifact@v5` after the Android workflow had moved to v7. Commit `a74474fcc6b24d0e86dab9dd58d10af2277aa8c1` corrected the contract test to require v7 and reject v5; subsequent CI runs passed.
+
+Verified current main commit on 2026-10-09: `8fde9c3322711b075c210da7af77154cb591c35b`.
+
+- [SAGE CI run 1673](https://github.com/officialoroe-crypto/sage-one/actions/runs/37969437072): Python passed with 218 tests and one Starlette/httpx deprecation warning; Flutter analysis and 59 Flutter tests passed.
+- [Android Release run 257](https://github.com/officialoroe-crypto/sage-one/actions/runs/37969437080): analysis, Flutter tests, release APK, App Bundle, and artifact upload all passed.
+
+Current workflows use `actions/setup-python@v6`, `actions/checkout@v6`, `actions/upload-artifact@v7`, and pin Ubuntu runners to `ubuntu-24.04`. The latest inspected logs do not contain the old `setup-python@v5` / Node.js 20 annotation. The remaining warning in the latest Python job is from Starlette's TestClient/httpx compatibility path. Annotations attached to historical runs are not evidence that current main is failing.
 
 ## Automated checks that exist
 
@@ -30,7 +37,9 @@ The old SAGE CI run cited by the owner reported `actions/setup-python@v5` and `u
 
 ## Current audit branch
 
-The follow-up audit adds Profile form validation so blank required fields are rejected in the UI instead of sending requests the backend will reject. CI must pass before this change is merged.
+Profile required-field and age validation is already present on main and covered by `frontend/test/final_surfaces_test.dart`; it is not a pending change.
+
+The follow-up audit fixes transient data-load recovery in Spark Wallet, Transactions, Evolution, Notifications, Payments, File Manager, and AI Studio. These screens now expose a Retry action after an initial read failure and clear stale error state after a retry succeeds. The new widget regression exercises failure → retry → recovered content for all seven screens. This work is on `audit/live-surface-error-recovery` and remains unmerged until its own CI passes. CI must pass before this change is merged.
 
 ## Known connection requirements
 

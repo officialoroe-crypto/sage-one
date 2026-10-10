@@ -3,6 +3,38 @@ import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+
+class _RetryableLoadError extends StatelessWidget {
+  const _RetryableLoadError({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message, style: const TextStyle(color: SageTheme.failure)),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: onRetry,
+                  child: const Text('Retry'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
 class _Page extends StatelessWidget {
   const _Page({required this.title, required this.body});
   final String title; final Widget body;
@@ -19,10 +51,10 @@ class SparkWalletScreen extends StatefulWidget {
 }
 class _SparkWalletState extends State<SparkWalletScreen>{
   Map<String,dynamic>? data; Object? error;
-  Future<void> load()async{try{final v=await widget.api.economyMe();if(mounted)setState(()=>data=v);}catch(e){if(mounted)setState(()=>error=e);}}
+  Future<void> load()async{try{final v=await widget.api.economyMe();if(mounted)setState((){data=v;error=null;});}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Spark Wallet',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    if(error!=null)Text('Wallet error: ${error.toString()}',style:const TextStyle(color:SageTheme.failure)),
+    if(error!=null)_RetryableLoadError(message:'Wallet error: ${error.toString()}',onRetry:(){load();}),
     if(data!=null)...[
       _row('Balance',data!['spark']?['balance']),
       _row('Lifetime earned',data!['spark']?['lifetime_earned']),
@@ -44,10 +76,10 @@ class TransactionsScreen extends StatefulWidget {
 }
 class _TransactionsState extends State<TransactionsScreen>{
   List items=[]; Object? error;
-  Future<void> load()async{try{final d=await widget.api.economyMe();if(mounted)setState(()=>items=d['ledger'] is List?d['ledger']:[]);}catch(e){if(mounted)setState(()=>error=e);}}
+  Future<void> load()async{try{final d=await widget.api.economyMe();if(mounted)setState((){items=d['ledger'] is List?d['ledger']:[];error=null;});}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Transactions',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    if(error!=null)Text('Transaction error: ${error.toString()}'),
+    if(error!=null)_RetryableLoadError(message:'Transaction error: ${error.toString()}',onRetry:(){load();}),
     ...items.map((e)=>Card(child:ListTile(title:Text(e['reason']?.toString()??'Spark movement'),subtitle:Text(e['reference']?.toString()??e['created_at']?.toString()??''),trailing:Text(e['delta']?.toString()??'0')))),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('No Spark transactions yet.')),
   ])));
@@ -59,10 +91,10 @@ class EvolutionFinalScreen extends StatefulWidget {
 }
 class _EvolutionFinalState extends State<EvolutionFinalScreen>{
   Map<String,dynamic>? data; List tiers=[]; Object? error;
-  Future<void> load()async{try{final d=await widget.api.economyMe();final t=await widget.api.evolutionTiers();if(mounted)setState((){data=d;tiers=t;});}catch(e){if(mounted)setState(()=>error=e);}}
+  Future<void> load()async{try{final d=await widget.api.economyMe();final t=await widget.api.evolutionTiers();if(mounted)setState((){data=d;tiers=t;error=null;});}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Evolution',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
-    if(error!=null)Text('Evolution error: ${error.toString()}',style:const TextStyle(color:SageTheme.failure)),
+    if(error!=null)_RetryableLoadError(message:'Evolution error: ${error.toString()}',onRetry:(){load();}),
     if(data!=null)...[
       Text("Tier: ${data!['evolution']?['tier']?.toString() ?? 'Bronze'}",style:const TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
       Text("Stage: ${data!['evolution']?['stage']?.toString() ?? 'LOW'}"),
@@ -251,7 +283,7 @@ class NotificationsFinalScreen extends StatefulWidget {
 }
 class _NotificationsFinalState extends State<NotificationsFinalScreen>{
   List items=[]; Object? error;
-  Future<void> load()async{try{final v=await widget.api.notifications();if(mounted)setState(()=>items=v);}catch(e){if(mounted)setState(()=>error=e);}}
+  Future<void> load()async{try{final v=await widget.api.notifications();if(mounted)setState((){items=v;error=null;});}catch(e){if(mounted)setState(()=>error=e);}}
   Future<void> read(String id) async {
   try {
     await widget.api.markNotificationRead(id);
@@ -278,7 +310,7 @@ class _NotificationsFinalState extends State<NotificationsFinalScreen>{
         }
       }
     },child:const Text('Mark all read'))]),
-    if(error!=null)Text('Notification error: ${error.toString()}'),
+    if(error!=null)_RetryableLoadError(message:'Notification error: ${error.toString()}',onRetry:(){load();}),
     ...items.map((n)=>Card(child:ListTile(title:Text(n['title']?.toString()??n['message']?.toString()??'SAGE update'),subtitle:Text(n['created_at']?.toString()??''),trailing:IconButton(icon:const Icon(Icons.done),onPressed:()=>read(n['id'].toString()))))),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('You are all caught up.')),
   ])));
@@ -290,12 +322,12 @@ class PaymentFinalScreen extends StatefulWidget {
 }
 class _PaymentFinalState extends State<PaymentFinalScreen>{
   Map<String,dynamic>? status; Object? error;
-  Future<void> load()async{try{final v=await widget.api.paymentStatus();if(mounted)setState(()=>status=v);}catch(e){if(mounted)setState(()=>error=e);}}
+  Future<void> load()async{try{final v=await widget.api.paymentStatus();if(mounted)setState((){status=v;error=null;});}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'Payments',body:ListView(padding:const EdgeInsets.all(20),children:[
     const Text('Provider readiness',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),
     if(status!=null)Card(child:ListTile(title:Text(status!['configured']==true?'Provider configured':'Not configured'),subtitle:Text(status!['message']?.toString()??''))),
-    if(error!=null)Text('Payment status error: ${error.toString()}'),
+    if(error!=null)_RetryableLoadError(message:'Payment status error: ${error.toString()}',onRetry:(){load();}),
     const SizedBox(height:20),const Text('No payment action is exposed until a real provider is configured.',style:TextStyle(color:SageTheme.textSecondary)),
   ]));
 }
@@ -306,11 +338,11 @@ class FileManagerFinalScreen extends StatefulWidget {
 }
 class _FileManagerFinalState extends State<FileManagerFinalScreen>{
   List items=[]; Object? error;
-  Future<void> load()async{try{final v=await widget.api.tasks();if(mounted)setState(()=>items=v);}catch(e){if(mounted)setState(()=>error=e);}}
+  Future<void> load()async{try{final v=await widget.api.tasks();if(mounted)setState((){items=v;error=null;});}catch(e){if(mounted)setState(()=>error=e);}}
   @override void initState(){super.initState();load();}
   @override Widget build(BuildContext c)=>_Page(title:'File Manager',body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(20),children:[
     const Text('Task artifacts',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),
-    if(error!=null)Text('File manager error: ${error.toString()}'),
+    if(error!=null)_RetryableLoadError(message:'File manager error: ${error.toString()}',onRetry:(){load();}),
     ...items.map((t){final a=t is Map&&t['artifact'] is Map?t['artifact']:null;return a==null?const SizedBox.shrink():Card(child:ListTile(title:Text(a['name']?.toString()??'Artifact'),subtitle:Text(a['mime_type']?.toString()??''),onTap:() async {
   final raw = a['url'] ?? a['uri'];
   final uri = raw == null ? null : Uri.tryParse(raw.toString());
@@ -341,7 +373,7 @@ class _AiStudioFinalState extends State<AiStudioFinalScreen>{
   List items=[]; Object? error;
   final TextEditingController _workspaceName = TextEditingController();
   final TextEditingController _workspaceSlug = TextEditingController();
-  Future<void> load()async{try{final v=await widget.api.workflowWorkspaces();if(mounted)setState(()=>items=v);}catch(e){if(mounted)setState(()=>error=e);}}
+  Future<void> load()async{try{final v=await widget.api.workflowWorkspaces();if(mounted)setState((){items=v;error=null;});}catch(e){if(mounted)setState(()=>error=e);}}
   Future<void> createWorkspace()async{
     _workspaceName.clear();
     _workspaceSlug.clear();
@@ -362,7 +394,7 @@ class _AiStudioFinalState extends State<AiStudioFinalScreen>{
   @override void dispose(){_workspaceName.dispose();_workspaceSlug.dispose();super.dispose();}
   @override Widget build(BuildContext c)=>_Page(title:'AI Studio',body:ListView(padding:const EdgeInsets.all(20),children:[
     Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('Workflow Studio',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),FilledButton.icon(onPressed:createWorkspace,icon:const Icon(Icons.add),label:const Text('Workspace'))]),
-    if(error!=null)Text('AI Studio error: ${error.toString()}'),
+    if(error!=null)_RetryableLoadError(message:'AI Studio error: ${error.toString()}',onRetry:(){load();}),
     ...items.map((w)=>Card(child:ListTile(title:Text(w['name']?.toString()??w['slug']?.toString()??'Workspace'),subtitle:Text(w['workspace_type']?.toString()??'personal')))),
     if(items.isEmpty&&error==null)const Padding(padding:EdgeInsets.all(40),child:Text('No workspaces yet.')),
   ]));
