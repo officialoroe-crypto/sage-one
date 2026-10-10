@@ -1,9 +1,21 @@
-name: SAGE ONE God Mode Developer Website
+name: SAGE ONE Public Website and Web App
 
-# Public Pages deployment is manual-only until the owner approves release readiness.
-# A manual run publishes the Flutter web application to GitHub Pages.
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "website/**"
+      - "frontend/**"
+      - ".github/workflows/sage-one-god-mode-pages.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "website/**"
+      - "frontend/**"
+      - ".github/workflows/sage-one-god-mode-pages.yml"
 
 permissions:
   contents: read
@@ -15,11 +27,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-24.04
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     defaults:
       run:
         working-directory: frontend
@@ -27,14 +36,33 @@ jobs:
       - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.3'
+          flutter-version: "3.47.3"
           channel: stable
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
-      - run: flutter build web --release --base-href /sage-one/
-      - uses: actions/upload-pages-artifact@v5
+      - name: Build the web app under /app/
+        run: flutter build web --release --base-href /sage-one/app/
+      - name: Combine public landing page and web app
+        run: |
+          mkdir -p public_site/app
+          cp -R ../website/. public_site/
+          cp -R build/web/. public_site/app/
+          test -s public_site/index.html
+          test -s public_site/app/index.html
+      - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
         with:
-          path: frontend/build/web
+          path: frontend/public_site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v5
