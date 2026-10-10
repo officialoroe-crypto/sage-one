@@ -133,3 +133,7 @@ Owner explicitly ordered that each assistant reply in the active workflow must b
 - Local `GET http://127.0.0.1:8000/identity/config` confirmed HTTP 200 with success/developer-mode/owner-mode flags true. This is a local endpoint check only; Google sign-in/onboarding remain unverified.
 - Confirmed Pages workflow builds Flutter web without a SAGE_API_URL dart-define and deploys static assets only. No root README, render.yaml, railway.json, fly.toml, or root backend requirements file was found at the checked paths; further repo inspection is required before concluding no existing host setup exists.
 - Public app still has confirmed fallback to localhost:8010 when SAGE_API_URL is unset. Do not claim production app works until a real HTTPS backend URL is configured and live checks pass.
+
+
+## PR 220 checkpoint — 2026-10-11
+PR #220 adds a public deployment guard requiring HTTPS SAGE_API_URL and passes it to Flutter web builds. It also documents backend host configuration, durable PostgreSQL, CORS and OAuth env. CI runs #196, #357 and #1836 were pending at checkpoint. No real API host, database, repository variable, merge, or live verification yet; do not call the public app fixed.
