@@ -18,13 +18,9 @@ void main() {
   });
 
   testWidgets(
-    'Jobs, Marketplace, Learning and Community actions stay explicitly unconnected',
+    'Marketplace, Learning and Community remain explicitly unconnected',
     (tester) async {
       const scenarios = <_WorkspaceScenario>[
-        _WorkspaceScenario(
-          screen: JobsScreen(),
-          actions: ['Find jobs', 'Track applications', 'Open active work'],
-        ),
         _WorkspaceScenario(
           screen: MarketplaceScreen(),
           actions: ['Browse marketplace', 'View saved items', 'Open seller tools'],
