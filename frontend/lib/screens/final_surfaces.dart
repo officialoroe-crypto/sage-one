@@ -149,6 +149,7 @@ class SettingsFinalScreen extends StatefulWidget {
 class _SettingsFinalState extends State<SettingsFinalScreen> {
   bool notifications = true;
   bool compact = false;
+  String themeMode = 'dark';
   bool saving = false;
   bool loading = true;
   bool _loaded = false;
@@ -186,10 +187,16 @@ class _SettingsFinalState extends State<SettingsFinalScreen> {
         compact = settings['compact_mode'] is bool
             ? settings['compact_mode'] as bool
             : false;
+        themeMode = settings['theme_mode'] is String &&
+                const ['dark', 'light', 'system']
+                    .contains(settings['theme_mode'])
+            ? settings['theme_mode'] as String
+            : SageTheme.preferenceFromMode(SageTheme.mode.value);
         _loaded = true;
         loading = false;
         _loadError = null;
       });
+      SageTheme.mode.value = SageTheme.modeFromPreference(themeMode);
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -214,9 +221,11 @@ class _SettingsFinalState extends State<SettingsFinalScreen> {
           : <String, dynamic>{};
       currentSettings['notifications'] = notifications;
       currentSettings['compact_mode'] = compact;
+      currentSettings['theme_mode'] = themeMode;
       basic['settings'] = currentSettings;
       await widget.api.updateProfile(basicInfo: basic);
       if (mounted) {
+        SageTheme.mode.value = SageTheme.modeFromPreference(themeMode);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Settings saved.')),
         );
@@ -273,6 +282,22 @@ class _SettingsFinalState extends State<SettingsFinalScreen> {
                   ? null
                   : (value) => setState(() => compact = value),
             ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: themeMode,
+              decoration: const InputDecoration(labelText: 'Appearance'),
+              items: const [
+                DropdownMenuItem(value: 'dark', child: Text('Dark')),
+                DropdownMenuItem(value: 'light', child: Text('Light')),
+                DropdownMenuItem(value: 'system', child: Text('System default')),
+              ],
+              onChanged: !_loaded || saving
+                  ? null
+                  : (value) {
+                      if (value != null) setState(() => themeMode = value);
+                    },
+            ),
+            const SizedBox(height: 16),
             FilledButton(
               onPressed: !_loaded || saving ? null : save,
               child: Text(saving ? 'Saving…' : 'Save settings'),
