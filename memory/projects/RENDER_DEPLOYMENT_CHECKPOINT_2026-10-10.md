@@ -26,3 +26,12 @@
 1. Inspect the latest `1f7b6e5` logs and capture the first actionable traceback or the successful application startup line.
 2. Confirm current `/health` and `/identity/config` results after that deployment.
 3. Only then dispatch the Pages workflow and verify that the deployed web app no longer requests `localhost:8010`.
+
+
+## Latest Render log review — 2026-10-10
+- Owner uploaded the newest deployment log. It shows dependency installation and build succeeded, then Uvicorn started on `0.0.0.0:10000`, `Application startup complete.`, repeated `GET /health` responses returned `200 OK`, and Render printed `Your service is live`.
+- Public base URL shown in Render logs: `https://sage-one-api.onrender.com`.
+- This resolves the immediate startup/health-check concern for the deployment represented by the uploaded log. It does not yet prove identity configuration, OAuth, database durability, onboarding, or the public Flutter app work end-to-end.
+- Next: test `https://sage-one-api.onrender.com/health` and `https://sage-one-api.onrender.com/identity/config` directly. Verify identity config carefully; do not share OAuth secrets. If both responses are valid, ensure GitHub Actions repository variable `SAGE_API_URL` equals exactly `https://sage-one-api.onrender.com` (no trailing slash), then manually run the **SAGE ONE Public Website and Web App** workflow on `main`: https://github.com/officialoroe-crypto/sage-one/actions/workflows/sage-one-god-mode-pages.yml.
+- After deployment, open `https://officialoroe-crypto.github.io/sage-one/app/`, hard-refresh, and verify browser Network/Console shows requests to `sage-one-api.onrender.com`, not `localhost:8010`. Test onboarding/auth only after config is reviewed.
+- Render Free's filesystem remains ephemeral; SQLite is temporary smoke-test-only and must not store real user data.
