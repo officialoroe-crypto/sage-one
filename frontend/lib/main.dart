@@ -18,6 +18,7 @@ import 'screens/memory.dart';
 import 'screens/evolution.dart';
 import 'theme/sage_theme.dart';
 import 'screens/feature_workspaces.dart';
+import 'screens/jobs_marketplace.dart';
 import 'screens/voice_mode.dart';
 import 'screens/developer_mode.dart';
 import 'screens/sales.dart';
@@ -143,8 +144,8 @@ class _SageOneShellState extends State<SageOneShell> {
             ListTile(leading: const Icon(Icons.chat_bubble_outline), title: const Text('Chat'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.apps), title: const Text('Apps'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AppsScreen())); }),
             ListTile(leading: const Icon(Icons.trending_up), title: const Text('Earnings'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const EarningsScreen())); }),
-            ListTile(leading: const Icon(Icons.storefront), title: const Text('Marketplace'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const MarketplaceScreen())); }),
-            ListTile(leading: const Icon(Icons.work_outline), title: const Text('Jobs'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const JobsScreen())); }),
+            ListTile(leading: const Icon(Icons.storefront), title: const Text('Marketplace'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => MarketplaceScreen(api: _api))); }),
+            ListTile(leading: const Icon(Icons.work_outline), title: const Text('Jobs'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => JobsScreen(api: _api))); }),
             ListTile(leading: const Icon(Icons.school_outlined), title: const Text('Learning'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const LearningScreen())); }),
             ListTile(leading: const Icon(Icons.groups_outlined), title: const Text('Community'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunityScreen())); }),
             ListTile(leading: const Icon(Icons.handshake_outlined), title: const Text('Sales'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => SalesScreen(api: _api))); }),
