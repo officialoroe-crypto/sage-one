@@ -33,48 +33,96 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Future<void> _runProjectCommand() async {
     if (_projectId.isEmpty || _commandBusy) return;
     _projectCommandController.clear();
-    final command = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Run SAGE in this project'),
-        content: TextField(
-          controller: _projectCommandController,
-          autofocus: true,
-          minLines: 2,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            hintText: 'Tell SAGE what to do with this project…',
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () {
-              final value = _projectCommandController.text.trim();
-              if (value.isNotEmpty) Navigator.pop(dialogContext, value);
-            },
-            child: const Text('Queue'),
-          ),
-        ],
-      ),
-    );
-    if (command == null || command.isEmpty) return;
+    var submitting = false;
+    String? errorMessage;
 
     setState(() => _commandBusy = true);
     try {
-      final response = await widget.api.submitCommand(command, projectId: _projectId);
-      final task = response['task'];
-      final taskId = task is Map ? task['id']?.toString() : response['task_id']?.toString();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(taskId == null ? 'Project command queued.' : 'Project task queued: $taskId')),
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
+            title: const Text('Run SAGE in this project'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _projectCommandController,
+                  autofocus: true,
+                  minLines: 2,
+                  maxLines: 5,
+                  onChanged: (_) => setDialogState(() => errorMessage = null),
+                  decoration: const InputDecoration(
+                    hintText: 'Tell SAGE what to do with this project…',
+                  ),
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    errorMessage!,
+                    style: const TextStyle(color: SageTheme.failure),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: submitting ? null : () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: _projectCommandController.text.trim().isEmpty || submitting
+                    ? null
+                    : () async {
+                        final command = _projectCommandController.text.trim();
+                        setDialogState(() {
+                          submitting = true;
+                          errorMessage = null;
+                        });
+                        try {
+                          final response = await widget.api.submitCommand(
+                            command,
+                            projectId: _projectId,
+                          );
+                          final task = response['task'];
+                          final taskId = task is Map
+                              ? task['id']?.toString()
+                              : response['task_id']?.toString();
+                          if (!dialogContext.mounted) return;
+                          Navigator.pop(dialogContext);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  taskId == null
+                                      ? 'Project command queued.'
+                                      : 'Project task queued: $taskId',
+                                ),
+                              ),
+                            );
+                          }
+                        } catch (error) {
+                          if (dialogContext.mounted) {
+                            setDialogState(() {
+                              submitting = false;
+                              errorMessage = 'Could not queue project command: $error';
+                            });
+                          }
+                        }
+                      },
+                child: submitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Queue'),
+              ),
+            ],
+          ),
+        ),
       );
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not queue project command: $error')),
-        );
-      }
     } finally {
       if (mounted) setState(() => _commandBusy = false);
     }
@@ -84,6 +132,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     if (_projectId.isEmpty) return;
     _assetNameController.clear();
     var assetType = 'image';
+    var creating = false;
+    String? errorMessage;
     final created = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -95,9 +145,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               TextField(
                 controller: _assetNameController,
                 autofocus: true,
+                onChanged: (_) => setDialogState(() => errorMessage = null),
                 decoration: const InputDecoration(labelText: 'Asset name'),
               ),
               const SizedBox(height: 12),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(errorMessage!, style: const TextStyle(color: SageTheme.failure)),
+              ],
               DropdownButtonFormField<String>(
                 value: assetType,
                 decoration: const InputDecoration(labelText: 'Type'),
@@ -121,25 +176,37 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () async {
-                final value = _assetNameController.text.trim();
-                if (value.isEmpty) return;
-                try {
-                  await widget.api.createWorkflowAsset(
-                    projectId: _projectId,
-                    name: value,
-                    assetType: assetType,
-                  );
-                  if (dialogContext.mounted) Navigator.pop(dialogContext, true);
-                } catch (error) {
-                  if (dialogContext.mounted) {
-                    ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      SnackBar(content: Text(error.toString())),
-                    );
-                  }
-                }
-              },
-              child: const Text('Create'),
+              onPressed: _assetNameController.text.trim().isEmpty || creating
+                  ? null
+                  : () async {
+                      final value = _assetNameController.text.trim();
+                      setDialogState(() {
+                        creating = true;
+                        errorMessage = null;
+                      });
+                      try {
+                        await widget.api.createWorkflowAsset(
+                          projectId: _projectId,
+                          name: value,
+                          assetType: assetType,
+                        );
+                        if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                      } catch (error) {
+                        if (dialogContext.mounted) {
+                          setDialogState(() {
+                            creating = false;
+                            errorMessage = 'Could not create asset: $error';
+                          });
+                        }
+                      }
+                    },
+              child: creating
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Create'),
             ),
           ],
         ),
