@@ -102,4 +102,31 @@ void main() {
       }
     },
   );
+
+  testWidgets('More menu opens the connected Learning paths screen', (tester) async {
+    final api = SageApi(
+      client: _NavigationClient(),
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: SageOneShell(api: api)));
+    // The command-center surface contains a repeating animation.
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('More'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    final learningItem = find.widgetWithText(ListTile, 'Learning');
+    expect(learningItem, findsOneWidget);
+    await tester.ensureVisible(learningItem);
+    await tester.tap(learningItem);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Digital Foundations'), findsOneWidget);
+    expect(find.text('Integration status'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
 }
