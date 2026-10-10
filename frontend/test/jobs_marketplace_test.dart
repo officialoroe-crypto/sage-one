@@ -165,8 +165,10 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: JobsScreen(api: api)));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byHintText('Search title, company or description'), 'Flutter');
-    await tester.enterText(find.byHintText('Filter by city, district or Remote'), 'Kathmandu');
+    await tester.enterText(find.byWidgetPredicate((widget) =>
+        widget is TextField && widget.decoration?.hintText == 'Search title, company or description'), 'Flutter');
+    await tester.enterText(find.byWidgetPredicate((widget) =>
+        widget is TextField && widget.decoration?.hintText == 'Filter by city, district or Remote'), 'Kathmandu');
     await tester.tap(find.byTooltip('Search jobs'));
     await tester.pumpAndSettle();
 
@@ -211,8 +213,10 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: MarketplaceScreen(api: api)));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byHintText('Search items, services and courses'), 'Honda');
-    await tester.enterText(find.byHintText('City or district'), 'Lalitpur');
+    await tester.enterText(find.byWidgetPredicate((widget) =>
+        widget is TextField && widget.decoration?.hintText == 'Search items, services and courses'), 'Honda');
+    await tester.enterText(find.byWidgetPredicate((widget) =>
+        widget is TextField && widget.decoration?.hintText == 'City or district'), 'Lalitpur');
     await tester.tap(find.byType(DropdownButtonFormField<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Vehicles').last);
