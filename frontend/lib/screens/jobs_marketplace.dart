@@ -153,7 +153,7 @@ class _JobsScreenState extends State<JobsScreen> {
                 : ListView.separated(
                     shrinkWrap: true,
                     itemCount: applications.length,
-                    separatorBuilder: (_, __) => const Divider(),
+                    separatorBuilder: (_, _) => const Divider(),
                     itemBuilder: (_, index) {
                       final raw = applications[index];
                       final item = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
@@ -847,7 +847,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 : ListView.separated(
                     shrinkWrap: true,
                     itemCount: inquiries.length,
-                    separatorBuilder: (_, __) => const Divider(),
+                    separatorBuilder: (_, _) => const Divider(),
                     itemBuilder: (_, index) {
                       final raw = inquiries[index];
                       final item = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
