@@ -299,6 +299,15 @@ class SageApi {
     return items is List ? items : <dynamic>[];
   }
 
+  Future<List<dynamic>> learningPaths() async {
+    final data = await _authorizedGet('/learning/paths');
+    final items = data['paths'] ?? data['items'] ?? data;
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> completeLearningLesson(String lessonId) async =>
+      _authorizedPost('/learning/lessons/$lessonId/complete', <String, dynamic>{});
+
   Future<List<dynamic>> jobPostings({
     String? query,
     String? location,
