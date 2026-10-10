@@ -21,7 +21,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: sage-one-public-pages
+  # Keep pull-request validation separate from main builds and manual publication.
+  group: sage-one-public-pages-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || (github.event_name == 'workflow_dispatch' && 'manual-deploy' || 'push-main') }}
   cancel-in-progress: true
 
 jobs:
