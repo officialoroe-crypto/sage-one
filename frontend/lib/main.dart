@@ -31,16 +31,21 @@ class SageOneApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SAGE ONE',
-      debugShowCheckedModeBanner: false,
-      theme: SageTheme.dark(),
-      home: SageSplashScreen(
-        child: _api != null
-            ? SageOneShell(api: _api)
-            : AuthGate(
-                childBuilder: (identity) => const SageOneShell(),
-              ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: SageTheme.mode,
+      builder: (context, mode, _) => MaterialApp(
+        title: 'SAGE ONE',
+        debugShowCheckedModeBanner: false,
+        theme: SageTheme.light(),
+        darkTheme: SageTheme.dark(),
+        themeMode: mode,
+        home: SageSplashScreen(
+          child: _api != null
+              ? SageOneShell(api: _api)
+              : AuthGate(
+                  childBuilder: (identity) => const SageOneShell(),
+                ),
+        ),
       ),
     );
   }
@@ -64,6 +69,7 @@ class _SageOneShellState extends State<SageOneShell> {
   void initState() {
     super.initState();
     _api = widget._api ?? SageApi();
+    _restoreThemePreference();
     _refreshNotificationBadge();
     _notificationPoller = Timer.periodic(
       const Duration(seconds: 10),
@@ -76,6 +82,24 @@ class _SageOneShellState extends State<SageOneShell> {
     _notificationPoller?.cancel();
     if (widget._api == null) _api.dispose();
     super.dispose();
+  }
+
+  Future<void> _restoreThemePreference() async {
+    try {
+      final response = await _api.profileMe();
+      final rawProfile = response['profile'];
+      if (rawProfile is! Map) return;
+      final rawBasic = rawProfile['basic_info'];
+      if (rawBasic is! Map) return;
+      final rawSettings = rawBasic['settings'];
+      if (rawSettings is! Map) return;
+      final savedMode = rawSettings['theme_mode'];
+      if (savedMode is String && mounted) {
+        SageTheme.mode.value = SageTheme.modeFromPreference(savedMode);
+      }
+    } catch (_) {
+      // Keep the default/current appearance when profile settings are offline.
+    }
   }
 
   Future<void> _refreshNotificationBadge() async {
