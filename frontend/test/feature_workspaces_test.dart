@@ -22,10 +22,6 @@ void main() {
     (tester) async {
       const scenarios = <_WorkspaceScenario>[
         _WorkspaceScenario(
-          screen: LearningScreen(),
-          actions: ['Continue learning', 'Browse paths', 'View progress'],
-        ),
-        _WorkspaceScenario(
           screen: CommunityScreen(),
           actions: ['Open community', 'Create a post', 'View activity'],
         ),

@@ -3,6 +3,7 @@ from identity.api import router as identity_router
 from world_intelligence.api import router as world_router
 from economy.api import router as economy_router
 from opportunities.api import router as opportunities_router
+from learning.api import router as learning_router
 
 
 def _paths() -> set[str]:
@@ -37,6 +38,9 @@ def test_identity_and_world_router_definitions_exist():
     assert "/marketplace/listings" in opportunity_paths
     assert "/marketplace/listings/mine" in opportunity_paths
     assert "/marketplace/inquiries/mine" in opportunity_paths
+    learning_paths = {route.path for route in learning_router.routes}
+    assert "/learning/paths" in learning_paths
+    assert "/learning/lessons/{lesson_id}/complete" in learning_paths
 
 
 def test_identity_and_world_routers_are_mounted_on_app():
@@ -62,6 +66,8 @@ def test_identity_and_world_routers_are_mounted_on_app():
     assert "/marketplace/listings" in paths
     assert "/marketplace/listings/mine" in paths
     assert "/marketplace/inquiries/mine" in paths
+    assert "/learning/paths" in paths
+    assert "/learning/lessons/{lesson_id}/complete" in paths
 
 
 def test_app_keeps_mission_routes_separate_from_identity_and_world():

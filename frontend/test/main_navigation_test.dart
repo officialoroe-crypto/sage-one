@@ -13,6 +13,23 @@ class _NavigationClient extends http.BaseClient {
     final payload = switch (request.url.path) {
       '/notifications' => {'success': true, 'notifications': <dynamic>[]},
       '/worker/health' => {'success': true, 'worker': {'running': false}},
+      '/learning/paths' => {
+        'success': true,
+        'paths': [
+          {
+            'id': 'digital-foundations',
+            'title': 'Digital Foundations',
+            'subtitle': 'Practical digital skills',
+            'level': 'Beginner',
+            'estimated_minutes': 20,
+            'lessons': [],
+            'completed_lessons': 0,
+            'total_lessons': 0,
+            'progress_ratio': 0.0,
+            'is_completed': false,
+          },
+        ],
+      },
       _ => {'success': true, 'items': <dynamic>[]},
     };
     return http.StreamedResponse(
@@ -32,10 +49,9 @@ class _MenuRouteCase {
 
 void main() {
   testWidgets(
-    'More menu navigates to Learning and Community placeholders',
+    'More menu navigates to Community placeholder',
     (tester) async {
       const routes = <_MenuRouteCase>[
-        _MenuRouteCase('Learning', 'Continue learning'),
         _MenuRouteCase('Community', 'Open community'),
       ];
 
@@ -86,4 +102,31 @@ void main() {
       }
     },
   );
+
+  testWidgets('More menu opens the connected Learning paths screen', (tester) async {
+    final api = SageApi(
+      client: _NavigationClient(),
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: SageOneShell(api: api)));
+    // The command-center surface contains a repeating animation.
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('More'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    final learningItem = find.widgetWithText(ListTile, 'Learning');
+    expect(learningItem, findsOneWidget);
+    await tester.ensureVisible(learningItem);
+    await tester.tap(learningItem);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Digital Foundations'), findsOneWidget);
+    expect(find.text('Integration status'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
 }
