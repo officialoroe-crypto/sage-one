@@ -1,9 +1,9 @@
 name: SAGE ONE God Mode Developer Website
 
+# Public Pages deployment is manual-only until the owner approves release readiness.
+# A manual run publishes the Flutter web application to GitHub Pages.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
