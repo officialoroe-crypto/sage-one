@@ -514,6 +514,14 @@ class JobsScreen extends StatefulWidget {
 class _JobsScreenState extends State<JobsScreen> {
   final _query = TextEditingController();
   final _location = TextEditingController(text: 'Nepal');
+  final _applicationNote = TextEditingController();
+  final _postTitle = TextEditingController();
+  final _postCompany = TextEditingController();
+  final _postDescription = TextEditingController();
+  final _postLocation = TextEditingController();
+  final _postSalaryMin = TextEditingController();
+  final _postSalaryMax = TextEditingController();
+  final _postSkills = TextEditingController();
   List<Map<String, dynamic>> _items = <Map<String, dynamic>>[];
   String _view = 'find';
   bool _loading = true;
@@ -529,6 +537,14 @@ class _JobsScreenState extends State<JobsScreen> {
   void dispose() {
     _query.dispose();
     _location.dispose();
+    _applicationNote.dispose();
+    _postTitle.dispose();
+    _postCompany.dispose();
+    _postDescription.dispose();
+    _postLocation.dispose();
+    _postSalaryMin.dispose();
+    _postSalaryMax.dispose();
+    _postSkills.dispose();
     super.dispose();
   }
 
@@ -852,7 +868,7 @@ class _JobsScreenState extends State<JobsScreen> {
       );
 
   Future<void> _showJob(Map<String, dynamic> job) async {
-    final note = TextEditingController();
+    _applicationNote.clear();
     var busy = false;
     String? errorMessage;
     final applied = await showDialog<bool>(
@@ -878,7 +894,7 @@ class _JobsScreenState extends State<JobsScreen> {
                 ],
                 const SizedBox(height: 12),
                 TextField(
-                  controller: note,
+                  controller: _applicationNote,
                   minLines: 2,
                   maxLines: 5,
                   decoration: const InputDecoration(labelText: 'Short note (optional)'),
@@ -907,7 +923,7 @@ class _JobsScreenState extends State<JobsScreen> {
                       try {
                         await widget.api.applyToJob(
                           job['id'].toString(),
-                          coverNote: note.text.trim().isEmpty ? null : note.text.trim(),
+                          coverNote: _applicationNote.text.trim().isEmpty ? null : _applicationNote.text.trim(),
                         );
                         if (dialogContext.mounted) Navigator.pop(dialogContext, true);
                       } catch (error) {
@@ -927,7 +943,6 @@ class _JobsScreenState extends State<JobsScreen> {
         ),
       ),
     );
-    note.dispose();
     if (applied == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Application submitted.')));
       if (_view == 'applications') _load();
@@ -1015,13 +1030,13 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   Future<void> _createJob() async {
-    final title = TextEditingController();
-    final company = TextEditingController();
-    final description = TextEditingController();
-    final location = TextEditingController(text: 'Kathmandu, Nepal');
-    final salaryMin = TextEditingController();
-    final salaryMax = TextEditingController();
-    final skills = TextEditingController();
+    _postTitle.clear();
+    _postCompany.clear();
+    _postDescription.clear();
+    _postLocation.text = 'Kathmandu, Nepal';
+    _postSalaryMin.clear();
+    _postSalaryMax.clear();
+    _postSkills.clear();
     var employmentType = 'full-time';
     var workMode = 'on-site';
     var busy = false;
@@ -1030,10 +1045,10 @@ class _JobsScreenState extends State<JobsScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) {
-          final canCreate = title.text.trim().length >= 3 &&
-              company.text.trim().isNotEmpty &&
-              description.text.trim().length >= 20 &&
-              location.text.trim().isNotEmpty &&
+          final canCreate = _postTitle.text.trim().length >= 3 &&
+              _postCompany.text.trim().isNotEmpty &&
+              _postDescription.text.trim().length >= 20 &&
+              _postLocation.text.trim().isNotEmpty &&
               !busy;
           return AlertDialog(
             title: const Text('Post a job'),
@@ -1043,10 +1058,10 @@ class _JobsScreenState extends State<JobsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(controller: title, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Job title (required)')),
-                    TextField(controller: company, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Company / employer (required)')),
-                    TextField(controller: description, minLines: 3, maxLines: 6, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Description (at least 20 characters)')),
-                    TextField(controller: location, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Location')),
+                    TextField(controller: _postTitle, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Job title (required)')),
+                    TextField(controller: _postCompany, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Company / employer (required)')),
+                    TextField(controller: _postDescription, minLines: 3, maxLines: 6, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Description (at least 20 characters)')),
+                    TextField(controller: _postLocation, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Location')),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       value: employmentType,
@@ -1072,12 +1087,12 @@ class _JobsScreenState extends State<JobsScreen> {
                     ),
                     Row(
                       children: [
-                        Expanded(child: TextField(controller: salaryMin, keyboardType: TextInputType.number, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Min salary (NPR)'))),
+                        Expanded(child: TextField(controller: _postSalaryMin, keyboardType: TextInputType.number, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Min salary (NPR)'))),
                         const SizedBox(width: 8),
-                        Expanded(child: TextField(controller: salaryMax, keyboardType: TextInputType.number, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Max salary (NPR)'))),
+                        Expanded(child: TextField(controller: _postSalaryMax, keyboardType: TextInputType.number, onChanged: (_) => setDialogState(() => errorMessage = null), decoration: const InputDecoration(labelText: 'Max salary (NPR)'))),
                       ],
                     ),
-                    TextField(controller: skills, decoration: const InputDecoration(labelText: 'Skills (comma separated)')),
+                    TextField(controller: _postSkills, decoration: const InputDecoration(labelText: 'Skills (comma separated)')),
                     if (errorMessage != null) ...[
                       const SizedBox(height: 8),
                       Text(errorMessage!, style: const TextStyle(color: SageTheme.failure)),
@@ -1091,10 +1106,10 @@ class _JobsScreenState extends State<JobsScreen> {
               FilledButton(
                 onPressed: canCreate
                     ? () async {
-                        final low = int.tryParse(salaryMin.text.trim());
-                        final high = int.tryParse(salaryMax.text.trim());
-                        if ((salaryMin.text.trim().isNotEmpty && low == null) ||
-                            (salaryMax.text.trim().isNotEmpty && high == null) ||
+                        final low = int.tryParse(_postSalaryMin.text.trim());
+                        final high = int.tryParse(_postSalaryMax.text.trim());
+                        if ((_postSalaryMin.text.trim().isNotEmpty && low == null) ||
+                            (_postSalaryMax.text.trim().isNotEmpty && high == null) ||
                             (low != null && low < 0) ||
                             (high != null && high < 0) ||
                             (low != null && high != null && high < low)) {
@@ -1109,15 +1124,15 @@ class _JobsScreenState extends State<JobsScreen> {
                         });
                         try {
                           await widget.api.createJob(
-                            title: title.text.trim(),
-                            companyName: company.text.trim(),
-                            description: description.text.trim(),
-                            location: location.text.trim(),
+                            title: _postTitle.text.trim(),
+                            companyName: _postCompany.text.trim(),
+                            description: _postDescription.text.trim(),
+                            location: _postLocation.text.trim(),
                             employmentType: employmentType,
                             workMode: workMode,
                             salaryMin: low,
                             salaryMax: high,
-                            skills: skills.text.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).take(20).toList(),
+                            skills: _postSkills.text.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).take(20).toList(),
                           );
                           if (dialogContext.mounted) Navigator.pop(dialogContext, true);
                         } catch (error) {
@@ -1139,13 +1154,6 @@ class _JobsScreenState extends State<JobsScreen> {
         },
       ),
     );
-    title.dispose();
-    company.dispose();
-    description.dispose();
-    location.dispose();
-    salaryMin.dispose();
-    salaryMax.dispose();
-    skills.dispose();
     if (created == true && mounted) {
       setState(() => _view = 'posts');
       await _load();
