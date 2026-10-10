@@ -206,7 +206,7 @@ class _JobsScreenState extends State<JobsScreen> {
 
     final created = await showDialog<bool>(
       context: context,
-      barrierDismissible: !saving,
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
           title: const Text('Post a job'),
@@ -655,7 +655,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
     final created = await showDialog<bool>(
       context: context,
-      barrierDismissible: !saving,
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
           title: const Text('Create marketplace listing'),
@@ -782,6 +782,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     String? errorMessage;
     final sent = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
           title: const Text('Contact seller'),
