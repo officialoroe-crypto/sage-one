@@ -25,6 +25,7 @@ class _JobsScreenState extends State<JobsScreen> {
   Object? _error;
   List<dynamic> _items = const [];
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _locationSearchController = TextEditingController();
   // These controllers are screen-owned so they remain alive until the dialog
   // reverse transition has removed its widgets from the overlay.
   final TextEditingController _applicationNoteController = TextEditingController();
@@ -44,6 +45,7 @@ class _JobsScreenState extends State<JobsScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _locationSearchController.dispose();
     _applicationNoteController.dispose();
     _jobTitleController.dispose();
     _jobCompanyController.dispose();
@@ -55,13 +57,17 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
       final items = switch (_mode) {
-        0 => await widget.api.jobPostings(query: _searchController.text),
+        0 => await widget.api.jobPostings(
+            query: _searchController.text,
+            location: _locationSearchController.text,
+          ),
         1 => await widget.api.myJobPostings(),
         _ => await widget.api.myJobApplications(),
       };
@@ -143,6 +149,7 @@ class _JobsScreenState extends State<JobsScreen> {
     if (confirm != true) return;
     try {
       await widget.api.closeJobPosting(job['id'].toString());
+      if (!mounted) return;
       _message('Job posting closed.');
       await _load();
     } catch (error) {
@@ -494,23 +501,36 @@ class _JobsScreenState extends State<JobsScreen> {
             if (_mode == 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onSubmitted: (_) => _load(),
-                        decoration: const InputDecoration(
-                          hintText: 'Search title, company or description',
-                          prefixIcon: Icon(Icons.search),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onSubmitted: (_) => _load(),
+                            decoration: const InputDecoration(
+                              hintText: 'Search title, company or description',
+                              prefixIcon: Icon(Icons.search),
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          tooltip: 'Search jobs',
+                          onPressed: _load,
+                          icon: const Icon(Icons.search),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      tooltip: 'Search jobs',
-                      onPressed: _load,
-                      icon: const Icon(Icons.search),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _locationSearchController,
+                      onSubmitted: (_) => _load(),
+                      decoration: const InputDecoration(
+                        hintText: 'Filter by city, district or Remote',
+                        prefixIcon: Icon(Icons.location_on_outlined),
+                      ),
                     ),
                   ],
                 ),
@@ -595,6 +615,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
