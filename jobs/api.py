@@ -66,14 +66,6 @@ def _clean_skills(skills: list[str]) -> list[str]:
     return normalized
 
 
-def _get_visible_job(job_id: str, owner_key: str):
-    with SessionLocal() as db:
-        job = repository.repository.get_job(db, job_id)
-        if job is None or (job.status != "published" and job.owner_key != owner_key):
-            raise HTTPException(status_code=404, detail="Job not found.")
-        return job
-
-
 @router.get("")
 def list_jobs(
     q: str | None = Query(default=None, max_length=160),
