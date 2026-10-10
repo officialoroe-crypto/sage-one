@@ -58,6 +58,8 @@ void main() {
 
         final menuItem = find.widgetWithText(ListTile, route.title);
         expect(menuItem, findsOneWidget, reason: 'More menu should expose ${route.title}');
+        await tester.ensureVisible(menuItem);
+        await tester.pump(const Duration(milliseconds: 300));
         await tester.tap(menuItem);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
