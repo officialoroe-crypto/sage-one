@@ -165,7 +165,11 @@ class IdentityClient {
   }) async =>
       _authorized('POST', '/identity/onboarding', body: {
         'name': name,
-        ...?(phone == null ? null : {'phone': phone}),
+        // Private Owner Mode allows onboarding before a phone is added.
+        // Omit blank phone values because the API accepts null/omitted, not ''.
+        ...?(phone == null || phone.trim().isEmpty
+            ? null
+            : {'phone': phone.trim()}),
         'address': address,
         'age': age,
         'basic_info': <String, dynamic>{},
