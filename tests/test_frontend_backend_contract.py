@@ -74,7 +74,7 @@ def _backend_endpoints() -> set[tuple[str, str]]:
         )
         prefix = prefix_match.group(1) if prefix_match else ""
         for match in re.finditer(
-            r"@(?:app|router)\.(get|post|put|patch|delete)\(\s*['\"]([^'\"]+)",
+            r"@(?:app|router)\.(get|post|put|patch|delete)\(\s*['\"]([^'\"]*)",
             source,
         ):
             method = match.group(1).upper()
