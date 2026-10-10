@@ -25,6 +25,15 @@ class _JobsScreenState extends State<JobsScreen> {
   Object? _error;
   List<dynamic> _items = const [];
   final TextEditingController _searchController = TextEditingController();
+  // These controllers are screen-owned so they remain alive until the dialog
+  // reverse transition has removed its widgets from the overlay.
+  final TextEditingController _applicationNoteController = TextEditingController();
+  final TextEditingController _jobTitleController = TextEditingController();
+  final TextEditingController _jobCompanyController = TextEditingController();
+  final TextEditingController _jobDescriptionController = TextEditingController();
+  final TextEditingController _jobLocationController = TextEditingController();
+  final TextEditingController _jobSalaryMinController = TextEditingController();
+  final TextEditingController _jobSalaryMaxController = TextEditingController();
 
   @override
   void initState() {
@@ -35,6 +44,13 @@ class _JobsScreenState extends State<JobsScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _applicationNoteController.dispose();
+    _jobTitleController.dispose();
+    _jobCompanyController.dispose();
+    _jobDescriptionController.dispose();
+    _jobLocationController.dispose();
+    _jobSalaryMinController.dispose();
+    _jobSalaryMaxController.dispose();
     super.dispose();
   }
 
@@ -73,13 +89,13 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   Future<void> _apply(Map<String, dynamic> job) async {
-    final noteController = TextEditingController();
+    _applicationNoteController.clear();
     final note = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Apply for this job'),
         content: TextField(
-          controller: noteController,
+          controller: _applicationNoteController,
           minLines: 2,
           maxLines: 5,
           decoration: const InputDecoration(
@@ -93,13 +109,12 @@ class _JobsScreenState extends State<JobsScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, noteController.text.trim()),
+            onPressed: () => Navigator.pop(dialogContext, _applicationNoteController.text.trim()),
             child: const Text('Submit application'),
           ),
         ],
       ),
     );
-    noteController.dispose();
     if (note == null || !mounted) return;
     try {
       await widget.api.applyForJob(job['id'].toString(), coverNote: note);
@@ -179,12 +194,12 @@ class _JobsScreenState extends State<JobsScreen> {
 
   Future<void> _createJob() async {
     final formKey = GlobalKey<FormState>();
-    final title = TextEditingController();
-    final company = TextEditingController();
-    final description = TextEditingController();
-    final location = TextEditingController();
-    final salaryMin = TextEditingController();
-    final salaryMax = TextEditingController();
+    final title = _jobTitleController..clear();
+    final company = _jobCompanyController..clear();
+    final description = _jobDescriptionController..clear();
+    final location = _jobLocationController..clear();
+    final salaryMin = _jobSalaryMinController..clear();
+    final salaryMax = _jobSalaryMaxController..clear();
     var employmentType = 'full_time';
     var saving = false;
     String? formError;
@@ -326,12 +341,6 @@ class _JobsScreenState extends State<JobsScreen> {
         ),
       ),
     );
-    title.dispose();
-    company.dispose();
-    description.dispose();
-    location.dispose();
-    salaryMin.dispose();
-    salaryMax.dispose();
     if (created == true && mounted) {
       setState(() => _mode = 1);
       await _load();
@@ -562,6 +571,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   Object? _error;
   List<dynamic> _items = const [];
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _listingTitleController = TextEditingController();
+  final TextEditingController _listingDescriptionController = TextEditingController();
+  final TextEditingController _listingLocationController = TextEditingController();
+  final TextEditingController _listingPriceController = TextEditingController();
+  final TextEditingController _inquiryMessageController = TextEditingController();
 
   @override
   void initState() {
@@ -572,6 +586,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _listingTitleController.dispose();
+    _listingDescriptionController.dispose();
+    _listingLocationController.dispose();
+    _listingPriceController.dispose();
+    _inquiryMessageController.dispose();
     super.dispose();
   }
 
@@ -625,10 +644,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   Future<void> _createListing() async {
     final formKey = GlobalKey<FormState>();
-    final title = TextEditingController();
-    final description = TextEditingController();
-    final location = TextEditingController();
-    final price = TextEditingController();
+    final title = _listingTitleController..clear();
+    final description = _listingDescriptionController..clear();
+    final location = _listingLocationController..clear();
+    final price = _listingPriceController..clear();
     var category = 'vehicles';
     var condition = 'used';
     var saving = false;
@@ -751,10 +770,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
       ),
     );
-    title.dispose();
-    description.dispose();
-    location.dispose();
-    price.dispose();
     if (created == true && mounted) {
       setState(() => _mode = 1);
       await _load();
@@ -762,7 +777,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> _inquire(Map<String, dynamic> listing) async {
-    final messageController = TextEditingController();
+    _inquiryMessageController.clear();
     var sending = false;
     String? errorMessage;
     final sent = await showDialog<bool>(
@@ -777,7 +792,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               Text((listing['title'] ?? 'Listing').toString(), style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
               TextField(
-                controller: messageController,
+                controller: _inquiryMessageController,
                 minLines: 2,
                 maxLines: 5,
                 onChanged: (_) => setDialogState(() => errorMessage = null),
@@ -795,14 +810,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           actions: [
             TextButton(onPressed: sending ? null : () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
             FilledButton(
-              onPressed: messageController.text.trim().isEmpty || sending
+              onPressed: _inquiryMessageController.text.trim().isEmpty || sending
                   ? null
                   : () async {
                       setDialogState(() => sending = true);
                       try {
                         await widget.api.inquireMarketplaceListing(
                           listing['id'].toString(),
-                          message: messageController.text.trim(),
+                          message: _inquiryMessageController.text.trim(),
                         );
                         if (dialogContext.mounted) Navigator.pop(dialogContext, true);
                       } catch (error) {
@@ -822,7 +837,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
       ),
     );
-    messageController.dispose();
     if (sent == true && mounted) {
       _message('Your inquiry was sent to the seller.');
       if (_mode == 2) await _load();
