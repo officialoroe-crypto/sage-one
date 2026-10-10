@@ -39,7 +39,7 @@ class _Page extends StatelessWidget {
   const _Page({required this.title, required this.body});
   final String title; final Widget body;
   @override Widget build(BuildContext c)=>Scaffold(
-    backgroundColor:SageTheme.voidBlack,
+    backgroundColor:Theme.of(c).scaffoldBackgroundColor,
     appBar:AppBar(title:Text(title),backgroundColor:Colors.transparent),
     body:body,
   );
@@ -149,6 +149,7 @@ class SettingsFinalScreen extends StatefulWidget {
 class _SettingsFinalState extends State<SettingsFinalScreen> {
   bool notifications = true;
   bool compact = false;
+  String themeMode = 'dark';
   bool saving = false;
   bool loading = true;
   bool _loaded = false;
@@ -186,10 +187,16 @@ class _SettingsFinalState extends State<SettingsFinalScreen> {
         compact = settings['compact_mode'] is bool
             ? settings['compact_mode'] as bool
             : false;
+        themeMode = settings['theme_mode'] is String &&
+                const ['dark', 'light', 'system']
+                    .contains(settings['theme_mode'])
+            ? settings['theme_mode'] as String
+            : SageTheme.preferenceFromMode(SageTheme.mode.value);
         _loaded = true;
         loading = false;
         _loadError = null;
       });
+      SageTheme.mode.value = SageTheme.modeFromPreference(themeMode);
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -206,12 +213,19 @@ class _SettingsFinalState extends State<SettingsFinalScreen> {
     if (!_loaded || saving) return;
     setState(() => saving = true);
     try {
-      basic['settings'] = {
-        'notifications': notifications,
-        'compact_mode': compact,
-      };
+      // Update only settings owned by this screen. Preserve future or
+      // server-managed preferences (for example theme mode) that this UI
+      // does not expose yet.
+      final currentSettings = basic['settings'] is Map
+          ? Map<String, dynamic>.from(basic['settings'] as Map)
+          : <String, dynamic>{};
+      currentSettings['notifications'] = notifications;
+      currentSettings['compact_mode'] = compact;
+      currentSettings['theme_mode'] = themeMode;
+      basic['settings'] = currentSettings;
       await widget.api.updateProfile(basicInfo: basic);
       if (mounted) {
+        SageTheme.mode.value = SageTheme.modeFromPreference(themeMode);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Settings saved.')),
         );
@@ -268,6 +282,22 @@ class _SettingsFinalState extends State<SettingsFinalScreen> {
                   ? null
                   : (value) => setState(() => compact = value),
             ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: themeMode,
+              decoration: const InputDecoration(labelText: 'Appearance'),
+              items: const [
+                DropdownMenuItem(value: 'dark', child: Text('Dark')),
+                DropdownMenuItem(value: 'light', child: Text('Light')),
+                DropdownMenuItem(value: 'system', child: Text('System default')),
+              ],
+              onChanged: !_loaded || saving
+                  ? null
+                  : (value) {
+                      if (value != null) setState(() => themeMode = value);
+                    },
+            ),
+            const SizedBox(height: 16),
             FilledButton(
               onPressed: !_loaded || saving ? null : save,
               child: Text(saving ? 'Saving…' : 'Save settings'),
