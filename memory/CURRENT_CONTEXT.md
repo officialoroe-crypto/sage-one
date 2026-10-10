@@ -84,3 +84,10 @@ Owner explicitly ordered that after every assistant reply, relevant conversation
 - Owner ran `curl -i http://127.0.0.1:8010/identity/config`; curl returned error 7, could not connect. `netstat -ano | findstr :8010` produced no visible output, consistent with no process listening on port 8010 at that time.
 - This establishes that the local endpoint is unreachable; it does not yet establish whether the intended backend should run on 8010 or whether the public Pages app is mistakenly configured to call localhost.
 - Next: ask owner to list `C:\SageOne` and `C:\SageOne\Backend` (Git Bash: `cd /c/SageOne && ls`, then `ls /c/SageOne/Backend`) to identify actual local checkout/backend structure and startup instructions. Do not run a local Flutter/Gradle build; CPU is already high. If the error is from the public deployed web app, localhost is the visitor's machine and production must use a reachable HTTPS backend URL.
+
+
+## Backend folder discovery — 2026-10-10
+- Owner's Git Bash listing confirms `C:\SageOne` contains `Backend/`, `desktop-agent/`, `img-assets/`, `sage_core-android-signin-test/`, `Git/`, `docs/`, `sage_core/`, and `sage_one/`.
+- `C:\SageOne\Backend` contains `app/`, `memory/`, and `venv/`. This identifies a local backend environment but not yet its startup entrypoint, dependencies, or intended port.
+- The last connection check still showed no listener at `127.0.0.1:8010`. Previous context says backend had responded on port 8000; check port/config rather than assuming 8010 is correct.
+- Next low-cost diagnostic: list `C:\SageOne\Backend\app` and locate dependency/startup files (`requirements.txt`, `pyproject.toml`, `run*.bat`, `main.py`, `uvicorn` instructions) without activating the venv or running a build. Still need to establish whether the reported browser error is from local app or public GitHub Pages app; public deployment must never call localhost for shared users.
