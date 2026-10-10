@@ -116,7 +116,7 @@ class _SageOneShellState extends State<SageOneShell> {
   Future<void> _openMore() async {
     final destination = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: SageTheme.voidBlack,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       showDragHandle: true,
       builder: (context) => SafeArea(
         child: SingleChildScrollView(
