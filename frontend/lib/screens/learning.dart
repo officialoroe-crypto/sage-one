@@ -202,7 +202,7 @@ class _LearningScreenState extends State<LearningScreen> {
     final completed = (path['completed_lessons'] as num?)?.toInt() ?? 0;
     final total = (path['total_lessons'] as num?)?.toInt() ?? lessons.length;
     final rawProgress = path['progress_ratio'];
-    final progress = rawProgress is num ? rawProgress.toDouble().clamp(0.0, 1.0) : 0.0;
+    final progress = rawProgress is num ? rawProgress.toDouble().clamp(0.0, 1.0).toDouble() : 0.0;
     final done = path['is_completed'] == true;
     return Card(
       clipBehavior: Clip.antiAlias,
