@@ -29,7 +29,7 @@ class _EvolutionClient extends http.BaseClient {
           'success': true,
           'spark': {'balance': 125},
           'evolution': {
-            'lifetime_achievement': 250,
+            'lifetime_achievement': currentTier == 'Californium Overlord' ? 15000 : 250,
             'tier': currentTier,
             'progress': currentTier == 'Californium Overlord'
                 ? {
