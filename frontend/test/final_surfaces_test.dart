@@ -14,12 +14,21 @@ class _FinalSurfaceClient extends http.BaseClient {
   int profileGetRequests = 0;
   int markReadRequests = 0;
   bool failProfileLoad = false;
+  Map<String, dynamic>? lastProfilePatch;
+  String? lastProfileAuthorization;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final path = request.url.path;
     if (path == '/notifications/read-all') markAllReadRequests++;
     if (path == '/notifications/notice-1/read') markReadRequests++;
-    if (path == '/identity/me' && request.method == 'PATCH') profilePatchRequests++;
+    if (path == '/identity/me' && request.method == 'PATCH') {
+      profilePatchRequests++;
+      lastProfileAuthorization = request.headers['authorization'];
+      final rawBody = request is http.Request
+          ? request.body
+          : utf8.decode(request.bodyBytes);
+      lastProfilePatch = Map<String, dynamic>.from(jsonDecode(rawBody) as Map);
+    }
     if (path == '/identity/me' && request.method == 'GET') profileGetRequests++;
     var status = 200;
     dynamic body = <String, dynamic>{'success': true};
@@ -134,7 +143,7 @@ void main() {
       expect(find.text(labels[i]), findsOneWidget);
     }
   });
-  testWidgets('Profile validates required fields before sending an update', (tester) async {
+  testWidgets('Profile validates fields and sends the authenticated PATCH contract', (tester) async {
     final client = _FinalSurfaceClient();
     final api = SageApi(
       client: client,
@@ -150,10 +159,44 @@ void main() {
     expect(find.text('Enter your address.'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(1), '12 Demo Road');
+    await tester.enterText(find.byType(TextField).at(2), '29');
+    await tester.tap(find.byType(SwitchListTile).first);
     await tester.pump();
     await tester.tap(find.text('Save profile'));
     await tester.pumpAndSettle();
+
     expect(client.profilePatchRequests, 1);
+    expect(client.lastProfileAuthorization, 'Bearer test-token');
+    expect(client.lastProfilePatch, {
+      'name': 'SAGE User',
+      'address': '12 Demo Road',
+      'age': 29,
+      'help_intent': 'Build SAGE',
+      'memory_consent': true,
+    });
+    expect(find.text('Profile saved.'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('Profile rejects invalid age without calling the backend', (tester) async {
+    final client = _FinalSurfaceClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: ProfileFinalScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(1), '12 Demo Road');
+    await tester.enterText(find.byType(TextField).at(2), '121');
+    await tester.tap(find.text('Save profile'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enter an age from 1 to 120, or leave it blank.'), findsOneWidget);
+    expect(client.profilePatchRequests, 0);
 
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
