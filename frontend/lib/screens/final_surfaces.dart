@@ -354,10 +354,16 @@ class _FileManagerFinalState extends State<FileManagerFinalScreen>{
     }
     return;
   }
-  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  var opened = false;
+  try {
+    opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    // Platform channels may throw when no compatible handler is installed.
+    opened = false;
+  }
   if (!opened && mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('SAGE could not open this artifact.')),
+      const SnackBar(content: Text('SAGE could not open this artifact. Check that a browser is installed and try again.')),
     );
   }
 },));}),
