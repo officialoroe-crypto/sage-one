@@ -5,7 +5,8 @@ GitHub is the durable shared project memory. Chat history is supplementary. Read
 ## Current engineering priorities — LOCKED ORDER
 1. **P0: clean the whole repository** — audit tracked files, source, assets, data/config, workflows and docs; identify stale/duplicate/conflicting residuals; trace references; consolidate operational rules and TODO; archive/delete only with evidence; run checks.
 2. **P1: build the self-repair system** — audit existing Developer Mode and CI first, then create a safe detect → diagnose → propose → test → preview → owner approve → apply → verify loop.
-3. Only after P0/P1 gates: resume broader end-to-end UI/backend QA, device/release hardening and deferred product features based on evidence.
+3. After P0/P1 gates: connect and verify live web intelligence + message assistance through the real Chat path, reusing the existing research/web-reader modules.
+4. Only then resume broader end-to-end UI/backend QA, device/release hardening and other deferred product features based on evidence.
 
 Do not reorder priorities to implement attractive new features while cleanup or self-repair remains the active blocker.
 
@@ -35,6 +36,7 @@ SAGE ONE is the owner's personal AI mentor and execution platform, not a chatbot
 - SAGE Spark Points (SP) and SAGE Spark (SS) separation and future ledger/payout behavior.
 - Screen-aware assistant with opt-in screen context and strict privacy/approval boundaries.
 - Screen-rating system.
+- Live internet search/page reading and user-submitted message help are owner-requested and documented in [Live Web Intelligence & Message Assistance](product/LIVE_WEB_INTELLIGENCE_AND_MESSAGE_ASSISTANCE.md); planned after cleanup and self-repair.
 - Further marketplace, third-party integrations, analytics, visual regression and release expansion as scheduled in the master backlog.
 
 ## Shared project record
