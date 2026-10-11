@@ -16,9 +16,11 @@ Detailed design, brand, economy, and feature specifications remain linked from t
 ## Current priority order
 - **P0 now:** whole-repository cleanup and removal/archive of verified residuals, duplicates, stale files, conflicting rules and task lists.
 - **P1 next:** safe self-repair loop that diagnoses, proposes, tests, previews and records fixes for owner approval.
+- **After P0/P1:** live web intelligence and message assistance, reusing existing research/web-reader foundations after an end-to-end audit.
 - **Deferred:** SP/SS currency behavior, screen-aware assistant and screen-rating system. Keep their specifications/backlog; do not implement them during P0/P1 unless the owner explicitly reprioritizes.
 
 ## Product definition
+SAGE's live web/message-assistance plan is recorded in [Live Web Intelligence & Message Assistance](product/LIVE_WEB_INTELLIGENCE_AND_MESSAGE_ASSISTANCE.md). Existing research code is a foundation, not proof of a working end-to-end Chat experience.
 SAGE ONE is a real AI execution ecosystem, not a chatbot demo. Core areas include Chat, Tasks, Research, Memory, Projects/Workspace, Voice, Onboarding, Authentication, durable execution, provider routing, owner-only Developer Mode, and a preview → approve → apply workflow.
 
 Normal SAGE: understand → plan → execute with permission → verify → show result.
