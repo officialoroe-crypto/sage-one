@@ -78,7 +78,34 @@ class _SageSplashScreenState extends State<SageSplashScreen>
                     scale: .92 + (_controller.value * .08),
                     child: child,
                   ),
-                  child: Container(
+                  child: SizedBox(
+                    width: 158,
+                    height: 158,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        Transform.rotate(
+                          angle: -0.48,
+                          child: Container(
+                            width: 150,
+                            height: 82,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: .78),
+                                width: 1.1,
+                              ),
+                              borderRadius: BorderRadius.circular(100),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withValues(alpha: .22),
+                                  blurRadius: 14,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Container(
                     width: 116,
                     height: 116,
                     alignment: Alignment.center,
@@ -118,6 +145,41 @@ class _SageSplashScreenState extends State<SageSplashScreen>
                           Shadow(color: SageTheme.cyan, blurRadius: 18),
                         ],
                       ),
+                    ),
+                  ),
+                        Positioned(
+                          right: 4,
+                          top: 23,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const RadialGradient(
+                                colors: [Color(0xFF8CEBFF), Color(0xFF1768D8), Color(0xFF071A45)],
+                              ),
+                              border: Border.all(color: Colors.white, width: 1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withValues(alpha: .8),
+                                  blurRadius: 13,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'S',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                shadows: [Shadow(color: SageTheme.cyan, blurRadius: 7)],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
