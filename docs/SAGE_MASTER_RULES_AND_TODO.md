@@ -67,7 +67,7 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 - [ ] Do not build or wire a rating mechanism during cleanup/self-repair work.
 
 
-### F5 — Existing validation/release backlog carried forward (DEFERRED until priority gates allow)
+### F6 — Existing validation/release backlog carried forward (DEFERRED until priority gates allow)
 - [ ] Production SMS/OTP provider.
 - [ ] Long-lived Google web session refresh UX.
 - [ ] Premium lifecycle smoke test on the configured environment.
@@ -84,7 +84,18 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 - [ ] Recheck premium reservation/settlement/refund lifecycle and Evolution settlement integration with current tests.
 - [ ] Reconfirm Android release workflow API URL and ADB-reverse requirements before installing an APK.
 
-### F4 — Product and release work (AFTER P0/P1, ordered by evidence)
+### F4 — Live web intelligence and message assistance (OWNER-REQUESTED; AFTER P0/P1)
+- [ ] Audit the existing `research/engine.py`, `research/parallel.py`, `research/synthesis.py`, `research/verification.py`, `web/reader.py`, `tools.registry`, API routes, chat execution path, persistence and deployed configuration.
+- [ ] Connect existing live search/page reading to ordinary authenticated Chat when current information is needed; do not rebuild duplicate search infrastructure.
+- [ ] Show result titles, domains, source links, retrieval times, evidence/uncertainty, and gracefully report timeouts/provider limits.
+- [ ] Add user-submitted-message assistance: explain, translate, summarize, and draft tone-adjusted replies; no reading other apps without explicit user initiation/permission and no external send without confirmation.
+- [ ] Treat web pages as untrusted data; protect against prompt injection, SSRF/redirect bypass, oversized content, malicious downloads and provider abuse.
+- [ ] Keep "learning" retrieval-grounded and consent-based: no silent model retraining, no bulk scraping, and no silent durable-memory writes.
+- [ ] Audit DDGS and existing providers before considering Google Search API. Any credentials, quota-dependent or paid provider needs explicit approval.
+- [ ] Test the real chat/API route, citations/provenance, auth, failures, cancellation, rate limits, prompt injection, SSRF and memory-consent behavior.
+- [ ] See [Live Web Intelligence & Message Assistance](product/LIVE_WEB_INTELLIGENCE_AND_MESSAGE_ASSISTANCE.md).
+
+### F5 — Product and release work (AFTER P0/P1 and live-web work, ordered by evidence)
 - [ ] Website browser acceptance and responsive/visual audit.
 - [ ] Full button/link/route/API interaction audit with loading, empty, error, retry and cancel behavior.
 - [ ] Physical Android device walkthrough, including Google Sign-In and phone-reachable backend configuration.
