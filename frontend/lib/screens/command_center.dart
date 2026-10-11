@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
@@ -206,7 +207,7 @@ class _CommandCenterState extends State<CommandCenter>
           onKeyEvent: (node, event) {
             if (event is KeyDownEvent &&
                 event.logicalKey == LogicalKeyboardKey.enter) {
-              if (event.isControlPressed) {
+              if (HardwareKeyboard.instance.isControlPressed) {
                 final selection = _prompt.selection;
                 final text = _prompt.text;
                 final start = selection.isValid ? selection.start : text.length;
