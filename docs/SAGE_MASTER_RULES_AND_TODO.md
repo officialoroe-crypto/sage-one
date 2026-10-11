@@ -130,6 +130,23 @@ Recover → Audit → Document → Plan → Implement → Test → Preview → O
 - [Project State / incident handoff](../PROJECT_STATE.md)
 - [Changelog](../CHANGELOG.md)
 
+
+## 7. Historical completion claims carried forward (not re-certified by this cleanup)
+
+The previous `TODO.md` marked the following foundations complete. These are preserved as historical project records, **not a claim that every runtime path is currently verified**. Re-audit during P1 and product QA where relevant.
+
+- Durable workers, leases, heartbeat, retries/backoff, recovery, task polling/cancellation/notifications.
+- Mission planning, dependency-aware execution, verification, Research OS records/evidence, provider routing and resource protection.
+- Unified Chat command loop, project-scoped commands/results, consent-gated task-experience memory, voice STT/TTS through durable commands.
+- Owner Developer Mode preview/apply gate and durable owner-scoped proposals.
+- Authenticated profile persistence, Google token validation foundation, OTP state machine/provider abstraction, onboarding, user-visible memory controls.
+- World Intelligence backend and Flutter status/knowledge/refresh UI.
+- Spark reservation/settlement/refund primitives, premium execution lifecycle, Evolution achievement settlement and tier API.
+- Apps Hub, File Manager, AI Studio, Wallet/Payments/Transactions, Profile/Settings/Notifications shell surfaces.
+- Sales discovery/audit/scoring, durable leads, intelligence, approval-gated outreach preparation, activity/history and owner sales UI.
+- Machine-readable work claims, claim/release and stale-claim detection, handoff records, overlap checks, CI coordination and current-main pre-PR consistency check.
+- CI previously reported Python compile/lint/tests, Flutter analyzer/tests, Android APK workflow and developer website workflow as passing on then-current main. Those old results do not certify the current branch or current runtime.
+
 ## 6. Definition of done
 
 A task is complete only when its acceptance criteria are met, relevant checks have current evidence, remaining risks are written down, and the resulting state is recorded. If a required check cannot run, label it BLOCKED/UNVERIFIED, never PASS.
