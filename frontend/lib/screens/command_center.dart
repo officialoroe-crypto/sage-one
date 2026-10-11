@@ -212,7 +212,7 @@ class _CommandCenterState extends State<CommandCenter>
                 final start = selection.isValid ? selection.start : text.length;
                 final end = selection.isValid ? selection.end : text.length;
                 _prompt.value = TextEditingValue(
-                  text: text.replaceRange(start, end, '\\n'),
+                  text: text.replaceRange(start, end, '\n'),
                   selection: TextSelection.collapsed(offset: start + 1),
                 );
                 return KeyEventResult.handled;
