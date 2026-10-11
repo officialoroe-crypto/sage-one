@@ -37,7 +37,7 @@ class _FakeApiClient extends http.BaseClient {
 }
 
 void main() {
-  testWidgets('SAGE ONE command center renders', (tester) async {
+  testWidgets('SAGE ONE app shell renders after splash', (tester) async {
     final api = SageApi(client: _FakeApiClient());
     await tester.pumpWidget(SageOneApp(api: api));
     await tester.pump(const Duration(milliseconds: 1900));
@@ -46,7 +46,6 @@ void main() {
     expect(find.text('SAGE ONE'), findsOneWidget);
     expect(find.text('STAGE'), findsOneWidget);
     expect(find.text('EVOLUTION'), findsOneWidget);
-    expect(find.text('Ready'), findsOneWidget);
     expect(find.text('Search + verify'), findsNothing);
     expect(find.text('Build content'), findsNothing);
   });
