@@ -19,9 +19,13 @@ python -m http.server 8080 --directory website
 
 Then open `http://127.0.0.1:8080`.
 
-## Deployment
+## Deployment and release boundary
 
-`.github/workflows/sage-one-god-mode-pages.yml` builds the Flutter app and publishes one combined Pages artifact: the marketing site at `/sage-one/` and the app at `/sage-one/app/`. Pushes to `main` that change `website/**` or `frontend/**` trigger deployment; a manual workflow dispatch is also available. Repository Pages must be configured to use GitHub Actions.
+`.github/workflows/sage-one-god-mode-pages.yml` validates the marketing page, runs Flutter analysis/tests, and builds a Flutter web QA artifact on relevant pull requests and main pushes. **The Flutter app build is not published to GitHub Pages during QA.**
+
+The public Pages artifact contains only the static marketing site. Publishing it requires a deliberate manual workflow dispatch. Do not add `frontend/build/web` to the public Pages artifact until the owner approves public app release after both web and mobile QA pass. Repository Pages must be configured to use GitHub Actions.
+
+The web QA build is uploaded separately as a GitHub Actions artifact for inspection. Artifact availability does not prove live-browser behavior or authenticated backend access.
 
 ## Design direction
 
