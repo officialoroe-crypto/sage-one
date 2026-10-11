@@ -111,14 +111,27 @@ app = FastAPI(
 def _cors_origins() -> list[str]:
     configured = os.getenv("SAGE_CORS_ORIGINS", "")
     if configured.strip():
-        return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
-    return [
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-        "http://localhost:7357",
-        "http://127.0.0.1:7357",
-        "https://officialoroe-crypto.github.io",
-    ]
+        origins = [
+            origin.strip().rstrip("/")
+            for origin in configured.split(",")
+            if origin.strip()
+        ]
+    else:
+        origins = [
+            "http://localhost:8080",
+            "http://127.0.0.1:8080",
+            "http://localhost:7357",
+            "http://127.0.0.1:7357",
+        ]
+
+    # The production Flutter web app is hosted under this GitHub Pages origin.
+    # Keep it enabled even when a Render environment variable overrides local
+    # defaults, so a partial SAGE_CORS_ORIGINS value cannot silently break it.
+    required_origins = ["https://officialoroe-crypto.github.io"]
+    for origin in required_origins:
+        if origin not in origins:
+            origins.append(origin)
+    return origins
 
 
 app.add_middleware(
