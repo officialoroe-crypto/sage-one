@@ -108,7 +108,7 @@ def google_login(request: GoogleLoginRequest):
     from identity.auth import verify_google_id_token
     claims = verify_google_id_token(request.id_token)
     profile = _profile_from_claims(claims)
-    return {"success": True, "identity": {"provider": "google", "subject": claims["auth_subject"], "email": claims.get("email"), "email_verified": claims.get("email_verified", False), "owner_mode": claims.get("owner_mode", False)}, "profile": profile, "onboarding_required": not profile["onboarding_completed"]}
+    return {"success": True, "identity": {"provider": "google", "subject": claims["auth_subject"], "email": claims.get("email"), "email_verified": claims.get("email_verified", False), "owner_mode": claims.get("owner_mode", False)}, "owner_mode": claims.get("owner_mode", False), "developer_mode": claims.get("developer_mode", False), "profile": profile, "onboarding_required": not profile["onboarding_completed"]}
 
 @router.get("/me")
 def get_me(claims: dict[str, Any] = Depends(authenticate_request)):
