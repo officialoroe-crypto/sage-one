@@ -67,6 +67,22 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 - [ ] Do not build or wire a rating mechanism during cleanup/self-repair work.
 
 
+
+### F6 — Live Internet Intelligence, Search and Message/Task Assistance (DEFERRED until P0 cleanup and P1 self-repair gates)
+- [ ] Audit current research pipeline, World Intelligence, provider routing, memory, chat command loop, durable task workers, source records and web-fetch capabilities before adding code. Search-index results alone are not sufficient; inspect actual files and call paths.
+- [ ] Provide a real backend-owned web-search/fetch interface with provider adapters, timeouts, retries with limits, rate limits, caching, source URLs, publication/access timestamps where available, and graceful no-provider/no-network states.
+- [ ] Search the open web and allow Google search results where a supported, permitted integration is available. Do not assume Google Custom Search JSON API is available for a new project: Google's current docs say it is closed to new customers; select a maintained provider or allowed user-opened Google Search flow after provider/cost review.
+- [ ] Show citations/source links and distinguish sourced facts, inference, stale information and uncertainty. Cross-check high-impact claims; do not invent sources.
+- [ ] Let SAGE use current information to answer questions, research topics, explain messages, translate, draft replies, summarize user-provided context, create/organize tasks, and propose next actions.
+- [ ] Support explicit user request and opt-in task triggers; never run unbounded autonomous browsing or claim it is continuously learning when no job is running.
+- [ ] Treat webpage content as untrusted input, not instructions. Protect against prompt injection, malicious links, secret exfiltration, and unsafe downloads; never let page text override system/owner rules.
+- [ ] Separate transient research results from durable memory. Propose useful memory candidates with source, confidence and expiry/freshness; require the owner's consent before saving personal or durable preferences unless an existing approved memory policy explicitly permits it.
+- [ ] Message assistance may draft, translate and suggest responses; do not send, post, or contact anyone without explicit per-action approval.
+- [ ] Task assistance may plan and execute only within existing permission/confirmation boundaries; require approval for external, destructive, paid, publishing or sensitive actions.
+- [ ] Keep secrets server-side, use least-privilege provider credentials, document quotas/pricing, prefer free-first options, and never introduce a paid dependency without explicit owner approval.
+- [ ] Test unavailable provider, rate-limit/quota, malformed result, malicious page instructions, stale source, duplicate job, cancellation, timeout and network-offline cases.
+- [ ] Acceptance: real end-to-end query → sourced results → answer/task proposal → user review → optional approved memory; logs show provenance and bounded usage. Mark incomplete until live integration tests prove it.
+
 ### F6 — Existing validation/release backlog carried forward (DEFERRED until priority gates allow)
 - [ ] Production SMS/OTP provider.
 - [ ] Long-lived Google web session refresh UX.
