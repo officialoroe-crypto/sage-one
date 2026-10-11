@@ -66,6 +66,24 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 - [ ] Define what is rated, scale, criteria, storage, and how it affects prioritization only after P0/P1.
 - [ ] Do not build or wire a rating mechanism during cleanup/self-repair work.
 
+
+### F5 — Existing validation/release backlog carried forward (DEFERRED until priority gates allow)
+- [ ] Production SMS/OTP provider.
+- [ ] Long-lived Google web session refresh UX.
+- [ ] Premium lifecycle smoke test on the configured environment.
+- [ ] Full multi-tenant ownership if SAGE becomes public/shared.
+- [ ] Broader third-party integrations and permissioned publishing adapters.
+- [ ] Analytics → improve feedback loop.
+- [ ] Automated Evolution visual regression.
+- [ ] Full button-by-button interaction audit with HTTP-method/path assertions and loading/error/cancel regression coverage.
+- [ ] Live backend connectivity smoke test against the configured private environment.
+- [ ] Manual Android/device QA with a physical device and reachable backend.
+- [ ] Resolve physical Android Google Sign-In only after checking current PR/CI, phone-reachable API URL, latest APK artifact, and fresh device logs; CI/build success alone is insufficient.
+- [ ] Full visual/reference comparison.
+- [ ] Verify consent-driven memory candidate review and confirmation UX on the real runtime path.
+- [ ] Recheck premium reservation/settlement/refund lifecycle and Evolution settlement integration with current tests.
+- [ ] Reconfirm Android release workflow API URL and ADB-reverse requirements before installing an APK.
+
 ### F4 — Product and release work (AFTER P0/P1, ordered by evidence)
 - [ ] Website browser acceptance and responsive/visual audit.
 - [ ] Full button/link/route/API interaction audit with loading, empty, error, retry and cancel behavior.
