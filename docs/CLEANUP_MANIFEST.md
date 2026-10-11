@@ -1,6 +1,6 @@
 # SAGE ONE — Documentation and Asset Cleanup Manifest
 
-Status: Inventory in progress; no application assets or source files deleted/moved by this pass.
+Status: Inventory in progress; one verified one-byte documentation placeholder removed on this review branch. No application assets or source files deleted/moved.
 Branch: `docs/canonical-source-of-truth-20261011`
 Baseline main SHA: `5524f23283f5979f06e497048ae7f6b63eabb87b`
 
@@ -21,7 +21,7 @@ Operational rules and all current/future tasks are centralized in [SAGE_MASTER_R
 - Preserve useful history; avoid competing canonical copies.
 - User data, database migrations, security/auth code, secrets/configuration and canonical assets require extra care; do not treat them as disposable clutter.
 
-## Documentation actions completed in this pass
+## Baseline repository inventory (main SHA above)\n\n- Recursive Git tree was not truncated: 364 total tree entries, 313 tracked files.\n- 12 image/vector files were found: 11 design/reference images and the website favicon. The 11 design images still require visual inspection and hash/dimension inventory.\n- Five zero-byte Python `__init__.py` files exist (`app`, `config`, `memory`, `permissions`, `web`). Empty package initializers can be intentional; do not remove without checking package/runtime behavior.\n- `docs/design/main design assets` was exactly one newline (1 byte). Repository code search for the path/name returned no references. It was removed on this branch only; review can restore it if a hidden/unindexed dependency is found.\n- The brand document names `SAGE_ONE_canonical_logo.png` and records a SHA-256/dimensions, but no asset with that filename appears in the tracked-file inventory. Locate the original or confirm which tracked reference is intended before replacing branding.\n- Code search for `Untitled front.jpg` returned no matches; this does not replace visual inspection or checking references in non-indexed/untracked files.\n\n## Documentation actions completed in this pass
 | Path | Treatment | Notes |
 |---|---|---|
 | `docs/00_START_HERE.md` | KEEP / CANONICAL | Updated to show P0 cleanup → P1 self-repair → deferred features |
@@ -40,7 +40,7 @@ Operational rules and all current/future tasks are centralized in [SAGE_MASTER_R
 | `docs/design/Untitled.jpg` | UNREVIEWED | Prior audit described Evolution infographic; record exact hash/dimensions and trace use |
 | `docs/design/Untitled front.jpg` | UNREVIEWED | Exists; visual contents need direct inspection |
 | `docs/design/img-assets/*` | UNREVIEWED | Inspect every image; hash, dimensions, duplicate and reference trace |
-| `docs/design/main design assets` | DELETE-VERIFIED CANDIDATE ONLY | Previously appeared to contain one newline; still requires reference check before removal |
+| `docs/design/main design assets` | DELETE-VERIFIED on branch | One-byte newline-only placeholder; code search for path/name returned no references; deletion is reviewable and not on main |
 | Root docs overlapping `docs/` | MERGE / REVIEW | Keep compatibility pointers when old links are in use |
 | Open PRs #221–#225, #219, #190 and #227 | REVIEW / RECONCILE | Older branches/bases may be stale; no blind merge |
 
@@ -59,7 +59,7 @@ Path; proposed descriptive path; SHA-256; dimensions/type; visual description; s
 - Do not merge or deploy without explicit owner approval.
 
 ## Remaining cleanup work
-1. Produce a complete tracked-file inventory and classify by area and role.
+1. Classify the 313 tracked files by area and role; identify residuals without treating intentional package initializers as waste.
 2. Inspect/hash all design and image assets; inspect the actual bytes of `Untitled front.jpg` and all `img-assets` files.
 3. Search source/docs/workflows/tests for every candidate path and for duplicate rule/task wording; use more than code search if indexing is incomplete.
 4. Reconcile brand, visual system, UI reference, Evolution lab, architecture, project state, changelog and open PRs.
