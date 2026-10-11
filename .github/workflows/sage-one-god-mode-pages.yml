@@ -77,7 +77,24 @@ jobs:
           print("Marketing page markup, release wording, and assets validated.")
           PY
       - name: Build Flutter web app for QA (not Pages deployment)
-        run: flutter build web --release --base-href /sage-one/app/
+        env:
+          SAGE_API_URL: ${{ vars.SAGE_API_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ -n "$SAGE_API_URL" ]; then
+            case "$SAGE_API_URL" in
+              https://*) ;;
+              *)
+                echo "::error::SAGE_API_URL must use HTTPS when provided."
+                exit 1
+                ;;
+            esac
+            flutter build web --release --base-href /sage-one/app/ --dart-define="SAGE_API_URL=$SAGE_API_URL"
+          else
+            # PR builds can validate the UI without production variables. This
+            # output is QA-only and will not be published to GitHub Pages.
+            flutter build web --release --base-href /sage-one/app/
+          fi
       - name: Upload web QA build artifact
         uses: actions/upload-artifact@v7
         with:
