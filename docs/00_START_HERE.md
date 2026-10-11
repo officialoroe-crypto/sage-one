@@ -2,25 +2,21 @@
 
 Status: Canonical documentation entry point. Last reviewed: 2026-10-11.
 
-## Required reading order
-1. [Canonical design system](design/SAGE_ONE_CANONICAL_DESIGN_SYSTEM.md)
-2. [SAGE Spark economy](product/SAGE_SPARK_ECONOMY.md)
-3. [Screen-aware assistant](product/SCREEN_AWARE_ASSISTANT.md)
-4. [Cleanup manifest](CLEANUP_MANIFEST.md)
-5. [Project memory](SAGE_PROJECT_MEMORY.md)
-6. [Architecture](../ARCHITECTURE.md)
-7. [Development rules](../DEVELOPMENT_RULES.md)
-8. [Locked Evolution system](../EVOLUTION_SYSTEM_FINAL_LOCKED.md)
+## Read first
+1. [Master Rules & To-Do — single operational priority/backlog source](SAGE_MASTER_RULES_AND_TODO.md)
+2. [Cleanup Manifest](CLEANUP_MANIFEST.md)
+3. [Canonical design system](design/SAGE_ONE_CANONICAL_DESIGN_SYSTEM.md)
+4. [Project memory](SAGE_PROJECT_MEMORY.md)
+5. [Architecture](../ARCHITECTURE.md)
+6. [Project state and incident handoff](../PROJECT_STATE.md)
+7. [Locked Evolution system](../EVOLUTION_SYSTEM_FINAL_LOCKED.md)
 
-## Authority rules
-- This is the entry point; detailed specs remain authoritative for their subject.
-- The latest explicit owner decision recorded in a canonical spec takes precedence over older drafts and screenshots.
-- Mark every reference APPROVED, HISTORICAL, SUPERSEDED, or UNREVIEWED.
-- Do not invent missing details or delete files before checking content and references.
-- When the owner explicitly says to implement a feature, record it without asking for redundant confirmation.
-- No merge or production deployment without explicit owner approval.
-- Prefer free resources; do not introduce paid services without approval.
-- Never claim a test, device flow, or deployment passed without current evidence.
+Detailed design, brand, economy, and feature specifications remain linked from this index. Do not maintain a competing priority list elsewhere.
+
+## Current priority order
+- **P0 now:** whole-repository cleanup and removal/archive of verified residuals, duplicates, stale files, conflicting rules and task lists.
+- **P1 next:** safe self-repair loop that diagnoses, proposes, tests, previews and records fixes for owner approval.
+- **Deferred:** SP/SS currency behavior, screen-aware assistant and screen-rating system. Keep their specifications/backlog; do not implement them during P0/P1 unless the owner explicitly reprioritizes.
 
 ## Product definition
 SAGE ONE is a real AI execution ecosystem, not a chatbot demo. Core areas include Chat, Tasks, Research, Memory, Projects/Workspace, Voice, Onboarding, Authentication, durable execution, provider routing, owner-only Developer Mode, and a preview → approve → apply workflow.
@@ -28,11 +24,15 @@ SAGE ONE is a real AI execution ecosystem, not a chatbot demo. Core areas includ
 Normal SAGE: understand → plan → execute with permission → verify → show result.
 Owner Developer SAGE: inspect code → propose safe change → implement and test → preview → owner approves → apply/merge.
 
-## Canonical decisions
-- Owner memory and owner-only developer access must be protected from other users.
-- Evolution and both Spark balances are separate systems; see linked specifications.
-- Screen reading must be visibly enabled, permission-based, privacy-conscious, and immediately pausable.
-- Use stable asset paths; historical screenshots must not silently override current specifications.
+## Authority rules
+- [Master Rules & To-Do](SAGE_MASTER_RULES_AND_TODO.md) controls current work order and operational rules.
+- Detailed subject-specific specs govern their technical details; the latest explicit owner decision recorded in a canonical spec supersedes older drafts.
+- Mark references APPROVED, HISTORICAL, SUPERSEDED, or UNREVIEWED.
+- Never delete files before checking content, inbound references, build/runtime/test use, uniqueness and recovery.
+- Record explicit implementation requests without asking redundant confirmation.
+- No merge or production deployment without explicit owner approval.
+- Prefer free resources; do not introduce paid services without approval.
+- Never claim a test, device flow, or deployment passed without current evidence.
 
 ## Work protocol
-Recover → Audit → Document → Plan → Implement → Test → Preview → Approve → Apply. Audit before editing, preserve existing work, work on a branch, record evidence, and update this index when canonical sources change.
+Recover → Audit → Document → Plan → Implement → Test → Preview → Owner approval → Apply. Audit before editing, preserve existing work, work on a branch, record evidence, and update this index when canonical sources change.
