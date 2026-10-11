@@ -93,12 +93,19 @@ class _AuthGateState extends State<AuthGate> {
 
   void _signedIn(Map<String, dynamic> result) {
     final profile = result['profile'];
+    final identity = result['identity'];
+    final identityClaims = identity is Map
+        ? Map<String, dynamic>.from(identity)
+        : <String, dynamic>{};
     setState(() {
       _profile = profile is Map
           ? Map<String, dynamic>.from(profile)
           : <String, dynamic>{};
+      // Google login historically nested owner_mode under "identity".
+      // Accept both response shapes so the owner never gets trapped at SMS.
       _developerMode = result['developer_mode'] == true;
-      _ownerMode = result['owner_mode'] == true;
+      _ownerMode = result['owner_mode'] == true ||
+          identityClaims['owner_mode'] == true;
       _loading = false;
     });
   }
