@@ -97,6 +97,14 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 - [ ] Acceptance: load tests show image/video queues do not block chat/research; verify concurrent users, provider failure, cancellation, retry, quota exhaustion, authorization, retention and cost limits before production.
 - [ ] Status: architecture requirement only. Not implemented or load-tested. Keep behind P0 repository cleanup and P1 self-repair unless owner explicitly reprioritizes.
 
+
+### F8 — Evaluate Freebuff as a free-first coding assistant (EVALUATION ONLY)
+- [ ] Candidate website: https://freebuff.ai/ and its current web app builder / GitHub-connected cloud workflow. The product advertises free coding agents, browser app building and no subscription/API key.
+- [ ] Do not treat marketing claims as proof of unlimited usage: current site describes a daily Freebucks allowance for some models and ad-supported access. Verify the exact current limits, model availability, privacy/data handling, private GitHub repo permissions, export/ownership, hosting limits and terms before use.
+- [ ] First trial must use a disposable test repository or a branch/worktree, never grant write access to SAGE ONE main by default. No secrets, production credentials or private user data in prompts.
+- [ ] If adopted, use Freebuff as an optional developer productivity tool, not as a runtime dependency or authority over project rules. Review every patch, run tests, and preserve SAGE's owner approval gate.
+- [ ] Status: investigated from public sources only; not installed, connected, or tested against the SAGE ONE repository.
+
 ### F6 — Existing validation/release backlog carried forward (DEFERRED until priority gates allow)
 - [ ] Production SMS/OTP provider.
 - [ ] Long-lived Google web session refresh UX.
