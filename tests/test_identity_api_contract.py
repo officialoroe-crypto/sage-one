@@ -75,3 +75,28 @@ def test_phone_send_request_requires_phone():
     except pydantic.ValidationError:
         return
     raise AssertionError("OTP send requests must require a phone number")
+
+
+def test_google_login_exposes_owner_flags_at_top_level(monkeypatch):
+    from identity import auth
+
+    claims = {
+        "auth_subject": "owner-subject",
+        "email": "owner@example.com",
+        "email_verified": True,
+        "owner_mode": True,
+        "developer_mode": True,
+    }
+    monkeypatch.setattr(auth, "verify_google_id_token", lambda _token: claims)
+    monkeypatch.setattr(
+        api,
+        "_profile_from_claims",
+        lambda _claims: {"onboarding_completed": False},
+    )
+
+    response = api.google_login(api.GoogleLoginRequest(id_token="test-id-token"))
+
+    assert response["owner_mode"] is True
+    assert response["developer_mode"] is True
+    assert response["identity"]["owner_mode"] is True
+    assert response["onboarding_required"] is True
