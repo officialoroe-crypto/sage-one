@@ -36,7 +36,8 @@ SAGE ONE is the user's personal AI execution platform. The user should eventuall
 - Spark and Evolution are separate systems.
 - Activity Center may award verified rewards such as 5/10/15+ Spark based on useful activity difficulty.
 - Rewards are server-verified, ledgered and idempotent; users cannot farm a one-time quest repeatedly.
-- Spark is an internal SAGE economy/usage unit, not automatically real money, cryptocurrency, investment or a security.
+- Spark is the SAGE platform currency at a fixed rate of 1 Spark = NPR 1 (owner decision 2026-10-11). It is not a cryptocurrency, investment or security. Real-rupee cash-out stays disabled until a payment provider is configured, the owner opts in, and a legal review is done.
+- Spend Trust Ladder (provisional): SAGE earns first, a savings lock and percentage rules limit each spend, and the owner approves every spend. See docs/SAGE_MASTER_BLUEPRINT.md.
 
 ## Activity Center
 Examples:

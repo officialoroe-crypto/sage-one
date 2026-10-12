@@ -133,7 +133,7 @@ Main contains the real private-first execution core:
 - World Intelligence cannot self-modify production code.
 
 ## Economy / Evolution
-- Spark is an internal platform credit, not cash.
+- Spark is the SAGE platform currency: 1 Spark = NPR 1 (owner decision 2026-10-11; see docs/SAGE_MASTER_BLUEPRINT.md). Cash-out is off until a payment provider is configured and the owner opts in.
 - Premium work uses a canonical cost catalogue with reservation → settle/refund lifecycle and owner-scoped idempotency.
 - Terminal failure/cancellation refunds exactly once; crash reconciliation exists.
 - Verified mission-task results settle lifetime Evolution achievement atomically and idempotently.

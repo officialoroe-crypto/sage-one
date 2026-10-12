@@ -89,7 +89,7 @@ class _EconomyScreenState extends State<EconomyScreen> {
             const _SectionTitle('Premium work • Evolution protected'),
             const SizedBox(height: 10),
             const Text(
-              'Spark is an internal SAGE work credit. Spending Spark never removes verified Evolution achievement.',
+              'SAGE Spark is the platform currency: 1 Spark = NPR 1. Spending Spark never removes verified Evolution achievement.',
               style: TextStyle(color: Colors.white54, height: 1.4, fontSize: 12),
             ),
             const SizedBox(height: 12),
@@ -140,6 +140,8 @@ class _SparkCard extends StatelessWidget {
           const Expanded(child: Text('SAGE Spark', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
           Text('${spark['balance'] ?? 0}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
         ]),
+        const SizedBox(height: 6),
+        Text('1 Spark = NPR 1 • worth NPR ${spark['npr_value'] ?? spark['balance'] ?? 0}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
         const SizedBox(height: 18),
         Row(children: [
           _Metric(label: 'Earned', value: '${spark['lifetime_earned'] ?? 0}'),

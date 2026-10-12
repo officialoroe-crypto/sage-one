@@ -18,7 +18,7 @@ Next core pass: tighten action/task/mission correlation; authorization provenanc
 - Evidence should be first-class.
 - Runtime Permission Engine and developer AI collaboration locks are separate concerns.
 - Durable Automation is distinct from the bounded local execution scheduler.
-- Spark remains an internal platform credit unless a future product/legal design explicitly changes that.
+- Spark is the platform currency at 1 Spark = NPR 1 (owner decision 2026-10-11). Cash-out is disabled until a provider, owner opt-in and legal review exist.
 - Heavy AI inference should remain cloud-first for the current development laptop.
 - Voice comes after the text execution loop.
 - Flutter should first expose the real SAGE interaction loop rather than many disconnected screens.

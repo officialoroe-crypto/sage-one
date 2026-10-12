@@ -147,3 +147,13 @@ PR #220 (fix/public-web-api-deployment) adds an HTTPS SAGE_API_URL guard to the 
 - User says Step 3 (GitHub Actions repository variable `SAGE_API_URL`) is complete, but cannot find the workflow in Actions. Provide direct workflow URL: https://github.com/officialoroe-crypto/sage-one/actions/workflows/sage-one-god-mode-pages.yml. Workflow display name is `SAGE ONE Public Website and Web App`; workflow filename is `sage-one-god-mode-pages.yml`.
 - Do not dispatch Pages workflow until backend is stable and the Actions variable points to its actual tested HTTPS base URL. The workflow intentionally fails if missing/non-HTTPS.
 - Render startup error details and code-level diagnosis recorded in project checkpoint: `database/connection.py` reads `SAGE_DATABASE_URL`; blank/invalid present value overrides SQLite fallback. Temporary smoke-test option: remove variable only if no DB exists, then redeploy; durable DB needed before real data. Re-test `/health` and `/identity/config` after redeploy. Identity response reported `developer_mode:false`, `owner_mode_available:false`, and Google client ID field appeared empty/omitted; Google/OAuth setup remains unverified.
+
+
+## Checkpoint: Spark currency rule and new website (2026-10-12)
+- Owner decision, restated 2026-10-12: SAGE Spark is the real currency, 1 Spark = NPR 1, applied across the whole system. See `economy/currency.py`, `memory/DECISIONS.md` and `docs/SAGE_MASTER_BLUEPRINT.md`.
+- Work in this branch: Spark/NPR rule in backend, API, Flutter economy screen and docs; Spend Trust Ladder draft (`economy/spend_ladder.py`); rebuilt `website/` from the owner's design board (hero, flow, two paths, Evolution explorer with transition, Spark converter, spend-limit calculator, roadmap).
+- Verified: backend tests 243 passed on a clean database; website spend-limit logic matches `economy/spend_ladder.py` on 314 cases; site has no horizontal overflow at 390px and 1280px and the Evolve transition completes in a headless browser.
+- Not verified: Flutter analyzer/tests for the changed `economy.dart`; CI on this branch; GitHub Pages deployment; real phone or browser review by the owner; the Google Fonts load (blocked in the test sandbox, fallback fonts were used).
+- Not done: Silver and Gold limits and final spend numbers (owner must confirm, see blueprint section 6.3); cash-out stays off until a payment provider, owner switch and legal review exist.
+- Left out on purpose: the Nepali tagline from the design board, because it could not be read reliably. Owner should supply the exact text.
+- Test note: `tests/test_mission_progress.py` expects a fresh event database; a leftover `sage_one.db` from earlier test runs makes it fail until the file is deleted.

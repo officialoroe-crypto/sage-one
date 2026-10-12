@@ -27,6 +27,10 @@ class Settings:
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     PAYMENT_PROVIDER = os.getenv("SAGE_PAYMENT_PROVIDER", "").strip()
     PAYMENT_SECRET_KEY = os.getenv("SAGE_PAYMENT_SECRET_KEY", "").strip()
+    # Real-rupee payout of Spark stays off until the owner opts in explicitly.
+    SPARK_CASH_OUT_ENABLED = os.getenv("SAGE_SPARK_CASH_OUT_ENABLED", "false").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
 
     # Private mode is the default only for development environments. Production
     # deployments must opt in explicitly and never inherit local owner access.
