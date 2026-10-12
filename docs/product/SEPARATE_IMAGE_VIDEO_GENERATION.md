@@ -32,3 +32,15 @@ Let many SAGE ONE users request generated images and videos without making the m
 
 ## Acceptance
 Load tests demonstrate that image/video jobs do not block main assistant requests; queue status and cancellation work; retries do not duplicate jobs; outputs are protected; usage/cost caps work; provider failures recover safely. Until tests run, this remains planned rather than complete.
+
+## Requested model families: Qwen and Wan
+The owner specifically requested Qwen AI and Wan AI for SAGE's media-generation architecture. Treat them as preferred candidates to evaluate, not as already integrated or guaranteed free.
+
+- **Qwen:** evaluate its official model/provider options for image generation and whether the exact model supports image generation through an API accessible to this project. QwenCloud documents a free trial quota for new users, but image/video usage can be billable after quota; do not assume unlimited free production usage.
+- **Wan:** evaluate the official open model family for video generation and hosted inference options. Self-hosting large Wan models requires substantial GPU memory and is not suitable for the owner's current laptop as a production worker. Use a hosted provider or separate GPU infrastructure only after price/quota/privacy review.
+- Keep provider adapters modular so a model/provider can be swapped without changing the main SAGE API.
+- Verify official model name, license, supported region, endpoint, commercial-use terms, quota, price, retention and latency at implementation time. Avoid third-party API services until their ownership, reliability and terms are checked.
+- Never expose provider keys in Flutter/web/mobile clients; route through server-side secret configuration.
+
+## Free coding tool investigation
+The name “Freebof” did not return a clear matching product in the web search. A likely match is **Freebuff** (https://freebuff.ai/), which advertises a free coding agent, browser-based web app builder and GitHub-connected cloud IDE. Its marketing claims need hands-on verification; “free” does not prove unlimited/no-credit usage, reliable private-repository support or production suitability. Check current terms, quotas, private repo permissions, export/ownership, deploy targets and privacy before connecting SAGE ONE.
