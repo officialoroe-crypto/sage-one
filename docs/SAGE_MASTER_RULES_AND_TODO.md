@@ -86,7 +86,7 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 
 ### F7 — Separate Image AI and Video AI Workloads (FUTURE ARCHITECTURE; audit first)
 - [ ] Keep the SAGE ONE main assistant responsive by separating image-generation and video-generation into independent services/workers and queues, rather than running heavy generation in the main API process.
-- [ ] Audit existing image/video generation endpoints, provider adapters, storage, job tables, background workers, auth, quota and billing before implementation; reuse sound existing infrastructure.
+- [ ] Audit existing image/video generation endpoints, provider adapters, storage, job tables, background workers, auth, quota and billing before implementation; reuse sound existing infrastructure. Evaluate Qwen as an image-generation candidate and Wan as a video-generation candidate; verify exact model/API, license, region, quotas, pricing, privacy and commercial-use terms before choosing a provider.
 - [ ] Define a common job lifecycle: submitted → queued → running → succeeded/failed/cancelled; return a job ID, progress/status, output references and actionable errors.
 - [ ] Separate image and video concurrency/worker pools; video jobs must not starve chat, research, or image jobs. Apply per-user and global concurrency limits, fair scheduling, backpressure and queue-depth alerts.
 - [ ] Use external/provider-hosted generation where appropriate instead of assuming the owner's laptop or primary API server can run large models. Keep provider selection configurable and free-first; disclose quotas, price and data handling before any paid provider is enabled.
