@@ -109,16 +109,32 @@ app = FastAPI(
 
 
 def _cors_origins() -> list[str]:
-    configured = os.getenv("SAGE_CORS_ORIGINS", "")
-    if configured.strip():
-        return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
-    return [
+    """Return explicit CORS allowlist plus the canonical public web-app origin.
+
+    Render environment overrides used to replace the defaults completely. If
+    SAGE_CORS_ORIGINS was configured without the GitHub Pages origin, browser
+    requests from the deployed frontend failed CORS preflight even though the
+    default configuration included it. Keep the public production frontend
+    allowed while still supporting extra deployment-specific origins.
+    """
+    canonical = [
+        "https://officialoroe-crypto.github.io",
+    ]
+    defaults = [
         "http://localhost:8080",
         "http://127.0.0.1:8080",
         "http://localhost:7357",
         "http://127.0.0.1:7357",
-        "https://officialoroe-crypto.github.io",
     ]
+    configured = os.getenv("SAGE_CORS_ORIGINS", "")
+    supplied = [
+        origin.strip().rstrip("/")
+        for origin in configured.split(",")
+        if origin.strip()
+    ]
+    # De-duplicate while preserving order. Configured origins extend, rather
+    # than accidentally remove, the canonical public frontend origin.
+    return list(dict.fromkeys(canonical + defaults + supplied))
 
 
 app.add_middleware(
