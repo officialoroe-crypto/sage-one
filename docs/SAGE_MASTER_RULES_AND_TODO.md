@@ -83,6 +83,20 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 - [ ] Test unavailable provider, rate-limit/quota, malformed result, malicious page instructions, stale source, duplicate job, cancellation, timeout and network-offline cases.
 - [ ] Acceptance: real end-to-end query → sourced results → answer/task proposal → user review → optional approved memory; logs show provenance and bounded usage. Mark incomplete until live integration tests prove it.
 
+
+### F7 — Separate Image AI and Video AI Workloads (FUTURE ARCHITECTURE; audit first)
+- [ ] Keep the SAGE ONE main assistant responsive by separating image-generation and video-generation into independent services/workers and queues, rather than running heavy generation in the main API process.
+- [ ] Audit existing image/video generation endpoints, provider adapters, storage, job tables, background workers, auth, quota and billing before implementation; reuse sound existing infrastructure.
+- [ ] Define a common job lifecycle: submitted → queued → running → succeeded/failed/cancelled; return a job ID, progress/status, output references and actionable errors.
+- [ ] Separate image and video concurrency/worker pools; video jobs must not starve chat, research, or image jobs. Apply per-user and global concurrency limits, fair scheduling, backpressure and queue-depth alerts.
+- [ ] Use external/provider-hosted generation where appropriate instead of assuming the owner's laptop or primary API server can run large models. Keep provider selection configurable and free-first; disclose quotas, price and data handling before any paid provider is enabled.
+- [ ] Store outputs in object/file storage with authorization, retention rules, signed/limited access URLs, cleanup and metadata; don't keep large media blobs in the primary relational database.
+- [ ] Support cancellation, bounded retries, timeouts, idempotency, duplicate-job protection, failed-job recovery, usage tracking and owner-visible logs.
+- [ ] Protect against abuse and cost spikes: authentication, quotas, per-user limits, moderation/safety checks appropriate to the provider, storage caps and admin kill switch.
+- [ ] Scale image and video independently based on queue depth and provider capacity; no promise of unlimited or continuous generation. Capacity must follow provider quotas, budgets and fair-use policy.
+- [ ] Acceptance: load tests show image/video queues do not block chat/research; verify concurrent users, provider failure, cancellation, retry, quota exhaustion, authorization, retention and cost limits before production.
+- [ ] Status: architecture requirement only. Not implemented or load-tested. Keep behind P0 repository cleanup and P1 self-repair unless owner explicitly reprioritizes.
+
 ### F6 — Existing validation/release backlog carried forward (DEFERRED until priority gates allow)
 - [ ] Production SMS/OTP provider.
 - [ ] Long-lived Google web session refresh UX.
