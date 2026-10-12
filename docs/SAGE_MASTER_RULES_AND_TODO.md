@@ -98,12 +98,12 @@ Goal: SAGE can diagnose issues and help the owner fix them safely while the owne
 - [ ] Status: architecture requirement only. Not implemented or load-tested. Keep behind P0 repository cleanup and P1 self-repair unless owner explicitly reprioritizes.
 
 
-### F8 — Evaluate Freebuff as a free-first coding assistant (EVALUATION ONLY)
-- [ ] Candidate website: https://freebuff.ai/ and its current web app builder / GitHub-connected cloud workflow. The product advertises free coding agents, browser app building and no subscription/API key.
-- [ ] Do not treat marketing claims as proof of unlimited usage: current site describes a daily Freebucks allowance for some models and ad-supported access. Verify the exact current limits, model availability, privacy/data handling, private GitHub repo permissions, export/ownership, hosting limits and terms before use.
-- [ ] First trial must use a disposable test repository or a branch/worktree, never grant write access to SAGE ONE main by default. No secrets, production credentials or private user data in prompts.
-- [ ] If adopted, use Freebuff as an optional developer productivity tool, not as a runtime dependency or authority over project rules. Review every patch, run tests, and preserve SAGE's owner approval gate.
-- [ ] Status: investigated from public sources only; not installed, connected, or tested against the SAGE ONE repository.
+### F8 — Freebuff status (PAUSED; owner will evaluate separately)
+- [x] Owner says Freebuff's one-hour-per-day free coding allowance is not enough for SAGE ONE's planned 5–12 hour work sessions.
+- [ ] Do not spend current development time integrating or evaluating Freebuff. The owner has already assigned it tasks and will judge its output independently.
+- [ ] Do not grant it additional SAGE ONE permissions or treat its output as merged/verified without owner review.
+- [ ] Resume evaluation only if the owner explicitly asks after reviewing its results.
+
 
 ### F6 — Existing validation/release backlog carried forward (DEFERRED until priority gates allow)
 - [ ] Production SMS/OTP provider.
