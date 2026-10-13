@@ -72,6 +72,7 @@ The immediate objective is a stable runnable SAGE ONE core and a usable demo. Av
 - Build order remains: stabilize core -> connect real backend/frontend -> complete one end-to-end customer workflow -> owner testing/private demo -> then expand automation and Owner Developer Mode.
 - GitHub remains the canonical shared memory for both backend and frontend chats.
 
+
 ## 2026-10-08 Role Boundary Correction — LOCKED
 - The backend chat's job is to **build and maintain the system**, not to personally perform SAGE's future customer-facing work.
 - SAGE Sales is a future SAGE capability/agent. When we say SAGE should create videos, research businesses, make portfolios, generate outreach, or perform sales work, that means **we must code SAGE so SAGE can perform those jobs**.
@@ -153,3 +154,15 @@ This section is a foundational product requirement. Future chats and implementat
 - Use human-interaction knowledge to be respectful, helpful and honest—not manipulative or exploitative, and not merely to say what someone wants to hear.
 - “Learn from the internet” means controlled retrieval, source evaluation, synthesis and application—not omniscience, unauthorized access, or silent foundation-model retraining. Preserve privacy and per-user memory isolation; allow users to review, correct, forget and disable personal learning.
 - Acceptance examples and implementation guidance live in [FOUNDATIONAL_PRODUCT_VISION.md](./FOUNDATIONAL_PRODUCT_VISION.md), section 11.
+
+
+
+### 2026-10-13 Screen-Aware Assistant — OWNER CLARIFICATION / REQUIRED SPEC
+- The requested feature is a **whole-screen-aware assistant**, not a messages-only reader and not merely a screen-sharing button.
+- On requests such as “Read my screen,” “Start screen sharing,” or natural equivalents, SAGE should launch the platform-supported screen-sharing flow. After required user/OS authorization succeeds, SAGE should confirm that screen access is active and ask what help is needed (unless the user already stated a task).
+- SAGE must be able to interpret the currently shared visible screen across supported content types: messages, apps, websites, documents, code/errors, images, forms, settings and other visible material. It should use that context to help with the user's actual request, including follow-up questions.
+- Natural confirmation example: “Okay, I’m now reading your screen. What do you need my help with?” Nepali example: “ल, म अहिले तपाईंको स्क्रिन हेर्दैछु। के सहयोग चाहियो भन्नुहोस्।”
+- Screen viewing does not imply device-control permission. Clicking, typing, sending, publishing, deleting, purchasing or changing settings remain separately permissioned/approval-first actions.
+- Screen access must be visible, stop/revoke-able, truthful about failure, and privacy-preserving. “SAGE, stop” must interrupt the relevant activity.
+- Detailed behavior and acceptance checklist: [SCREEN_AWARE_ASSISTANT.md](./product/SCREEN_AWARE_ASSISTANT.md).
+- **Phase rule:** “Deferred” means postponed and still open—not done. “Specified” means documentation exists—not code. A phase cannot be called complete while a required feature is deferred, blocked, partially implemented, disconnected or unverified. Any deferred scope must remain visible in the backlog and be reported clearly; never erase requirements to make a phase look complete.
