@@ -180,7 +180,7 @@ window.SAGE = window.SAGE || {};
       <!-- controls -->
       <div class="row mt12" style="gap:9px">
         <button class="btn primary sm" style="flex:1" data-act="rs-play">${playing ? '■ Stop' : '▶ Start Research'}</button>
-        <button class="btn soft sm" style="flex:1" data-act="rs-fail">⚡ Simulate Failure</button>
+        <button class="btn soft sm" style="flex:1" data-act="rs-fail">⚡ Preview Recovery Animation</button>
       </div>
 
       <!-- Source panel -->
@@ -215,8 +215,8 @@ window.SAGE = window.SAGE || {};
         <span class="fl-warn">⚠</span>
         <div class="grow"><b class="small">Couldn't complete the research.</b><div class="tiny muted">Network or source access interrupted.</div></div>
         <div class="fl-btns">
-          <button class="btn xs primary" data-act="rs-fail">Retry</button>
-          <button class="btn xs soft" data-act="rs-fail">Try another approach</button>
+          <button class="btn xs primary" data-act="rs-fail">Preview recovery again</button>
+          <button class="btn xs soft" data-act="rs-fail">Close preview</button>
         </div>
         <div class="tiny muted" style="width:100%;text-align:right">Tap to skip animation</div>
       </div>

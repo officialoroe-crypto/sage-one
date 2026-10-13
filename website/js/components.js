@@ -317,12 +317,16 @@ window.SAGE = window.SAGE || {};
       clearTimeout(timer); cancelAnimationFrame(countRaf);
       root.classList.remove('on'); root.innerHTML = '';
       S._fxSkip = null;
-      if (!opts.noCredit) S.creditEarning(amount, opts.source || 'Client Payment');
-      S.save();
-      if (S.currentRoute() === 'earn' || S.currentRoute() === 'wallet' || S.currentRoute() === 'home') S.render();
-      S.toast('Payment received ✓ ' + S.npr(amount) + ' · ' + tier.name.toLowerCase());
-      const lvl = S.addProgress(full ? 6 : 3, 'Payment received');
-      if (lvl) S.handleLevelUp(lvl);
+      if (opts.preview) {
+        S.toast('Animation preview complete. No payment, balance, or progress changed.');
+      } else {
+        if (!opts.noCredit) S.creditEarning(amount, opts.source || 'Client Payment');
+        S.save();
+        if (S.currentRoute() === 'earn' || S.currentRoute() === 'wallet' || S.currentRoute() === 'home') S.render();
+        S.toast('Payment received ✓ ' + S.npr(amount) + ' · ' + tier.name.toLowerCase());
+        const lvl = S.addProgress(full ? 6 : 3, 'Payment received');
+        if (lvl) S.handleLevelUp(lvl);
+      }
       if (opts.onDone) opts.onDone();
     }
     S._fxSkip = () => finish(true);
@@ -345,9 +349,9 @@ window.SAGE = window.SAGE || {};
       root.innerHTML = `<div class="fx-overlay earn-fx quick" id="earnFx" data-s="5">
         <div class="earn-top"><div class="earn-stage"><span class="earn-n">✦</span><b>SMALL EARNING</b><em>${tier.range}</em></div></div>
         <div class="earn-orb" id="earnOrb">${S.stateOrb('earning', 200)}</div>
-        <div class="earn-amount show" id="earnAmt"><span>+${S.npr(0)}</span><em>EARNED</em></div>
+        <div class="earn-amount show" id="earnAmt"><span>+${S.npr(0)}</span><em>${opts.preview ? 'PREVIEW ONLY' : 'EARNED'}</em></div>
         <div class="earn-desc">${S.esc(tier.d)}</div>
-        <div class="earn-chip">Payment received!</div>
+        <div class="earn-chip">${opts.preview ? 'ANIMATION PREVIEW · NO PAYMENT' : 'Payment received!'}</div>
         <button class="btn ghost sm" data-act="skip-fx">Tap to skip animation</button>
       </div>`;
       countUp(900);
@@ -409,7 +413,7 @@ window.SAGE = window.SAGE || {};
       clearTimeout(timer);
       root.classList.remove('on'); root.innerHTML = '';
       S._fxSkip = null;
-      if (!skip) S.toast('Back online! · Research recovered');
+      if (!skip) S.toast(opts.preview ? 'Recovery animation preview complete. No research was run.' : 'Back online! · Research recovered');
       if (opts.onDone) opts.onDone(!skip);
     }
     S._fxSkip = () => finish(true);
@@ -442,8 +446,8 @@ window.SAGE = window.SAGE || {};
       <div class="earn-rail" id="failRail">${seq.map((s, k) => `<i class="${k === 0 ? 'on' : ''}" style="--rc:${s.c}"></i>`).join('')}</div>
       <div class="fail-card" id="failCard">
         <div class="fail-warn">⚠</div>
-        <div class="grow"><b>Couldn't complete the research.</b><div class="tiny muted">Network or source access interrupted.</div></div>
-        <div class="fail-btns"><button class="btn xs primary" data-act="fail-retry">Retry</button><button class="btn xs soft" data-act="fail-retry">Try another approach</button></div>
+        <div class="grow"><b>${opts.preview ? 'Recovery animation preview' : 'Couldn\'t complete the research.'}</b><div class="tiny muted">${opts.preview ? 'This is a visual test only. No research request was sent.' : 'Network or source access interrupted.'}</div></div>
+        <div class="fail-btns"><button class="btn xs primary" data-act="rs-fail">Replay preview</button><button class="btn xs soft" data-act="skip-fx">Close preview</button></div>
       </div>
       <button class="btn ghost sm" data-act="skip-fx">Tap to skip animation</button>
     </div>`;

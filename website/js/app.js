@@ -182,11 +182,14 @@ window.SAGE = window.SAGE || {};
       case 'rs-analyze': S.rsStop(); S.rsJump(2); S.go('research'); break;
       case 'rs-set': S.rsStop(); S.rsSet(+arg); break;
       case 'rs-play': S.rsPlay(); break;
-      case 'rs-fail':
-      case 'fail-retry': {
+      case 'rs-fail': {
         S.closeSheet();
         if (S.currentRoute() !== 'research') S.go('research');
-        S.playFailure({ onDone: () => { S.rsJump(4); if (S.currentRoute() === 'research') S.render(true); } });
+        S.playFailure({ preview: true });
+        break;
+      }
+      case 'fail-retry': {
+        S.toast('Live research is not connected yet. No retry request was sent.');
         break;
       }
       case 'logo-preview': S.previewState(arg); break;
@@ -195,7 +198,7 @@ window.SAGE = window.SAGE || {};
       case 'src-all': S.toast('12 sources · 7 verified · 2 rejected'); break;
 
       /* --- earning animation (board 3) --- */
-      case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Client Payment' }); break;
+      case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;
       case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Project Payment' }); break;
 
       /* --- premium (board 2) --- */
