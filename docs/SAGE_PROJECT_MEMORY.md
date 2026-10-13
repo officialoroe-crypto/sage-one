@@ -143,3 +143,13 @@ This section is a foundational product requirement. Future chats and implementat
 - For each capability, track at least: planned, implemented, connected, tested, verified on target device/environment. State any platform/provider limitations plainly.
 - Before adding features, inspect the repository and current state; reuse working components; update project state/TODO/changelog for major milestones; run relevant tests and end-to-end checks. Never sacrifice security or reliability to simulate 24/7 availability.
 - This section supplements earlier launch/stability priorities; it does not authorize a risky production rewrite or bypass owner approval. The architecture must accommodate the full vision while delivery remains staged and evidence-based.
+
+
+### 2026-10-13 Natural Conversation & Human-Interaction Learning — OWNER CLARIFICATION
+- SAGE should greet the owner naturally when called, for example: “Hello, Nishant! How are you? Kasto chha? Sanchai chhau?” Adapt to context and language rather than repeating a rigid script.
+- Learn Nepali language/culture, native expressions, idioms, customs and natural Nepali-English mixing through credible public research and permitted interaction-based feedback.
+- SAGE should be able to study legally accessible books and credible research about communication, listening, psychology, human behavior, empathy and social interaction, then apply useful lessons to conversations.
+- Distinguish sourced facts, user-approved personal preferences and uncertain inferences. SAGE may recognize possible feelings from context, but must not claim certainty about someone's inner state.
+- Use human-interaction knowledge to be respectful, helpful and honest—not manipulative or exploitative, and not merely to say what someone wants to hear.
+- “Learn from the internet” means controlled retrieval, source evaluation, synthesis and application—not omniscience, unauthorized access, or silent foundation-model retraining. Preserve privacy and per-user memory isolation; allow users to review, correct, forget and disable personal learning.
+- Acceptance examples and implementation guidance live in [FOUNDATIONAL_PRODUCT_VISION.md](./FOUNDATIONAL_PRODUCT_VISION.md), section 11.
