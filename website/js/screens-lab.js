@@ -98,7 +98,7 @@ window.SAGE = window.SAGE || {};
         <div class="tiny muted">Example text only. No source pages were fetched or verified.</div></div>`;
     } else {
       body = `<div class="src-detail-rows">
-        ${[['Domain', src.n], ['Type', src.t], ['Pages fetched', src.pages], ['Used in answer', src.used], ['Rejected', src.pages - src.used], ['Status', 'Example only']]
+        ${[['Domain', src.n], ['Type', src.t], ['Pages fetched', 'Not run'], ['Used in answer', 'Not run'], ['Rejected', 'Not run'], ['Status', 'Example only — not fetched']]
           .map(r => `<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--stroke)"><span class="small muted">${r[0]}</span><b class="small">${r[1]}</b></div>`).join('')}
       </div>`;
     }
@@ -109,9 +109,9 @@ window.SAGE = window.SAGE || {};
         <span class="pill green">Example</span>
       </div>
       <div class="src-stats">
-        <div><b>7</b><span>relevant pages</span></div>
-        <div><b>5</b><span>used in answer</span></div>
-        <div><b>2</b><span>rejected</span></div>
+        <div><b>—</b><span>pages fetched</span></div>
+        <div><b>—</b><span>used in answer</span></div>
+        <div><b>—</b><span>rejected</span></div>
       </div>
       <div class="src-tabs">${tabs.map(t => `<button class="${rsDetailTab === t ? 'on' : ''}" data-act="src-tab" data-arg="${t}">${t}</button>`).join('')}</div>
       ${body}`;
@@ -120,7 +120,7 @@ window.SAGE = window.SAGE || {};
   let rsDetailSrc = 'Google';
   S.srcDetail = function (name) {
     rsDetailSrc = name || rsDetailSrc;
-    S.sheet(`<h3>Source Detail View</h3><div class="sub">Transparency. Trust. Real data.</div>${sourceDetailHTML(rsDetailSrc)}`);
+    S.sheet(`<h3>Source Detail View</h3><div class="sub">Example only · no source was fetched or verified.</div>${sourceDetailHTML(rsDetailSrc)}`);
   };
   S.srcTab = function (t) { rsDetailTab = t; S.srcDetail(); };
 
@@ -143,7 +143,7 @@ window.SAGE = window.SAGE || {};
       <div class="rs-stage" style="--rc:${st.c}">
         <div class="rs-caption">${S.esc(st.cap)}</div>
         <div class="rs-orb">${S.stateOrb(orbForState(st.id), 150)}</div>
-        ${st.title ? `<div class="rs-title">${S.esc(st.title)}</div>` : `<div class="rs-title brand">SAGE</div>`}
+        ${st.title ? `<div class="rs-title">${st.id === 'success' ? 'Preview complete' : S.esc(st.title)}</div>` : `<div class="rs-title brand">SAGE</div>`}
         <div class="rs-sub">${S.esc(st.sub).replace(/\n/g, '<br>')}</div>
 
         ${st.pct > 0 && st.pct < 100 ? `
@@ -189,7 +189,7 @@ window.SAGE = window.SAGE || {};
         ${S.DATA.LIVE_SOURCES.map(s => `
         <div class="sp-row" data-act="src-detail" data-arg="${s.n}">
           <span class="src-badge" style="background:${s.c};color:${s.dark ? '#111' : '#fff'}">${s.g}</span>
-          <div class="grow"><b class="small">${S.esc(s.n)}</b><div class="tiny muted">${S.esc(s.t)} · ${s.pages} page${s.pages > 1 ? 's' : ''} · ${s.used} used</div></div>
+          <div class="grow"><b class="small">${S.esc(s.n)}</b><div class="tiny muted">${S.esc(s.t)} · sample metadata only</div></div>
           <span class="pill green">✓ Verified</span>
         </div>`).join('')}
         <div class="sp-row more" data-act="src-all"><span class="src-badge ghost">+</span><div class="grow"><b class="small">More Sources</b></div>${S.icon('i-arrow-r')}</div>
