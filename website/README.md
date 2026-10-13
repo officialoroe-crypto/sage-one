@@ -1,28 +1,29 @@
-# SAGE ONE Website
+# SAGE ONE Workspace
 
-The `website/` directory is the public-facing SAGE ONE landing surface.
-
-## Boundaries
-
-- This site explains SAGE ONE, SAGE WORKFLOW, Intelligence, Spark and Evolution.
-- It does not expose authenticated workspace data.
-- It does not pretend that publishing, social connections, research or execution are available from the public landing page.
-- The authenticated product remains the Flutter application and SAGE Core APIs.
+The Freebuff-exported SAGE ONE workspace is now the primary website and web workspace. It replaces the former marketing-only landing page; the existing Flutter app remains available under `/app/`, and the FastAPI backend remains the canonical backend.
 
 ## Local preview
 
-Serve this directory with any static HTTP server. For example:
+From the repository root, serve `website/` with a static HTTP server, for example:
 
-```text
+```sh
 python -m http.server 8080 --directory website
 ```
 
 Then open `http://127.0.0.1:8080`.
 
+## Live connections currently implemented in code
+
+- Owner Google sign-in through the existing `/identity/config` and `/identity/google` endpoints.
+- Live chat through `POST /chat`.
+- Explicit queue-last-request action through `POST /command`.
+- Google ID token is kept in page memory only, not browser storage.
+- Prototype balances and fictional earnings start at zero; fake payment, KYC, generation, and other simulated actions are blocked where wired.
+
 ## Deployment
 
-`.github/workflows/sage-one-god-mode-pages.yml` builds the Flutter app and publishes one combined Pages artifact: the marketing site at `/sage-one/` and the app at `/sage-one/app/`. Pushes to `main` that change `website/**` or `frontend/**` trigger deployment; a manual workflow dispatch is also available. Repository Pages must be configured to use GitHub Actions.
+The GitHub Pages workflow publishes this website at `/sage-one/` and the existing Flutter app at `/sage-one/app/`. It syntax-checks the website JavaScript, then runs Flutter analysis/tests and builds the app. A successful source/CI build does not by itself prove live login, API behavior, task completion, or third-party integrations.
 
-## Design direction
+## Product rule
 
-The website follows the SAGE ONE cinematic system: near-black foundation, cyan/blue/violet intelligence accents, gold for economy/premium signals, orbital-core motifs, restrained motion and responsive layouts. The landing page describes the product direction without claiming that unfinished integrations are already live.
+This is the new foundation to improve—not a finished product. Every screen, animation, control, data flow, permission, API, and external integration must be audited and tested. Mark a feature complete only after evidence from the actual running app. Never present simulated money, fake research, fake generated media, or unexecuted actions as real.
