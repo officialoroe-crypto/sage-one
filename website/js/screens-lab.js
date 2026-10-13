@@ -63,9 +63,8 @@ window.SAGE = window.SAGE || {};
       if (!rsPlaying) return;
       if (rsIdx >= S.DATA.RS.length - 1) {
         S.rsStop();
-        S.toast('Research complete ✓ 12 sources · 7 verified');
-        const lvl = S.addProgress(8, 'Research completed');
-        if (lvl) S.handleLevelUp(lvl); else S.render(true);
+        S.toast('Animation preview complete. No research ran, no sources were fetched, and no progress was awarded.');
+        if (S.currentRoute() === 'research') S.render(true);
         return;
       }
       rsIdx++;
@@ -95,11 +94,11 @@ window.SAGE = window.SAGE || {};
     } else if (rsDetailTab === 'Preview') {
       body = `<div class="src-preview">
         <p><b>Key finding.</b> Personal AI assistants are shifting from answer engines to <b>execution partners</b> — tools that not only research but complete tasks end-to-end.</p>
-        <p>Across 7 relevant pages, 5 were used in the answer; 2 were rejected for low credibility.</p>
-        <div class="tiny muted">Preview generated from verified sources only.</div></div>`;
+        <p>Example summary only. No pages were fetched, used, or rejected.</p>
+        <div class="tiny muted">Example text only. No source pages were fetched or verified.</div></div>`;
     } else {
       body = `<div class="src-detail-rows">
-        ${[['Domain', src.n], ['Type', src.t], ['Pages fetched', src.pages], ['Used in answer', src.used], ['Rejected', src.pages - src.used], ['Status', 'Verified']]
+        ${[['Domain', src.n], ['Type', src.t], ['Pages fetched', 'Not run'], ['Used in answer', 'Not run'], ['Rejected', 'Not run'], ['Status', 'Example only — not fetched']]
           .map(r => `<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--stroke)"><span class="small muted">${r[0]}</span><b class="small">${r[1]}</b></div>`).join('')}
       </div>`;
     }
@@ -107,12 +106,12 @@ window.SAGE = window.SAGE || {};
       <div class="src-head">
         <span class="src-badge lg" style="background:${src.c};color:${src.dark ? '#111' : '#fff'}">${src.g}</span>
         <div class="grow"><b>${S.esc(src.n)}</b><div class="tiny muted">${S.esc(src.t)}</div></div>
-        <span class="pill green">✓ Verified</span>
+        <span class="pill green">Example</span>
       </div>
       <div class="src-stats">
-        <div><b>7</b><span>relevant pages</span></div>
-        <div><b>5</b><span>used in answer</span></div>
-        <div><b>2</b><span>rejected</span></div>
+        <div><b>—</b><span>pages fetched</span></div>
+        <div><b>—</b><span>used in answer</span></div>
+        <div><b>—</b><span>rejected</span></div>
       </div>
       <div class="src-tabs">${tabs.map(t => `<button class="${rsDetailTab === t ? 'on' : ''}" data-act="src-tab" data-arg="${t}">${t}</button>`).join('')}</div>
       ${body}`;
@@ -121,7 +120,7 @@ window.SAGE = window.SAGE || {};
   let rsDetailSrc = 'Google';
   S.srcDetail = function (name) {
     rsDetailSrc = name || rsDetailSrc;
-    S.sheet(`<h3>Source Detail View</h3><div class="sub">Transparency. Trust. Real data.</div>${sourceDetailHTML(rsDetailSrc)}`);
+    S.sheet(`<h3>Source Detail View</h3><div class="sub">Example only · no source was fetched or verified.</div>${sourceDetailHTML(rsDetailSrc)}`);
   };
   S.srcTab = function (t) { rsDetailTab = t; S.srcDetail(); };
 
@@ -131,7 +130,7 @@ window.SAGE = window.SAGE || {};
       const playing = rsPlaying;
       return `
       <div class="row between mb8" style="min-height:44px">
-        <div><h2 class="screen-title">Research Lab</h2><div class="tiny muted">Idle → Researching → Analyzing → Verifying → Success</div></div>
+        <div><h2 class="screen-title">Research Lab</h2><div class="tiny muted">Animation preview · no live research request</div></div>
         <span class="pill blue" style="color:${st.c};border-color:${st.c}55">${st.label.toUpperCase()}</span>
       </div>
 
@@ -144,7 +143,7 @@ window.SAGE = window.SAGE || {};
       <div class="rs-stage" style="--rc:${st.c}">
         <div class="rs-caption">${S.esc(st.cap)}</div>
         <div class="rs-orb">${S.stateOrb(orbForState(st.id), 150)}</div>
-        ${st.title ? `<div class="rs-title">${S.esc(st.title)}</div>` : `<div class="rs-title brand">SAGE</div>`}
+        ${st.title ? `<div class="rs-title">${st.id === 'success' ? 'Preview complete' : S.esc(st.title)}</div>` : `<div class="rs-title brand">SAGE</div>`}
         <div class="rs-sub">${S.esc(st.sub).replace(/\n/g, '<br>')}</div>
 
         ${st.pct > 0 && st.pct < 100 ? `
@@ -161,11 +160,11 @@ window.SAGE = window.SAGE || {};
         ${st.id === 'success' ? `
         <div class="rs-top-src">
           <span class="src-badge" style="background:#34d399;color:#04321f">${S.icon('i-search')}</span>
-          <div class="grow"><b class="small">Top Sources</b><div class="tiny muted">12 sources · 7 verified</div></div>
+          <div class="grow"><b class="small">Top Sources</b><div class="tiny muted">Preview only · no sources fetched</div></div>
           ${S.icon('i-arrow-r')}
         </div>
         <div class="rs-checks">
-          ${['Accurate & relevant information', 'Key points summarized', 'Sources provided'].map(c => `<div><span class="ck">✓</span>${c}</div>`).join('')}
+          ${['Animation stages previewed', 'No live research request sent', 'No sources claimed as verified'].map(c => `<div><span class="ck">✓</span>${c}</div>`).join('')}
         </div>
         <button class="btn primary sm" style="width:100%" data-act="src-detail" data-arg="Google">View Full Report</button>` : ''}
 
@@ -179,29 +178,29 @@ window.SAGE = window.SAGE || {};
 
       <!-- controls -->
       <div class="row mt12" style="gap:9px">
-        <button class="btn primary sm" style="flex:1" data-act="rs-play">${playing ? '■ Stop' : '▶ Start Research'}</button>
+        <button class="btn primary sm" style="flex:1" data-act="rs-play">${playing ? '■ Stop' : '▶ Preview Research Animation'}</button>
         <button class="btn soft sm" style="flex:1" data-act="rs-fail">⚡ Preview Recovery Animation</button>
       </div>
 
       <!-- Source panel -->
-      <div class="sect-label">Source Panel <span class="tiny">during research · shows where SAGE gets information</span></div>
+      <div class="sect-label">Source Panel <span class="tiny">sample cards only · not live research data</span></div>
       <div class="card src-panel">
-        <div class="sp-head"><span style="color:var(--electric-2)">‹</span><b class="small">Live Sources</b><span class="tiny muted">12 sources · 7 verified</span></div>
+        <div class="sp-head"><span style="color:var(--electric-2)">‹</span><b class="small">Example Sources</b><span class="tiny muted">Preview only · no sources fetched</span></div>
         ${S.DATA.LIVE_SOURCES.map(s => `
         <div class="sp-row" data-act="src-detail" data-arg="${s.n}">
           <span class="src-badge" style="background:${s.c};color:${s.dark ? '#111' : '#fff'}">${s.g}</span>
-          <div class="grow"><b class="small">${S.esc(s.n)}</b><div class="tiny muted">${S.esc(s.t)} · ${s.pages} page${s.pages > 1 ? 's' : ''} · ${s.used} used</div></div>
-          <span class="pill green">✓ Verified</span>
+          <div class="grow"><b class="small">${S.esc(s.n)}</b><div class="tiny muted">${S.esc(s.t)} · sample metadata only</div></div>
+          <span class="pill">Example</span>
         </div>`).join('')}
         <div class="sp-row more" data-act="src-all"><span class="src-badge ghost">+</span><div class="grow"><b class="small">More Sources</b></div>${S.icon('i-arrow-r')}</div>
       </div>
 
       <!-- Source detail (inline) -->
-      <div class="sect-label">Source Detail View <span class="tiny">transparency · trust · real data</span></div>
+      <div class="sect-label">Source Detail View <span class="tiny">sample content · not verified</span></div>
       <div class="card src-detail">${sourceDetailHTML('Google')}</div>
 
       <!-- Failure sequence -->
-      <div class="sect-label">Failure Sequence <span class="tiny">10–30 seconds · visual drama, clear message, easy recovery</span></div>
+      <div class="sect-label">Failure Animation Preview <span class="tiny">10–30 seconds · visual test only, no live request</span></div>
       <div class="fail-grid">
         ${S.DATA.FAIL_SEQ.map(f => `
         <div class="fl-tile" style="--rc:${f.c}">
@@ -213,7 +212,7 @@ window.SAGE = window.SAGE || {};
       </div>
       <div class="fl-error">
         <span class="fl-warn">⚠</span>
-        <div class="grow"><b class="small">Couldn't complete the research.</b><div class="tiny muted">Network or source access interrupted.</div></div>
+        <div class="grow"><b class="small">Example research-failure state</b><div class="tiny muted">Visual preview only. No live research request was sent.</div></div>
         <div class="fl-btns">
           <button class="btn xs primary" data-act="rs-fail">Preview recovery again</button>
           <button class="btn xs soft" data-act="rs-fail">Close preview</button>
