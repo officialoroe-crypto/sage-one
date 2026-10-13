@@ -137,7 +137,8 @@ window.SAGE = window.SAGE || {};
     'auth-continue', 'kyc-start', 'kyc-done', 'premium-upgrade', 'premium-confirm', 'premium-cancel',
     'buy-spark', 'buy-spark-amount', 'buy-spark-custom', 'send-spark', 'send-spark-go',
     'withdraw', 'withdraw-go', 'sim-earn', 'earn-tier', 'buy-listing', 'buy-confirm',
-    'gen-image', 'gen-video', 'rs-start', 'rs-play', 'rs-analyze'
+    'gen-image', 'gen-video', 'rs-start', 'rs-play', 'rs-analyze', 'rs-fail', 'fail-retry',
+    'src-all', 'src-detail', 'apply-job', 'enroll', 'course-complete', 'sell-submit'
   ]);
   S.backend = {
     apiBase: API_BASE, renderGoogleButton, isOwnerAuthenticated: () => !!ownerToken,
