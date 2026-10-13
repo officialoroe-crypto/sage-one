@@ -163,7 +163,8 @@ window.SAGE = window.SAGE || {};
     const auth = S.screens.auth, originalView = auth.view, originalMount = auth.mount;
     auth.view = function () {
       return originalView().replace(/<button class="google-btn" data-act="auth-google">[\s\S]*?<\/button>/,
-        '<div class="google-live-wrap"><div id="sageGoogleButton"></div><div class="tiny muted">Secure Google sign-in · SAGE Core owner access only</div></div>');
+        '<div class="google-live-wrap"><div id="sageGoogleButton"></div><div class="tiny muted">Secure Google sign-in · SAGE Core owner access only</div></div>')
+        .replace('Your data is 100% secure · Encrypted end-to-end', 'Google identity is verified by SAGE Core; this tab keeps the token in memory only.');
     };
     auth.mount = function () { if (typeof originalMount === 'function') originalMount(); renderGoogleButton(); };
   }
