@@ -138,16 +138,26 @@ window.SAGE = window.SAGE || {};
     'buy-spark', 'buy-spark-amount', 'buy-spark-custom', 'send-spark', 'send-spark-go',
     'withdraw', 'withdraw-go', 'sim-earn', 'earn-tier', 'buy-listing', 'buy-confirm',
     'gen-image', 'gen-video', 'rs-start', 'rs-play', 'rs-analyze', 'rs-fail', 'fail-retry',
-    'src-all', 'src-detail', 'apply-job', 'enroll', 'course-complete', 'sell-submit'
+    'src-all', 'src-detail', 'apply-job', 'enroll', 'course-complete', 'sell-submit',
+    'rs-set', 'rs-tab', 'rs-source', 'agent-hire', 'hire-go', 'wf-run', 'ig-test',
+    'ai-mode', 'ai-provider', 'ai-save'
   ]);
   S.backend = {
     apiBase: API_BASE, renderGoogleButton, isOwnerAuthenticated: () => !!ownerToken,
-    chat, queueCommand, signOut: () => { ownerToken = null; sessionId = null; status('CORE READY · SIGN IN', 'ready'); },
+    chat, queueCommand,
+    checkConfig: async () => { const cfg = await loadConfig(); return { googleConfigured: !!cfg.google_client_id, ownerModeAvailable: !!cfg.owner_mode_available }; },
+    signOut: () => { ownerToken = null; sessionId = null; status('CORE READY · SIGN IN', 'ready'); },
     status: () => ({ configured: !!config, ownerAuthenticated: !!ownerToken })
   };
   const originalAct = S.act;
   if (typeof originalAct === 'function') S.act = function (name, arg) {
     if (name === 'auth-google') { renderGoogleButton(); toast('Use the secure Google button to sign in.'); return; }
+    if (name === 'ai-test') {
+      if (!S.backend) { toast('SAGE Core connection is not ready.'); return; }
+      S.backend.checkConfig().then(cfg => toast(cfg.googleConfigured ? 'Core identity configuration loaded. AI provider health has not been tested.' : 'Core responded, but Google sign-in is not configured.'))
+        .catch(err => toast('Core configuration check failed: ' + String(err.message || err).slice(0, 100)));
+      return;
+    }
     if (name === 'chat-quick' && arg === 'Queue my last request as a task') { queueLastRequest(); return; }
     if (DEMO_ONLY.has(name)) { toast('Prototype only: real payments, KYC, research, and media generation are not connected. No transaction was made.'); return; }
     return originalAct.call(this, name, arg);

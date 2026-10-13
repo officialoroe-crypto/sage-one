@@ -1,23 +1,20 @@
-/* SAGE ONE — AI engine
-   Built-in answer system (default, offline) + optional live LLM via a user supplied key.
-   Answer shape: { title, intro, blocks[], sources[], followups[], confidence, engine } */
+/* SAGE ONE — local utility helpers and structured answer rendering.
+   Live inference is routed through authenticated SAGE Core; never call paid providers from the browser. */
 window.SAGE = window.SAGE || {};
 (function (S) {
   'use strict';
 
-  /* ---------- config (kept out of app state; key never leaves the device) ---------- */
+  /* ---------- provider config: server-managed only ---------- */
   const CFG_KEY = 'sage-ai-cfg-v1';
-  const DEF = { mode: 'builtin', provider: 'openai', key: '', model: 'gpt-4o-mini', base: 'https://api.openai.com/v1' };
+  const DEF = { mode: 'core', provider: 'core', key: '', model: 'server-managed', base: '' };
   let cfg = Object.assign({}, DEF);
-  try { const raw = localStorage.getItem(CFG_KEY); if (raw) cfg = Object.assign(cfg, JSON.parse(raw)); } catch (e) {}
+  // Remove the legacy browser-stored provider key/config. Secrets belong on the server, never in localStorage.
+  try { localStorage.removeItem(CFG_KEY); } catch (e) {}
 
   const AI = S.AI = {};
-  AI.cfg = function () { return cfg; };
-  AI.setCfg = function (patch) {
-    cfg = Object.assign(cfg, patch);
-    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
-  };
-  AI.isLive = function () { return cfg.mode === 'live' && !!cfg.key; };
+  AI.cfg = function () { return Object.assign({}, cfg, { key: '', mode: 'core', provider: 'core' }); };
+  AI.setCfg = function () { cfg = Object.assign({}, DEF); };
+  AI.isLive = function () { return !!(S.backend && S.backend.isOwnerAuthenticated && S.backend.isOwnerAuthenticated()); };
 
   /* ---------- helpers ---------- */
   const list = (a) => a.map(x => ({ t: 'ul', v: [x] }));
@@ -624,29 +621,10 @@ window.SAGE = window.SAGE || {};
     'No markdown other than described. No code fences.';
 
   AI.askLive = function (q) {
-    const base = (cfg.base || '').replace(/\/+$/, '');
-    if (cfg.provider === 'gemini') {
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
-        encodeURIComponent(cfg.model || 'gemini-1.5-flash') + ':generateContent?key=' + encodeURIComponent(cfg.key);
-      return fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: SYS }] }, contents: [{ role: 'user', parts: [{ text: q }] }] })
-      }).then(r => r.json()).then(j => {
-        const p = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
-        if (!p || !p[0] || !p[0].text) throw new Error('empty response');
-        return p[0].text;
-      });
+    if (!S.backend || !S.backend.isOwnerAuthenticated || !S.backend.isOwnerAuthenticated()) {
+      return Promise.reject(new Error('Sign in with the configured SAGE owner account to use live AI.'));
     }
-    return fetch(base + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
-      body: JSON.stringify({ model: cfg.model, messages: [{ role: 'system', content: SYS }, { role: 'user', content: q }] })
-    }).then(r => r.json()).then(j => {
-      const txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      if (!txt) throw new Error((j && j.error && j.error.message) || 'empty response');
-      return txt;
-    });
+    return S.backend.chat(q);
   };
 
   AI.parseLive = function (text) {
@@ -688,15 +666,16 @@ window.SAGE = window.SAGE || {};
   };
 
   AI.answer = function (q) {
-    if (AI.isLive()) {
-      return AI.askLive(q)
-        .then(txt => AI.parseLive(txt))
-        .catch(err => {
-          S.toast('Live AI unavailable (' + (err && err.message ? err.message : 'error') + ') — using built-in engine');
-          return AI.builtin(q);
-        });
+    if (!S.backend || !S.backend.isOwnerAuthenticated || !S.backend.isOwnerAuthenticated()) {
+      return Promise.resolve({
+        title: 'Sign in to SAGE Core',
+        intro: 'Live AI and research are not available until you sign in with the configured SAGE owner account. No sample answer was substituted.',
+        blocks: [], sources: [], followups: [], confidence: null, engine: 'authentication-required', topic: 'auth'
+      });
     }
-    return Promise.resolve(AI.builtin(q));
+    return S.backend.chat(q).then(function (text) {
+      return AI.parseLive('**SAGE Core**\\n\\n' + String(text || 'SAGE Core returned an empty response.'));
+    });
   };
 
   /* ---------- rendering ---------- */

@@ -398,61 +398,31 @@ window.SAGE = window.SAGE || {};
   /* ===== AI ENGINE (built-in default + user supplied key) ===== */
   R.aisettings = {
     view: () => {
-      const c = S.AI.cfg();
-      const lib = [
-        'Classifies intent across 16 topic areas',
-        'Builds structured answers — sections, steps, notes and fact tables',
-        'Surfaces sources plus suggested follow-up questions',
-        'Handles math, date/time, and honest “no live feed” answers',
-        'Streams the reply word by word like a real assistant'
-      ];
+      const signedIn = !!(S.backend && S.backend.isOwnerAuthenticated && S.backend.isOwnerAuthenticated());
       return `
-      ${S.topNav('AI Engine', 'How SAGE writes its answers')}
-      <div class="sect-label">Answer engine</div>
-      <div class="mode-cards">
-        <div class="mode-card ${c.mode === 'builtin' ? 'on' : ''}" data-act="ai-mode" data-arg="builtin">
-          <b>Built-in engine</b>
-          <p>On-device answer system: intent detection, knowledge base, sources and step-by-step plans. Works offline, no key, no cost.</p>
-          <span class="tag">Default</span>
-        </div>
-        <div class="mode-card ${c.mode === 'live' ? 'on' : ''}" data-act="ai-mode" data-arg="live">
-          <b>Live model</b>
-          <p>Sends the question to a real LLM you connect yourself. Needs your own API key; each message is billed by that provider.</p>
-          <span class="tag">Your key</span>
-        </div>
-      </div>
-
-      ${c.mode === 'live' ? `
-      <div class="sect-label">Connection</div>
+      ${S.topNav('AI Engine', 'SAGE Core manages provider access')}
+      <div class="sect-label">Secure AI connection</div>
       <div class="card">
-        <div class="field"><label>Provider</label>
-          <div class="seg">
-            <button class="${c.provider === 'openai' ? 'on' : ''}" data-act="ai-provider" data-arg="openai">OpenAI-compatible</button>
-            <button class="${c.provider === 'gemini' ? 'on' : ''}" data-act="ai-provider" data-arg="gemini">Google Gemini</button>
+        <div class="row" style="gap:12px;align-items:flex-start">
+          <div class="iconbox accent">${S.icon('i-sparkles')}</div>
+          <div class="grow">
+            <b>AI runs through SAGE Core</b>
+            <p class="small muted mt8">Provider keys and paid-service configuration belong on the backend. This website will not ask you to paste a secret API key into your browser or save one in local storage.</p>
           </div>
         </div>
-        ${c.provider === 'openai' ? `<div class="field"><label>Base URL</label><input class="input" id="aiBase" value="${S.esc(c.base)}" placeholder="https://api.openai.com/v1"></div>` : ''}
-        <div class="field"><label>Model</label><input class="input" id="aiModel" value="${S.esc(c.model)}" placeholder="${c.provider === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o-mini'}"></div>
-        <div class="field"><label>API key</label><input class="input" id="aiKey" type="password" value="${S.esc(c.key)}" placeholder="${c.provider === 'gemini' ? 'AIza…' : 'sk-…'}" autocomplete="off"></div>
-        <div class="row" style="gap:8px">
-          <button class="btn primary grow" data-act="ai-save">${S.icon('i-check')} Save connection</button>
-          <button class="btn soft" data-act="ai-test">Test</button>
-        </div>
-        <div class="notice">Your key is stored only in this browser and sent only to the provider you choose. It is never uploaded to SAGE.</div>
-      </div>` : `
-      <div class="sect-label">What the built-in engine does</div>
-      <div class="card">
-        ${lib.map(x => `<div class="row small" style="padding:5px 0"><span style="color:#4fe39b">✓</span> ${x}</div>`).join('')}
+        <div class="set-item"><div class="grow"><b class="small">Owner session</b><div class="sv">${signedIn ? 'Signed in for this tab' : 'Sign in required'}</div></div></div>
+        <div class="set-item"><div class="grow"><b class="small">Provider routing</b><div class="sv">Managed by SAGE Core server configuration</div></div></div>
+        <button class="btn primary mt12" data-act="ai-test" style="width:100%">Check Core configuration</button>
+        <div class="notice mt12">A successful configuration check does not prove an AI provider is enabled or that research/media generation is working. SAGE will show those capabilities only after real integration tests.</div>
       </div>
-      <div class="notice">Switch to <b>Live model</b> any time to point chat at a real LLM with your own key.</div>`}
-      <div class="sect-label">Try it</div>
+      <div class="sect-label">Current live capability</div>
       <div class="card">
-        <div class="tiny muted mb8">Ask anything — the answer streams in with sources and follow-ups.</div>
-        <div class="quick-prompts">
-          ${S.DATA.CHAT_QS.map(q => `<button class="qp" data-act="chat-quick" data-arg="${S.esc(q)}">${S.esc(q)}</button>`).join('')}
-        </div>
+        <div class="row"><span class="small">Owner sign-in</span><b class="small">${signedIn ? 'Active in this tab' : 'Not signed in'}</b></div>
+        <div class="row mt8"><span class="small">Core chat</span><b class="small">${signedIn ? 'Available to test' : 'Sign in first'}</b></div>
+        <div class="row mt8"><span class="small">Research / image / video</span><b class="small">Integration pending</b></div>
       </div>`;
     }
   };
+
 
 })(window.SAGE);

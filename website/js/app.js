@@ -487,7 +487,7 @@ window.SAGE = window.SAGE || {};
       case 'ai-mode': {
         S.AI.setCfg({ mode: arg });
         S.render();
-        S.toast(arg === 'live' ? 'Live model selected — add your key below' : 'Built-in SAGE engine active');
+        S.toast('AI providers are managed by SAGE Core. Browser API-key mode is disabled.');
         break;
       }
       case 'ai-provider': {
@@ -506,15 +506,15 @@ window.SAGE = window.SAGE || {};
         const b = ((S.$('#aiBase') || {}).value || '').trim();
         S.AI.setCfg({ key: k, model: mdl || undefined, base: b || undefined });
         S.render();
-        S.toast(k ? 'Connection saved ✓ — chat is live' : 'Saved — add an API key to go live');
+        S.toast('Browser API keys are disabled. Configure providers on the SAGE Core server instead.');
         break;
       }
       case 'ai-test': {
-        if (!S.AI.isLive()) { S.toast('Enter an API key first'); break; }
+        if (!S.backend || !S.backend.checkConfig) { S.toast('SAGE Core connection is not ready.'); break; }
         S.toast('Testing connection…');
-        S.AI.askLive('Reply with exactly: OK')
-          .then(t => S.toast('✓ Connected — ' + String(t).trim().slice(0, 40)))
-          .catch(e => S.toast('✗ ' + (e && e.message ? e.message : 'connection failed')));
+        S.backend.checkConfig()
+          .then(c => S.toast(c.googleConfigured ? 'Core identity configuration loaded. AI provider health is not yet exposed.' : 'Core responded, but Google sign-in is not configured.'))
+          .catch(e => S.toast('Core configuration check failed: ' + (e && e.message ? e.message : 'connection failed')));
         break;
       }
 
