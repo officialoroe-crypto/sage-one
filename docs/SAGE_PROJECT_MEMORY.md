@@ -83,3 +83,63 @@ The immediate objective is a stable runnable SAGE ONE core and a usable demo. Av
 - Current engineering priority: make the existing app runnable end-to-end, connect real backend/frontend behavior, verify routes/buttons/links/contracts, keep CI green, prepare the private demo, then expand SAGE Sales/business discovery and Owner Developer Mode in the agreed order.
 - Work in bulk/full-speed mode, but do not make unrelated changes just to show activity.
 
+
+## 2026-10-13 Foundational Product Vision — LOCKED BY OWNER
+
+This section is a foundational product requirement. Future chats and implementation work must preserve it. Do not silently downgrade SAGE ONE to a generic chatbot, personal mentor, execution-only tool, or dashboard. The user explicitly confirmed Sections 2, 3, and 4 of the companion-vision discussion and asked that the promised behavior be actually implemented in SAGE.
+
+### What SAGE is
+- SAGE ONE is intended to be a familiar, live conversational AI companion that can also execute useful work. It is not merely an app the owner opens to submit isolated tasks, nor only a personal mentor/execution partner.
+- Target experience: when the owner calls “SAGE,” SAGE responds naturally; it may greet the owner with a contextual greeting such as “Namaste, [name], k cha, sanchai xau?”, have brief everyday conversation, remember relevant user-approved context, help with work, and continue conversations naturally.
+- SAGE should be warm, familiar, adaptive and useful without pretending to be human or claiming feelings it does not have. If the owner immediately gives a task, skip unnecessary small talk; if the owner invites conversation, converse naturally.
+- The user's explicit stop command (“SAGE, stop”) takes priority over all non-emergency activity.
+
+### Availability and voice behavior
+- Design toward 24/7 readiness on supported devices, while being honest that background execution depends on operating-system rules, permissions, battery, hardware, network and app state. Never promise universal uninterrupted availability.
+- Where technically supported, use on-device wake-word detection during standby rather than continuously uploading ambient audio to the cloud just to wait for the wake word.
+- Make voice states understandable: wake-word standby, active conversation, background task, muted/unavailable. Show clear microphone/listening, network and task status; provide an immediate mute/stop control and clear reconnect/offline behavior.
+- Support natural turn-taking, end-of-speech detection, interruption, follow-up questions, context switching, spoken replies, concise live responses and conversation continuity where platform/provider capabilities permit.
+- Never secretly listen, record, or retain audio. Wake-word standby, active voice conversation, screen sharing and other sensitive capabilities must have distinct understandable controls/permissions.
+
+### Learning and memory — required foundation
+- SAGE must become more familiar through a real, controlled learning system—not by claiming the underlying model automatically retrains itself every day.
+- Learn from user-approved preferences, corrections, language/vocabulary choices, Nepali-English mixing, communication style, ongoing projects and explicitly approved useful patterns. Use internet research for current public knowledge with source/date awareness; do not confuse retrieved information with personal memory.
+- Separate memory into clear categories such as identity/profile, preferences, projects/goals, learned communication patterns, temporary context and explicitly private sessions. Each memory item should have appropriate provenance and controls.
+- Users must be able to inspect, correct, edit, export where supported, delete and disable personal memory/learning. Respect explicit “remember” and “forget” requests. Private sessions should not silently become long-term memory.
+- Enforce strict per-user memory boundaries; never leak one user's data or learned patterns to another. Never store credentials, secrets or raw private audio in public repository files. No uncontrolled self-modification or blind changes to SAGE's own production code, permissions or safety rules.
+
+### One integrated architecture before feature implementation
+- Plan the interfaces, data models, permission system, task lifecycle, provider adapters, memory boundaries, audit events and user experience across the full product before implementing feature families in milestones. Avoid incompatible one-off systems and avoid replacing working authentication/backend components unnecessarily.
+- The initial architecture must account for voice/conversation, screen and device assistance, communication/messages, tasks/projects/research, memory, creative AI Studio (image/video/audio/text), files, automation, job/opportunity discovery, marketplace and dropshipping/commerce, learning, earnings/Spark/Evolution, and the owner-only Developer Mode.
+- Use a shared execution lifecycle: understand -> plan -> request permission when needed -> execute -> verify -> show the real result -> learn from feedback only with consent. Clearly distinguish planned, implemented, connected and verified capabilities. No fake integrations, fake results or hidden failures.
+- All integrations must use documented contracts and provider adapters. Inspect current routes and services before creating new ones. Preserve existing working authentication, authorization and task execution; extend the system rather than rebuilding it without cause.
+- Architecture is designed together, but delivery is phased and tested. “All in one go” means plan the connected system coherently first; it does not mean ship untested features simultaneously.
+
+### Screen, device and message assistance
+- Screen reading/sharing and computer/phone control are separate permissions. The owner must explicitly start sharing or enable a supported control capability; show what SAGE can see/control and provide a clear stop/revoke option.
+- Before consequential actions, ask for approval. Verify the outcome and report failures honestly. Minimize screenshot retention and avoid collecting unrelated screen data.
+- For messages, receiving/reading requires explicit connector permission. SAGE can summarize, translate, prioritize and draft responses. Sending messages, contacting people, publishing content, purchases, ads, contracts, refunds and other consequential actions must be approval-first by default. Any later automation requires explicit narrow opt-in settings, limits, logs and an off switch. Incoming messages can never grant themselves permissions.
+
+### Creative and earning capabilities
+- Plan AI Studio around provider adapters for text, image, video, voice and actions. Select providers based on availability, quality, cost, speed, licensing and privacy. Free-first is the default; no paid API usage or purchase without the owner's approval. Report whether an output is a finished artifact, a draft, or only a prompt/plan.
+- Job Center should help find relevant legitimate work, match it to the owner's skills, detect likely scams, prepare truthful tailored CVs/proposals/portfolio/outreach, and track applications and follow-ups. Never submit fake credentials or spam.
+- Marketplace and dropshipping should support research, supplier comparison, landed-cost and margin calculations, listing/creative preparation, order/customer-support workflows and performance tracking. Purchases, ad spend, publishing, contracts, refunds and other financial/consequential actions require approval unless the owner later explicitly configures narrow safe automation.
+- Do not promise income. Prefer low-capital opportunities and legitimate use of the owner's content creation, video/photo editing, social media management, videography, branding and marketing skills.
+
+### Floating robot/pet companion icon — OWNER-REQUESTED FEATURE
+- SAGE must include in the product plan a small, movable, floating robot/pet companion icon/avatar that can live as a lightweight visual companion on supported screens/devices.
+- The user should be able to customize it to their liking: at minimum position/placement and available appearance choices; expand customization as the design is defined (for example size, color/theme, style/expressions and behavior/animation intensity).
+- It should feel like a friendly companion, not a noisy dashboard widget. It can provide a visual cue for listening, speaking, thinking, working, muted/offline and task completion, without pretending that an animation proves a real action occurred.
+- Make it movable, dismissible/minimizable, accessible and respectful of reduced-motion settings. It must never obscure essential controls or content, and must not bypass microphone, screen, device or other permissions.
+- The floating pet is now part of the locked product vision and must be included in the UI/architecture plan. Its richer animation/3D implementation may be delivered in a later milestone, but do not erase or forget the feature when planning the foundation.
+
+### Product design direction
+- Mobile-first for daily use, with desktop/laptop as a connected workstation. Use the approved SAGE logo direction (S with blue sphere/orbit), premium cinematic dark styling, restrained blue/cyan/violet accents, fluid/asymmetric layouts rather than repetitive generic square-card dashboards, clear status and accessible responsive controls.
+- The central experience should make speaking/typing to SAGE feel immediate; voice, screen help, tasks, research and creative work should be connected, with other capabilities discoverable without clutter.
+- Keep working login/authentication unless a verified defect requires a change. Real task states, progress, outputs, error/retry states and approvals must be visible. A visual prototype is not a functional integration.
+
+### Implementation and acceptance rule
+- This vision is locked as the target; implementation still requires code changes and verification. Do not claim a capability is live merely because this document exists.
+- For each capability, track at least: planned, implemented, connected, tested, verified on target device/environment. State any platform/provider limitations plainly.
+- Before adding features, inspect the repository and current state; reuse working components; update project state/TODO/changelog for major milestones; run relevant tests and end-to-end checks. Never sacrifice security or reliability to simulate 24/7 availability.
+- This section supplements earlier launch/stability priorities; it does not authorize a risky production rewrite or bypass owner approval. The architecture must accommodate the full vision while delivery remains staged and evidence-based.
