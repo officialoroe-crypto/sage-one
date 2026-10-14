@@ -207,8 +207,12 @@ void main() {
     expect(client.requestPaths, contains('/command'));
     expect(client.requestPaths, contains('/tasks/voice-task-1'));
     expect(client.requestPaths, isNot(contains('/execute/background')));
-    final spokenResult = tester.widget<SelectableText>(find.byType(SelectableText).last);
-    expect(spokenResult.data, 'The voice pipeline works.');
+
+    // The result card is below the initial viewport in the compact test device.
+    await tester.drag(find.byType(ListView), const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.text('YOUR TASK IS COMPLETE'), findsOneWidget);
+    expect(find.text('The voice pipeline works.'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
