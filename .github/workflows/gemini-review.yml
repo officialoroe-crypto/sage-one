@@ -23,6 +23,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - name: Check out trusted default-branch instructions
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          persist-credentials: false
+
       - name: Validate target pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
