@@ -186,3 +186,32 @@ test('bulk action wiring audit across every primary screen', async ({ page }) =>
   expect(controlsWithoutActions, 'interactive-looking controls without an action or disabled state').toEqual([]);
   expect(audit.unhandledActions, 'visible actions without a recognized dispatcher; inspect attached audit report').toEqual([]);
 });
+
+test('voice button captures a transcript and waits for explicit user send', async ({ page }) => {
+  await page.addInitScript(() => {
+    class FakeSpeechRecognition {
+      onresult: ((event: any) => void) | null = null;
+      onend: (() => void) | null = null;
+      onerror: ((event: any) => void) | null = null;
+      lang = '';
+      continuous = false;
+      interimResults = false;
+      start() { (window as any).__fakeSageRecognition = this; }
+      stop() { this.onend?.(); }
+    }
+    (window as any).SpeechRecognition = FakeSpeechRecognition;
+  });
+  await page.goto('/');
+  await page.locator('#screen [data-act="voice-toggle"][data-arg="#homeAsk"]').click();
+  await expect(page.locator('#sageBackendStatus')).toContainText('LISTENING');
+  await page.evaluate(() => {
+    const recognition = (window as any).__fakeSageRecognition;
+    const phrase = { 0: { transcript: 'Hello SAGE, this is a voice QA test.' }, isFinal: true, length: 1 };
+    recognition.onresult({ resultIndex: 0, results: [phrase] });
+    recognition.onend();
+  });
+  await expect(page.locator('#homeAsk')).toHaveValue('Hello SAGE, this is a voice QA test.');
+  await expect(page.locator('#sageBackendStatus')).toContainText('VOICE CAPTURED');
+  const state = await page.evaluate(() => window.SAGE.state().chat);
+  expect(state, 'voice recognition must not silently send a task or chat message').toEqual([]);
+});
