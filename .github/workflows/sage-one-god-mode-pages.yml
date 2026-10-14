@@ -51,37 +51,43 @@ jobs:
         run: flutter analyze
       - name: Test Flutter app
         run: flutter test
-      - name: Validate imported workspace and local assets
+      - name: Validate landing page, preview pages and local assets
         run: |
-          for file in ../website/js/*.js; do
-            node --check "$file"
-          done
+          node --check ../website/app.js
+          node --check ../website/chat/chat.js
+          node --check ../website/app-preview/app.js
           python - <<'PY'
           from pathlib import Path
 
           site = Path("../website")
           html = (site / "index.html").read_text(encoding="utf-8")
           required = (
-              'href="css/styles.css',
-              'id="screen"',
-              'id="tabbar"',
-              'src="js/core.js',
-              'src="js/screens-onboarding.js',
-              'src="js/app.js',
-              'src="js/backend.js',
+              'href="styles.css"',
+              'id="menuToggle"',
+              'id="primaryNav"',
+              'id="rankChips"',
+              'id="evolveBtn"',
+              'src="app.js"',
           )
           missing = [fragment for fragment in required if fragment not in html]
           if missing:
-              raise SystemExit(f"Workspace entry point is missing expected structure: {missing}")
+              raise SystemExit(f"Landing page is missing expected structure: {missing}")
+
           for filename in (
-              "css/styles.css", "img/sage-mark.png", "js/core.js", "js/data.js",
-              "js/components.js", "js/ai.js", "js/screens-onboarding.js",
-              "js/screens-home.js", "js/screens-apps.js", "js/screens-system.js",
-              "js/screens-lab.js", "js/screens-agents.js", "js/app.js", "js/backend.js",
+              "styles.css", "app.js", "favicon.svg", "_headers",
+              "assets/sage-logo.webp", "assets/everest-buddha.webp",
+              "chat/index.html", "chat/chat.css", "chat/chat.js",
+              "app-preview/index.html", "app-preview/app.css", "app-preview/app.js",
           ):
               if not (site / filename).is_file():
-                  raise SystemExit(f"Missing workspace asset: {filename}")
-          print("Workspace entry point, referenced assets, and JavaScript syntax validated.")
+                  raise SystemExit(f"Missing website asset: {filename}")
+
+          for filename in ("chat/index.html", "app-preview/index.html"):
+              page = (site / filename).read_text(encoding="utf-8")
+              if "<title>" not in page or 'name="description"' not in page:
+                  raise SystemExit(f"Preview page is missing title/description: {filename}")
+
+          print("Landing, chat and phone-preview entry points, local assets, metadata and JavaScript syntax validated.")
           PY
       - name: Upload workspace source for QA
         uses: actions/upload-artifact@v7

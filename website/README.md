@@ -1,36 +1,32 @@
-# SAGE ONE Website Workspace
+# SAGE ONE Website
 
-The Freebuff-exported workspace is the intended SAGE ONE website experience. Its source lives in this directory:
-- `index.html` — workspace entry point
-- `css/` — responsive visual system and animation
-- `js/` — screens, navigation, voice capture, and the authenticated SAGE Core bridge
-- `img/` — workspace imagery and brand assets
+The `website/` directory is the public-facing SAGE ONE landing surface.
 
-The Flutter mobile app remains in `frontend/`; FastAPI remains the canonical backend.
+## Boundaries
 
-## Preview locally without publishing
+- This site explains SAGE ONE, SAGE WORKFLOW, Intelligence, Spark and Evolution.
+- It does not expose authenticated workspace data.
+- It does not pretend that publishing, social connections, research or execution are available from the public landing page.
+- The authenticated product remains the Flutter application and SAGE Core APIs.
 
-1. Download the latest successful **SAGE ONE Marketing Website and Web App QA** run from GitHub Actions.
-2. Download the artifact named `sage-one-website-workspace-qa-<commit>` and extract it to a folder, for example `C:\\SageOne\\website-qa`.
-3. Open Command Prompt in that extracted folder and run:
+## Local preview
 
-```bat
-py -m http.server 8080
+Serve this directory with any static HTTP server. For example:
+
+```text
+python -m http.server 8080 --directory website
 ```
 
-4. Open `http://127.0.0.1:8080` in Chrome or Opera. Keep the server window open while testing.
+Then open `http://127.0.0.1:8080`.
 
-Microphone input requires a supported browser and microphone permission. Voice recognition shows a transcript and waits for you to review and send it. Google sign-in from a local preview also requires `http://localhost:8080` or `http://127.0.0.1:8080` to be an authorized origin in the Google OAuth configuration. Do not paste OAuth secrets or tokens into chat.
+## Deployment
 
-## Current backend boundaries
+`.github/workflows/sage-one-god-mode-pages.yml` builds the Flutter app and publishes one combined Pages artifact: the marketing site at `/sage-one/` and the app at `/sage-one/app/`. Pushes to `main` that change `website/**` or `frontend/**` trigger deployment; a manual workflow dispatch is also available. Repository Pages must be configured to use GitHub Actions.
 
-- Google owner sign-in, chat, and explicitly queued tasks are connected in code but still require real browser end-to-end verification.
-- Phone verification depends on an actual configured SMS provider.
-- Formal KYC, external payments, research, and media-generation providers are not to be marked complete unless the real provider is connected and verified.
-- Prototype-only actions must clearly say they are unavailable and must not fake a transaction, verification, generated file, or completed task.
+## Contents
 
-## Release boundary
+Hero with the canonical logo, the Learn-to-Evolution flow, the two progression paths, an Evolution explorer (13 ranks, Low/Mid/High, transition preview), the Spark converter (1 Spark = NPR 1), a spend-limit calculator that mirrors `economy/spend_ladder.py`, and the roadmap from `docs/SAGE_MASTER_BLUEPRINT.md`. Images in `assets/` are web-sized copies of the owner's design assets in `docs/design/`. The calculator numbers are provisional until the owner confirms them.
 
-**Publishing is paused during the current rebuild.** The GitHub Actions workflow validates the workspace, runs Flutter analysis/tests, builds the Flutter web app for QA, and uploads short-retention QA artifacts. It has no Pages package/deploy job. Pushes to main, pull requests, and manual workflow dispatch do not publish the website or app.
+## Design direction
 
-The currently deployed public website remains unchanged until a later release is explicitly requested. Because this repository is public, Actions artifacts may be downloadable by other repository visitors; they are not private storage. Do not put credentials, tokens, private user data, or real identity documents in them. QA artifacts do not prove live-browser behavior or authenticated backend access.
+The website follows the SAGE ONE cinematic system: near-black foundation, cyan/blue/violet intelligence accents, gold for economy/premium signals, orbital-core motifs, restrained motion and responsive layouts. The landing page describes the product direction without claiming that unfinished integrations are already live.
