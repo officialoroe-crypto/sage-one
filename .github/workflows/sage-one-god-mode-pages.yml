@@ -23,7 +23,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: sage-one-public-pages
+  # Keep pull-request validation isolated so it cannot cancel a production Pages deployment.
+  group: sage-one-pages-${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -34,6 +35,11 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v6
+      - name: Check primary website JavaScript syntax
+        run: |
+          for file in ../website/js/*.js; do
+            node --check "$file"
+          done
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.47.3"
