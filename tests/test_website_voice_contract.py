@@ -29,3 +29,14 @@ def test_voice_uses_selected_language_and_waits_for_user_to_send():
     assert "tap Send when ready" in voice_handler
     assert "S.sendChat(" not in voice_handler
     assert "queueLastRequest(" not in voice_handler
+
+
+
+def test_web_voice_speaks_only_voice_triggered_answers_and_has_stop_control():
+    backend = (WEBSITE / "js" / "backend.js").read_text(encoding="utf-8")
+
+    assert "window.speechSynthesis.speak(utterance);" in backend
+    assert "if (speakThisResponse) speak(answer);" in backend
+    assert "if (name === 'voice-stop') { stopSpeaking(); return; }" in backend
+    assert "button.textContent = 'Stop SAGE speaking';" in backend
+    assert "S.state().lang === 'ne' ? 'ne-NP' : 'en-US'" in backend

@@ -1198,3 +1198,23 @@ body.on-desk .home-panels{display:none}
 .sage-backend-status[data-mode="error"]{color:#ffb0a4;border-color:rgba(255,120,100,.45)}
 .google-live-wrap{display:grid;gap:10px;justify-items:center;margin:12px 0;min-height:48px}
 .google-live-wrap #sageGoogleButton{min-height:42px;display:flex;align-items:center;justify-content:center}
+
+
+/* Accessible control shown only while browser speech synthesis is active. */
+.sage-voice-stop {
+  position: fixed;
+  right: 16px;
+  bottom: 88px;
+  z-index: 10000;
+  border: 1px solid rgba(112, 205, 255, .55);
+  border-radius: 999px;
+  padding: 11px 16px;
+  color: #f7fbff;
+  background: #151a35;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .35);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sage-voice-stop:focus-visible { outline: 2px solid #7ce4ff; outline-offset: 3px; }

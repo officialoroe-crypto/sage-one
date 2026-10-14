@@ -29,6 +29,9 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
   bool _wakeMode = false;
   String _status = 'INITIALIZING';
   String _localeId = 'en_US';
+  String _language = 'en';
+  String? _sessionId;
+  List<String> _speechLocaleIds = <String>[];
   String? _taskId;
   String? _result;
 
@@ -70,12 +73,23 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
       }
 
       final locales = await _speech.locales();
-      final nepali = locales.where((x) {
-        final id = x.localeId.toLowerCase();
-        return id == 'ne_np' || id.startsWith('ne_');
+      _speechLocaleIds = locales.map((locale) => locale.localeId).toList();
+      final nepali = _speechLocaleIds.where((id) {
+        final normalized = id.toLowerCase().replaceAll('-', '_');
+        return normalized == 'ne_np' || normalized.startsWith('ne_');
       }).toList();
+      final english = _speechLocaleIds.where((id) =>
+          id.toLowerCase().replaceAll('-', '_').startsWith('en_')).toList();
 
-      if (nepali.isNotEmpty) _localeId = nepali.first.localeId;
+      // Prefer Nepali when the device has a Nepali recognizer; otherwise use
+      // English and expose the actual device capability in the UI.
+      if (nepali.isNotEmpty) {
+        _language = 'ne';
+        _localeId = nepali.first;
+      } else {
+        _language = 'en';
+        _localeId = english.isNotEmpty ? english.first : 'en_US';
+      }
 
       await _tts.setSpeechRate(.46);
       await _tts.setVolume(.95);
@@ -84,10 +98,14 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
         if (mounted) setState(() => _speaking = true);
       });
       _tts.setCompletionHandler(() {
-        if (mounted) setState(() => _speaking = false);
+        if (!mounted) return;
+        setState(() => _speaking = false);
+        if (_wakeMode && !_processing) _restartWakeListening();
       });
       _tts.setCancelHandler(() {
-        if (mounted) setState(() => _speaking = false);
+        if (!mounted) return;
+        setState(() => _speaking = false);
+        if (_wakeMode && !_processing) _restartWakeListening();
       });
 
       if (!mounted) return;
@@ -163,8 +181,11 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
     if (!result.finalResult) return;
 
     if (_wakeMode) {
-      final normalized = transcript.toLowerCase();
-      final wakeIndex = normalized.indexOf('sage');
+      // Match SAGE as a separate word, not the "sage" suffix inside
+      // unrelated words such as "message".
+      final wakeMatch = RegExp(r'\bsage\b', caseSensitive: false)
+          .firstMatch(transcript);
+      final wakeIndex = wakeMatch?.start ?? -1;
       if (wakeIndex < 0) {
         _command.clear();
         _speech.stop();
@@ -234,12 +255,18 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
     setState(() {
       _processing = true;
       _listening = false;
-      _status = 'EXECUTING';
+      _status = 'SENDING TO SAGE';
       _result = null;
     });
 
     try {
-      final response = await widget.api.submitBackground(prompt);
+      // Use the same authenticated /command endpoint as typed chat so voice
+      // commands share SAGE's durable session, planning and execution path.
+      final response = await widget.api.submitCommand(
+        prompt,
+        sessionId: _sessionId,
+      );
+      _sessionId = response['session_id']?.toString() ?? _sessionId;
       final task = response['task'];
       final rawId = response['task_id'] ??
           (task is Map ? (task['id'] ?? task['task_id']) : null);
@@ -250,6 +277,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
       }
 
       _taskId = taskId;
+      if (mounted) setState(() => _status = 'SAGE IS ANALYZING / WORKING');
       _poller?.cancel();
       _poller = Timer.periodic(
         const Duration(seconds: 2),
@@ -316,13 +344,52 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
   }
 
   Future<void> _speak(String text) async {
+    final clean = text.trim();
+    if (clean.isEmpty) return;
     try {
       await _tts.stop();
-      await _tts.setLanguage(
-        _localeId.toLowerCase().startsWith('ne') ? 'ne-NP' : 'en-US',
-      );
-      await _tts.speak(text);
-    } catch (_) {}
+      final requestedLanguage = _language == 'ne' ? 'ne-NP' : 'en-US';
+      try {
+        await _tts.setLanguage(requestedLanguage);
+      } catch (_) {
+        // Some Android installations expose Nepali recognition but not a
+        // Nepali TTS voice. Fall back transparently instead of failing the task.
+        await _tts.setLanguage('en-US');
+        if (mounted) _snack('Nepali speech output is unavailable on this device; using English voice output.');
+      }
+      await _tts.speak(clean.length > 1200 ? '${clean.substring(0, 1200)}…' : clean);
+    } catch (error) {
+      if (mounted) _snack('Speech output failed: $error');
+    }
+  }
+
+  Future<void> _stopSpeaking() async {
+    await _tts.stop();
+    if (mounted) setState(() => _speaking = false);
+  }
+
+  Future<void> _selectLanguage(String language) async {
+    if (language == 'ne' && !_speechLocaleIds.any((id) {
+      final normalized = id.toLowerCase().replaceAll('-', '_');
+      return normalized == 'ne_np' || normalized.startsWith('ne_');
+    })) {
+      _snack('Nepali speech recognition is not available in the device speech service.');
+      return;
+    }
+    final matches = _speechLocaleIds.where((id) {
+      final normalized = id.toLowerCase().replaceAll('-', '_');
+      return language == 'ne'
+          ? (normalized == 'ne_np' || normalized.startsWith('ne_'))
+          : normalized.startsWith('en_');
+    }).toList();
+    if (mounted) {
+      setState(() {
+        _language = language;
+        _localeId = matches.isNotEmpty ? matches.first : (language == 'ne' ? 'ne_NP' : 'en_US');
+      });
+    }
+    await _tts.stop();
+    if (mounted) setState(() => _speaking = false);
   }
 
   void _snack(String message) {
@@ -347,6 +414,12 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
         title: const Text('SAGE VOICE'),
         backgroundColor: Colors.transparent,
         actions: [
+          if (_speaking)
+            IconButton(
+              tooltip: 'Stop speaking',
+              onPressed: _stopSpeaking,
+              icon: const Icon(Icons.stop_circle_outlined),
+            ),
           IconButton(
             tooltip: _wakeMode
                 ? 'Disable SAGE wake mode'
@@ -442,6 +515,24 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
             ),
           ),
           const SizedBox(height: 8),
+          SegmentedButton<String>(
+            segments: [
+              const ButtonSegment<String>(value: 'en', label: Text('English')),
+              ButtonSegment<String>(
+                value: 'ne',
+                label: const Text('नेपाली'),
+                enabled: _speechLocaleIds.any((id) {
+                  final normalized = id.toLowerCase().replaceAll('-', '_');
+                  return normalized == 'ne_np' || normalized.startsWith('ne_');
+                }),
+              ),
+            ],
+            selected: <String>{_language},
+            onSelectionChanged: _ready && !_processing
+                ? (selection) => _selectLanguage(selection.first)
+                : null,
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _command,
             minLines: 3,
@@ -468,11 +559,11 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.translate, color: SageTheme.violet),
-              title: const Text('Nepali-first voice'),
+              title: Text(_language == 'ne' ? 'नेपाली आवाज चयन गरिएको' : 'English voice selected'),
               subtitle: Text(
-                _localeId.toLowerCase().startsWith('ne')
-                    ? 'Nepali recognizer selected.'
-                    : 'Nepali is preferred when the device exposes a recognizer; otherwise English is used.',
+                _language == 'ne'
+                    ? 'Speech recognition uses $_localeId. Spoken responses will request Nepali TTS.'
+                    : 'Speech recognition uses $_localeId. Select Nepali if the device provides a Nepali recognizer.',
                 style: const TextStyle(
                   fontSize: 10,
                   color: SageTheme.textSecondary,
