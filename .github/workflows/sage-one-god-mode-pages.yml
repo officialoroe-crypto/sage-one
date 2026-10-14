@@ -111,7 +111,8 @@ jobs:
           retention-days: 7
 
   backend-smoke:
-    if: github.event_name != 'pull_request'
+    # Read-only health/config checks are safe on pull requests too. This job
+    # does not deploy or mutate the live service.
     name: Smoke-test live backend for web integration
     runs-on: ubuntu-24.04
     timeout-minutes: 5
