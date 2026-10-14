@@ -2,6 +2,10 @@ name: Copilot Agent Environment Setup
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/copilot-setup-steps.yml"
 
 permissions:
   contents: read
