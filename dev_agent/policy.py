@@ -38,6 +38,10 @@ class AgentPolicy:
         if not path or path == ".git" or path.startswith(".git/"):
             return True
         name = Path(path).name.lower()
+        if name.startswith(".env"):
+            return True
+        if name.endswith((".pem", ".key", ".p12", ".pfx")):
+            return True
         return name in {item.lower() for item in self.forbidden_names}
 
     def can_read(self, relative_path: str) -> bool:
