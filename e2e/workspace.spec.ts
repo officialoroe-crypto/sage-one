@@ -188,6 +188,7 @@ test('bulk action wiring audit across every primary screen', async ({ page }) =>
 });
 
 test('voice button captures a transcript and waits for explicit user send', async ({ page }) => {
+  test.setTimeout(20_000);
   await page.addInitScript(() => {
     class FakeSpeechRecognition {
       onresult: ((event: any) => void) | null = null;
