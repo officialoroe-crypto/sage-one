@@ -36,18 +36,17 @@ jobs:
         working-directory: .
         run: |
           test -s website/index.html
-          test -s website/css/styles.css
-          test -s website/js/app.js
-          test -s website/js/backend.js
-          test -s website/img/sage-mark.png
+          test -s website/styles.css
+          test -s website/app.js
+          test -s website/favicon.svg
           python - <<'PY'
           from pathlib import Path
 
           html = Path("website/index.html").read_text(encoding="utf-8")
           required = (
-              'href="css/styles.css',
-              'src="js/app.js',
-              'img/sage-mark.png',
+              'href="styles.css',
+              'href="favicon.svg',
+              'src="app.js',
           )
           missing = [fragment for fragment in required if fragment not in html]
           if missing:
@@ -58,9 +57,7 @@ jobs:
       - name: Check website JavaScript syntax
         working-directory: .
         run: |
-          for file in website/js/*.js; do
-            node --check "$file"
-          done
+          node --check website/app.js
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
