@@ -8,33 +8,23 @@ window.SAGE = window.SAGE || {};
   let range = '7D';
   S.setEarnRange = function (v) { range = v; S.render(); };
   R.earn = {
-    view: () => {
-      const st = S.state(), e = st.earnings;
-      const series = { Today: [4,6,3,8,5,9,7,12,8,10,14,11], '7D': [30,45,38,60,52,70,64,80,72,88,76,95], '30D': [40,55,48,65,60,75,68,85,78,92,84,100], All: [10,20,32,30,45,55,50,68,74,82,90,100] }[range];
-      const sources = [
-        { k: 'Marketplace Sales', v: e.marketplace, ic: 'i-bag' },
-        { k: 'Job Bonus', v: e.jobs, ic: 'i-case' },
-        { k: 'Referral Rewards', v: e.referral, ic: 'i-users' },
-        { k: 'Content Creation', v: e.content, ic: 'i-sparkles' }
-      ];
-      const max = Math.max(...series);
-      return `
+    view: () => `
       <div class="top-nav"><button class="backbtn" style="position:static" data-act="back">${S.icon('i-arrow-l')}</button>
-        <div><h2>Your Earnings</h2><div class="tiny muted">Lifetime journey income</div></div></div>
-      <div class="balance-card mb12">
-        <div class="row between">
-          <div><div class="cur">Total Earnings</div>
-            <div class="amount">${S.npr(st.lifetimeEarned)}</div>
-            <span class="pill green mt8">${S.icon('i-trend')} +12% this month</span></div>
-          <svg class="spark-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2L12 2z"/></svg>
+        <div><h2>Rewards &amp; Earnings</h2><div class="tiny muted">Verified records only</div></div></div>
+      <div class="card mb12">
+        <div class="row" style="gap:12px;align-items:flex-start">
+          <div class="iconbox">${S.icon('i-shield')}</div>
+          <div class="grow">
+            <b class="small">Real cash earnings are not connected</b>
+            <div class="tiny muted mt8">No payment has been received or credited by this screen. Cash earnings, bank withdrawals, and external payouts remain unavailable until a real provider and verified transaction flow are connected.</div>
+          </div>
         </div>
-        <div class="chart">${series.map((v, i) => `<div class="cbar ${i < series.length - 4 ? 'dim' : ''}" style="height:${(v / max) * 100}%"></div>`).join('')}</div>
-        <div class="range-row">${['Today', '7D', '30D', 'All'].map(r => `<button class="${range === r ? 'active' : ''}" data-act="earn-range" data-arg="${r}">${r}</button>`).join('')}</div>
+        <button class="btn primary mt12" style="width:100%" data-act="nav" data-arg="spark">Open live Spark Wallet</button>
       </div>
 
-      <!-- Signature 7-stage earning animation (board 3) -->
-      <button class="btn primary" data-act="sim-earn" style="background:linear-gradient(135deg,#b8860b,#f5c86b);color:#1c1204">${S.icon('i-bolt')} Payment Received — Play the 7-Stage Animation</button>
-      <div class="notice">Exact 0–17s timeline · tier decides how epic it gets.</div>
+      <div class="sect-label">Reward animation preview</div>
+      <button class="btn primary" data-act="sim-earn" style="background:linear-gradient(135deg,#b8860b,#f5c86b);color:#1c1204">${S.icon('i-play')} Preview the 7-Stage Animation</button>
+      <div class="notice">Visual preview only. This does not create a payment, grant Spark, or confirm an earning.</div>
 
       <div class="sect-label">Earning Animation <span class="tiny">7 stages · 0–17s</span></div>
       <div class="es-timeline">
@@ -49,48 +39,20 @@ window.SAGE = window.SAGE || {};
         </div>`).join('')}
       </div>
 
-      <div class="sect-label">Other Earning Tiers <span class="tiny">size decides intensity</span></div>
+      <div class="sect-label">Reward tiers <span class="tiny">illustrative only</span></div>
       <div class="tier-grid">
         ${S.DATA.EARN_TIERS.map(t => `
-        <div class="tier-card" style="--tc:${t.c};--tc2:${t.c2}" data-act="earn-tier" data-arg="${t.amount}">
-          <div class="tier-name">${t.name}</div>
-          <div class="tier-range">(${t.range})</div>
+        <div class="tier-card" style="--tc:${t.c};--tc2:${t.c2}">
+          <div class="tier-name">${S.esc(t.name)}</div>
+          <div class="tier-range">(${S.esc(t.range)})</div>
           <div class="tier-orb">${S.stateOrb(t.id === 'small' ? 'verifying' : t.id === 'medium' ? 'analyzing' : 'earning', 92)}</div>
-          <div class="tier-amt">+ ${S.npr(t.amount)}<em>EARNED</em></div>
+          <div class="tier-amt">${S.esc(t.name)}<em>PREVIEW</em></div>
           <div class="tier-d">${S.esc(t.d)}</div>
           <div class="tier-use">${S.esc(t.use)}</div>
         </div>`).join('')}
       </div>
-
-      <div class="sect-label">Notification &amp; Summary <span class="tiny">money earned</span></div>
-      <div class="card notif-card">
-        <div class="row" style="gap:11px">
-          <span class="notif-ic">${S.icon('i-bolt')}</span>
-          <div class="grow"><b class="small">${S.DATA.EARN_SUMMARY.title}</b>
-            <div style="font-size:17px;font-weight:800">${S.npr(S.DATA.EARN_SUMMARY.amount)}</div></div>
-          <span class="tiny muted">${S.DATA.EARN_SUMMARY.when}</span>
-        </div>
-        <div class="divider"></div>
-        <div class="row" style="gap:9px"><span class="tiny muted" style="width:56px">From</span><div class="grow"><b class="small">${S.esc(S.DATA.EARN_SUMMARY.from)}</b><div class="tiny muted">Payment ID: ${S.DATA.EARN_SUMMARY.pid}</div></div></div>
-        <div class="divider"></div>
-        <div class="tiny muted mb8">Summary</div>
-        ${S.DATA.EARN_SUMMARY.points.map(p => `<div class="notif-pt"><span class="ck">✓</span>${S.esc(p)}</div>`).join('')}
-        <button class="btn soft sm mt12" style="width:100%" data-act="nav" data-arg="wallet">View Details</button>
-      </div>
-      <div class="sect-label">Income Sources</div>
-      ${sources.map(s => `
-        <div class="list-item" style="cursor:default">
-          <div class="iconbox">${S.icon(s.ic)}</div>
-          <div class="grow"><b class="small">${s.k}</b></div>
-          <b class="small">${S.npr(s.v)}</b>
-        </div>`).join('')}
-      <button class="btn primary mt12" data-act="withdraw">${S.icon('i-bank')} Withdraw to Bank</button>
-      <div class="notice">Only through approved &amp; regulated partners.<br>Withdrawals never reduce your Evolution (Key Rule #1).</div>
-      <div class="sect-label">Fees applied on withdrawal</div>
-      <div class="fee-box" data-act="nav" data-arg="fees" style="cursor:pointer">
-        <div class="row between"><span class="small">Transaction / Withdrawal Fee</span><span class="pill gold">1% → 0.3%</span></div>
-      </div>`;
-    }
+      <div class="notice">Reward amounts are not awarded from this preview. Verified Spark movements appear in the authenticated Spark Wallet ledger.</div>
+    `
   };
 
   /* ===== SPARK CURRENCY SYSTEM ===== */
