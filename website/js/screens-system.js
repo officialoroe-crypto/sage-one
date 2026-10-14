@@ -95,45 +95,71 @@ window.SAGE = window.SAGE || {};
 
   /* ===== SPARK CURRENCY SYSTEM ===== */
   R.spark = {
-    view: () => {
-      const st = S.state();
-      return `
+    view: () => `
       <div class="top-nav"><button class="backbtn" style="position:static" data-act="back">${S.icon('i-arrow-l')}</button>
-        <div><h2>Spark</h2><div class="tiny muted">Your Digital Fuel · Your Value. Your Freedom.</div></div></div>
+        <div><h2>Spark Wallet</h2><div class="tiny muted">Backend-backed balance and ledger</div></div></div>
       <div class="balance-card" style="text-align:center">
         <svg class="spark-star" style="margin:0 auto" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2L12 2z"/></svg>
-        <div class="amount" style="margin-top:6px">${S.fmtSpark(st.spark)}</div>
-        <div class="cur">Sparks · ≈ ${S.npr(st.spark)}</div>
+        <div class="amount" id="sageSparkBalance">—</div>
+        <div class="cur">SAGE Spark · live Core balance</div>
         <div class="row mt12" style="gap:10px">
-          <button class="btn primary sm" style="flex:1" data-act="buy-spark">${S.icon('i-plus')} Buy Spark</button>
-          <button class="btn soft sm" style="flex:1" data-act="send-spark">${S.icon('i-share')} Send Spark</button>
+          <button class="btn primary sm" style="flex:1" disabled title="Payment provider is not yet connected">Buy Spark · unavailable</button>
+          <button class="btn soft sm" style="flex:1" disabled title="A verified transfer workflow is not yet connected">Send Spark · unavailable</button>
         </div>
       </div>
-      <div class="card mt12" style="text-align:center">
-        <b class="small">1 Spark = NPR 1</b>
-        <div class="tiny muted mt8">Buy with real money (NPR) · KYC verified &amp; secure</div>
+      <div class="card mt12">
+        <div class="row between"><b class="small">Lifetime earned</b><b id="sageSparkEarned">—</b></div>
+        <div class="row between mt8"><b class="small">Lifetime spent</b><b id="sageSparkSpent">—</b></div>
       </div>
-      <div class="sect-label">Payment Methods <span class="tiny">(Nepal Phase 1)</span></div>
-      ${S.DATA.PAYMENTS.map(p => `
-        <div class="pay-method ${st.payMethod === p.id ? 'active' : ''}" data-act="pay-method" data-arg="${p.id}">
-          <div class="pay-logo" style="background:${p.c}">${p.short}</div>
-          <div class="grow"><b class="small">${p.name}</b><div class="tiny muted">${p.sub}</div></div>
-          ${p.id === 'fonepay' ? '<span class="pill green">Recommended</span>' : (st.payMethod === p.id ? S.icon('i-check') : '')}
-        </div>`).join('')}
-      <div class="sect-label">How It Works</div>
-      <div class="card">
-        ${['Choose FonePay / eSewa', 'Secure payment (KYC verified)', 'Instant Spark credited', 'Use Spark for the transaction'].map((s, i) => `
-        <div class="tl-step ${i === 0 ? 'on' : ''}"><div class="tl-dot">${i + 1}</div>
-          <div><b class="small">${s}</b></div></div>`).join('')}
-      </div>
-      <div class="sect-label">Spark Usage</div>
-      <div class="card">
-        ${S.DATA.SPARK_USAGE.map((u, i) => `
-        <div class="row between" style="padding:7px 0;${i ? 'border-top:1px solid var(--stroke)' : ''}">
-          <span class="small muted">${S.esc(u.k)}</span><span class="small" style="color:var(--electric-2)">${S.esc(u.v)}</span></div>`).join('')}
-      </div>
+      <div class="sect-label">Payment provider readiness</div>
+      <div class="card"><div class="small" id="sagePaymentStatus">Checking SAGE Core…</div>
+        <div class="tiny muted mt8">No purchase or withdrawal is available unless a real payment provider is configured and the backend enables the operation.</div></div>
+      <div class="sect-label">Recent Spark ledger</div>
+      <div class="card" id="sageSparkLedger"><div class="tiny muted">Loading the authenticated ledger…</div></div>
       <div class="card mt12 row" style="gap:10px"><div class="iconbox">${S.icon('i-info')}</div>
-        <div class="tiny muted grow">Spark is <b>separate from Evolution</b> — it powers the platform economy, never your rank.</div></div>`;
+        <div class="tiny muted grow">Spark balance and ledger entries are read from SAGE Core. Spark is an internal platform credit; this screen does not promise cash value or redemption.</div></div>`,
+    mount: async () => {
+      const balance = document.getElementById('sageSparkBalance');
+      const earned = document.getElementById('sageSparkEarned');
+      const spent = document.getElementById('sageSparkSpent');
+      const payment = document.getElementById('sagePaymentStatus');
+      const ledger = document.getElementById('sageSparkLedger');
+      if (!balance || !ledger) return;
+      if (!S.backend || !S.backend.isOwnerAuthenticated()) {
+        balance.textContent = 'Sign in required';
+        if (payment) payment.textContent = 'Sign in with the configured SAGE owner Google account to load provider readiness.';
+        ledger.textContent = 'The private Spark ledger is available after sign-in.';
+        return;
+      }
+      balance.textContent = 'Loading…';
+      ledger.textContent = 'Loading authenticated ledger…';
+      try {
+        const [economy, payments] = await Promise.all([
+          S.backend.economyMe(),
+          S.backend.paymentStatus()
+        ]);
+        const spark = economy.spark || {};
+        balance.textContent = Number(spark.balance || 0).toLocaleString();
+        if (earned) earned.textContent = Number(spark.lifetime_earned || 0).toLocaleString();
+        if (spent) spent.textContent = Number(spark.lifetime_spent || 0).toLocaleString();
+        if (payment) payment.textContent = payments.configured === true
+          ? String(payments.message || 'Provider configured; payment actions remain disabled until the full payment flow is verified.')
+          : String(payments.message || 'Payment provider is not configured.');
+        const entries = Array.isArray(economy.ledger) ? economy.ledger : [];
+        ledger.innerHTML = entries.length ? entries.slice(0, 20).map(entry => `
+          <div class="row between" style="gap:12px;padding:9px 0;border-bottom:1px solid var(--stroke)">
+            <div class="grow"><b class="small">${S.esc(String(entry.reason || 'Spark movement'))}</b>
+              <div class="tiny muted">${S.esc(String(entry.created_at || ''))}</div></div>
+            <div style="text-align:right"><b class="small">${Number(entry.delta || 0) > 0 ? '+' : ''}${Number(entry.delta || 0).toLocaleString()}</b>
+              <div class="tiny muted">Balance ${Number(entry.balance_after || 0).toLocaleString()}</div></div>
+          </div>`).join('') : '<div class="tiny muted">No Spark ledger entries yet.</div>';
+      } catch (error) {
+        balance.textContent = 'Unavailable';
+        if (earned) earned.textContent = '—';
+        if (spent) spent.textContent = '—';
+        if (payment) payment.textContent = 'Could not load provider readiness: ' + String(error.message || error);
+        ledger.textContent = 'Could not load the backend ledger. Refresh or sign in again.';
+      }
     }
   };
 
@@ -298,7 +324,6 @@ window.SAGE = window.SAGE || {};
   R.profile = {
     view: () => {
       const st = S.state(), u = st.user, e = st.evo, d = S.DATA.EVOLUTIONS[e.stage - 1];
-      const kycDone = st.kyc.face && st.kyc.nid;
       return `
       <div class="row between mb12" style="min-height:44px">
         <div><h2 class="screen-title">Profile</h2><div class="tiny muted">Your SAGE identity</div></div>
@@ -312,17 +337,17 @@ window.SAGE = window.SAGE || {};
         <div class="row mt8" style="gap:6px;justify-content:center">
           <span class="pill accent">${S.icon('i-diamond')} ${S.esc(d.name)}</span>
           <span class="pill blue">EXPLORER</span>
-          <span class="pill ${kycDone ? 'green' : 'gold'}">${kycDone ? 'KYC ✓' : 'KYC Pending'}</span>
+          <span class="pill gold">KYC NOT CONNECTED</span>
         </div>
         <div class="row mt12" style="gap:10px">
-          <button class="btn sm soft" style="flex:1" data-act="nav" data-arg="spark">${S.fmtSpark(st.spark)} Spark</button>
-          <button class="btn sm soft" style="flex:1" data-act="nav" data-arg="earn">${S.npr(st.lifetimeEarned)}</button>
+          <button class="btn sm soft" style="flex:1" data-act="nav" data-arg="spark">Open Spark Wallet</button>
+          <button class="btn sm soft" style="flex:1" disabled title="Real-world earnings are not connected">Earnings unavailable</button>
         </div>
       </div>
       <div class="sect-label">Account</div>
       <div class="set-group">
         <div class="set-item" data-act="nav" data-arg="kyc"><div class="iconbox" style="width:34px;height:34px">${S.icon('i-shield')}</div>
-          <div class="grow"><b class="small">KYC Verification</b><div class="sv">${kycDone ? 'Face ✓ · NID ✓' : 'Complete to unlock withdrawals'}</div></div>${S.icon('i-arrow-r')}</div>
+          <div class="grow"><b class="small">Identity Verification</b><div class="sv">Formal KYC provider is not connected</div></div>${S.icon('i-arrow-r')}</div>
         <div class="set-item" data-act="nav" data-arg="settings"><div class="iconbox" style="width:34px;height:34px">${S.icon('i-globe')}</div>
           <div class="grow"><b class="small">Language</b><div class="sv">${st.lang === 'ne' ? 'नेपाली' : 'English'}</div></div>${S.icon('i-arrow-r')}</div>
         <div class="set-item" data-act="nav" data-arg="settings"><div class="iconbox" style="width:34px;height:34px">${S.icon('i-moon')}</div>

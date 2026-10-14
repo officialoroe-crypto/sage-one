@@ -45,10 +45,10 @@ window.SAGE = window.SAGE || {};
     if (nav) nav.innerHTML = S.DATA.DESK_NAV.map(n => `
       <button class="ds-item ${current.name === n.id ? 'on' : ''}" data-act="nav" data-arg="${n.id}">
         ${S.icon(n.ic)}<span>${n.name}</span></button>`).join('');
-    const cr = S.$('#dsCredits'), crn = S.$('#dsCreditsNpr'), ts = S.$('#dtSpark');
-    if (cr) cr.textContent = S.fmtSpark(st.spark);
-    if (crn) crn.textContent = S.fmtSpark(st.spark);
-    if (ts) ts.textContent = S.fmtSpark(st.spark);
+    const cr = S.$('#dsCredits'), ts = S.$('#dtSpark');
+    // Never display the local prototype balance as real money or backend-confirmed Spark.
+    if (cr) cr.textContent = '—';
+    if (ts) ts.textContent = '—';
     const nm = S.$('#dsName'), av = S.$('#dsAva');
     if (nm) nm.textContent = st.user.name || 'SAGE User';
     if (av) av.textContent = st.user.avatar || (st.user.name ? st.user.name[0].toUpperCase() : 'S');

@@ -464,7 +464,7 @@ window.SAGE = window.SAGE || {};
   S.sparkTag = function () {
     return `<span class="spark-pill" data-act="nav" data-arg="spark">
       <svg class="spark-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2L12 2z"/></svg>
-      ${S.fmtSpark(S.state().spark)}</span>`;
+      SAGE Spark</span>`;
   };
 
 })(window.SAGE);
