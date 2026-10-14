@@ -22,7 +22,8 @@ def test_preview_voice_has_browser_support_fallbacks_and_truthful_scope():
     assert "Voice input is not available in this browser or preview." in chat_js
     assert "window.SpeechRecognition || window.webkitSpeechRecognition" in phone_js
     assert "Voice is not available here. Type your message." in phone_js
-    assert "window.speechSynthesis.speak(utterance);" in phone_js
+    assert "function speak(text)" in phone_js
+    assert "window.speechSynthesis.speak(new window.SpeechSynthesisUtterance(text));" in phone_js
 
 
 def test_preview_voice_and_chat_do_not_claim_a_live_backend_connection():
