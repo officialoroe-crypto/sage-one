@@ -139,3 +139,11 @@ p { margin: 0; }
 }
 .dots i { --r: 5.1rem; }
 .state .dots i { --r: 3rem; }
+
+
+/* Preview accessibility and small-screen overflow guard. */
+.wordmark { color:var(--fg); text-decoration:none; display:inline-flex; align-items:center; min-height:44px; }
+button:disabled { cursor:not-allowed; opacity:.55; }
+.home, .card, .evo, .balance, .sheet { min-width:0; }
+img, svg, canvas { max-width:100%; }
+@media (max-width:360px) { .home { padding-inline:.7rem; } .row-between { flex-wrap:wrap; gap:.5rem; } .tabs { padding-inline:.25rem; } }
