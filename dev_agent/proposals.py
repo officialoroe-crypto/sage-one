@@ -139,7 +139,7 @@ def prepare_developer_preview(workspace: str, task: str) -> dict[str, Any]:
             "changes": changes,
             "change_count": len(changes),
             "patch_bytes": total_size,
-            "checks": "The agent's reported checks ran in the isolated workspace; inspect the result before approval.",
+            "checks": "Exact file contents and before/after hashes were captured in an isolated workspace. Review the agent response and require CI/relevant tests before release.",
         }
 
 
@@ -192,8 +192,7 @@ def apply_developer_preview(workspace: str, preview: dict[str, Any]) -> dict[str
                     handle.write(encoded)
                     handle.flush()
                     os.fsync(handle.fileno())
-                if mode is not None:
-                    os.chmod(temp_name, mode)
+                os.chmod(temp_name, mode if mode is not None else 0o644)
                 os.replace(temp_name, target)
             finally:
                 if os.path.exists(temp_name):
