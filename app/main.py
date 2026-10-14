@@ -42,7 +42,6 @@ from app.worker_service import worker_service
 from config.settings import settings
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from workflows.repository import repository as workflow_repository
-from dev_agent.agent import DevelopmentAgent
 from dev_agent.proposals import prepare_developer_preview, apply_developer_preview, StaleDeveloperProposal
 
 
