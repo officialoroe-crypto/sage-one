@@ -101,12 +101,15 @@ test.describe('SAGE ONE public website browser interactions', () => {
     await page.locator('#sendBtn').click();
     await expect(page.locator('#feed')).toContainText('Hello SAGE, this is a preview test.');
     await expect(page.locator('.composer-note')).toContainText('scripted examples');
+    await page.locator('#menuBtn').click();
+    await expect(page.locator('#shell')).toHaveClass(/rail-open/);
     await page.locator('#newChat').click();
     await expect(page.locator('#chatTitle')).toHaveText('New chat');
     const features = page.locator('#nav button[data-feature]');
     const featureCount = await features.count();
     expect(featureCount).toBeGreaterThan(0);
     for (let i = 0; i < featureCount; i++) {
+      await page.locator('#menuBtn').click();
       await features.nth(i).click();
       await expect(page.locator('#pane')).toBeVisible();
       await expect(page.locator('#paneTitle')).not.toBeEmpty();
