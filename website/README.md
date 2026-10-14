@@ -21,9 +21,9 @@ Then open `http://127.0.0.1:8080`.
 
 ## Deployment and release boundary
 
-`.github/workflows/sage-one-god-mode-pages.yml` validates the marketing page, runs Flutter analysis/tests, and builds a Flutter web QA artifact on relevant pull requests and main pushes. **The Flutter app build is not published to GitHub Pages during QA.**
+**Publishing is paused during the current product rebuild.** The workflow may run CI, build the Flutter web app for QA, and upload a short-retention inspection artifact, but it has no Pages package/deploy job. Neither pushes to `main`, pull requests, nor manual workflow dispatch publishes the website or app.
 
-The public Pages artifact contains only the static marketing site. Publishing it requires a deliberate manual workflow dispatch. Do not add `frontend/build/web` to the public Pages artifact until the owner approves public app release after both web and mobile QA pass. Repository Pages must be configured to use GitHub Actions.
+The currently deployed website remains unchanged until the owner later requests a release and a separate, reviewed deployment workflow is restored. Do not publish `frontend/build/web` while voice, authentication, KYC, backend wiring, economy, and UI repairs are underway.
 
 The web QA build is uploaded separately as a GitHub Actions artifact for inspection. Artifact availability does not prove live-browser behavior or authenticated backend access.
 
