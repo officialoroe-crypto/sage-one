@@ -17,6 +17,7 @@ class AgentPolicy:
         "app", "agents", "brain", "config", "database", "dev_agent",
         "execution", "memory", "missions", "permissions", "projects",
         "research", "tasks", "tools", "web", "tests", "docs", ".github",
+        "frontend", "website", "qa", "scripts",
     )
 
     forbidden_names: tuple[str, ...] = (
