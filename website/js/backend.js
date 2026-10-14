@@ -95,6 +95,101 @@ window.SAGE = window.SAGE || {};
     }
   }
 
+  let researchTaskId = null;
+  let researchTaskBusy = false;
+  let researchStatusText = 'Sign in with the configured SAGE owner Google account to run a real task.';
+  let researchResultText = '';
+  let researchPollTimer = null;
+
+  function setResearchUI(statusText, resultText) {
+    researchStatusText = String(statusText || '');
+    if (resultText !== undefined) researchResultText = String(resultText || '');
+    const statusNode = document.getElementById('rsLiveStatus');
+    const resultNode = document.getElementById('rsLiveResult');
+    const cancelButton = document.getElementById('rsLiveCancel');
+    const runButton = document.getElementById('rsLiveRun');
+    if (statusNode) statusNode.textContent = researchStatusText;
+    if (resultNode) resultNode.textContent = researchResultText;
+    if (cancelButton) cancelButton.disabled = !researchTaskBusy;
+    if (runButton) runButton.disabled = researchTaskBusy;
+  }
+
+  function renderResearchState() {
+    setResearchUI(researchStatusText, researchResultText);
+  }
+
+  async function startResearch(query) {
+    const clean = String(query || '').trim();
+    if (!clean) { toast('Enter a research question first.'); return; }
+    if (!ownerToken) { toast('Sign in with the configured SAGE owner Google account to run live research.'); S.go('auth'); return; }
+    if (researchTaskBusy) { toast('A research task is already running.'); return; }
+    researchTaskBusy = true;
+    researchResultText = '';
+    setResearchUI('Queueing a real SAGE Core task…', '');
+    try {
+      const task = await queueCommand(
+        'Research this question and return a careful report. Do not invent sources or citations; include source URLs only when they were actually retrieved and verified. Question: ' + clean
+      );
+      researchTaskId = task.id;
+      setResearchUI('Task queued · ' + task.id + ' · status: ' + String(task.status || 'queued'), '');
+      pollResearchTask(task.id, 0);
+    } catch (error) {
+      researchTaskBusy = false;
+      setResearchUI('Research task could not be queued: ' + String(error.message || error), '');
+      status('RESEARCH TASK FAILED', 'error');
+    }
+  }
+
+  async function pollResearchTask(taskId, attempt) {
+    if (!taskId || taskId !== researchTaskId) return;
+    if (researchPollTimer) { clearTimeout(researchPollTimer); researchPollTimer = null; }
+    try {
+      const response = await request('/tasks/' + encodeURIComponent(taskId));
+      const task = response.task || response;
+      const state = String(task.status || 'unknown').toLowerCase();
+      if (['completed', 'complete', 'succeeded', 'success'].includes(state)) {
+        const output = task.result ?? task.output ?? task.summary ?? task.error ?? 'Task completed without a readable result.';
+        researchTaskBusy = false;
+        setResearchUI('Task completed by SAGE Core · ' + taskId + '. Review the result below.', flatten(output));
+        status('RESEARCH TASK COMPLETED', 'ready');
+        return;
+      }
+      if (['failed', 'error', 'cancelled', 'canceled'].includes(state)) {
+        researchTaskBusy = false;
+        const reason = task.error || task.result || ('Task status: ' + state);
+        setResearchUI('SAGE Core task ' + state + ' · ' + taskId, flatten(reason));
+        status('RESEARCH TASK ' + state.toUpperCase(), 'error');
+        return;
+      }
+      setResearchUI('Task ' + taskId + ' · status: ' + state + ' · checking Core again…');
+      if (attempt >= 120) {
+        researchTaskBusy = false;
+        setResearchUI('The task is still not final after four minutes. It may continue on SAGE Core; refresh status later or cancel it.', researchResultText);
+        return;
+      }
+      researchPollTimer = setTimeout(() => pollResearchTask(taskId, attempt + 1), 2000);
+    } catch (error) {
+      researchTaskBusy = false;
+      setResearchUI('Could not read the task status: ' + String(error.message || error) + '. No successful result is being claimed.', '');
+      status('RESEARCH STATUS CHECK FAILED', 'error');
+    }
+  }
+
+  async function cancelResearch() {
+    if (!researchTaskId || !researchTaskBusy) { toast('There is no active research task to cancel.'); return; }
+    if (researchPollTimer) { clearTimeout(researchPollTimer); researchPollTimer = null; }
+    try {
+      const response = await request('/tasks/' + encodeURIComponent(researchTaskId) + '/cancel', {});
+      const task = response.task || response;
+      researchTaskBusy = false;
+      setResearchUI('Cancellation requested · Core status: ' + String(task.status || 'unknown'), researchResultText);
+      toast('Cancellation request sent to SAGE Core.');
+    } catch (error) {
+      setResearchUI('Could not cancel the task: ' + String(error.message || error), researchResultText);
+      toast('Task cancellation failed. Check the Core status before retrying.');
+    }
+  }
+
   function loadGoogleScript() {
     if (window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
     if (gisPromise) return gisPromise;
@@ -206,6 +301,8 @@ window.SAGE = window.SAGE || {};
     chat, queueCommand, startVoice,
     economyMe: () => request('/economy/me'),
     paymentStatus: () => request('/economy/payment/status'),
+    getTask: taskId => request('/tasks/' + encodeURIComponent(taskId)),
+    startResearch, cancelResearch, resumeResearch: renderResearchState,
     checkConfig: async () => { const cfg = await loadConfig(); return { googleConfigured: !!cfg.google_client_id, ownerModeAvailable: !!cfg.owner_mode_available }; },
     signOut: () => { ownerToken = null; sessionId = null; status('CORE READY · SIGN IN', 'ready'); },
     status: () => ({ configured: !!config, ownerAuthenticated: !!ownerToken })
@@ -214,6 +311,8 @@ window.SAGE = window.SAGE || {};
   if (typeof originalAct === 'function') S.act = function (name, arg) {
     if (name === 'auth-google') { renderGoogleButton(); toast('Use the secure Google button to sign in.'); return; }
     if (name === 'voice-toggle') { startVoice(arg || '#chatInput'); return; }
+    if (name === 'research-run') { startResearch((document.getElementById('rsLiveQuery') || {}).value); return; }
+    if (name === 'research-cancel') { cancelResearch(); return; }
     if (name === 'ai-test') {
       if (!S.backend) { toast('SAGE Core connection is not ready.'); return; }
       S.backend.checkConfig().then(cfg => toast(cfg.googleConfigured ? 'Core identity configuration loaded. AI provider health has not been tested.' : 'Core responded, but Google sign-in is not configured.'))
