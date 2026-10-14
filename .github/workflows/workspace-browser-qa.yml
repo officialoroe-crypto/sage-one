@@ -6,6 +6,11 @@ on:
     branches: [main, "test/**", "fix/**", "feature/**"]
     paths:
       - "website/**"
+      - "app/**"
+      - "database/**"
+      - "tasks/**"
+      - "notifications/**"
+      - "tests/**"
       - "e2e/**"
       - "playwright.config.ts"
       - "package.json"
@@ -15,6 +20,11 @@ on:
     branches: [main]
     paths:
       - "website/**"
+      - "app/**"
+      - "database/**"
+      - "tasks/**"
+      - "notifications/**"
+      - "tests/**"
       - "e2e/**"
       - "playwright.config.ts"
       - "package.json"
@@ -23,6 +33,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: sage-workspace-browser-qa-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   browser-and-live-api:
@@ -45,10 +59,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Start local QA-only website server
         run: |
-          python3 -m http.server 4173 --directory website > /tmp/sage-qa-server.log 2>&1 &
+          python3 -m http.server 8080 --directory website > /tmp/sage-qa-server.log 2>&1 &
           echo $! > /tmp/sage-qa-server.pid
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then
               exit 0
             fi
             sleep 1
