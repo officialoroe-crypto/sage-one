@@ -31,6 +31,6 @@ Microphone input requires a supported browser and microphone permission. Voice r
 
 ## Release boundary
 
-**Publishing is paused during the current rebuild.** The GitHub Actions workflow validates the workspace, runs Flutter analysis/tests, builds the Flutter web app for QA, and uploads short-retention inspection artifacts. It has no Pages package/deploy job. Pushes to main, pull requests, and manual workflow dispatch do not publish the website or app.
+**Publishing is paused during the current rebuild.** The GitHub Actions workflow validates the workspace, runs Flutter analysis/tests, builds the Flutter web app for QA, and uploads short-retention QA artifacts. It has no Pages package/deploy job. Pushes to main, pull requests, and manual workflow dispatch do not publish the website or app.
 
-The currently deployed public website remains unchanged until a later release is explicitly requested. QA artifacts are for private inspection only and do not prove live-browser behavior or authenticated backend access.
+The currently deployed public website remains unchanged until a later release is explicitly requested. Because this repository is public, Actions artifacts may be downloadable by other repository visitors; they are not private storage. Do not put credentials, tokens, private user data, or real identity documents in them. QA artifacts do not prove live-browser behavior or authenticated backend access.
