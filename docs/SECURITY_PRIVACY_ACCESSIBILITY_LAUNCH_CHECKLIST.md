@@ -22,6 +22,13 @@ These are observed from repository source, not from a live penetration test. Fin
 - **Policy pages/consent:** no Privacy, Terms, Cookie, or Refund policy references were found in the website JS files inspected. Internal draft documents are being added separately; they are not public-facing pages and must not be treated as legally complete.
 - **Legal scope:** official Nepal Law Commission sources identify the Privacy Act, 2075 and E-Commerce Act, 2081; the Electronic Transactions Act, 2063 and Consumer Protection Act, 2075 are also relevant review candidates. Applicability and effective requirements need qualified Nepal legal review; cookie-consent requirements depend on actual tracking and user jurisdictions.
 
+## Artifacts added during the initial pass
+- [x] Record this full worklist in the repository.
+- [x] Add a source-derived environment-variable inventory with secrets redacted and deployment limitations stated.
+- [x] Add internal-only drafts for Privacy Policy, Terms and Conditions, Cookie Policy, Refund/Cancellation Policy, and form-consent copy. These are not public website pages and are not approved for publication.
+- [ ] Convert policy drafts into accessible public pages only after operator details, data flows, and legal review are complete.
+- [ ] Verify actual hosted environment values and settings; this cannot be done from repository source alone.
+
 ## 0. Safety and working rules
 - [ ] Preserve existing user changes and data; inspect before modifying.
 - [ ] Never print, commit, or expose secret values. Report secret names and locations only, with values redacted.
