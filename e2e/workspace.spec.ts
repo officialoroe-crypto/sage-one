@@ -131,3 +131,58 @@ test.describe('SAGE ONE actual browser interactions', () => {
     expect(audit.missing, 'controls without an action, disabled state, or aria-disabled explanation').toEqual([]);
   });
 });
+
+test('bulk action wiring audit across every primary screen', async ({ page }) => {
+  await page.goto('/');
+  const audit = await page.evaluate(async () => {
+    const routes = ['home', 'apps', 'chat', 'research', 'jobs', 'marketplace', 'learning', 'community', 'aistudio', 'files', 'logostates', 'premium', 'profile', 'settings', 'wallet', 'spark', 'earn', 'evolution', 'agents', 'workflow', 'integrations', 'memory', 'aisettings'];
+    const scripts = Array.from(document.scripts).map(script => script.src).filter(src => src && src.startsWith(location.origin + '/js/'));
+    const sourcePairs = await Promise.all(scripts.map(async src => [src.split('/').pop() || '', await (await fetch(src)).text()] as const));
+    const source = Object.fromEntries(sourcePairs) as Record<string, string>;
+    const appSource = source['app.js'] || '';
+    const backendSource = source['backend.js'] || '';
+    const known = new Set<string>();
+    for (const match of appSource.matchAll(/case\\s+['"]([^'"]+)['"]\\s*:/g)) known.add(match[1]);
+    for (const match of backendSource.matchAll(/name\\s*===\\s*['"]([^'"]+)['"]/g)) known.add(match[1]);
+    const demo = backendSource.match(/const DEMO_ONLY\\s*=\\s*new Set\\(\\[([\\s\\S]*?)\\]\\);/);
+    if (demo) for (const match of demo[1].matchAll(/['"]([^'"]+)['"]/g)) known.add(match[1]);
+    for (const name of (window.SAGE?.AG_ACT_KNOWN || [])) known.add(name);
+    const perScreen: Array<{route:string; controls:number; actions:string[]; noAction:string[]}> = [];
+    for (const route of routes) {
+      try {
+        if (!window.SAGE?.screens?.[route]) {
+          perScreen.push({ route, controls: 0, actions: [], noAction: ['SCREEN NOT REGISTERED'] });
+          continue;
+        }
+        window.SAGE.go(route, null, { replace: true });
+        const root = document.querySelector('#screen');
+        const controls = Array.from(root?.querySelectorAll('button, [role="button"], input[type="button"], input[type="submit"]') || []) as HTMLElement[];
+        const actions = controls.map(el => el.getAttribute('data-act')).filter((value): value is string => Boolean(value));
+        const noAction = controls.filter(el => !el.hasAttribute('data-act') && !el.hasAttribute('disabled') && el.getAttribute('aria-disabled') !== 'true')
+          .map(el => (el.innerText || el.getAttribute('aria-label') || el.title || el.tagName).trim().slice(0, 100));
+        perScreen.push({ route, controls: controls.length, actions: Array.from(new Set(actions)).sort(), noAction });
+      } catch (error) {
+        perScreen.push({ route, controls: 0, actions: [], noAction: ['RENDER ERROR: ' + String(error)] });
+      }
+    }
+    const actions = Array.from(new Set(perScreen.flatMap(screen => screen.actions))).sort();
+    const unhandledActions = actions.filter(action => !known.has(action));
+    return {
+      routesChecked: routes.length,
+      registeredRoutes: perScreen.filter(screen => !screen.noAction.includes('SCREEN NOT REGISTERED')).length,
+      totalControls: perScreen.reduce((sum, screen) => sum + screen.controls, 0),
+      uniqueActions: actions.length,
+      unhandledActions,
+      perScreen
+    };
+  });
+  await test.info().attach('all-screen-action-wiring-audit.json', {
+    body: JSON.stringify(audit, null, 2),
+    contentType: 'application/json'
+  });
+  expect(audit.registeredRoutes, 'primary screens missing from the app').toBe(audit.routesChecked);
+  expect(audit.totalControls, 'no screen controls were inventoried').toBeGreaterThan(0);
+  const controlsWithoutActions = audit.perScreen.flatMap(screen => screen.noAction.filter(item => item !== 'SCREEN NOT REGISTERED').map(item => ({ route: screen.route, item })));
+  expect(controlsWithoutActions, 'interactive-looking controls without an action or disabled state').toEqual([]);
+  expect(audit.unhandledActions, 'visible actions without a recognized dispatcher; inspect attached audit report').toEqual([]);
+});
