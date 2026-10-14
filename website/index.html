@@ -26,13 +26,14 @@
   <header class="topbar">
     <div class="wrap">
       <a class="wordmark" href="#top">SAGE<small>ONE</small></a>
-      <nav aria-label="Primary">
+      <button type="button" class="menu-toggle" id="menuToggle" aria-controls="primaryNav" aria-expanded="false" aria-label="Open navigation"><span></span><span></span><span></span></button>
+      <nav aria-label="Primary" id="primaryNav">
         <a href="#evolution">Evolution</a>
         <a href="#spark">Spark</a>
         <a href="#ladder">Spend limits</a>
         <a href="#roadmap">Roadmap</a>
         <a href="app-preview/">Phone app</a>
-        <a class="signin-link" href="chat/">Sign in</a>
+        <a class="signin-link" href="chat/">Chat preview</a>
       </nav>
     </div>
   </header>
@@ -44,7 +45,7 @@
           <h1>Think less.<br>Execute more.</h1>
           <p class="lede">SAGE ONE is a personal AI mentor and execution partner. It researches, creates and carries out work for you, and it asks before it acts.</p>
           <div class="hero-actions">
-            <a class="button primary" href="chat/" data-app-link>Open SAGE</a>
+            <a class="button primary" href="chat/" data-app-link>Open interactive preview</a>
             <a class="button" href="#roadmap">See where it stands</a>
           </div>
           <p class="status-line"><i aria-hidden="true"></i><span>Private build in progress. Built in Nepal.</span></p>
@@ -277,9 +278,10 @@
   </main>
 
   <footer>
-    <div class="wrap">
-      <span>SAGE ONE. Built in Nepal.</span>
+    <div class="wrap footer-wrap">
+      <span>© <span id="copyrightYear">2026</span> SAGE ONE · Built in Nepal.</span>
       <span>Spark is platform currency, not a cryptocurrency or an investment.</span>
+      <nav class="footer-links" aria-label="Footer"><a href="#top">Back to top</a><a href="chat/">Chat preview</a><a href="app-preview/">Phone app preview</a></nav>
     </div>
   </footer>
 
