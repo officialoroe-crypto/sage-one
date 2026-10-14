@@ -109,7 +109,7 @@ class _DeveloperModeScreenState extends State<DeveloperModeScreen> {
     String excerpt(dynamic value) {
       final text = value?.toString() ?? '(new file)';
       return text.length > 6000
-          ? '${text.substring(0, 6000)}\\n… preview truncated for readability …'
+          ? '${text.substring(0, 6000)}\n… preview truncated for readability …'
           : text;
     }
 
