@@ -183,7 +183,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
     if (_wakeMode) {
       // Match SAGE as a separate word, not the "sage" suffix inside
       // unrelated words such as "message".
-      final wakeMatch = RegExp(r'\\bsage\\b', caseSensitive: false)
+      final wakeMatch = RegExp(r'\bsage\b', caseSensitive: false)
           .firstMatch(transcript);
       final wakeIndex = wakeMatch?.start ?? -1;
       if (wakeIndex < 0) {
