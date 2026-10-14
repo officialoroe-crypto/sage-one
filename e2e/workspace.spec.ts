@@ -48,12 +48,14 @@ test.describe('SAGE ONE actual browser interactions', () => {
     await expect(page.locator('#screen')).toContainText('Namaste');
     await expect(page.locator('#homeAsk')).toBeVisible();
     await expect(page.locator('#sageBackendStatus')).toBeVisible();
+    await expect(page.locator('#sageBackendStatus')).toContainText('CORE READY');
+    await expect(page.locator('#sageBackendStatus')).not.toContainText('CORE OFFLINE');
     expect(pageErrors, 'uncaught browser JavaScript errors').toEqual([]);
   });
 
   test('real click actions navigate to Chat and the app hub', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#screen [data-act="chat"]').first().click();
+    await page.locator('#tabbar [data-act="chat"]').first().click();
     await expect(page.locator('#chatInput')).toBeVisible();
     await expect(page.locator('#chatBody')).toBeVisible();
 
@@ -67,7 +69,7 @@ test.describe('SAGE ONE actual browser interactions', () => {
 
   test('Chat does not pretend to answer when owner authentication is missing', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#screen [data-act="chat"]').first().click();
+    await page.locator('#tabbar [data-act="chat"]').first().click();
     await page.locator('#chatInput').fill('QA check: please reply with a short greeting.');
     await page.locator('#screen [data-act="chat-send"]').click();
     await expect(page.locator('#sageBackendStatus')).toBeVisible();
@@ -80,7 +82,7 @@ test.describe('SAGE ONE actual browser interactions', () => {
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/');
-    const routes = ['home', 'apps', 'chat', 'research', 'jobs', 'marketplace', 'learning', 'community', 'aistudio', 'files', 'logostates', 'premium', 'profile', 'settings', 'wallet', 'spark', 'earn', 'evolution', 'agents', 'workflow', 'integrations', 'memory', 'aisettings'];
+    const routes = ['home', 'apps', 'chat', 'research', 'jobs', 'marketplace', 'learning', 'community', 'aistudio', 'files', 'logostates', 'premium', 'profile', 'settings', 'wallet', 'spark', 'earn', 'evolution', 'agents', 'workflow', 'integrations', 'memory', 'aisettings', 'history', 'activity'];
     const inventory: Array<{ route: string; rendered: boolean; error?: string }> = [];
     for (const route of routes) {
       const result = await page.evaluate((name) => {
@@ -135,7 +137,7 @@ test.describe('SAGE ONE actual browser interactions', () => {
 test('bulk action wiring audit across every primary screen', async ({ page }) => {
   await page.goto('/');
   const audit = await page.evaluate(async () => {
-    const routes = ['home', 'apps', 'chat', 'research', 'jobs', 'marketplace', 'learning', 'community', 'aistudio', 'files', 'logostates', 'premium', 'profile', 'settings', 'wallet', 'spark', 'earn', 'evolution', 'agents', 'workflow', 'integrations', 'memory', 'aisettings'];
+    const routes = ['home', 'apps', 'chat', 'research', 'jobs', 'marketplace', 'learning', 'community', 'aistudio', 'files', 'logostates', 'premium', 'profile', 'settings', 'wallet', 'spark', 'earn', 'evolution', 'agents', 'workflow', 'integrations', 'memory', 'aisettings', 'history', 'activity'];
     const scripts = Array.from(document.scripts).map(script => script.src).filter(src => src && src.startsWith(location.origin + '/js/'));
     const sourcePairs = await Promise.all(scripts.map(async src => [new URL(src).pathname.split('/').pop() || '', await (await fetch(src)).text()] as const));
     const source = Object.fromEntries(sourcePairs) as Record<string, string>;
@@ -244,4 +246,192 @@ test('unconnected community membership and file upload are not falsely marked su
   await expect(page.locator('#screen button[disabled][title*="Event registration"]')).toBeDisabled();
   await page.evaluate(() => window.SAGE.go('files', null, { replace: true }));
   await expect(page.locator('#screen button[disabled][title*="Real file uploads"]')).toBeDisabled();
+});
+
+const coreUrl = 'https://sage-one-api.onrender.com';
+
+async function signInAsMockOwner(page: import('@playwright/test').Page) {
+  await page.route(coreUrl + '/identity/config', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    json: { success: true, google_client_id: 'qa-client.apps.googleusercontent.com', owner_mode_available: true }
+  }));
+  await page.route(coreUrl + '/identity/google', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    json: { success: true, owner_mode: true, profile: { name: 'Browser QA Owner' }, identity: { email: 'qa-owner@example.test' } }
+  }));
+  await page.addInitScript(() => {
+    (window as any).google = { accounts: { id: {
+      initialize: function(options: any) { (window as any).__sageQaGoogleCallback = options.callback; },
+      renderButton: function(mount: HTMLElement) {
+        const button = document.createElement('button');
+        button.id = 'qa-google-sign-in';
+        button.type = 'button';
+        button.textContent = 'Continue with Google';
+        button.onclick = function() { (window as any).__sageQaGoogleCallback({ credential: 'qa-owner-token' }); };
+        mount.appendChild(button);
+      }
+    } } };
+  });
+  await page.goto('/');
+  await page.evaluate(() => window.SAGE.go('auth', null, { replace: true }));
+  await expect(page.locator('#sageGoogleButton')).toBeVisible();
+  await expect(page.locator('#qa-google-sign-in')).toBeVisible();
+  await page.locator('#qa-google-sign-in').click();
+  await expect(page.locator('#screen')).toContainText('Namaste');
+}
+
+test('saved conversations load, archive, restore, and reopen through real UI actions', async ({ page }) => {
+  let archived = false;
+  await page.route(coreUrl + '/sessions*', async route => {
+    const isArchived = new URL(route.request().url()).searchParams.get('archived') === 'true';
+    const include = isArchived === archived;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      json: {
+        success: true,
+        archived: isArchived,
+        sessions: include ? [{
+          id: 'qa-session-1',
+          preview: 'How do I recover my saved SAGE conversation?',
+          created_at: '2026-10-14T10:00:00Z',
+          message_count: 2,
+          archived: isArchived
+        }] : []
+      }
+    });
+  });
+  await page.route(coreUrl + '/session/qa-session-1/archive', async route => {
+    archived = true;
+    await route.fulfill({ status: 200, contentType: 'application/json', json: { success: true, session_id: 'qa-session-1', archived: true } });
+  });
+  await page.route(coreUrl + '/session/qa-session-1/restore', async route => {
+    archived = false;
+    await route.fulfill({ status: 200, contentType: 'application/json', json: { success: true, session_id: 'qa-session-1', archived: false } });
+  });
+  await page.route(coreUrl + '/session/qa-session-1/messages*', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    json: {
+      success: true,
+      session_id: 'qa-session-1',
+      messages: [
+        { role: 'user', content: 'How do I recover my saved SAGE conversation?' },
+        { role: 'assistant', content: 'Open Chat History and restore the archived conversation.' }
+      ]
+    }
+  }));
+
+  await signInAsMockOwner(page);
+  await page.evaluate(() => window.SAGE.go('history', null, { replace: true }));
+  await expect(page.locator('#sageHistoryList')).toContainText('How do I recover my saved SAGE conversation?');
+  await page.locator('#sageHistoryList [data-act="history-archive"]').click();
+  await expect(page.locator('#sageHistoryList')).toContainText('No conversations in this list yet');
+  await page.locator('#screen [data-act="history-filter"][data-arg="archived"]').click();
+  await expect(page.locator('#sageHistoryList')).toContainText('How do I recover my saved SAGE conversation?');
+  await page.locator('#sageHistoryList [data-act="history-restore"]').click();
+  await expect(page.locator('#sageHistoryList')).toContainText('No conversations in this list yet');
+  await page.locator('#screen [data-act="history-filter"][data-arg="active"]').click();
+  await expect(page.locator('#sageHistoryList')).toContainText('How do I recover my saved SAGE conversation?');
+  await page.locator('#sageHistoryList [data-act="history-archive"]').click();
+  await page.locator('#screen [data-act="history-filter"][data-arg="archived"]').click();
+  await page.locator('#sageHistoryList [data-act="history-open"]').click();
+  await expect(page.locator('#chatBody')).toContainText('How do I recover my saved SAGE conversation?');
+  await expect(page.locator('#chatBody')).toContainText('Open Chat History and restore the archived conversation.');
+});
+
+test('Activity Center loads owner tasks and notifications and marks notifications read', async ({ page }) => {
+  let read = false;
+  await page.route(coreUrl + '/tasks*', async route => {
+    expect(route.request().headers()['authorization']).toBe('Bearer qa-owner-token');
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      json: { success: true, tasks: [{ id: 'qa-task-1', title: 'Browser QA task', status: 'completed', result: 'Task result verified by the QA fixture', created_at: '2026-10-14T10:00:00Z' }] }
+    });
+  });
+  await page.route(coreUrl + '/notifications*', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      json: { success: true, notifications: [{ id: 'qa-notice-1', title: 'SAGE task completed', body: 'Your test task finished.', read, created_at: '2026-10-14T10:01:00Z' }] }
+    });
+  });
+  await page.route(coreUrl + '/notifications/qa-notice-1/read', async route => {
+    read = true;
+    await route.fulfill({ status: 200, contentType: 'application/json', json: { success: true, notification: { id: 'qa-notice-1', read: true } } });
+  });
+  await signInAsMockOwner(page);
+  await page.evaluate(() => window.SAGE.go('activity', null, { replace: true }));
+  await expect(page.locator('#sageActivityContent')).toContainText('Browser QA task');
+  await expect(page.locator('#sageActivityContent')).toContainText('Task result verified by the QA fixture');
+  await expect(page.locator('#sageActivityContent')).toContainText('SAGE task completed');
+  await page.locator('#sageActivityContent [data-act="activity-read"]').click();
+  await expect(page.locator('#sageActivityContent')).toContainText('Read');
+});
+
+test('New Chat clears the current local transcript and session pointer', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.SAGE.state().chatSessionId = 'old-session';
+    window.SAGE.state().chat = [{ role: 'user', text: 'Old conversation must not carry over.' }];
+    window.SAGE.save();
+    window.SAGE.go('history', null, { replace: true });
+  });
+  await page.locator('#screen [data-act="chat-new"]').click();
+  await expect(page.locator('#chatInput')).toBeVisible();
+  const state = await page.evaluate(() => ({
+    sessionId: window.SAGE.state().chatSessionId || null,
+    messages: window.SAGE.state().chat
+  }));
+  expect(state.sessionId).toBeNull();
+  expect(state.messages).toEqual([]);
+});
+
+test('dashboard and Chat do not display fake live or financial success states', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => window.SAGE.go('home', null, { replace: true }));
+  await expect(page.locator('#screen')).toContainText('Verified real earnings');
+  await expect(page.locator('#screen')).toContainText('Open Activity Center');
+  await expect(page.locator('#screen')).not.toContainText('+12%');
+  await expect(page.locator('#screen')).not.toContainText('Found 24 sources');
+  await page.evaluate(() => window.SAGE.go('chat', null, { replace: true }));
+  await expect(page.locator('#screen')).toContainText('connection status shown below');
+  await expect(page.locator('#screen')).not.toContainText('Online · AI Mentor');
+});
+
+test('authenticated Chat sends through the Core API contract and displays the returned answer', async ({ page }) => {
+  let chatRequest: Record<string, unknown> | null = null;
+  await page.route(coreUrl + '/chat', async route => {
+    expect(route.request().headers()['authorization']).toBe('Bearer qa-owner-token');
+    chatRequest = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      json: { success: true, session_id: 'qa-chat-session', response: { text: 'SAGE Core mock response verified.' } }
+    });
+  });
+  await page.route(coreUrl + '/sessions*', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    json: { success: true, archived: false, sessions: [{
+      id: 'qa-chat-session',
+      preview: 'Please reply with the browser QA result.',
+      created_at: '2026-10-14T10:00:00Z',
+      message_count: 2,
+      archived: false
+    }] }
+  }));
+  await signInAsMockOwner(page);
+  await page.evaluate(() => window.SAGE.go('chat', null, { replace: true }));
+  await page.locator('#chatInput').fill('Please reply with the browser QA result.');
+  await page.locator('#screen [data-act="chat-send"]').click();
+  await expect(page.locator('#chatBody')).toContainText('SAGE Core mock response verified.');
+  expect(chatRequest).toMatchObject({ message: 'Please reply with the browser QA result.' });
+  const state = await page.evaluate(() => window.SAGE.state().chatSessionId);
+  expect(state).toBe('qa-chat-session');
+  await page.evaluate(() => window.SAGE.go('history', null, { replace: true }));
+  await expect(page.locator('#sageHistoryList')).toContainText('Please reply with the browser QA result.');
 });

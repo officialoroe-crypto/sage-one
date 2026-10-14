@@ -60,22 +60,25 @@ window.SAGE = window.SAGE || {};
     if (current.name !== 'home') { rail.innerHTML = ''; return; }
     rail.innerHTML = `
       <div class="rail-card">
-        <div class="rail-head">Live Activity <span class="rail-live">● live</span></div>
-        ${S.DATA.LIVE_ACTIVITY.map(a => `
-        <div class="la-row" data-act="rs-start">
-          <span class="src-badge" style="background:${a.c};color:${a.dark ? '#111' : '#fff'}">${a.g}</span>
-          <div class="grow"><b class="small">${a.n}</b><div class="tiny muted">Found ${a.s} sources</div></div>
-          <span class="tiny muted">${a.when}</span>${S.icon('i-arrow-r')}
-        </div>`).join('')}
+        <div class="rail-head">Explore</div>
+        <div class="la-row" data-act="nav" data-arg="research">
+          <span class="iconbox" style="width:32px;height:32px">${S.icon('i-search')}</span>
+          <div class="grow"><b class="small">Open Research</b><div class="tiny muted">Start a research session</div></div>
+          ${S.icon('i-arrow-r')}
+        </div>
       </div>
       <div class="rail-card">
-        <div class="rail-head">Recent</div>
-        ${S.DATA.RECENT.map(r => `
-        <div class="la-row" data-act="chat">
-          <span class="iconbox" style="width:32px;height:32px">${S.icon(r.ic)}</span>
-          <div class="grow"><b class="small ellipsis">${r.n}</b><div class="tiny muted">${r.when}</div></div>
+        <div class="rail-head">Your activity</div>
+        <div class="la-row" data-act="nav" data-arg="history">
+          <span class="iconbox" style="width:32px;height:32px">${S.icon('i-clock')}</span>
+          <div class="grow"><b class="small">Chat History</b><div class="tiny muted">Open or archive saved conversations</div></div>
           ${S.icon('i-arrow-r')}
-        </div>`).join('')}
+        </div>
+        <div class="la-row" data-act="nav" data-arg="activity">
+          <span class="iconbox" style="width:32px;height:32px">${S.icon('i-bell')}</span>
+          <div class="grow"><b class="small">Activity Center</b><div class="tiny muted">Tasks and notifications</div></div>
+          ${S.icon('i-arrow-r')}
+        </div>
       </div>
       <div class="rail-foot">More than an AI.<br><b>It's your edge.</b></div>`;
   }
@@ -195,62 +198,30 @@ window.SAGE = window.SAGE || {};
       case 'logo-preview': S.previewState(arg); break;
       case 'src-detail': S.srcDetail(arg); break;
       case 'src-tab': S.srcTab(arg); break;
-      case 'src-all': S.toast('12 sources · 7 verified · 2 rejected'); break;
+      case 'src-all': S.toast('Live source verification is not connected. No source counts are being claimed.'); break;
 
       /* --- earning animation (board 3) --- */
       case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;
-      case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Reward Animation Preview', preview: true, noCredit: true }); break;
+      case 'earn-tier': S.toast('Real earnings are not connected. This preview will not credit Spark or cash.'); break;
 
-      /* --- premium (board 2) --- */
-      case 'premium-upgrade': {
-        const pm = S.DATA.PAYMENTS.find(p => p.id === st.payMethod);
-        S.sheet(`
-          <h3>Upgrade to SAGE Premium</h3>
-          <div class="sub">Unlock more. Do more. · NPR 999/month</div>
-          <div class="card mb12">
-            ${S.DATA.PREMIUM_FEATURES.map(f => `<div class="row small" style="padding:5px 0"><span style="color:#34d399">✓</span> ${f}</div>`).join('')}
-          </div>
-          <div class="tiny muted mb12">Pay with ${pm.name} · cancel anytime</div>
-          <button class="btn primary" data-act="premium-confirm" style="background:linear-gradient(135deg,#6d4dff,#9d7bff)">${S.icon('i-crown')} Upgrade Now</button>`);
-        break;
-      }
+      /* --- premium (not connected) --- */
+      case 'premium-upgrade':
       case 'premium-confirm':
-        st.premium = true; S.save(); S.closeSheet(); S.render();
-        S.toast('SAGE Premium active ✓ Full power unlocked');
-        if (S.previewState) S.previewState('premium');
-        break;
       case 'premium-cancel':
-        st.premium = false; S.save(); S.render(); S.toast('Premium plan ended · basics stay free'); break;
-
-      /* --- onboarding --- */
-      case 'lang': S.setLang(arg); S.render(); break;
-      case 'auth-continue': {
-        const n = ((S.$('#au-name') || {}).value || '').trim();
-        const p = ((S.$('#au-phone') || {}).value || '').trim();
-        const e = ((S.$('#au-email') || {}).value || '').trim();
-        st.user.name = n || 'Ramesh Shrestha';
-        st.user.phone = p || '+977 9800000000';
-        st.user.email = e;
-        S.save(); S.toast('Account created · OTP verified ✓');
-        S.go('kyc'); break;
-      }
-      case 'auth-google':
-        st.user.name = st.user.name || 'Ramesh Shrestha'; S.save();
-        S.toast('Signed in with Google ✓'); S.go('kyc'); break;
-      case 'kyc-start': {
-        if (st.kyc.face && st.kyc.nid) { S.go('profile-create'); break; }
-        S.sheet(`
-          <h3>Verification in progress</h3>
-          <div class="sub">Face scan + NID check — simulated in this preview</div>
-          <div class="tl-step on"><div class="tl-dot">1</div><div><b class="small">Capturing face geometry</b><div class="tiny muted">3D liveness check…</div></div></div>
-          <div class="tl-step on"><div class="tl-dot">2</div><div><b class="small">Reading NID chip</b><div class="tiny muted">Verifying with Nepal DoT…</div></div></div>
-          <div class="tl-step on"><div class="tl-dot">3</div><div><b class="small">Matching identity</b><div class="tiny muted">Confidence 99.2%…</div></div></div>
-          <button class="btn primary mt12" data-act="kyc-done">Complete Verification</button>`);
+        S.closeSheet();
+        S.toast('Premium billing is not connected. No subscription was started or changed.');
         break;
-      }
+
+      /* --- onboarding: real identity provider required --- */
+      case 'auth-continue':
+      case 'auth-google':
+        S.toast('Use the secure Google sign-in connected to SAGE Core. Local/demo account creation is disabled.');
+        S.go('auth');
+        break;
+      case 'kyc-start':
       case 'kyc-done':
-        st.kyc.face = true; st.kyc.nid = true; S.save(); S.closeSheet();
-        S.toast('KYC verified ✓ Full access unlocked'); S.go('profile-create'); break;
+        S.toast('KYC provider is not configured. Identity has not been verified and access was not unlocked.');
+        break;
       case 'pick-avatar': {
         const avatars = ['🧘', '🦅', '🏔️', '🦁', '🐺', '🪔'];
         st.user.avatar = avatars[Math.floor(Math.random() * avatars.length)];
@@ -278,97 +249,101 @@ window.SAGE = window.SAGE || {};
       case 'chat-quick': S.sendChat(arg); break;
       case 'chat-action': S.chatAction(arg); break;
 
-      /* --- marketplace and jobs: never claim an external action without a provider --- */
+      /* --- marketplace --- */
       case 'mkt-cat': S.setMktCat(arg); break;
       case 'listing': S.go('listing-detail', arg); break;
       case 'buy-listing':
       case 'buy-confirm':
-        S.sheet(`
-          <h3>Marketplace checkout is not connected</h3>
-          <div class="sub">No live marketplace, payment provider, or verified order flow is connected. No purchase was made and no Spark or cash balance changed.</div>
-          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
+        S.closeSheet();
+        S.toast('Marketplace checkout is not connected. No purchase or Spark movement occurred.');
         break;
       case 'sell-submit':
-        S.sheet(`
-          <h3>Marketplace publishing is not connected</h3>
-          <div class="sub">This workspace cannot publish a real listing yet. Nothing was listed and no reward or earning was credited.</div>
-          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
-        break;
-      case 'job-filter': S.setJobFilter(arg); break;
-      case 'apply-job':
-        S.sheet(`
-          <h3>Job application was not sent</h3>
-          <div class="sub">A verified job-provider connection is not available. SAGE will not claim that an employer was contacted or add a completion reward.</div>
-          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
+        S.closeSheet();
+        S.toast('Marketplace publishing is not connected. No listing was published and no earnings were credited.');
         break;
 
-      case 'files-tab': S.setFilesTab(arg); break;
+      /* --- jobs --- */
+      case 'job-filter': S.setJobFilter(arg); break;
+      case 'apply-job':
+        S.toast('Job application delivery is not connected. No application was sent.');
+        break;
 
       /* --- learning --- */
       case 'learn-tab': S.setLearnTab(arg); break;
       case 'course': S.go('course-detail', arg); break;
-      case 'enroll': {
-        if (!st.enrolled.includes(arg)) st.enrolled.push(arg);
-        S.save(); S.render(); S.toast('Enrolled ✓ Your learning path is ready');
-        const lvl = S.addProgress(4, 'Course enrolled');
-        if (lvl) S.handleLevelUp(lvl);
+      case 'enroll':
+      case 'course-complete':
+        S.toast('Course enrollment and completion tracking are not connected to a learning provider. No progress reward was granted.');
         break;
-      }
-      case 'course-complete': {
-        const parts = arg.split('|');
-        const c = S.DATA.COURSES.find(x => x.id === parts[0]);
-        S.toast('Module ' + (+parts[1] + 1) + ' complete ✓ · ' + (c ? c.title : ''));
-        const lvl = S.addProgress(9, 'Module completed');
-        if (lvl) S.handleLevelUp(lvl);
-        break;
-      }
 
       /* --- community --- */
       case 'comm-tab': S.setCommTab(arg); break;
+      case 'files-tab': S.setFilesTab(arg); break;
+      case 'chat-new':
+        if (S.backend && S.backend.startNewChat) S.backend.startNewChat();
+        else { S.state().chatSessionId = null; S.state().chat = []; S.save(); S.go('chat'); }
+        break;
+      case 'history-filter': S.setHistoryFilter(arg); break;
+      case 'history-open':
+        if (S.backend && S.backend.loadSession) {
+          S.backend.loadSession(arg).catch(error => S.toast('Could not open conversation: ' + String(error.message || error)));
+        } else S.toast('Chat history is not connected to SAGE Core.');
+        break;
+      case 'history-archive':
+        if (S.backend && S.backend.archiveSession) {
+          S.backend.archiveSession(arg).then(() => { S.toast('Conversation archived'); S.go('history'); })
+            .catch(error => S.toast('Could not archive conversation: ' + String(error.message || error)));
+        }
+        break;
+      case 'history-restore':
+        if (S.backend && S.backend.restoreSession) {
+          S.backend.restoreSession(arg).then(() => { S.toast('Conversation restored'); S.go('history'); })
+            .catch(error => S.toast('Could not restore conversation: ' + String(error.message || error)));
+        }
+        break;
+      case 'history-refresh':
+      case 'activity-refresh':
+        S.render();
+        break;
+      case 'activity-read':
+        if (S.backend && S.backend.markNotificationRead) {
+          S.backend.markNotificationRead(arg).then(() => S.render())
+            .catch(error => S.toast('Could not mark notification read: ' + String(error.message || error)));
+        }
+        break;
 
-      /* --- AI studio: never fabricate generated files or charge local prototype credits --- */
+      /* --- AI studio --- */
       case 'ai-tool': {
         if (arg === 'image') S.go('ai-image');
         else if (arg === 'video') S.go('ai-video');
-        else S.toast('Code Generation is not connected yet.');
+        else S.toast('Code Generation — coming soon ⏳');
         break;
       }
+      /* Provider-dependent actions stay unavailable until a real backend adapter is configured. */
       case 'gen-image':
       case 'gen-video':
-        S.sheet(`
-          <h3>AI generation provider is not connected</h3>
-          <div class="sub">SAGE has not generated or saved a real image/video from this action. No Spark was deducted and no earning was credited.</div>
-          <div class="notice">Connect and verify an image/video provider before enabling generation.</div>
-          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
+        S.toast('Image/video generation is not connected to a real provider. No Spark was charged and no file was created.');
         break;
 
-      /* --- Spark and cash: never mutate local prototype state as a payment --- */
+      /* --- spark & money --- */
       case 'pay-method':
+        st.payMethod = arg; S.save(); S.render();
+        S.toast(S.DATA.PAYMENTS.find(p => p.id === arg).name + ' selected'); break;
       case 'buy-spark':
       case 'buy-spark-amount':
       case 'buy-spark-custom':
-        S.sheet(`
-          <h3>Purchases are not connected yet</h3>
-          <div class="sub">No payment provider is configured for live SAGE Spark purchases. This screen will not charge you or add a balance.</div>
-          <div class="notice">Your real Spark balance and ledger are shown in the authenticated Spark Wallet. Do not treat prototype balances as money.</div>
-          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
+        S.toast('Spark purchases are unavailable until a real payment provider and server-side verification are configured. No payment or Spark credit occurred.');
         break;
       case 'send-spark':
       case 'send-spark-go':
-        S.sheet(`
-          <h3>Spark transfers are not available yet</h3>
-          <div class="sub">A verified backend transfer flow is required before SAGE can move Spark between accounts. No balance has been changed.</div>
-          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
+        S.toast('Spark transfers are unavailable until the authenticated transfer API is connected. No Spark was moved.');
         break;
 
-      /* --- earnings and withdrawals --- */
+      /* --- earn & withdraw --- */
       case 'earn-range': S.setEarnRange(arg); break;
       case 'withdraw':
       case 'withdraw-go':
-        S.sheet(`
-          <h3>Cash payouts are not connected yet</h3>
-          <div class="sub">No payout provider or verified withdrawal flow is connected. SAGE will not claim that a withdrawal was initiated.</div>
-          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
+        S.toast('Withdrawals are unavailable until a regulated payment provider and server-side verification are configured. No withdrawal was initiated.');
         break;
 
       /* --- evolution --- */

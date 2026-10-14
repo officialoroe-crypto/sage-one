@@ -3,6 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 SYSTEM_SCREEN = ROOT / "website" / "js" / "screens-system.js"
 APP_CONTROLLER = ROOT / "website" / "js" / "app.js"
+BACKEND_BRIDGE = ROOT / "website" / "js" / "backend.js"
 
 
 def test_earnings_screen_does_not_claim_a_mock_payment_was_received():
@@ -28,36 +29,35 @@ def test_earnings_screen_links_to_backend_backed_spark_wallet():
     assert "Withdraw to Bank" not in source
 
 
-def test_purchase_transfer_and_withdrawal_actions_never_mutate_local_balance():
+def test_provider_dependent_actions_are_blocked_by_the_backend_bridge():
+    source = BACKEND_BRIDGE.read_text(encoding="utf-8")
+    assert "const DEMO_ONLY = new Set([" in source
+    for action in (
+        "kyc-start", "kyc-done", "premium-upgrade", "premium-confirm",
+        "buy-spark", "send-spark", "withdraw", "buy-listing", "buy-confirm",
+        "gen-image", "gen-video", "apply-job", "enroll", "course-complete",
+        "sell-submit", "wf-run", "ai-provider",
+    ):
+        assert "'" + action + "'" in source
+    assert "No transaction was made." in source
+
+
+def test_unconnected_actions_never_claim_success_or_mutate_local_economy():
     source = APP_CONTROLLER.read_text(encoding="utf-8")
-    guarded_actions = source[source.index("/* --- Spark and cash:"):source.index("/* --- evolution --- */")]
-    assert "Purchases are not connected yet" in guarded_actions
-    assert "Spark transfers are not available yet" in guarded_actions
-    assert "Cash payouts are not connected yet" in guarded_actions
-    assert "S.addSpark(" not in guarded_actions
-    assert "Withdrawal of " not in guarded_actions
-
-
-
-def test_every_reward_animation_entry_is_preview_only():
-    source = APP_CONTROLLER.read_text(encoding="utf-8")
-    assert "case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;" in source
-    assert "case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Reward Animation Preview', preview: true, noCredit: true }); break;" in source
-
-
-
-def test_unconnected_marketplace_jobs_and_generation_never_claim_success():
-    source = APP_CONTROLLER.read_text(encoding="utf-8")
-    assert "Marketplace checkout is not connected" in source
-    assert "Marketplace publishing is not connected" in source
-    assert "Job application was not sent" in source
-    assert "AI generation provider is not connected" in source
-    assert "Purchase complete ✓" not in source
-    assert "Listing published!" not in source
-    assert "Application sent ✓" not in source
-    assert "Video rendered ✓" not in source
+    for misleading_claim in (
+        "Purchase complete ✓", "Listing published!", "Application sent ✓",
+        "Enrolled ✓", "Module ' + (+parts[1] + 1) + ' complete ✓",
+        "KYC verified ✓", "Signed in with Google ✓", "Account created · OTP verified ✓",
+        "SAGE Premium active ✓",
+    ):
+        assert misleading_claim not in source
+    assert "No purchase or Spark movement occurred." in source
+    assert "No listing was published and no earnings were credited." in source
+    assert "No application was sent." in source
+    assert "No progress reward was granted." in source
+    assert "st.earnings.marketplace +=" not in source
+    assert "st.lifetimeEarned +=" not in source
     assert "S.addSpark(-5, 'Image generated')" not in source
-    assert "st.earnings.content += 15" not in source
 
 
 def test_files_filter_control_is_connected_to_its_action_handler():

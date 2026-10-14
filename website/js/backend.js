@@ -188,7 +188,7 @@ window.SAGE = window.SAGE || {};
         toast('This Google account is not the configured SAGE owner. No owner access was granted.'); return;
       }
       // The Google ID token is held in memory only, never browser storage.
-      ownerToken = response.credential; sessionId = null;
+      ownerToken = response.credential; sessionId = S.state().chatSessionId || null;
       const profile = data.profile || {}, identity = data.identity || {}, state = S.state();
       if (profile.name || identity.email) state.user.name = profile.name || identity.email;
       if (identity.email) state.user.email = identity.email;
@@ -225,14 +225,50 @@ window.SAGE = window.SAGE || {};
   }
   async function chat(message) {
     const data = await request('/chat', { message, ...(sessionId ? { session_id: sessionId } : {}) });
-    if (data.session_id) sessionId = data.session_id;
+    if (data.session_id) { sessionId = data.session_id; S.state().chatSessionId = sessionId; S.save(); }
     return flatten(data.response);
   }
   async function queueCommand(message) {
     const data = await request('/command', { message, ...(sessionId ? { session_id: sessionId } : {}), priority: 3 });
-    if (data.session_id) sessionId = data.session_id;
+    if (data.session_id) { sessionId = data.session_id; S.state().chatSessionId = sessionId; S.save(); }
     const task = data.task || {};
     return { id: task.id || task.task_id || data.task_id || 'queued', status: data.status || task.status || 'queued' };
+  }
+
+  async function listSessions(archived = false) {
+    return request('/sessions?archived=' + String(Boolean(archived)) + '&limit=100');
+  }
+  function startNewChat() {
+    sessionId = null;
+    S.state().chatSessionId = null;
+    S.state().chat = [];
+    S.save();
+    S.go('chat');
+  }
+  async function loadSession(id) {
+    const data = await request('/session/' + encodeURIComponent(id) + '/messages?limit=100');
+    sessionId = id;
+    S.state().chatSessionId = id;
+    S.state().chat = (data.messages || []).map(item => {
+      const content = String(item.content || '');
+      if (item.role === 'user') return { role: 'user', text: content };
+      const ans = { title: 'SAGE ONE · SAVED CONVERSATION', intro: content, blocks: [], sources: [], followups: [], confidence: null, engine: 'core-history' };
+      return { role: 'bot', type: 'ai', ai: { phase: 'done', ans, k: content.length, bi: 0 } };
+    });
+    S.save();
+    S.go('chat');
+    return { success: true, session_id: id, message_count: (data.messages || []).length };
+  }
+  async function archiveSession(id) {
+    return request('/session/' + encodeURIComponent(id) + '/archive', {});
+  }
+  async function restoreSession(id) {
+    return request('/session/' + encodeURIComponent(id) + '/restore', {});
+  }
+  async function listTasks() { return request('/tasks?limit=100'); }
+  async function listNotifications() { return request('/notifications?limit=100'); }
+  async function markNotificationRead(id) {
+    return request('/notifications/' + encodeURIComponent(id) + '/read', {});
   }
   function showAnswer(text, engine) {
     const clean = String(text || 'SAGE Core returned an empty response.').slice(0, 12000);
@@ -279,6 +315,8 @@ window.SAGE = window.SAGE || {};
   S.backend = {
     apiBase: API_BASE, renderGoogleButton, isOwnerAuthenticated: () => !!ownerToken,
     chat, queueCommand, startVoice, speak, stopSpeaking,
+    listSessions, loadSession, archiveSession, restoreSession, startNewChat,
+    listTasks, listNotifications, markNotificationRead,
     economyMe: () => request('/economy/me'),
     paymentStatus: () => request('/economy/payment/status'),
     checkConfig: async () => { const cfg = await loadConfig(); return { googleConfigured: !!cfg.google_client_id, ownerModeAvailable: !!cfg.owner_mode_available }; },

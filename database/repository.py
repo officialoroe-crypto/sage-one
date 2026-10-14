@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session as DBSession
 
 from database.models import (
     Session,
+    ArchivedSession,
     Message,
     Memory,
     Task,
@@ -102,6 +103,23 @@ class SageRepository:
         if owner_key is not None:
             query = query.filter(Session.owner_key == owner_key)
         return query.first()
+
+    def list_sessions(
+        self,
+        db: DBSession,
+        *,
+        owner_key: str,
+        archived: bool = False,
+        limit: int = 50,
+    ) -> list[Session]:
+        """List only one owner's sessions, separated into active and archived lists."""
+        archived_ids = (
+            db.query(ArchivedSession.session_id)
+            .filter(ArchivedSession.owner_key == owner_key)
+        )
+        query = db.query(Session).filter(Session.owner_key == owner_key)
+        query = query.filter(Session.id.in_(archived_ids) if archived else ~Session.id.in_(archived_ids))
+        return query.order_by(Session.created_at.desc()).limit(max(1, min(limit, 100))).all()
 
     # ============================================================
     # MESSAGES
@@ -828,6 +846,15 @@ def get_session(
     owner_key: str | None = None,
 ) -> Session | None:
     return repository.get_session(db, session_id, owner_key)
+
+def list_sessions(
+    db: DBSession,
+    *,
+    owner_key: str,
+    archived: bool = False,
+    limit: int = 50,
+) -> list[Session]:
+    return repository.list_sessions(db, owner_key=owner_key, archived=archived, limit=limit)
 
 
 def add_message(

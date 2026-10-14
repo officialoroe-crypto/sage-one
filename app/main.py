@@ -18,7 +18,7 @@ from agentic.models import ActionRequest
 from brain.router import router
 from database.connection import SessionLocal, Base, engine
 from database import repository
-from database.models import DeveloperProposal
+from database.models import ArchivedSession, DeveloperProposal, Message
 from sales.models import SalesActivity, SalesLead
 
 from missions.engine import mission_engine
@@ -572,6 +572,64 @@ def get_session_messages(
         }
 
 
+@app.get("/sessions")
+def list_chat_sessions(
+    archived: bool = False,
+    limit: int = 50,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    """List the authenticated owner's saved conversations, including archived ones on request."""
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        sessions = repository.list_sessions(
+            db,
+            owner_key=owner_key,
+            archived=archived,
+            limit=max(1, min(limit, 100)),
+        )
+        items = []
+        for session in sessions:
+            latest = repository.get_messages(db, session.id, limit=1)
+            item = _serialize(session)
+            item["preview"] = (latest[0].content if latest else "")[:180]
+            item["message_count"] = db.query(Message).filter(Message.session_id == session.id).count()
+            item["archived"] = archived
+            items.append(item)
+        return {"success": True, "sessions": items, "archived": archived}
+
+
+@app.post("/session/{session_id}/archive")
+def archive_chat_session(session_id: str, claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        session = repository.get_session(db, session_id, owner_key=owner_key)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        marker = db.query(ArchivedSession).filter(
+            ArchivedSession.session_id == session_id,
+            ArchivedSession.owner_key == owner_key,
+        ).first()
+        if marker is None:
+            db.add(ArchivedSession(session_id=session_id, owner_key=owner_key))
+            db.commit()
+    return {"success": True, "session_id": session_id, "archived": True}
+
+
+@app.post("/session/{session_id}/restore")
+def restore_chat_session(session_id: str, claims: dict[str, Any] = Depends(_require_owner)):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    with SessionLocal() as db:
+        session = repository.get_session(db, session_id, owner_key=owner_key)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Session not found.")
+        db.query(ArchivedSession).filter(
+            ArchivedSession.session_id == session_id,
+            ArchivedSession.owner_key == owner_key,
+        ).delete(synchronize_session=False)
+        db.commit()
+    return {"success": True, "session_id": session_id, "archived": False}
+
+
 # ============================================================
 # CHAT
 # ============================================================
@@ -853,7 +911,6 @@ def developer_preview(
     workspace = _developer_workspace(request.workspace)
     result = prepare_developer_preview(str(workspace), request.task)
     proposal_id = str(uuid.uuid4())
-    status = "preview" if result.get("success") and result.get("changes") else "failed"
     with SessionLocal() as db:
         proposal = DeveloperProposal(
             id=proposal_id,
@@ -861,15 +918,15 @@ def developer_preview(
             task=request.task,
             workspace=str(workspace),
             preview_json=json.dumps(result, default=str),
-            status=status,
+            status="preview",
         )
         db.add(proposal)
         db.commit()
     return {
-        "success": status == "preview",
-        "proposal_id": proposal_id if status == "preview" else None,
-        "status": status,
-        "requires_approval": status == "preview",
+        "success": True,
+        "proposal_id": proposal_id,
+        "status": "preview",
+        "requires_approval": True,
         "proposal": result,
     }
 
@@ -902,14 +959,13 @@ def developer_apply(
     request: DeveloperApplyRequest,
     claims: dict[str, Any] = Depends(_require_owner),
 ):
-    """Apply the exact stored preview after explicit approval; never rerun the coding agent."""
+    """Apply exactly one owner-scoped preview after explicit approval."""
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
     if not request.approved:
         raise HTTPException(status_code=400, detail="Explicit approval is required.")
 
     owner_key = _developer_owner_key(claims)
-    now = datetime.now(timezone.utc)
     with SessionLocal() as db:
         proposal = db.query(DeveloperProposal).filter(
             DeveloperProposal.id == request.proposal_id,
@@ -921,22 +977,23 @@ def developer_apply(
             raise HTTPException(status_code=409, detail="Developer proposal is no longer applicable.")
         workspace = proposal.workspace
         preview = json.loads(proposal.preview_json)
-        if not preview.get("success") or not preview.get("changes"):
-            raise HTTPException(status_code=409, detail="Proposal has no validated file changes.")
-        proposal.status = "applying"
-        proposal.approved_at = now
-        db.commit()
 
     try:
         result = apply_developer_preview(workspace, preview)
-        final_status = "applied"
     except StaleDeveloperProposal as exc:
-        result = {"success": False, "error": str(exc), "repreview_required": True}
-        final_status = "stale"
-    except (PermissionError, ValueError, OSError) as exc:
-        result = {"success": False, "error": str(exc)}
-        final_status = "failed"
+        with SessionLocal() as db:
+            stale = db.query(DeveloperProposal).filter(
+                DeveloperProposal.id == request.proposal_id,
+                DeveloperProposal.owner_key == owner_key,
+            ).first()
+            if stale is not None:
+                stale.status = "stale"
+                db.commit()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except (ValueError, PermissionError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    now = datetime.now(timezone.utc)
     with SessionLocal() as db:
         proposal = db.query(DeveloperProposal).filter(
             DeveloperProposal.id == request.proposal_id,
@@ -944,19 +1001,16 @@ def developer_apply(
         ).first()
         if proposal is None:
             raise HTTPException(status_code=404, detail="Developer proposal disappeared.")
-        proposal.applied_at = datetime.now(timezone.utc)
+        proposal.approved_at = now
+        proposal.applied_at = now
         proposal.result_json = json.dumps(result, default=str)
-        proposal.status = final_status
+        proposal.status = "applied" if result.get("success") else "failed"
         db.commit()
 
-    if final_status == "stale":
-        raise HTTPException(status_code=409, detail=result["error"])
-    if final_status == "failed":
-        raise HTTPException(status_code=409, detail=result["error"])
     return {
-        "success": True,
+        "success": bool(result.get("success")),
         "proposal_id": request.proposal_id,
-        "status": "applied",
+        "status": "applied" if result.get("success") else "failed",
         "result": result,
     }
 
@@ -1283,9 +1337,10 @@ def get_tasks(
     if status is not None and status not in tasks.VALID_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid task status")
 
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     return {
         "success": True,
-        "tasks": tasks.list(status=status),
+        "tasks": tasks.list(status=status, owner_key=owner_key),
     }
 
 
