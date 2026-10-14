@@ -611,9 +611,7 @@ class _KycScreenState extends State<KycScreen> {
       setState(() => _error = 'Send a verification code first.');
       return;
     }
-    if (!RegExp(r'^\\d{6}
-class FirstRunScreen extends StatelessWidget { const FirstRunScreen({super.key}); @override Widget build(BuildContext c)=>const FeatureWorkspace(title:'First Run',subtitle:'Finish setup and choose how SAGE should work with you.',icon:Icons.flag_outlined,actions:['Complete setup','Choose capabilities','Finish workspace setup']);}
-).hasMatch(code)) {
+    if (!RegExp(r'^\d{6}$').hasMatch(code)) {
       setState(() => _error = 'Enter the six-digit verification code.');
       return;
     }
