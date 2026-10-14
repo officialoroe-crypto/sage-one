@@ -105,7 +105,9 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: CommandCenter(api: api)));
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.text('VOICE COMMAND  ·  TAP TO SPEAK'));
+    final voiceEntry = find.text('VOICE COMMAND  ·  TAP TO SPEAK');
+    await tester.ensureVisible(voiceEntry);
+    await tester.tap(voiceEntry);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
