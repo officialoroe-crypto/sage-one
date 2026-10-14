@@ -116,10 +116,15 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
 
     if (status == 'done' || status == 'notListening') {
       setState(() => _listening = false);
-      if (_wakeMode && _ready && !_processing && !_speaking) {
+      if (_wakeMode && _ready && !_processing && !_speaking &&
+          _command.text.trim().isEmpty) {
         _restartWakeListening();
       } else if (!_processing && !_speaking) {
-        setState(() => _status = 'READY');
+        setState(() {
+          _status = _command.text.trim().isEmpty
+              ? (_wakeMode ? 'SAY SAGE TO WAKE' : 'READY')
+              : 'COMMAND CAPTURED — REVIEW THEN EXECUTE';
+        });
       }
     }
   }
@@ -171,10 +176,20 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
         return;
       }
       _command.text = command;
+      _command.selection = TextSelection.collapsed(offset: command.length);
     }
 
+    // Recognition only captures intent. The user confirms the transcript
+    // before SAGE queues or executes a task.
     _speech.stop();
-    _submit();
+    if (mounted) {
+      setState(() {
+        _listening = false;
+        _status = _command.text.trim().isEmpty
+            ? 'READY'
+            : 'COMMAND CAPTURED — REVIEW THEN EXECUTE';
+      });
+    }
   }
 
   Future<void> _toggleListening() async {
@@ -396,7 +411,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
                 Text(
                   _wakeMode
                       ? 'SAGE is listening for its name. Say “Hey SAGE”, “SAGE”, or “Hello SAGE”, then your command.'
-                      : 'Speak naturally. SAGE captures the command, executes it, and can speak the result back.',
+                      : 'Speak naturally. SAGE shows the transcript first; review it and tap Confirm & Execute.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: SageTheme.textSecondary,
@@ -435,7 +450,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
           FilledButton.icon(
             onPressed: _processing ? null : _submit,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('EXECUTE COMMAND'),
+            label: const Text('CONFIRM & EXECUTE'),
           ),
           const SizedBox(height: 9),
           OutlinedButton.icon(
