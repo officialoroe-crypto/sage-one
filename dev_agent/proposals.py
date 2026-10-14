@@ -157,12 +157,15 @@ def apply_developer_preview(workspace: str, preview: dict[str, Any]) -> dict[str
         relative = str(item.get("path", ""))
         if not policy.can_write(relative):
             raise PermissionError(f"Proposed path is not writable: {relative}")
+        relative_path = Path(relative)
+        if relative_path.is_absolute() or any(part in {".", ".."} for part in relative_path.parts):
+            raise PermissionError(f"Invalid relative path in proposal: {relative}")
+        candidate = root
+        for part in relative_path.parts:
+            candidate = candidate / part
+            if candidate.is_symlink():
+                raise PermissionError(f"Symlink writes are not permitted: {relative}")
         target = policy.resolve(relative)
-        if target.is_symlink():
-            raise PermissionError(f"Symlink writes are not permitted: {relative}")
-        parent = target.parent
-        if parent.exists() and any(p.is_symlink() for p in [parent, *parent.parents] if p != root.parent):
-            raise PermissionError(f"Symlink parent is not permitted: {relative}")
         current = target.read_bytes() if target.is_file() else None
         expected = item.get("before_sha256")
         if (_digest(current) if current is not None else None) != expected:
