@@ -4,6 +4,8 @@
 **Owner rule:** Do not deploy, publish, enable public access, or release the app/site until the owner explicitly approves. Private/staging test environments only.
 **Evidence rule:** Mark each item separately as Specified, Implemented, Connected, Tested, Verified, or Blocked. A green build is not runtime proof. Never record PASS without repeatable evidence.
 
+**Initial live smoke evidence (2026-10-14 UTC):** GitHub Actions run [38617788443](https://github.com/officialoroe-crypto/sage-one/actions/runs/38617788443) passed the read-only health/config checks and unauthenticated Chat rejection. The same workflow run built the Flutter web QA artifact successfully; this was QA-only and did not deploy. Browser QA run [38617788746](https://github.com/officialoroe-crypto/sage-one/actions/runs/38617788746) passed 16 Playwright tests, but the saved-history/activity/authenticated-chat tests use mocked API responses. They do not prove durable production persistence or a real model reply.
+
 ## Initial code-inspection findings (2026-10-15; not a complete audit)
 
 These are observed from repository source, not from a live penetration test. Findings remain open unless explicitly marked otherwise.
@@ -39,7 +41,7 @@ These are observed from repository source, not from a live penetration test. Fin
 
 ## 1. Backend, live smoke test, Chat and persistence
 - [ ] Find why the live-backend smoke-test job was skipped; distinguish workflow conditions from backend health.
-- [ ] Run safe, read-only health/config smoke tests against the intended test environment.
+- [x] Run safe, read-only live smoke checks on the configured Render backend: /health healthy, /identity/config success with Google client ID configured, and unauthenticated POST /chat rejected with HTTP 401 (run 38617788443). This is not an authenticated model-response test.
 - [ ] Verify authenticated requests return genuine provider/model replies, not canned/demo success.
 - [ ] Verify messages persist, sessions reopen, errors/timeouts are visible, and unauthorized access is denied.
 - [ ] Verify provider keys remain server-side and missing provider configuration fails honestly.
