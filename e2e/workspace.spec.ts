@@ -215,3 +215,30 @@ test('voice button captures a transcript and waits for explicit user send', asyn
   const state = await page.evaluate(() => window.SAGE.state().chat);
   expect(state, 'voice recognition must not silently send a task or chat message').toEqual([]);
 });
+
+test('Files category buttons filter the visible file list', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => window.SAGE.go('files', null, { replace: true }));
+  const recent = await page.locator('#screen .list-item').count();
+  await page.locator('#screen [data-act="files-tab"][data-arg="Documents"]').click();
+  await expect(page.locator('#screen [data-act="files-tab"][data-arg="Documents"]')).toHaveClass(/active/);
+  const documents = await page.locator('#screen .list-item').count();
+  await page.locator('#screen [data-act="files-tab"][data-arg="Media"]').click();
+  await expect(page.locator('#screen [data-act="files-tab"][data-arg="Media"]')).toHaveClass(/active/);
+  const media = await page.locator('#screen .list-item').count();
+  expect(recent).toBeGreaterThan(0);
+  expect(documents).toBeGreaterThan(0);
+  expect(media).toBeGreaterThan(0);
+  expect(documents).not.toBe(recent);
+});
+
+test('unconnected community membership and file upload are not falsely marked successful', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => window.SAGE.go('community', null, { replace: true }));
+  const join = page.locator('#screen button[disabled][title*="Group membership"]');
+  await expect(join.first()).toBeDisabled();
+  await page.locator('#screen [data-act="comm-tab"][data-arg="Training"]').click();
+  await expect(page.locator('#screen button[disabled][title*="Event registration"]')).toBeDisabled();
+  await page.evaluate(() => window.SAGE.go('files', null, { replace: true }));
+  await expect(page.locator('#screen button[disabled][title*="Real file uploads"]')).toBeDisabled();
+});
