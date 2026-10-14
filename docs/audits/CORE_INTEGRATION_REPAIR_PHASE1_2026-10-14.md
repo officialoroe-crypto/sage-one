@@ -23,7 +23,7 @@ Status: Active implementation plan; no production release authorized.
 
 ### Batch 1 — Stop releases and establish truth
 - Keep public Pages deployment disabled while repair work is underway.
-- Keep Flutter web builds as private, short-retention QA artifacts only.
+- Keep Flutter web builds as short-retention QA artifacts only; because the repository is public, artifacts may be downloaded by repository readers and must contain no secrets or private user data.
 - Correct website validation to inspect files actually referenced by website/index.html.
 - Maintain a feature inventory with evidence, owner, status, dependencies, and acceptance tests.
 
