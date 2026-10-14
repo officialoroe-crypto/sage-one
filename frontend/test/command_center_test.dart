@@ -106,6 +106,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     final voiceEntry = find.text('VOICE COMMAND  ·  TAP TO SPEAK');
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -420));
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(voiceEntry);
     await tester.tap(voiceEntry);
     await tester.pump();
