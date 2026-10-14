@@ -169,30 +169,3 @@ These are observed from repository source, not from a live penetration test. Fin
 
 > Work on SAGE ONE in the canonical GitHub repository only. First recover current project state, audit `AI_COLLABORATION.md`, `PROJECT_STATE.md`, `TODO.md`, `coordination/ACTIVE_WORK.yaml`, open PRs, current main SHA, workflows, environment/config code, and existing tests. Finish the approved core product priorities before this deferred website/legal polish queue. Never expose, print, commit, or ask the owner to paste secrets; inspect only masked variable names/presence and verify host settings with the owner. Audit authorization and account/data isolation on every API route, admin/owner/developer paths, production debug/docs, CORS, headers/CSP, request size/input validation, rate limits, abuse/cost limits, session/token expiry, CSRF where relevant, SSRF/path traversal/IDOR, uploads, logs, database migrations/backups/restore, dependency vulnerabilities/licenses, and full Git-history secrets. Rotate any confirmed leaked secret immediately using a safe replacement plan. Add and test accessible Privacy, Terms, Cookie, Refund/Cancellation and form-consent pages only after live data flows, tracking, operator details and applicable Nepal requirements are verified with qualified local counsel. Audit cookies, localStorage, analytics, embeds, third-party requests, data minimization/retention/deletion, image/font/media licenses and truthful claims. Then fix links/footer/buttons/messages/placeholders/navigation, vertical and intentional horizontal scrolling, mobile menu, favicon, titles/meta, copyright year, optimized approved images, clickable logo/phone/email, keyboard/forms/labels/focus/contrast/alt text, and responsive mobile/desktop layouts. Use Playwright and existing cloud CI, capture reproducible evidence, fix only on an isolated feature branch, bound repair attempts, update the durable checklist/memory, and request owner approval. Do not deploy, publish, enable public access, merge risky changes, or claim legal/security compliance without explicit approval and verified evidence. No guarantee of zero vulnerabilities or legal liability is possible; flag unresolved risks and require Nepal legal review before launch.
 
-
-
-## Website bulk-work status snapshot — 2026-10-15
-
-This snapshot tracks the current implementation branch, not a release. Status words are deliberately separate: **Specified** means documented; **Implemented** means code exists; **Connected** means the control is wired to its action; **Tested** means an automated or manual test ran; **Verified** means the intended browser/device confirmed the result.
-
-| Work item | Current status | Evidence / remaining gate |
-|---|---|---|
-| Mobile navigation menu | Implemented; Connected | `website/index.html`, `website/styles.css`, `website/app.js`; automated CI pending |
-| Responsive layouts and horizontal overflow guards | Implemented | Responsive overrides added; real narrow-screen and landscape checks still needed |
-| Clickable brand logos | Implemented | Landing wordmark links to top; phone-preview wordmark links home |
-| Favicon and page metadata | Implemented | Favicon already exists; description added to chat and phone-preview pages |
-| Copyright year | Implemented; Connected | Year populated by JavaScript from the current date |
-| Footer navigation | Implemented; Connected | Back-to-top, chat preview, and phone preview links |
-| Inert phone-preview notifications | Deferred/blocked safely | Disabled and labelled because notifications are not connected in the preview |
-| Demo sign-in and scripted chat | Implemented with truthful disclosure | Preview labels/disclaimers; real authenticated Chat remains a separate core-feature blocker |
-| Automated local link/asset, metadata, alt-text, form-label and button-name checks | Specified; test added | `tests/test_website_quality_contract.py`; CI result still required |
-| Approved hero photograph and rights confirmation | Deferred/blocked | Current assets are existing project artwork; owner approval and rights confirmation are not evidenced |
-| Verified public phone/email/operator details | Deferred/blocked | No verified contact details supplied; do not invent them |
-| Privacy, Terms, Cookies, Refund and form consent for public use | Deferred/blocked | Internal drafts only; confirm real data flows/cookies and obtain qualified Nepal legal review before publication |
-| Full link/button sweep, color-contrast audit, real-device mobile/desktop/landscape QA | Deferred/blocked | Automated checks are not a substitute for browser and physical-device verification |
-| Release/deployment | Deferred/blocked by owner instruction | No production release authorized |
-
-
-### Limited website data-flow scan
-
-On the current website branch, a source-text scan of `website/app.js`, `website/chat/chat.js`, and `website/app-preview/app.js` found no direct `document.cookie`, Web Storage, analytics SDK, iframe, or browser network-call references. The three HTML pages load Google Fonts from Google-hosted domains. This is a limited source scan only: it does **not** establish what the hosting layer, future integrations, backend, browser extensions, or third-party requests do on the deployed site. Do not decide cookie-consent obligations from this scan alone; confirm the actual deployed network/storage behavior and obtain qualified local advice before publishing final policy text.
