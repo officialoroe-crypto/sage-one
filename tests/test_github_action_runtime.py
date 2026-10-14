@@ -21,8 +21,21 @@ def test_workflow_actions_use_current_compatible_majors():
     assert "actions/checkout@v6" in pages
     assert "actions/upload-artifact@v7" in pages
     assert "retention-days: 7" in pages
-    assert "actions/upload-pages-artifact@" not in pages
-    assert "actions/deploy-pages@" not in pages
+
+    # The public Pages workflow is intentionally manual-dispatch only.
+    # Its public artifact must contain the marketing site, never the Flutter app.
+    assert "actions/upload-pages-artifact@v5" in pages
+    assert "actions/deploy-pages@v5" in pages
+    package = pages.split("  package-marketing-site:", maxsplit=1)[1].split(
+        "  deploy-marketing-site:", maxsplit=1
+    )[0]
+    deploy = pages.split("  deploy-marketing-site:", maxsplit=1)[1]
+
+    assert "if: github.event_name == 'workflow_dispatch'" in package
+    assert "if: github.event_name == 'workflow_dispatch'" in deploy
+    assert "cp website/index.html website/styles.css website/app.js website/favicon.svg public_site/" in package
+    assert "frontend/build/web" not in package
+    assert "needs:\n      - validate\n      - package-marketing-site" in deploy
     assert "deploy-website:" not in pages
 
 
