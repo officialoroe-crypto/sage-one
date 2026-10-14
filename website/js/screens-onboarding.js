@@ -66,45 +66,40 @@ window.SAGE = window.SAGE || {};
   R.auth = {
     nonav: true,
     view: () => `
-      ${S.topNav('Create Your Account', 'Join the SAGE journey')}
-      <div class="field"><label>Full Name</label><input class="input" id="au-name" placeholder="e.g. Ramesh Shrestha" value="${S.esc(S.state().user.name)}"></div>
-      <div class="field"><label>Phone Number</label><input class="input" id="au-phone" placeholder="+977 98XXXXXXXX" inputmode="tel"></div>
-      <div class="field"><label>Email (optional)</label><input class="input" id="au-email" placeholder="you@example.com" inputmode="email"></div>
-      <button class="btn primary mt12" data-act="auth-continue">${S.t('onb.continue')}</button>
-      <div class="or">or</div>
-      <button class="google-btn" data-act="auth-google">
-        <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.6z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3C3.7 21.4 7.6 24 12 24z"/><path fill="#FBBC05" d="M5.6 14.7a7.2 7.2 0 0 1 0-4.6v-3H1.8a12 12 0 0 0 0 10.7l3.8-3z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.6 0 3.7 2.6 1.8 6.1l3.8 3C6.5 6.7 9 4.8 12 4.8z"/></svg>
-        Continue with Google
-      </button>
-      <div class="linkline">Already have an account? <b data-act="auth-google">Sign In</b></div>
-      <div class="notice">${S.icon('i-lock', 'lic')} Your data is 100% secure · Encrypted end-to-end</div>`,
+      ${S.topNav('Sign in to SAGE Core', 'Private owner workspace')}
+      <div class="card glow" style="text-align:center;padding:24px">
+        <div style="font-size:28px;font-weight:800;letter-spacing:2px">SAGE ONE</div>
+        <div class="tiny muted mt8">Sign in with the configured owner Google account to connect this website to the real SAGE backend.</div>
+        <div class="or">SECURE GOOGLE SIGN-IN</div>
+        <button class="google-btn" data-act="auth-google">
+          <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.6z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3C3.7 21.4 7.6 24 12 24z"/><path fill="#FBBC05" d="M5.6 14.7a7.2 7.2 0 0 1 0-4.6v-3H1.8a12 12 0 0 0 0 10.7l3.8-3z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.2 15.1 0 12 0 7.6 0 3.7 2.6 1.8 6.1l3.8 3C6.5 6.7 9 4.8 12 4.8z"/></svg>
+          Continue with Google
+        </button>
+        <div class="notice mt12">Google tokens are held in memory for this tab. SAGE Core must verify the identity and grant owner access; a normal Google sign-in does not automatically grant owner permissions.</div>
+      </div>`,
     mount() {}
   };
 
   /* ===== KYC Verification ===== */
   R.kyc = {
     nonav: true,
-    view: () => {
-      const k = S.state().kyc;
-      return `
-      ${S.topNav('Verify Your Identity', 'For a safer and better experience, please complete your KYC')}
-      <div class="kyc-opt ${k.face ? 'done' : ''}" data-act="kyc" data-arg="face">
-        <div class="iconbox">${S.icon('i-scan')}</div>
-        <div class="grow"><b>Face Verification</b><div class="tiny muted">Quick selfie scan · 30 seconds</div></div>
-        <span class="status">${k.face ? '✓ Verified' : 'Pending'}</span>
+    view: () => `
+      ${S.topNav('Identity Verification', 'Verification must be confirmed by a real provider')}
+      <div class="card glow" style="padding:20px">
+        <div class="row" style="gap:12px;align-items:flex-start">
+          <div class="iconbox">${S.icon('i-shield')}</div>
+          <div class="grow">
+            <b>Formal KYC is not connected</b>
+            <div class="tiny muted mt8">SAGE Core currently has no government-ID, face-liveness, or KYC provider connected to this website. No identity scan is running and no KYC status can be granted here.</div>
+          </div>
+        </div>
       </div>
-      <div class="kyc-opt ${k.nid ? 'done' : ''}" data-act="kyc" data-arg="nid">
-        <div class="iconbox">${S.icon('i-id')}</div>
-        <div class="grow"><b>NID Verification</b><div class="tiny muted">National ID · Nepal</div></div>
-        <span class="status">${k.nid ? '✓ Verified' : 'Pending'}</span>
+      <div class="card mt12">
+        <b class="small">What this means</b>
+        <div class="tiny muted mt8">Do not upload government ID or biometric data here. A provider-backed verification flow must be implemented and tested before SAGE can mark KYC complete or unlock regulated financial actions.</div>
       </div>
-      <div class="card mt16" style="display:flex;gap:10px;align-items:flex-start">
-        <div class="iconbox" style="width:34px;height:34px">${S.icon('i-shield')}</div>
-        <div class="tiny muted" style="line-height:1.8">Your data is <b style="color:#4fe39b">100% secure</b>. KYC unlocks Spark purchases, withdrawals to NPR and higher-value marketplace trades.</div>
-      </div>
-      <button class="btn primary mt20" data-act="kyc-start" ${k.face && k.nid ? '' : ''}>${k.face && k.nid ? 'Continue' : 'Start Verification'}</button>
-      <div class="notice">Verification is simulated in this preview build.</div>`;
-    }
+      <button class="btn soft mt16" data-act="back">${S.icon('i-arrow-l')} Back to SAGE</button>
+      <div class="notice mt12">Status: NOT CONNECTED · No verification claim has been made.</div>`
   };
 
   /* ===== Create Profile ===== */
