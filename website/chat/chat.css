@@ -175,3 +175,17 @@ p { margin: 0; }
   .suggest { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .rail { transition: none; } }
+
+
+/* Small-screen resilience: let text and workspace panes shrink rather than widen the page. */
+html, body { max-width:100%; overflow-x:hidden; }
+.shell, .rail, .rail-scroll, .main, .feed, .feed-inner, .composer-wrap, .pane, .pane-body { min-width:0; }
+.feed, .pane-body, .rail-scroll { overscroll-behavior:contain; }
+textarea, input, button { max-width:100%; }
+img, svg, canvas { max-width:100%; }
+@media (max-width:380px) {
+  .topline, .composer-wrap, .pane-head { padding-inline:.65rem; }
+  .composer { gap:.35rem; }
+  .composer textarea { min-width:0; }
+  .shell.with-pane { grid-template-columns:minmax(0,1fr); }
+}
