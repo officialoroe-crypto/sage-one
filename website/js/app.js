@@ -353,6 +353,7 @@ window.SAGE = window.SAGE || {};
 
       /* --- community --- */
       case 'comm-tab': S.setCommTab(arg); break;
+      case 'files-tab': S.setFilesTab(arg); break;
 
       /* --- AI studio --- */
       case 'ai-tool': {

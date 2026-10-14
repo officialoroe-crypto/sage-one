@@ -6,13 +6,14 @@ window.SAGE = window.SAGE || {};
 
   /* ===== MARKETPLACE ===== */
   let mktCat = 'all', mktQuery = '';
-  let jobFilter = 'All', learnTab = 'For You', commTab = 'Groups';
+  let jobFilter = 'All', learnTab = 'For You', commTab = 'Groups', filesTab = 'Recent';
 
   /* filter setters called by the action dispatcher */
   S.setMktCat = function (v) { mktCat = v; S.render(); };
   S.setJobFilter = function (v) { jobFilter = v; S.render(); };
   S.setLearnTab = function (v) { learnTab = v; S.render(); };
   S.setCommTab = function (v) { commTab = v; S.render(); };
+  S.setFilesTab = function (v) { filesTab = v; S.render(); };
   R.marketplace = {
     view: () => {
       const list = S.DATA.LISTINGS.filter(l =>
@@ -216,15 +217,15 @@ window.SAGE = window.SAGE || {};
       </div>
       <div class="chiprow">${tabs.map(t => `<button class="chip ${commTab === t ? 'active' : ''}" data-act="comm-tab" data-arg="${t}">${t}</button>`).join('')}</div>
       ${commTab === 'Groups' ? S.DATA.GROUPS.map(g => `
-        <div class="list-item" data-act="toast" data-arg="Joined ${S.esc(g.name)} — say namaste! 🙏">
+        <div class="list-item">
           <div class="group-avatar" style="background:${g.c}">${g.emoji}</div>
           <div class="grow"><b class="small">${S.esc(g.name)}</b><div class="tiny muted">${S.esc(g.meta)}</div></div>
-          <button class="btn xs ghost">Join</button>
+          <button class="btn xs ghost" disabled title="Group membership is not connected to the backend yet">Join · unavailable</button>
         </div>`).join('')
         : commTab === 'Training' ? `
         <div class="card glow"><div class="row" style="gap:10px"><div class="iconbox">${S.icon('i-book')}</div>
           <div class="grow"><b class="small">Live Training: Freelancing 101</b><div class="tiny muted">Tomorrow 4 PM · 420 going</div></div></div>
-          <button class="btn xs primary mt12" style="width:100%" data-act="toast" data-arg="Seat reserved for Freelancing 101 ✅">Reserve Seat</button></div>
+          <button class="btn xs primary mt12" style="width:100%" disabled title="Event registration is not connected to the backend yet">Registration unavailable</button></div>
         <div class="card mt12"><div class="row" style="gap:10px"><div class="iconbox">${S.icon('i-sparkles')}</div>
           <div class="grow"><b class="small">AI Prompt Workshop</b><div class="tiny muted">Friday 5 PM · 210 going</div></div></div></div>`
         : `
@@ -244,19 +245,19 @@ window.SAGE = window.SAGE || {};
       return `
       <div class="row between mb12" style="min-height:44px">
         <div><h2 class="screen-title">Files</h2><div class="tiny muted">Create images, videos, code &amp; more</div></div>
-        <button class="btn xs primary" data-act="toast" data-arg="Upload dialog (demo)">${S.icon('i-plus')} Upload</button>
+        <button class="btn xs primary" disabled title="Real file uploads are not connected yet">${S.icon('i-plus')} Upload unavailable</button>
       </div>
-      <div class="chiprow"><button class="chip active">Recent</button><button class="chip">Documents</button><button class="chip">Media</button></div>
-      ${S.DATA.FILES.map(f => {
+      <div class="chiprow">${['Recent', 'Documents', 'Media'].map(tab => `<button class="chip ${filesTab === tab ? 'active' : ''}" data-act="files-tab" data-arg="${tab}">${tab}</button>`).join('')}</div>
+      ${S.DATA.FILES.filter(f => filesTab === 'Recent' || (filesTab === 'Documents' ? ['pdf', 'doc'].includes(f.kind) : ['img', 'vid'].includes(f.kind))).map(f => {
         const colors = { pdf: '#e0335c', doc: '#1b5cff', img: '#00a86b', vid: '#8b3fe4' };
         return `
-        <div class="list-item" data-act="toast" data-arg="Opening ${S.esc(f.name)}…">
+        <div class="list-item" data-act="toast" data-arg="Sample file metadata only; real file preview and downloads are not connected yet.">
           <div class="file-ic" style="background:${colors[f.kind]}">${f.kind.toUpperCase()}</div>
           <div class="grow"><b class="small">${S.esc(f.name)}</b><div class="tiny muted">${S.esc(f.size)} · ${S.esc(f.when)}</div></div>
           ${S.icon('i-download')}
         </div>`;
       }).join('')}
-      ${st.ownedFiles.length ? `<div class="sect-label">AI Generated</div>` + st.ownedFiles.map(f => `
+      ${st.ownedFiles.length && filesTab !== 'Documents' ? `<div class="sect-label">AI Generated</div>` + st.ownedFiles.map(f => `
         <div class="list-item" data-act="toast" data-arg="${S.esc(f.name)}">
           <div class="iconbox accent">${S.icon('i-sparkles')}</div>
           <div class="grow"><b class="small">${S.esc(f.name)}</b><div class="tiny muted">${S.esc(f.size)} · ${S.esc(f.when)}</div></div>

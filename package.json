@@ -1,0 +1,13 @@
+{
+  "name": "sage-one-browser-qa",
+  "private": true,
+  "version": "0.1.0",
+  "description": "QA-only Playwright browser tests for SAGE ONE; no product deployment.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0"
+  }
+}
