@@ -68,13 +68,26 @@ test.describe('SAGE ONE public website browser interactions', () => {
     await expect(page.locator('#verdict')).toContainText('may show you a 5 Spark spend');
   });
 
-  test('Evolution controls change the selected rank and intensity', async ({ page }) => {
+  test('all 13 Evolution ranks, all intensities and the Evolve action work', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await page.locator('#rankChips button[data-rank="1"]').click();
+    const ranks = page.locator('#rankChips button[data-rank]');
+    await expect(ranks).toHaveCount(13);
+    for (let i = 0; i < 13; i++) {
+      const rank = ranks.nth(i);
+      const label = (await rank.innerText()).replace(/^\\d+\\s*/, '');
+      await rank.click();
+      await expect(page.locator('#rankTitle')).toContainText(label);
+      await expect(rank).toHaveAttribute('aria-pressed', 'true');
+    }
+    for (const level of ['0', '1', '2']) {
+      const button = page.locator(`#levelSeg button[data-level="${level}"]`);
+      await button.click();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+    }
+    await ranks.first().click();
+    await page.locator('#evolveBtn').click();
     await expect(page.locator('#rankTitle')).toContainText('Silver');
-    await expect(page.locator('#rankChips button[data-rank="1"]')).toHaveAttribute('aria-pressed', 'true');
-    await page.locator('#levelSeg button[data-level="2"]').click();
-    await expect(page.locator('#levelSeg button[data-level="2"]')).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('chat preview clearly discloses simulated sign-in and replies', async ({ page }) => {
@@ -88,6 +101,17 @@ test.describe('SAGE ONE public website browser interactions', () => {
     await page.locator('#sendBtn').click();
     await expect(page.locator('#feed')).toContainText('Hello SAGE, this is a preview test.');
     await expect(page.locator('.composer-note')).toContainText('scripted examples');
+    await page.locator('#newChat').click();
+    await expect(page.locator('#chatTitle')).toHaveText('New chat');
+    const features = page.locator('#nav button[data-feature]');
+    const featureCount = await features.count();
+    expect(featureCount).toBeGreaterThan(0);
+    for (let i = 0; i < featureCount; i++) {
+      await features.nth(i).click();
+      await expect(page.locator('#pane')).toBeVisible();
+      await expect(page.locator('#paneTitle')).not.toBeEmpty();
+      await page.locator('#paneClose').click();
+    }
   });
 
   test('phone preview opens its chat sheet and labels sample values', async ({ page }) => {
@@ -100,6 +124,16 @@ test.describe('SAGE ONE public website browser interactions', () => {
     await page.locator('#msg').fill('What is my Evolution rank?');
     await page.locator('#send').click();
     await expect(page.locator('#transcript')).toContainText('Evolution');
+    await page.locator('#sheetClose').click();
+    await expect(page.locator('#sheet')).toBeHidden();
+    await page.locator('#sageBtn').click();
+    const prompts = page.locator('#prompts button[data-cmd]');
+    const promptCount = await prompts.count();
+    expect(promptCount).toBe(4);
+    for (let i = 0; i < promptCount; i++) {
+      await prompts.nth(i).click();
+      await expect(page.locator('#stateLabel')).toHaveText(/Done|Waiting for your approval/);
+    }
   });
 
   test('all preview pages fit narrow, mobile, tablet and desktop widths', async ({ page }) => {
