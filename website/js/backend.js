@@ -57,7 +57,7 @@ window.SAGE = window.SAGE || {};
     const recognition = new SpeechRecognition();
     activeRecognition = recognition;
     voiceTarget = target;
-    recognition.lang = 'ne-NP';
+    recognition.lang = S.state().lang === 'ne' ? 'ne-NP' : 'en-US';
     recognition.continuous = false;
     recognition.interimResults = true;
     let finalTranscript = '';
