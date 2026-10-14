@@ -1,14 +1,7 @@
-name: SAGE ONE Public Website and Web App
+name: SAGE ONE Website and Flutter QA (Deployment Paused)
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "website/**"
-      - "frontend/**"
-      - ".github/workflows/sage-one-god-mode-pages.yml"
   push:
     branches:
       - main
@@ -16,83 +9,104 @@ on:
       - "website/**"
       - "frontend/**"
       - ".github/workflows/sage-one-god-mode-pages.yml"
-
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "website/**"
+      - "frontend/**"
+      - ".github/workflows/sage-one-god-mode-pages.yml"
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  # Keep pull-request validation isolated so it cannot cancel a production Pages deployment.
+  # PR runs are isolated from main/manual publication; production runs are never
+  # cancelled by a newer run while a Pages deployment is in progress.
   group: sage-one-pages-${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  validate:
+    name: Validate website and build Flutter web QA artifact
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v6
-      - name: Check primary website JavaScript syntax
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Validate current Freebuff website assets
+        working-directory: .
         run: |
-          for file in ../website/js/*.js; do
+          test -s website/index.html
+          test -s website/css/styles.css
+          test -s website/js/app.js
+          test -s website/js/backend.js
+          test -s website/img/sage-mark.png
+          python - <<'PY'
+          from pathlib import Path
+
+          html = Path("website/index.html").read_text(encoding="utf-8")
+          required = (
+              'href="css/styles.css',
+              'src="js/app.js',
+              'img/sage-mark.png',
+          )
+          missing = [fragment for fragment in required if fragment not in html]
+          if missing:
+              raise SystemExit(f"Current website asset references are missing: {missing}")
+          print("Current Freebuff website entry point and primary assets are present.")
+          PY
+
+      - name: Check website JavaScript syntax
+        working-directory: .
+        run: |
+          for file in website/js/*.js; do
             node --check "$file"
           done
-      - uses: subosito/flutter-action@v2
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.47.3"
           channel: stable
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
-      - name: Require a real HTTPS backend URL for public builds
-        if: github.event_name != 'pull_request'
+          cache: true
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Analyze Flutter app
+        run: flutter analyze
+
+      - name: Test Flutter app
+        run: flutter test
+
+      - name: Build Flutter web app for QA only
         env:
           SAGE_API_URL: ${{ vars.SAGE_API_URL }}
         run: |
-          if [ -z "$SAGE_API_URL" ]; then
-            echo "::error::Set repository Actions variable SAGE_API_URL to the deployed HTTPS FastAPI base URL before deploying the public app."
-            exit 1
-          fi
-          case "$SAGE_API_URL" in
-            https://*) ;;
-            *)
-              echo "::error::SAGE_API_URL must begin with https://."
-              exit 1
-              ;;
-          esac
-      - name: Build the web app under /app/
-        env:
-          SAGE_API_URL: ${{ vars.SAGE_API_URL }}
-        run: |
-          if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then
+          if [ -n "$SAGE_API_URL" ]; then
+            case "$SAGE_API_URL" in
+              https://*) ;;
+              *)
+                echo "::error::SAGE_API_URL must use HTTPS when configured."
+                exit 1
+                ;;
+            esac
             flutter build web --release --base-href /sage-one/app/ --dart-define="SAGE_API_URL=$SAGE_API_URL"
           else
-            # PR previews validate the frontend without needing production secrets.
+            # This build is an inspection artifact, never part of public Pages output.
             flutter build web --release --base-href /sage-one/app/
           fi
-      - name: Combine public landing page and web app
-        run: |
-          mkdir -p public_site/app
-          cp -R ../website/. public_site/
-          cp -R build/web/. public_site/app/
-          test -s public_site/index.html
-          test -s public_site/app/index.html
-      - name: Upload GitHub Pages artifact
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: frontend/public_site
 
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-24.04
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
+      - name: Upload Flutter web QA artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: sage-one-flutter-web-qa-${{ github.sha }}
+          path: frontend/build/web
+          if-no-files-found: error
+          retention-days: 7
