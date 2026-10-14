@@ -28,7 +28,7 @@ window.SAGE = window.SAGE || {};
       const askBar = `<div class="hh-ask">
         <span>${S.icon('i-search')}</span>
         <input id="homeAsk" placeholder="Ask SAGE anything…" autocomplete="off">
-        <button class="hh-mic" data-act="voice-toggle" data-arg="#homeAsk" aria-label="Start voice command" title="Tap to speak; review before sending">${S.icon('i-mic')}</button>
+        <button class="hh-mic" data-act="voice-toggle" data-arg="#homeAsk" aria-label="Start voice command" title="Tap to speak; review before sending"><span>VOICE</span>${S.icon('i-mic')}</button>
         <button class="hh-send" data-act="home-ask">${S.icon('i-send')}</button>
       </div>`;
       const actions = [
