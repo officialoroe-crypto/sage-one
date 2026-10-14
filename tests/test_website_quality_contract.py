@@ -179,7 +179,7 @@ def test_core_text_palette_meets_wcag_aa_contrast_on_dark_surfaces() -> None:
     import re
 
     css = (SITE / "styles.css").read_text(encoding="utf-8")
-    variables = dict(re.findall(r"--([a-z0-9-]+):\\s*(#[0-9a-fA-F]{6})\\s*;", css))
+    variables = dict(re.findall(r"--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\s*;", css))
     backgrounds = ("bg", "surface", "surface-2")
     text_tokens = ("fg", "muted", "cyan", "blue", "violet", "gold", "ok", "fail")
     for token in backgrounds + text_tokens:
