@@ -169,3 +169,32 @@ These are observed from repository source, not from a live penetration test. Fin
 
 > Work on SAGE ONE in the canonical GitHub repository only. First recover current project state, audit `AI_COLLABORATION.md`, `PROJECT_STATE.md`, `TODO.md`, `coordination/ACTIVE_WORK.yaml`, open PRs, current main SHA, workflows, environment/config code, and existing tests. Finish the approved core product priorities before this deferred website/legal polish queue. Never expose, print, commit, or ask the owner to paste secrets; inspect only masked variable names/presence and verify host settings with the owner. Audit authorization and account/data isolation on every API route, admin/owner/developer paths, production debug/docs, CORS, headers/CSP, request size/input validation, rate limits, abuse/cost limits, session/token expiry, CSRF where relevant, SSRF/path traversal/IDOR, uploads, logs, database migrations/backups/restore, dependency vulnerabilities/licenses, and full Git-history secrets. Rotate any confirmed leaked secret immediately using a safe replacement plan. Add and test accessible Privacy, Terms, Cookie, Refund/Cancellation and form-consent pages only after live data flows, tracking, operator details and applicable Nepal requirements are verified with qualified local counsel. Audit cookies, localStorage, analytics, embeds, third-party requests, data minimization/retention/deletion, image/font/media licenses and truthful claims. Then fix links/footer/buttons/messages/placeholders/navigation, vertical and intentional horizontal scrolling, mobile menu, favicon, titles/meta, copyright year, optimized approved images, clickable logo/phone/email, keyboard/forms/labels/focus/contrast/alt text, and responsive mobile/desktop layouts. Use Playwright and existing cloud CI, capture reproducible evidence, fix only on an isolated feature branch, bound repair attempts, update the durable checklist/memory, and request owner approval. Do not deploy, publish, enable public access, merge risky changes, or claim legal/security compliance without explicit approval and verified evidence. No guarantee of zero vulnerabilities or legal liability is possible; flag unresolved risks and require Nepal legal review before launch.
 
+
+
+## Website bulk-work status snapshot — 2026-10-15
+
+Status meanings: **Specified** = documented; **Implemented** = code exists; **Connected** = the control is wired to its action; **Tested** = an automated/manual test ran; **Verified** = confirmed in the intended real environment; **Deferred/blocked** = waiting for evidence, owner input, or a qualified reviewer.
+
+| Checklist item | Status now | Evidence / remaining gate |
+|---|---|---|
+| Responsive mobile menu | Implemented; Connected; Tested | Playwright verified open, navigation, close, and expanded-state behavior |
+| Vertical scrolling and intentional horizontal scrolling | Implemented; Tested | Chromium checks passed at 320, 375, 768 and 1280 px across landing, Chat preview and phone preview; pricing-table horizontal scroll is intentional |
+| Clickable logos | Implemented; Connected; Tested | Header/hero/phone-preview marks link to home/top; browser assertion passed |
+| Footer links and local page/asset links | Implemented; Connected; Tested | Python link/asset contract passed; browser checks passed |
+| Titles, meta descriptions, favicon and image alt attributes | Implemented; Tested | Automated HTML contract and website asset validation passed |
+| Copyright year | Implemented; Connected; Tested | Year is generated from the current date; contract test passed |
+| Primary calculator and Evolution controls | Implemented; Connected; Tested | Spark/NPR converter, spend-limit calculator, all 13 rank selectors, all three intensities and Evolve action passed browser checks |
+| Chat-preview controls and phone-preview prompts | Implemented; Connected; Tested | Simulated sign-in, new chat, each workspace feature panel, phone chat sheet and four scripted prompts passed browser checks |
+| Inert phone-preview notifications | Deferred/blocked safely | Disabled and labelled until notifications are actually connected |
+| Core text color tokens | Tested (limited contrast scope) | Automated WCAG AA ratio test passed for foreground/muted/accent text tokens against dark surface tokens; full page/state/focus/gradient contrast audit remains pending |
+| Image compression | Implemented | Existing WebP assets measured at about 43.7 KB and 23.2 KB; approved replacement photo and usage rights are not yet verified |
+| Stale test-count and unsupported feature claims | Implemented; Tested | Removed hard-coded “243 backend tests passing” and qualified features whose end-to-end behavior is not verified |
+| Automated test suite | Tested | Python CI: 251 passed; Playwright: 10 passed; Flutter analyze/tests passed; website local-asset validation and Flutter web QA build passed on implementation commit `d935967b5f069eedab53b64819f180aad45c1973` |
+| Public operator/business details and clickable phone/email | Deferred/blocked | No verified public contact details were supplied; none were invented |
+| Approved custom hero photograph and asset rights | Deferred/blocked | Requires owner approval and usage-rights confirmation |
+| Privacy, Terms, Cookies, Refund/Cancellation and form consent for public use | Deferred/blocked | Internal drafts only; verify deployed data flows and third parties, then obtain qualified Nepal legal review |
+| Cookie-consent decision | Specified; limited source scan tested; legal decision deferred | No direct cookie/Web Storage/analytics/iframe/network calls found in the three page scripts; Google Fonts loads from Google-hosted domains. This limited scan does not settle legal obligations |
+| Full accessibility and real-device verification | Deferred/blocked | Core palette contrast and selected keyboard/menu behavior are tested; full screen-reader, keyboard-only, zoom/reflow, physical mobile/desktop/landscape and complete page/state audits remain |
+| Public deployment/release | Deferred/blocked by owner instruction | No production deployment or release authorized |
+
+**Test scope note:** CI/browser success verifies the tested code paths and viewport sizes only. It does not verify image licensing, legal compliance, every possible browser state, physical devices, real Google authentication, live AI Chat, real payments, or production deployment.
