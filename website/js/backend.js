@@ -204,6 +204,8 @@ window.SAGE = window.SAGE || {};
   S.backend = {
     apiBase: API_BASE, renderGoogleButton, isOwnerAuthenticated: () => !!ownerToken,
     chat, queueCommand, startVoice,
+    economyMe: () => request('/economy/me'),
+    paymentStatus: () => request('/economy/payment/status'),
     checkConfig: async () => { const cfg = await loadConfig(); return { googleConfigured: !!cfg.google_client_id, ownerModeAvailable: !!cfg.owner_mode_available }; },
     signOut: () => { ownerToken = null; sessionId = null; status('CORE READY · SIGN IN', 'ready'); },
     status: () => ({ configured: !!config, ownerAuthenticated: !!ownerToken })
