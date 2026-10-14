@@ -199,7 +199,7 @@ window.SAGE = window.SAGE || {};
 
       /* --- earning animation (board 3) --- */
       case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;
-      case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Project Payment' }); break;
+      case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Reward Animation Preview', preview: true, noCredit: true }); break;
 
       /* --- premium (board 2) --- */
       case 'premium-upgrade': {
