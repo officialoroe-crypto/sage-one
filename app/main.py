@@ -1272,9 +1272,14 @@ def get_tasks(
 
 
 @app.get("/tasks/{task_id}")
-def get_task(task_id: str):
-    task = tasks.get(task_id)
+def get_task(
+    task_id: str,
+    claims: dict[str, Any] = Depends(_require_owner),
+):
+    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
+    task = tasks.get(task_id, owner_key=owner_key)
     if task is None:
+        # Do not reveal whether another owner has a task with this identifier.
         raise HTTPException(status_code=404, detail="Task not found")
     return {
         "success": True,
