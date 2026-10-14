@@ -38,6 +38,70 @@ window.SAGE = window.SAGE || {};
   }
   let activeRecognition = null;
   let voiceTarget = null;
+  let voiceResponsePending = false;
+  let activeUtterance = null;
+
+  function setVoiceStopVisible(visible) {
+    let button = document.getElementById('sageVoiceStop');
+    if (!visible) {
+      if (button) button.remove();
+      return;
+    }
+    if (button) return;
+    button = document.createElement('button');
+    button.id = 'sageVoiceStop';
+    button.className = 'sage-voice-stop';
+    button.type = 'button';
+    button.textContent = 'Stop SAGE speaking';
+    button.setAttribute('aria-label', 'Stop SAGE speaking');
+    button.addEventListener('click', stopSpeaking);
+    document.body.appendChild(button);
+  }
+
+  function stopSpeaking() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    activeUtterance = null;
+    setVoiceStopVisible(false);
+    status('VOICE READY · SPEECH STOPPED', 'ready');
+  }
+
+  function speak(text) {
+    const clean = String(text || '').trim().slice(0, 1200);
+    if (!clean) return false;
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      status('TEXT RESPONSE READY · SPEECH OUTPUT NOT SUPPORTED', 'error');
+      toast('This browser cannot speak responses. The written SAGE answer is still available.');
+      return false;
+    }
+    window.speechSynthesis.cancel();
+    const language = S.state().lang === 'ne' ? 'ne-NP' : 'en-US';
+    const utterance = new window.SpeechSynthesisUtterance(clean);
+    utterance.lang = language;
+    const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+    const prefix = language.toLowerCase().split('-')[0];
+    const selectedVoice = voices.find(v => String(v.lang || '').toLowerCase() === language.toLowerCase()) ||
+      voices.find(v => String(v.lang || '').toLowerCase().startsWith(prefix + '-'));
+    if (selectedVoice) utterance.voice = selectedVoice;
+    utterance.onstart = () => {
+      setVoiceStopVisible(true);
+      status('SAGE SPEAKING · TAP STOP TO INTERRUPT', 'speaking');
+    };
+    utterance.onend = () => {
+      activeUtterance = null;
+      setVoiceStopVisible(false);
+      status('VOICE RESPONSE COMPLETE', 'ready');
+    };
+    utterance.onerror = event => {
+      activeUtterance = null;
+      setVoiceStopVisible(false);
+      status('VOICE OUTPUT FAILED', 'error');
+      toast('SAGE could not speak this response: ' + String(event.error || 'speech error'));
+    };
+    activeUtterance = utterance;
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }
+
   function startVoice(selector) {
     if (activeRecognition) {
       try { activeRecognition.stop(); } catch (_) {}
@@ -55,6 +119,7 @@ window.SAGE = window.SAGE || {};
     const target = document.querySelector(selector);
     if (!target) { toast('Voice command input is not available on this screen.'); return; }
     const recognition = new SpeechRecognition();
+    voiceResponsePending = false;
     activeRecognition = recognition;
     voiceTarget = target;
     recognition.lang = S.state().lang === 'ne' ? 'ne-NP' : 'en-US';
@@ -76,6 +141,7 @@ window.SAGE = window.SAGE || {};
       }
     };
     recognition.onerror = event => {
+      voiceResponsePending = false;
       status('VOICE ERROR · ' + String(event.error || 'unknown'), 'error');
       toast('Voice input failed: ' + String(event.error || 'unknown') + '. Check microphone permission and try again.');
     };
@@ -83,6 +149,7 @@ window.SAGE = window.SAGE || {};
       const transcript = (finalTranscript || (voiceTarget && voiceTarget.value) || '').trim();
       activeRecognition = null;
       voiceTarget = null;
+      voiceResponsePending = !!transcript;
       status(transcript ? 'VOICE CAPTURED · REVIEW BEFORE SENDING' : 'VOICE READY · NO SPEECH CAPTURED', transcript ? 'ready' : 'neutral');
       if (transcript) toast('SAGE heard: ' + transcript.slice(0, 100) + (transcript.length > 100 ? '…' : '') + ' · Review and tap Send.');
     };
@@ -176,10 +243,18 @@ window.SAGE = window.SAGE || {};
   async function sendChat(message) {
     if (!message || !message.trim()) return;
     if (!ownerToken) { toast('Sign in with the configured SAGE owner Google account to use live chat.'); S.go('auth'); return; }
+    const speakThisResponse = voiceResponsePending;
+    voiceResponsePending = false;
     S._chatBusy = true; S.chatPush({ role: 'user', text: message.trim() }); S.render(); if (S.chatOrb) S.chatOrb('thinking');
-    try { showAnswer(await chat(message.trim()), 'core'); }
+    try {
+      const answer = await chat(message.trim());
+      showAnswer(answer, 'core');
+      if (speakThisResponse) speak(answer);
+    }
     catch (err) {
-      showAnswer('SAGE Core could not complete this request: ' + String(err.message || err) + '\n\nNo offline answer was substituted.', 'core-error');
+      const messageText = 'SAGE Core could not complete this request: ' + String(err.message || err) + '\n\nNo offline answer was substituted.';
+      showAnswer(messageText, 'core-error');
+      if (speakThisResponse) speak(messageText);
       status('CORE REQUEST FAILED', 'error');
     }
   }
@@ -203,7 +278,7 @@ window.SAGE = window.SAGE || {};
   ]);
   S.backend = {
     apiBase: API_BASE, renderGoogleButton, isOwnerAuthenticated: () => !!ownerToken,
-    chat, queueCommand, startVoice,
+    chat, queueCommand, startVoice, speak, stopSpeaking,
     economyMe: () => request('/economy/me'),
     paymentStatus: () => request('/economy/payment/status'),
     checkConfig: async () => { const cfg = await loadConfig(); return { googleConfigured: !!cfg.google_client_id, ownerModeAvailable: !!cfg.owner_mode_available }; },
@@ -214,6 +289,7 @@ window.SAGE = window.SAGE || {};
   if (typeof originalAct === 'function') S.act = function (name, arg) {
     if (name === 'auth-google') { renderGoogleButton(); toast('Use the secure Google button to sign in.'); return; }
     if (name === 'voice-toggle') { startVoice(arg || '#chatInput'); return; }
+    if (name === 'voice-stop') { stopSpeaking(); return; }
     if (name === 'ai-test') {
       if (!S.backend) { toast('SAGE Core connection is not ready.'); return; }
       S.backend.checkConfig().then(cfg => toast(cfg.googleConfigured ? 'Core identity configuration loaded. AI provider health has not been tested.' : 'Core responded, but Google sign-in is not configured.'))
