@@ -41,8 +41,9 @@ def test_workspace_routes_and_real_controls_in_browser():
             assert page.get_by_role("button", name="Buy Spark · unavailable").is_disabled()
             assert page.get_by_role("button", name="Send Spark · unavailable").is_disabled()
 
-            # The visible voice entry must remain available; a headless browser is not
-            # expected to grant a real microphone, so we verify safe fallback, not audio.
+            # Check the visible voice entry on the home workspace. A headless browser
+            # cannot prove real microphone/audio behavior; physical-device QA remains needed.
+            page.evaluate("window.SAGE.go('home')")
             voice_controls = page.locator('[data-act="voice-toggle"]')
             assert voice_controls.count() >= 1
 
