@@ -159,3 +159,34 @@ def test_mobile_menu_is_connected_and_copyright_is_dynamic() -> None:
     assert "243 backend tests passing" not in html
     assert "Implemented in code (verification varies)" in html
     assert "being built as a personal AI mentor" in html
+
+
+def _luminance(hex_color: str) -> float:
+    channels = [int(hex_color[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+    linear = [
+        value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+        for value in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast_ratio(first: str, second: str) -> float:
+    high, low = sorted((_luminance(first), _luminance(second)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+def test_core_text_palette_meets_wcag_aa_contrast_on_dark_surfaces() -> None:
+    import re
+
+    css = (SITE / "styles.css").read_text(encoding="utf-8")
+    variables = dict(re.findall(r"--([a-z0-9-]+):\\s*(#[0-9a-fA-F]{6})\\s*;", css))
+    backgrounds = ("bg", "surface", "surface-2")
+    text_tokens = ("fg", "muted", "cyan", "blue", "violet", "gold", "ok", "fail")
+    for token in backgrounds + text_tokens:
+        assert token in variables, f"Missing CSS color token --{token}"
+    for token in text_tokens:
+        for background in backgrounds:
+            ratio = _contrast_ratio(variables[token], variables[background])
+            assert ratio >= 4.5, (
+                f"--{token} on --{background} has contrast {ratio:.2f}:1, below WCAG AA 4.5:1"
+            )
