@@ -418,4 +418,29 @@
   updateUI();
   startLoop();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+  /* Mobile navigation stays usable without inline event handlers. */
+  var menuToggle = $('menuToggle');
+  var primaryNav = $('primaryNav');
+  function setMenuOpen(open) {
+    if (!menuToggle || !primaryNav) return;
+    primaryNav.classList.toggle('is-open', open);
+    menuToggle.setAttribute('aria-expanded', String(open));
+    menuToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+  }
+  if (menuToggle && primaryNav) {
+    menuToggle.addEventListener('click', function () {
+      setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true');
+    });
+    primaryNav.addEventListener('click', function (event) {
+      if (event.target.closest('a')) setMenuOpen(false);
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { setMenuOpen(false); menuToggle.focus(); }
+    });
+    window.addEventListener('resize', function () {
+      if (window.matchMedia('(min-width: 761px)').matches) setMenuOpen(false);
+    });
+  }
+  var year = $('copyrightYear');
+  if (year) year.textContent = String(new Date().getFullYear());
 })();
