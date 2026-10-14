@@ -79,103 +79,54 @@ class _SageSplashScreenState extends State<SageSplashScreen>
                     child: child,
                   ),
                   child: SizedBox(
-                    width: 158,
-                    height: 158,
+                    width: 156,
+                    height: 156,
                     child: Stack(
                       alignment: Alignment.center,
-                      clipBehavior: Clip.none,
                       children: [
-                        Transform.rotate(
-                          angle: -0.48,
-                          child: Container(
-                            width: 150,
-                            height: 82,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: .78),
-                                width: 1.1,
-                              ),
-                              borderRadius: BorderRadius.circular(100),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: .22),
-                                  blurRadius: 14,
-                                ),
-                              ],
-                            ),
-                          ),
+                        const CustomPaint(
+                          size: Size(156, 156),
+                          painter: _SplashOrbitPainter(),
                         ),
                         Container(
-                    width: 116,
-                    height: 116,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const RadialGradient(
-                        center: Alignment(-.32, -.38),
-                        radius: .9,
-                        colors: [
-                          Color(0xFF6FEAFF),
-                          Color(0xFF1768D8),
-                          Color(0xFF071A45),
-                          Color(0xFF030916),
-                        ],
-                        stops: [0, .24, .68, 1],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: SageTheme.cyan.withValues(alpha: .28),
-                          blurRadius: 42,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                      border: Border.all(
-                        color: SageTheme.cyan.withValues(alpha: .62),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: const Text(
-                      'S',
-                      style: TextStyle(
-                        fontSize: 72,
-                        height: 1,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(color: SageTheme.cyan, blurRadius: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                        Positioned(
-                          right: 4,
-                          top: 23,
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: const RadialGradient(
-                                colors: [Color(0xFF8CEBFF), Color(0xFF1768D8), Color(0xFF071A45)],
-                              ),
-                              border: Border.all(color: Colors.white, width: 1),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: .8),
-                                  blurRadius: 13,
-                                  spreadRadius: 1,
-                                ),
+                          width: 98,
+                          height: 98,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const RadialGradient(
+                              center: Alignment(-.32, -.38),
+                              radius: .9,
+                              colors: [
+                                Color(0xFFB9F5FF),
+                                Color(0xFF329BFF),
+                                Color(0xFF1768D8),
+                                Color(0xFF071A45),
                               ],
+                              stops: [0, .2, .48, 1],
                             ),
-                            child: const Text(
-                              'S',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                shadows: [Shadow(color: SageTheme.cyan, blurRadius: 7)],
+                            boxShadow: [
+                              BoxShadow(
+                                color: SageTheme.cyan.withValues(alpha: .34),
+                                blurRadius: 38,
+                                spreadRadius: 2,
                               ),
+                            ],
+                            border: Border.all(
+                              color: SageTheme.cyan.withValues(alpha: .8),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: const Text(
+                            'S',
+                            style: TextStyle(
+                              fontSize: 66,
+                              height: 1,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(color: Color(0xFF146CFF), blurRadius: 18),
+                              ],
                             ),
                           ),
                         ),
@@ -220,4 +171,64 @@ class _SageSplashScreenState extends State<SageSplashScreen>
       ),
     );
   }
+}
+
+ 
+class _SplashOrbitPainter extends CustomPainter {
+  const _SplashOrbitPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(-.32);
+    final orbit = Rect.fromCenter(
+      center: Offset.zero,
+      width: size.width * .94,
+      height: size.height * .48,
+    );
+    canvas.drawOval(
+      orbit,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = SageTheme.cyan.withValues(alpha: .8),
+    );
+    canvas.drawOval(
+      orbit.inflate(5),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = .65
+        ..color = Colors.white.withValues(alpha: .22),
+    );
+    final coin = Offset(orbit.width * .37, -orbit.height * .33);
+    canvas.drawCircle(
+      coin,
+      12,
+      Paint()
+        ..color = SageTheme.gold.withValues(alpha: .3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+    );
+    canvas.drawCircle(
+      coin,
+      8,
+      Paint()
+        ..shader = const RadialGradient(
+          colors: [Color(0xFFFFF3B0), Color(0xFFFFC247), Color(0xFFB86A12)],
+        ).createShader(Rect.fromCircle(center: coin, radius: 8)),
+    );
+    canvas.drawCircle(
+      coin,
+      5,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF8D4C0B),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _SplashOrbitPainter oldDelegate) => false;
 }
