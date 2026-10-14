@@ -387,77 +387,34 @@ window.SAGE = window.SAGE || {};
         break;
       }
 
-      /* --- spark & money --- */
+      /* --- Spark and cash: never mutate local prototype state as a payment --- */
       case 'pay-method':
-        st.payMethod = arg; S.save(); S.render();
-        S.toast(S.DATA.PAYMENTS.find(p => p.id === arg).name + ' selected'); break;
-      case 'buy-spark': {
-        const pm = S.DATA.PAYMENTS.find(p => p.id === st.payMethod);
+      case 'buy-spark':
+      case 'buy-spark-amount':
+      case 'buy-spark-custom':
         S.sheet(`
-          <h3>Buy Spark</h3>
-          <div class="sub">1 Spark = NPR 1 · KYC verified &amp; secure</div>
-          <div class="grid2" style="margin-bottom:12px">
-            ${[100, 500, 1250, 5000].map(v => `
-            <button class="btn soft" data-act="buy-spark-amount" data-arg="${v}" style="flex-direction:column;gap:2px;padding:12px">
-              <b>${S.fmtSpark(v)}</b><span class="tiny muted">Spark · ${S.npr(v)}</span></button>`).join('')}
-          </div>
-          <div class="field"><label>Custom amount</label><input class="input" id="spark-custom" inputmode="numeric" placeholder="e.g. 2500"></div>
-          <button class="btn primary mt8" data-act="buy-spark-custom">${S.icon('i-bolt')} Purchase with ${pm.name}</button>
-          <div class="notice">Payment flow: Choose ${pm.name} → Secure payment (KYC verified) → Instant Spark credited</div>`);
+          <h3>Purchases are not connected yet</h3>
+          <div class="sub">No payment provider is configured for live SAGE Spark purchases. This screen will not charge you or add a balance.</div>
+          <div class="notice">Your real Spark balance and ledger are shown in the authenticated Spark Wallet. Do not treat prototype balances as money.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'buy-spark-amount': S.addSpark(+arg, 'Purchased'); S.closeSheet(); S.render(); break;
-      case 'buy-spark-custom': {
-        const v = parseInt(((S.$('#spark-custom') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!v) { S.toast('Enter an amount'); break; }
-        S.addSpark(v, 'Purchased'); S.closeSheet(); S.render(); break;
-      }
-      case 'send-spark': {
+      case 'send-spark':
+      case 'send-spark-go':
         S.sheet(`
-          <h3>Send Spark</h3>
-          <div class="sub">Instant transfer to any SAGE user · balance ${S.fmtSpark(st.spark)}</div>
-          <div class="field"><label>Recipient (phone or SAGE ID)</label><input class="input" placeholder="+977 98XXXXXXXX"></div>
-          <div class="field"><label>Amount</label><input class="input" id="send-amt" inputmode="numeric" placeholder="e.g. 250"></div>
-          <button class="btn primary mt8" data-act="send-spark-go">${S.icon('i-share')} Send Spark</button>`);
+          <h3>Spark transfers are not available yet</h3>
+          <div class="sub">A verified backend transfer flow is required before SAGE can move Spark between accounts. No balance has been changed.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'send-spark-go': {
-        const v = parseInt(((S.$('#send-amt') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!v || v > st.spark) { S.toast('Check the amount (balance ' + S.fmtSpark(st.spark) + ')'); break; }
-        S.addSpark(-v, 'Sent'); S.closeSheet(); S.render();
-        const lvl = S.addProgress(2, 'Sent Spark to a peer');
-        if (lvl) S.handleLevelUp(lvl);
-        break;
-      }
 
-      /* --- earn & withdraw --- */
+      /* --- earnings and withdrawals --- */
       case 'earn-range': S.setEarnRange(arg); break;
-      case 'withdraw': {
+      case 'withdraw':
+      case 'withdraw-go':
         S.sheet(`
-          <h3>Withdraw to Bank</h3>
-          <div class="sub">Only through approved &amp; regulated partners</div>
-          <div class="field"><label>Amount (NPR)</label><input class="input" id="wd-amt" inputmode="numeric" placeholder="e.g. 5000"></div>
-          <div class="fee-box" style="margin-bottom:12px">
-            <div class="row between small"><span class="muted">Withdrawal fee</span><b id="wd-fee">—</b></div>
-            <div class="tiny muted mt8">Evolution is lifetime achievement — withdrawal never reduces it.</div>
-          </div>
-          <button class="btn primary" data-act="withdraw-go">${S.icon('i-bank')} Confirm Withdrawal</button>`);
-        const inp = S.$('#wd-amt');
-        if (inp) inp.addEventListener('input', () => {
-          const v = parseInt(inp.value.replace(/\D/g, ''), 10) || 0;
-          S.$('#wd-fee').textContent = v ? S.npr(Math.round(v * S.txFeePct(v) / 100)) + ' (' + S.txFeePct(v) + '%)' : '—';
-        });
+          <h3>Cash payouts are not connected yet</h3>
+          <div class="sub">No payout provider or verified withdrawal flow is connected. SAGE will not claim that a withdrawal was initiated.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'withdraw-go': {
-        const v = parseInt(((S.$('#wd-amt') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!v) { S.toast('Enter an amount'); break; }
-        S.closeSheet();
-        S.toast('Withdrawal of ' + S.npr(v) + ' initiated ✓ (fee ' + S.txFeePct(v) + '%)');
-        const lvl = S.addProgress(3, 'Funds withdrawn');
-        if (lvl) S.handleLevelUp(lvl);
-        break;
-      }
 
       /* --- evolution --- */
       case 'evo-preview': S.evoPreview(+arg); break;
