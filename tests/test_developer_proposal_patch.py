@@ -64,5 +64,8 @@ def test_developer_policy_allows_product_ui_but_never_secrets_or_escape_paths(tm
     assert policy.can_write("frontend/lib/main.dart")
     assert policy.can_write("qa/e2e/test_workspace_browser.py")
     assert not policy.can_write(".env")
+    assert not policy.can_write(".env.production.local")
+    assert not policy.can_read(".env.staging")
+    assert not policy.can_write("website/private.key")
     assert not policy.can_write("website/../../outside.py")
     assert not policy.can_write("website/credentials.json")
