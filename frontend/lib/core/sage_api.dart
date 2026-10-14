@@ -465,6 +465,18 @@ class SageApi {
 
   Future<Map<String, dynamic>> profileMe() async => _authorizedGet('/identity/me');
 
+  Future<Map<String, dynamic>> sendIdentityPhoneOtp(String phone) async =>
+      _authorizedPost('/identity/phone/send', {'phone': phone});
+
+  Future<Map<String, dynamic>> verifyIdentityPhoneOtp(
+    String challengeId,
+    String code,
+  ) async =>
+      _authorizedPost('/identity/phone/verify', {
+        'challenge_id': challengeId,
+        'code': code,
+      });
+
   Future<Map<String, dynamic>> updateProfile({
     String? name,
     String? phone,

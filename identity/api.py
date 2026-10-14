@@ -37,7 +37,7 @@ class OnboardingRequest(BaseModel):
     address: str = Field(min_length=1, max_length=1000)
     age: int = Field(ge=1, le=120)
     basic_info: dict[str, Any] = Field(default_factory=dict)
-    help_intent: str = Field(min_length=1, max_length=2000)
+    help_intent: str = Field(default="", max_length=2000)
     capabilities: list[str] = Field(default_factory=list, max_length=20)
     memory_consent: bool = False
 

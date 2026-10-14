@@ -19,8 +19,11 @@ def test_workflow_actions_use_current_compatible_majors():
     assert "actions/upload-artifact@v7" in android
     assert "actions/upload-artifact@v5" not in android
     assert "actions/checkout@v6" in pages
-    assert "actions/upload-pages-artifact@v5" in pages
-    assert "actions/deploy-pages@v5" in pages
+    assert "actions/upload-artifact@v7" in pages
+    assert "retention-days: 7" in pages
+    assert "actions/upload-pages-artifact@" not in pages
+    assert "actions/deploy-pages@" not in pages
+    assert "deploy-website:" not in pages
 
 
 def test_github_workflows_pin_runner_image_to_ubuntu_24_04():
