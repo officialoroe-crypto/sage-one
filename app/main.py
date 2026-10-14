@@ -43,6 +43,7 @@ from config.settings import settings
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from workflows.repository import repository as workflow_repository
 from dev_agent.agent import DevelopmentAgent
+from dev_agent.proposals import prepare_developer_preview, apply_developer_preview, StaleDeveloperProposal
 
 
 # ============================================================
@@ -909,7 +910,7 @@ def developer_preview(
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
     workspace = _developer_workspace(request.workspace)
-    result = DevelopmentAgent(str(workspace), apply_changes=False).plan(request.task)
+    result = prepare_developer_preview(str(workspace), request.task)
     proposal_id = str(uuid.uuid4())
     with SessionLocal() as db:
         proposal = DeveloperProposal(
@@ -976,9 +977,23 @@ def developer_apply(
         if proposal.status != "preview":
             raise HTTPException(status_code=409, detail="Developer proposal is no longer applicable.")
         workspace = proposal.workspace
-        task = proposal.task
+        preview = json.loads(proposal.preview_json)
 
-    result = DevelopmentAgent(workspace, apply_changes=True).apply(task)
+    try:
+        result = apply_developer_preview(workspace, preview)
+    except StaleDeveloperProposal as exc:
+        with SessionLocal() as db:
+            stale = db.query(DeveloperProposal).filter(
+                DeveloperProposal.id == request.proposal_id,
+                DeveloperProposal.owner_key == owner_key,
+            ).first()
+            if stale is not None:
+                stale.status = "stale"
+                db.commit()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except (ValueError, PermissionError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     now = datetime.now(timezone.utc)
     with SessionLocal() as db:
         proposal = db.query(DeveloperProposal).filter(
