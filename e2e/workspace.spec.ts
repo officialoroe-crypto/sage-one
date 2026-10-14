@@ -202,7 +202,9 @@ test('voice button captures a transcript and waits for explicit user send', asyn
     (window as any).SpeechRecognition = FakeSpeechRecognition;
   });
   await page.goto('/');
-  await page.locator('#screen [data-act="voice-toggle"][data-arg="#homeAsk"]').click();
+  await page.evaluate(() => window.SAGE.go('chat', null, { replace: true }));
+  await expect(page.locator('#chatInput')).toBeVisible();
+  await page.locator('#screen [data-act="voice-toggle"][data-arg="#chatInput"]').click();
   await expect(page.locator('#sageBackendStatus')).toContainText('LISTENING');
   await page.evaluate(() => {
     const recognition = (window as any).__fakeSageRecognition;
@@ -210,7 +212,7 @@ test('voice button captures a transcript and waits for explicit user send', asyn
     recognition.onresult({ resultIndex: 0, results: [phrase] });
     recognition.onend();
   });
-  await expect(page.locator('#homeAsk')).toHaveValue('Hello SAGE, this is a voice QA test.');
+  await expect(page.locator('#chatInput')).toHaveValue('Hello SAGE, this is a voice QA test.');
   await expect(page.locator('#sageBackendStatus')).toContainText('VOICE CAPTURED');
   const state = await page.evaluate(() => window.SAGE.state().chat);
   expect(state, 'voice recognition must not silently send a task or chat message').toEqual([]);
