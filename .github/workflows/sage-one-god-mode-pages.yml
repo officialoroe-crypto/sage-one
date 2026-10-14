@@ -78,23 +78,16 @@ jobs:
           PY
       - name: Build Flutter web app for QA (not Pages deployment)
         env:
-          SAGE_API_URL: ${{ vars.SAGE_API_URL }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          SAGE_API_URL: ${{ vars.SAGE_API_URL || 'https://sage-one-api.onrender.com' }}
         run: |
-          if [ -n "$SAGE_API_URL" ]; then
-            case "$SAGE_API_URL" in
-              https://*) ;;
-              *)
-                echo "::error::SAGE_API_URL must use HTTPS when provided."
-                exit 1
-                ;;
-            esac
-            flutter build web --release --base-href /sage-one/app/ --dart-define="SAGE_API_URL=$SAGE_API_URL"
-          else
-            # PR builds can validate the UI without production variables. This
-            # output is QA-only and will not be published to GitHub Pages.
-            flutter build web --release --base-href /sage-one/app/
-          fi
+          case "$SAGE_API_URL" in
+            https://*) ;;
+            *)
+              echo "::error::SAGE_API_URL must use HTTPS."
+              exit 1
+              ;;
+          esac
+          flutter build web --release --base-href / --dart-define="SAGE_API_URL=$SAGE_API_URL"
       - name: Upload web QA build artifact
         uses: actions/upload-artifact@v7
         with:
@@ -102,6 +95,59 @@ jobs:
           path: frontend/build/web
           if-no-files-found: error
           retention-days: 7
+
+  backend-smoke:
+    if: github.event_name != 'pull_request'
+    name: Smoke-test live backend for web integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      SAGE_API_URL: ${{ vars.SAGE_API_URL || 'https://sage-one-api.onrender.com' }}
+    steps:
+      - name: Check live API health and owner sign-in configuration
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          from urllib.error import HTTPError, URLError
+          from urllib.request import Request, urlopen
+
+          base = os.environ["SAGE_API_URL"].rstrip("/")
+          if not base.startswith("https://"):
+              raise SystemExit("SAGE_API_URL must use HTTPS for the web app.")
+
+          def get_json(path):
+              last_error = None
+              for attempt in range(6):
+                  try:
+                      request = Request(base + path, headers={"Accept": "application/json"})
+                      with urlopen(request, timeout=20) as response:
+                          if response.status < 200 or response.status >= 300:
+                              raise RuntimeError(f"{path} returned HTTP {response.status}")
+                          return json.loads(response.read().decode("utf-8"))
+                  except (HTTPError, URLError, TimeoutError, RuntimeError, ValueError) as exc:
+                      last_error = exc
+                      if attempt < 5:
+                          time.sleep(10)
+              raise SystemExit(f"Backend smoke check failed for {path}: {last_error}")
+
+          health = get_json("/health")
+          if str(health.get("status", "")).lower() != "healthy":
+              raise SystemExit(f"Backend health is not healthy: {health.get('status', 'missing status')}")
+
+          identity = get_json("/identity/config")
+          if identity.get("success") is not True:
+              raise SystemExit("Identity config endpoint did not return success=true.")
+          if not str(identity.get("google_client_id", "")).strip():
+              raise SystemExit("Google sign-in is not configured: backend returned an empty google_client_id.")
+
+          print("PASS: live backend health endpoint is healthy.")
+          print("PASS: identity configuration endpoint is reachable and Google sign-in is configured.")
+          print("PASS: web build target:", base)
+          PY
 
   package-marketing-site:
     if: github.event_name == 'workflow_dispatch'
