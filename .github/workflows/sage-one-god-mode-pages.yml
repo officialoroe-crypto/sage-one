@@ -1,6 +1,7 @@
 name: SAGE ONE Marketing Website and Web App QA
 
 on:
+  # Manual runs are QA-only while the product rebuild is underway.
   workflow_dispatch:
   push:
     branches:
@@ -149,44 +150,3 @@ jobs:
           print("PASS: web build target:", base)
           PY
 
-  package-marketing-site:
-    if: github.event_name == 'workflow_dispatch'
-    name: Package marketing site only
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      pages: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-      - name: Package and validate the public landing page
-        run: |
-          mkdir -p public_site
-          cp website/index.html website/styles.css website/app.js website/favicon.svg public_site/
-          test -s public_site/index.html
-          test -s public_site/styles.css
-          test -s public_site/app.js
-          test -s public_site/favicon.svg
-          test ! -e public_site/app/index.html
-      - name: Upload marketing-only Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: public_site
-
-  deploy-marketing-site:
-    if: github.event_name == 'workflow_dispatch'
-    needs:
-      - validate
-      - package-marketing-site
-    name: Deploy approved marketing site only
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
