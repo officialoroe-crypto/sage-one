@@ -159,8 +159,25 @@ jobs:
           if not str(identity.get("google_client_id", "")).strip():
               raise SystemExit("Google sign-in is not configured: backend returned an empty google_client_id.")
 
+          # Confirm the live Chat endpoint rejects unauthenticated callers.
+          # This request must not create a session or invoke a model.
+          probe = Request(
+              base + "/chat",
+              data=json.dumps({"message": "unauthenticated security smoke test"}).encode("utf-8"),
+              headers={"Content-Type": "application/json", "Accept": "application/json"},
+              method="POST",
+          )
+          try:
+              with urlopen(probe, timeout=20) as response:
+                  raise SystemExit(
+                      f"Unauthenticated /chat unexpectedly returned HTTP {response.status}."
+                  )
+          except HTTPError as exc:
+              if exc.code != 401:
+                  raise SystemExit(f"Unauthenticated /chat returned HTTP {exc.code}; expected 401.")
           print("PASS: live backend health endpoint is healthy.")
           print("PASS: identity configuration endpoint is reachable and Google sign-in is configured.")
+          print("PASS: live Chat rejects unauthenticated requests with HTTP 401.")
           print("PASS: web build target:", base)
           PY
 
