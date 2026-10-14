@@ -17,6 +17,7 @@ class AgentPolicy:
         "app", "agents", "brain", "config", "database", "dev_agent",
         "execution", "memory", "missions", "permissions", "projects",
         "research", "tasks", "tools", "web", "tests", "docs", ".github",
+        "frontend", "website", "qa", "scripts",
     )
 
     forbidden_names: tuple[str, ...] = (
@@ -37,6 +38,10 @@ class AgentPolicy:
         if not path or path == ".git" or path.startswith(".git/"):
             return True
         name = Path(path).name.lower()
+        if name.startswith(".env"):
+            return True
+        if name.endswith((".pem", ".key", ".p12", ".pfx")):
+            return True
         return name in {item.lower() for item in self.forbidden_names}
 
     def can_read(self, relative_path: str) -> bool:
@@ -47,7 +52,11 @@ class AgentPolicy:
             raise PermissionError(f"Reading '{relative_path}' is not permitted by the agent policy.")
 
     def can_write(self, relative_path: str) -> bool:
-        path = relative_path.replace("\\", "/").lstrip("/")
+        normalized = relative_path.replace("\\", "/")
+        candidate = Path(normalized)
+        if candidate.is_absolute() or any(part in {".", ".."} for part in candidate.parts):
+            return False
+        path = normalized
         if self._is_forbidden(path):
             return False
         return any(path == root or path.startswith(root + "/") for root in self.writable_roots)
