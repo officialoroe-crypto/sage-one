@@ -4,6 +4,21 @@
 **Owner rule:** Do not deploy, publish, enable public access, or release the app/site until the owner explicitly approves. Private/staging test environments only.
 **Evidence rule:** Mark each item separately as Specified, Implemented, Connected, Tested, Verified, or Blocked. A green build is not runtime proof. Never record PASS without repeatable evidence.
 
+## Initial code-inspection findings (2026-10-15; not a complete audit)
+
+These are observed from repository source, not from a live penetration test. Findings remain open unless explicitly marked otherwise.
+
+- **Workflow behavior confirmed:** the website workflow previously used `if: github.event_name != 'pull_request'` on its live-backend smoke job, so that job was deliberately skipped for PR runs. A draft security PR now removes that condition so the read-only smoke can run during PR validation; its actual result must still be checked.
+- **CORS needs tightening:** `app/main.py` currently allows all methods and headers, enables credentials, and includes localhost origins alongside the canonical frontend origin. Review exact required origins/methods/headers and production-only behavior before public hosting.
+- **API security headers were absent in the inspected main version:** a separate draft PR adds baseline API response headers and tests. It does not yet set static-site CSP or prove the hosting proxy emits HSTS.
+- **Chat input bounds were missing:** a separate draft PR adds message/label length limits and regression tests. Other request models and nested context still need an input-size/validation review.
+- **Environment fail-closed behavior needs review:** `config/settings.py` defaults `SAGE_ENV` to development and derives private/developer defaults from it. Production must explicitly set and validate environment settings; verify the deployed environment without exposing values.
+- **Data minimization risk:** `identity/api.py` onboarding/profile models accept phone, address, age, basic-info and help-intent fields. Confirm each field is necessary, explain it before collection, define retention/deletion, and avoid collecting address/age unless required.
+- **Database deployment risk:** `database/connection.py` falls back to a local SQLite file if `SAGE_DATABASE_URL` is absent. Production startup should require an intentional durable database configuration and documented backup/restore.
+- **Third-party request observed:** `website/index.html` loads Google Fonts from Google-hosted domains. Inventory its privacy impact and decide whether to self-host or disclose it; inspect all other scripts/embeds.
+- **Dependency policy needs work:** `requirements.txt` contains broad version ranges and includes pytest in the runtime requirements file. Review lockfiles, production/dev dependency separation, vulnerabilities and licenses before changing versions.
+- **Legal scope:** official Nepal Law Commission sources identify the Privacy Act, 2075 and E-Commerce Act, 2081; the Electronic Transactions Act, 2063 and Consumer Protection Act, 2075 are also relevant review candidates. Applicability and effective requirements need qualified Nepal legal review; cookie-consent requirements depend on actual tracking and user jurisdictions.
+
 ## 0. Safety and working rules
 - [ ] Preserve existing user changes and data; inspect before modifying.
 - [ ] Never print, commit, or expose secret values. Report secret names and locations only, with values redacted.
