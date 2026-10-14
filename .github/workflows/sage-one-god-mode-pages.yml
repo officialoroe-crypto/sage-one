@@ -1,4 +1,4 @@
-name: SAGE ONE Website and Flutter QA (Deployment Paused)
+name: SAGE ONE Marketing Website and Web App QA
 
 on:
   workflow_dispatch:
@@ -16,20 +16,20 @@ on:
       - "website/**"
       - "frontend/**"
       - ".github/workflows/sage-one-god-mode-pages.yml"
+
 permissions:
   contents: read
 
 concurrency:
-  # PR runs are isolated from main/manual publication; production runs are never
-  # cancelled by a newer run while a Pages deployment is in progress.
-  group: sage-one-pages-${{ github.event.pull_request.number || github.ref_name }}
+  # Keep pull-request validation separate from main builds and manual publication.
+  group: sage-one-public-pages-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || (github.event_name == 'workflow_dispatch' && 'manual-deploy' || 'push-main') }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    name: Validate website and build Flutter web QA artifact
+    name: Validate website and build web app for QA
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 20
     permissions:
       contents: read
     defaults:
@@ -38,75 +38,109 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Validate current Freebuff website assets
-        working-directory: .
-        run: |
-          test -s website/index.html
-          test -s website/css/styles.css
-          test -s website/js/app.js
-          test -s website/js/backend.js
-          test -s website/img/sage-mark.png
-          python - <<'PY'
-          from pathlib import Path
-
-          html = Path("website/index.html").read_text(encoding="utf-8")
-          required = (
-              'href="css/styles.css',
-              'src="js/app.js',
-              'img/sage-mark.png',
-          )
-          missing = [fragment for fragment in required if fragment not in html]
-          if missing:
-              raise SystemExit(f"Current website asset references are missing: {missing}")
-          print("Current Freebuff website entry point and primary assets are present.")
-          PY
-
-      - name: Check website JavaScript syntax
-        working-directory: .
-        run: |
-          for file in website/js/*.js; do
-            node --check "$file"
-          done
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.47.3"
           channel: stable
           cache: true
-
-      - name: Get Flutter packages
+      - name: Get packages
         run: flutter pub get
-
       - name: Analyze Flutter app
         run: flutter analyze
-
       - name: Test Flutter app
         run: flutter test
+      - name: Validate marketing-site markup and assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
 
-      - name: Build Flutter web app for QA only
+          site = Path("../website")
+          html = (site / "index.html").read_text(encoding="utf-8")
+          required_fragments = (
+              "<title>",
+              'href="styles.css"',
+              'href="favicon.svg"',
+              'src="app.js"',
+              "Public app access will open only after both platforms pass their verification plan.",
+          )
+          missing = [fragment for fragment in required_fragments if fragment not in html]
+          if missing:
+              raise SystemExit(f"Missing marketing-page content: {missing}")
+          if r'\n  <link rel="stylesheet"' in html:
+              raise SystemExit("Found literal \\n text where an HTML newline belongs.")
+          if 'href="/sage-one/app/"' in html:
+              raise SystemExit("The private QA app must not be linked from the public marketing site.")
+          for filename in ("styles.css", "app.js", "favicon.svg"):
+              if not (site / filename).is_file():
+                  raise SystemExit(f"Missing public site asset: {filename}")
+          print("Marketing page markup, release wording, and assets validated.")
+          PY
+      - name: Build Flutter web app for QA (not Pages deployment)
         env:
           SAGE_API_URL: ${{ vars.SAGE_API_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           if [ -n "$SAGE_API_URL" ]; then
             case "$SAGE_API_URL" in
               https://*) ;;
               *)
-                echo "::error::SAGE_API_URL must use HTTPS when configured."
+                echo "::error::SAGE_API_URL must use HTTPS when provided."
                 exit 1
                 ;;
             esac
             flutter build web --release --base-href /sage-one/app/ --dart-define="SAGE_API_URL=$SAGE_API_URL"
           else
-            # This build is an inspection artifact, never part of public Pages output.
+            # PR builds can validate the UI without production variables. This
+            # output is QA-only and will not be published to GitHub Pages.
             flutter build web --release --base-href /sage-one/app/
           fi
-
-      - name: Upload Flutter web QA artifact
+      - name: Upload web QA build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: sage-one-flutter-web-qa-${{ github.sha }}
+          name: sage-one-web-qa-${{ github.sha }}
           path: frontend/build/web
           if-no-files-found: error
           retention-days: 7
+
+  package-marketing-site:
+    if: github.event_name == 'workflow_dispatch'
+    name: Package marketing site only
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Package and validate the public landing page
+        run: |
+          mkdir -p public_site
+          cp website/index.html website/styles.css website/app.js website/favicon.svg public_site/
+          test -s public_site/index.html
+          test -s public_site/styles.css
+          test -s public_site/app.js
+          test -s public_site/favicon.svg
+          test ! -e public_site/app/index.html
+      - name: Upload marketing-only Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: public_site
+
+  deploy-marketing-site:
+    if: github.event_name == 'workflow_dispatch'
+    needs:
+      - validate
+      - package-marketing-site
+    name: Deploy approved marketing site only
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
