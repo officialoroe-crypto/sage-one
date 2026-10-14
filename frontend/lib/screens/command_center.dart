@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
@@ -278,42 +277,18 @@ class _CommandCenterState extends State<CommandCenter>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Focus(
-          onKeyEvent: (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.enter) {
-              if (HardwareKeyboard.instance.isControlPressed) {
-                final selection = _prompt.selection;
-                final text = _prompt.text;
-                final start = selection.isValid ? selection.start : text.length;
-                final end = selection.isValid ? selection.end : text.length;
-                _prompt.value = TextEditingValue(
-                  text: text.replaceRange(start, end, '\n'),
-                  selection: TextSelection.collapsed(offset: start + 1),
-                );
-                return KeyEventResult.handled;
-              }
-              _send();
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: TextField(
-            controller: _prompt,
-            minLines: 3,
-            maxLines: 6,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _send(),
-            decoration: const InputDecoration(
-              hintText: 'Tell SAGE what you want done…',
-              prefixIcon: Padding(
-                padding: EdgeInsets.only(left: 14, right: 6),
-                child: Icon(Icons.bolt, color: SageTheme.cyan),
-              ),
-              prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-              contentPadding: EdgeInsets.all(18),
+        TextField(
+          controller: _prompt,
+          minLines: 3,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            hintText: 'Tell SAGE what you want done…',
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(left: 14, right: 6),
+              child: Icon(Icons.bolt, color: SageTheme.cyan),
             ),
+            prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+            contentPadding: EdgeInsets.all(18),
           ),
         ),
         const SizedBox(height: 10),
