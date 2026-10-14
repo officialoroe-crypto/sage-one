@@ -117,7 +117,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
     if (status == 'done' || status == 'notListening') {
       setState(() => _listening = false);
       if (_wakeMode && _ready && !_processing && !_speaking &&
-          _command.text.trim().isEmpty) {
+          _status != 'COMMAND CAPTURED — REVIEW THEN EXECUTE') {
         _restartWakeListening();
       } else if (!_processing && !_speaking) {
         setState(() {
@@ -165,7 +165,13 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
     if (_wakeMode) {
       final normalized = transcript.toLowerCase();
       final wakeIndex = normalized.indexOf('sage');
-      if (wakeIndex < 0) return;
+      if (wakeIndex < 0) {
+        _command.clear();
+        _speech.stop();
+        if (mounted) setState(() => _status = 'SAY SAGE TO WAKE');
+        _restartWakeListening();
+        return;
+      }
 
       final command = transcript.substring(wakeIndex + 4).trim();
       if (command.isEmpty) {
