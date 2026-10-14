@@ -8,6 +8,9 @@ DATABASE_URL = os.getenv(
     "SAGE_DATABASE_URL",
     "sqlite:///./sage_one.db"
 )
+# Hosts (Render, Heroku, Neon) hand out "postgres://", which SQLAlchemy 2 rejects.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
 
 
 class Base(DeclarativeBase):
@@ -20,7 +23,8 @@ engine = create_engine(
         "check_same_thread": False
     }
     if DATABASE_URL.startswith("sqlite")
-    else {}
+    else {},
+    pool_pre_ping=True,
 )
 
 

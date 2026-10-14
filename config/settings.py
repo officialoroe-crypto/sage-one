@@ -44,6 +44,19 @@ class Settings:
     ).strip().lower() in {
         "1", "true", "yes", "on"
     }
+    IS_PRODUCTION = ENVIRONMENT.strip().lower() == "production"
+    # Hard rule: a production deployment can never run Developer Mode or the
+    # localhost dev-login, whatever the environment variables say.
+    if IS_PRODUCTION:
+        PRIVATE_MODE = False
+        DEVELOPER_MODE = False
+    # Only trust X-Forwarded-For (used for rate limiting) behind a known proxy.
+    TRUST_PROXY_HEADERS = os.getenv("SAGE_TRUST_PROXY_HEADERS", "false").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+    RATE_LIMIT_PER_MINUTE = int(os.getenv("SAGE_RATE_LIMIT_PER_MINUTE", "120"))
+    AUTH_RATE_LIMIT_PER_MINUTE = int(os.getenv("SAGE_AUTH_RATE_LIMIT_PER_MINUTE", "10"))
+    MAX_BODY_BYTES = int(os.getenv("SAGE_MAX_BODY_BYTES", str(1024 * 1024)))
     OWNER_AUTH_SUBJECT = os.getenv("SAGE_OWNER_AUTH_SUBJECT")
 
     MODEL = os.getenv("SAGE_MODEL", "gemini-3.8-flash")

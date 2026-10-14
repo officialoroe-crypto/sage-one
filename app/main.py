@@ -43,6 +43,12 @@ from config.settings import settings
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from workflows.repository import repository as workflow_repository
 from dev_agent.agent import DevelopmentAgent
+from app.security import (
+    BodySizeLimitMiddleware,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+    validate_production_config,
+)
 
 
 # ============================================================
@@ -99,13 +105,28 @@ async def _lifespan(_app: FastAPI):
         worker_service.stop()
 
 
+# Interactive docs and the OpenAPI schema map the whole API for an attacker, and
+# FastAPI serves them outside the auth dependency, so they are off in production.
 app = FastAPI(
     dependencies=[Depends(_require_api_access)],
     title="SAGE ONE",
     version="6.0.0",
     description="SAGE ONE personal AI execution core",
     lifespan=_lifespan,
+    debug=False,
+    docs_url=None if settings.IS_PRODUCTION else "/docs",
+    redoc_url=None if settings.IS_PRODUCTION else "/redoc",
+    openapi_url=None if settings.IS_PRODUCTION else "/openapi.json",
 )
+
+
+@app.exception_handler(Exception)
+async def _unhandled_error(_request: Request, exc: Exception):
+    """Never leak stack traces or internals to clients."""
+    import logging
+    from fastapi.responses import JSONResponse
+    logging.getLogger("sage.error").exception("Unhandled error", exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error."})
 
 
 def _cors_origins() -> list[str]:
@@ -121,13 +142,29 @@ def _cors_origins() -> list[str]:
     ]
 
 
+_startup_problems = validate_production_config(_cors_origins())
+if _startup_problems:
+    # Refuse to boot an insecure production deployment rather than run it.
+    raise RuntimeError("Unsafe production configuration: " + " ".join(_startup_problems))
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+    max_age=600,
 )
+# Added after CORS so they wrap it (last added = outermost): limits and headers
+# apply to every response, including CORS preflights and error responses.
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.MAX_BODY_BYTES)
+app.add_middleware(
+    RateLimitMiddleware,
+    per_minute=settings.RATE_LIMIT_PER_MINUTE,
+    auth_per_minute=settings.AUTH_RATE_LIMIT_PER_MINUTE,
+    trust_proxy=settings.TRUST_PROXY_HEADERS,
+)
+app.add_middleware(SecurityHeadersMiddleware, hsts=settings.IS_PRODUCTION)
 
 # Ensure newly introduced durable tables exist when the API starts.
 Base.metadata.create_all(bind=engine)
@@ -148,7 +185,7 @@ app.include_router(learning_api_router)
 # ============================================================
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=20000)
     session_id: Optional[str] = None
     goal: Optional[str] = None
     task: Optional[str] = None
@@ -157,16 +194,16 @@ class ChatRequest(BaseModel):
 
 
 class ExecuteRequest(BaseModel):
-    goal: str
+    goal: str = Field(min_length=1, max_length=20000)
     project_id: Optional[str] = None
     session_id: Optional[str] = None
     max_steps: int = Field(default=20, ge=1, le=100)
 
 
 class AutomationCreateRequest(BaseModel):
-    name: str
-    goal: str
-    schedule_type: str = "once"
+    name: str = Field(min_length=1, max_length=200)
+    goal: str = Field(min_length=1, max_length=20000)
+    schedule_type: str = Field(default="once", max_length=50)
     run_at: Optional[datetime] = None
     interval_seconds: Optional[int] = Field(default=None, ge=60)
     session_id: Optional[str] = None
@@ -175,26 +212,26 @@ class AutomationCreateRequest(BaseModel):
 
 
 class MemoryRequest(BaseModel):
-    content: str
-    memory_type: str = "general"
+    content: str = Field(min_length=1, max_length=5000)
+    memory_type: str = Field(default="general", max_length=100)
     importance: int = Field(default=5, ge=1, le=10)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     source: str = "user"
 
 
 class PermissionRequest(BaseModel):
-    permission: str
+    permission: str = Field(min_length=1, max_length=200)
     allowed: bool
 
 
 class MissionCreateRequest(BaseModel):
-    goal: str
+    goal: str = Field(min_length=1, max_length=20000)
     priority: int = Field(default=3, ge=1, le=5)
     session_id: Optional[str] = None
 
 
 class MissionPlanRequest(BaseModel):
-    goal: str
+    goal: str = Field(min_length=1, max_length=20000)
     session_id: Optional[str] = None
     priority: int = Field(default=3, ge=1, le=5)
 
@@ -236,9 +273,9 @@ class DeveloperApplyRequest(BaseModel):
 
 class SalesRunRequest(BaseModel):
     business_name: str = Field(min_length=1, max_length=200)
-    website: Optional[str] = None
-    instagram: Optional[str] = None
-    notes: Optional[str] = None
+    website: Optional[str] = Field(default=None, max_length=2000)
+    instagram: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=5000)
     project_id: Optional[str] = None
     session_id: Optional[str] = None
 
@@ -1120,11 +1157,13 @@ def execute_tool(
             "error": result.get("error", "Tool execution failed."),
         }
 
-    except Exception as exc:
+    except Exception:
+        import logging
+        logging.getLogger("sage.error").exception("tool execution failed")
         return {
             "success": False,
             "tool": tool_name,
-            "error": str(exc),
+            "error": "Tool execution failed.",
         }
 
 # ============================================================
