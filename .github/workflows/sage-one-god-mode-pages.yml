@@ -83,7 +83,7 @@ jobs:
                   raise SystemExit(f"Missing workspace asset: {filename}")
           print("Workspace entry point, referenced assets, and JavaScript syntax validated.")
           PY
-      - name: Upload workspace source for private QA
+      - name: Upload workspace source for QA
         uses: actions/upload-artifact@v7
         with:
           name: sage-one-website-workspace-qa-${{ github.sha }}
