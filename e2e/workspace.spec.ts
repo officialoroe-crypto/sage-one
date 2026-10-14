@@ -33,6 +33,7 @@ test.describe('SAGE ONE public website browser interactions', () => {
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /personal AI mentor/i);
     await expect(page.locator('.hero h1')).toContainText('Think less.');
     await expect(page.locator('.hero-logo')).toHaveAttribute('alt', /SAGE ONE logo/i);
+    await expect(page.locator('.hero-logo-link')).toHaveAttribute('href', '#top');
     await expect(page.locator('#rankChips button[data-rank="1"]')).toBeVisible();
     await expect(page.locator('#evolveBtn')).toBeVisible();
     expect(pageErrors, 'uncaught landing-page JavaScript errors').toEqual([]);
