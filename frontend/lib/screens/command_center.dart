@@ -100,10 +100,19 @@ class _CommandCenterState extends State<CommandCenter>
       final value = task['result'] ?? task['error'];
       final terminal = {'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
 
+      final statusLabel = switch (status) {
+        'completed' => 'Task completed',
+        'failed' => 'Task failed',
+        'cancelled' || 'canceled' => 'Task cancelled',
+        'queued' || 'pending' => 'Task queued',
+        'running' || 'processing' || 'in_progress' => 'SAGE is working…',
+        _ => 'Task status: $status',
+      };
+
       setState(() {
-        _status = terminal ? 'Task complete' : 'SAGE is working…';
+        _status = statusLabel;
         _result = value?.toString();
-        _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
+        _sending = !terminal;
       });
 
       if (!_sending) {

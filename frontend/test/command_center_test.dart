@@ -10,6 +10,7 @@ import 'package:sage_one/screens/command_center.dart';
 class _FakeApiClient extends http.BaseClient {
   int markAllReadRequests = 0;
   int commandRequests = 0;
+  String taskStatus = 'completed';
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
@@ -21,7 +22,12 @@ class _FakeApiClient extends http.BaseClient {
       '/brain/routing' => jsonEncode({'provider': 'test-provider'}),
       '/execute/background' => jsonEncode({'task_id': 'test-task'}),
       '/command' => jsonEncode({'success': true, 'status': 'queued', 'session_id': 'voice-session', 'task': {'id': 'test-task'}}),
-      '/tasks/test-task' => jsonEncode({'id': 'test-task', 'status': 'completed', 'result': 'Command complete'}),
+      '/tasks/test-task' => jsonEncode({
+          'id': 'test-task',
+          'status': taskStatus,
+          if (taskStatus == 'completed') 'result': 'Command complete',
+          if (taskStatus == 'failed') 'error': 'Command failed for test',
+        }),
       _ => jsonEncode({'error': 'not found'}),
     };
     final status = request.url.path == '/brain/routing' ||
@@ -78,6 +84,31 @@ void main() {
 
     expect(client.commandRequests, 1);
     expect(find.text('Command complete'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('failed task is not reported as completed', (tester) async {
+    final client = _FakeApiClient()..taskStatus = 'failed';
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: CommandCenter(api: api)));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Run a test that fails');
+    await tester.pump();
+    tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Execute')).onPressed!();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    expect(find.text('Task failed'), findsOneWidget);
+    expect(find.text('Command failed for test'), findsOneWidget);
+    expect(find.text('Task completed'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
