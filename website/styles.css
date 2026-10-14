@@ -255,3 +255,9 @@ body { overflow-wrap:anywhere; }
   .flow span { font-size:0.8rem; }
   .field-row { grid-template-columns:minmax(0,1fr); }
 }
+
+
+/* The hero artwork is a home link, with the image retaining its accessible text. */
+.hero-logo-link { display:block; width:100%; max-width:30rem; margin-inline:auto; }
+.hero-logo-link .hero-logo { width:100%; max-width:100%; margin:0; }
+@media (max-width:760px) { .hero-logo-link { max-width:min(68vw,22rem); grid-row:1; } }
