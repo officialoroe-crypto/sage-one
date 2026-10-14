@@ -36,3 +36,10 @@ def test_purchase_transfer_and_withdrawal_actions_never_mutate_local_balance():
     assert "Cash payouts are not connected yet" in guarded_actions
     assert "S.addSpark(" not in guarded_actions
     assert "Withdrawal of " not in guarded_actions
+
+
+
+def test_every_reward_animation_entry_is_preview_only():
+    source = APP_CONTROLLER.read_text(encoding="utf-8")
+    assert "case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;" in source
+    assert "case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Reward Animation Preview', preview: true, noCredit: true }); break;" in source
