@@ -36,6 +36,65 @@ window.SAGE = window.SAGE || {};
       .finally(() => { initPromise = null; });
     return initPromise;
   }
+  let activeRecognition = null;
+  let voiceTarget = null;
+  function startVoice(selector) {
+    if (activeRecognition) {
+      try { activeRecognition.stop(); } catch (_) {}
+      activeRecognition = null;
+      voiceTarget = null;
+      status('VOICE READY · TAP MIC TO SPEAK', 'ready');
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast('Voice input is not supported by this browser. Try a browser with Web Speech support.');
+      status('VOICE INPUT NOT SUPPORTED', 'error');
+      return;
+    }
+    const target = document.querySelector(selector);
+    if (!target) { toast('Voice command input is not available on this screen.'); return; }
+    const recognition = new SpeechRecognition();
+    activeRecognition = recognition;
+    voiceTarget = target;
+    recognition.lang = 'ne-NP';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    let finalTranscript = '';
+    status('LISTENING · SPEAK NOW', 'listening');
+    toast('SAGE is listening. Your words will appear in the command box; tap Send when ready.');
+    recognition.onresult = event => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const text = event.results[i][0] && event.results[i][0].transcript || '';
+        if (event.results[i].isFinal) finalTranscript += text;
+        else interim += text;
+      }
+      if (voiceTarget) {
+        voiceTarget.value = (finalTranscript + ' ' + interim).trim();
+        voiceTarget.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    };
+    recognition.onerror = event => {
+      status('VOICE ERROR · ' + String(event.error || 'unknown'), 'error');
+      toast('Voice input failed: ' + String(event.error || 'unknown') + '. Check microphone permission and try again.');
+    };
+    recognition.onend = () => {
+      const transcript = (finalTranscript || (voiceTarget && voiceTarget.value) || '').trim();
+      activeRecognition = null;
+      voiceTarget = null;
+      status(transcript ? 'VOICE CAPTURED · REVIEW BEFORE SENDING' : 'VOICE READY · NO SPEECH CAPTURED', transcript ? 'ready' : 'neutral');
+      if (transcript) toast('SAGE heard: ' + transcript.slice(0, 100) + (transcript.length > 100 ? '…' : '') + ' · Review and tap Send.');
+    };
+    try { recognition.start(); }
+    catch (error) {
+      activeRecognition = null;
+      voiceTarget = null;
+      status('VOICE START FAILED', 'error');
+      toast('Could not start microphone: ' + String(error.message || error));
+    }
+  }
+
   function loadGoogleScript() {
     if (window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
     if (gisPromise) return gisPromise;
@@ -144,7 +203,7 @@ window.SAGE = window.SAGE || {};
   ]);
   S.backend = {
     apiBase: API_BASE, renderGoogleButton, isOwnerAuthenticated: () => !!ownerToken,
-    chat, queueCommand,
+    chat, queueCommand, startVoice,
     checkConfig: async () => { const cfg = await loadConfig(); return { googleConfigured: !!cfg.google_client_id, ownerModeAvailable: !!cfg.owner_mode_available }; },
     signOut: () => { ownerToken = null; sessionId = null; status('CORE READY · SIGN IN', 'ready'); },
     status: () => ({ configured: !!config, ownerAuthenticated: !!ownerToken })
@@ -152,6 +211,7 @@ window.SAGE = window.SAGE || {};
   const originalAct = S.act;
   if (typeof originalAct === 'function') S.act = function (name, arg) {
     if (name === 'auth-google') { renderGoogleButton(); toast('Use the secure Google button to sign in.'); return; }
+    if (name === 'voice-toggle') { startVoice(arg || '#chatInput'); return; }
     if (name === 'ai-test') {
       if (!S.backend) { toast('SAGE Core connection is not ready.'); return; }
       S.backend.checkConfig().then(cfg => toast(cfg.googleConfigured ? 'Core identity configuration loaded. AI provider health has not been tested.' : 'Core responded, but Google sign-in is not configured.'))
