@@ -32,14 +32,15 @@ def test_workflow_actions_use_current_compatible_majors():
     assert "retention-days: 7" in pages
     assert "deploy-website:" not in pages
 
-def test_web_qa_build_targets_live_https_backend_and_smoke_checks_main():
+def test_web_qa_build_targets_live_https_backend_and_smoke_checks_pull_requests():
     pages = (WORKFLOWS / "sage-one-god-mode-pages.yml").read_text(encoding="utf-8")
 
     assert "SAGE_API_URL: ${{ vars.SAGE_API_URL || 'https://sage-one-api.onrender.com' }}" in pages
     assert '--dart-define="SAGE_API_URL=$SAGE_API_URL"' in pages
     assert "flutter build web --release --base-href / --dart-define=" in pages
     assert "backend-smoke:" in pages
-    assert "if: github.event_name != 'pull_request'" in pages
+    assert "if: github.event_name != 'pull_request'" not in pages
+    assert "does not deploy or mutate the live service" in pages
     assert 'get_json("/health")' in pages
     assert 'get_json("/identity/config")' in pages
     assert 'identity.get("google_client_id", "")' in pages
