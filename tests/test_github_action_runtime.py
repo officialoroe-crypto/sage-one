@@ -44,6 +44,7 @@ def test_web_qa_build_targets_live_https_backend_and_smoke_checks_main():
 
     assert "SAGE_API_URL: ${{ vars.SAGE_API_URL || 'https://sage-one-api.onrender.com' }}" in pages
     assert '--dart-define="SAGE_API_URL=$SAGE_API_URL"' in pages
+    assert "flutter build web --release --base-href / --dart-define=" in pages
     assert "backend-smoke:" in pages
     assert "if: github.event_name != 'pull_request'" in pages
     assert 'get_json("/health")' in pages
