@@ -1,30 +1,36 @@
-# SAGE ONE Website
+# SAGE ONE Website Workspace
 
-The `website/` directory is the public-facing SAGE ONE landing surface.
+The Freebuff-exported workspace is the intended SAGE ONE website experience. Its source lives in this directory:
+- `index.html` — workspace entry point
+- `css/` — responsive visual system and animation
+- `js/` — screens, navigation, voice capture, and the authenticated SAGE Core bridge
+- `img/` — workspace imagery and brand assets
 
-## Boundaries
+The Flutter mobile app remains in `frontend/`; FastAPI remains the canonical backend.
 
-- This site explains SAGE ONE, SAGE WORKFLOW, Intelligence, Spark and Evolution.
-- It does not expose authenticated workspace data.
-- It does not pretend that publishing, social connections, research or execution are available from the public landing page.
-- The authenticated product remains the Flutter application and SAGE Core APIs.
+## Preview locally without publishing
 
-## Local preview
+1. Download the latest successful **SAGE ONE Marketing Website and Web App QA** run from GitHub Actions.
+2. Download the artifact named `sage-one-website-workspace-qa-<commit>` and extract it to a folder, for example `C:\\SageOne\\website-qa`.
+3. Open Command Prompt in that extracted folder and run:
 
-Serve this directory with any static HTTP server. For example:
-
-```text
-python -m http.server 8080 --directory website
+```bat
+py -m http.server 8080
 ```
 
-Then open `http://127.0.0.1:8080`.
+4. Open `http://127.0.0.1:8080` in Chrome or Opera. Keep the server window open while testing.
 
-## Product workspace and release boundary
+Microphone input requires a supported browser and microphone permission. Voice recognition shows a transcript and waits for you to review and send it. Google sign-in from a local preview also requires `http://localhost:8080` or `http://127.0.0.1:8080` to be an authorized origin in the Google OAuth configuration. Do not paste OAuth secrets or tokens into chat.
 
-The Freebuff-exported workspace is the intended website experience. Its source lives in `website/index.html`, `website/css/`, `website/js/`, and `website/img/`. The authenticated Flutter app remains in `frontend/`, and FastAPI remains the canonical backend.
+## Current backend boundaries
+
+- Google owner sign-in, chat, and explicitly queued tasks are connected in code but still require real browser end-to-end verification.
+- Phone verification depends on an actual configured SMS provider.
+- Formal KYC, external payments, research, and media-generation providers are not to be marked complete unless the real provider is connected and verified.
+- Prototype-only actions must clearly say they are unavailable and must not fake a transaction, verification, generated file, or completed task.
+
+## Release boundary
 
 **Publishing is paused during the current rebuild.** The GitHub Actions workflow validates the workspace, runs Flutter analysis/tests, builds the Flutter web app for QA, and uploads short-retention inspection artifacts. It has no Pages package/deploy job. Pushes to main, pull requests, and manual workflow dispatch do not publish the website or app.
 
-The currently deployed public site remains unchanged until the owner later requests a release and a separate, reviewed deployment workflow is restored. Do not publish the Flutter build while voice, authentication, KYC, backend wiring, economy, and UI repairs are underway.
-
-A QA artifact is for inspection only. It does not prove live-browser behavior or authenticated backend access.
+The currently deployed public website remains unchanged until a later release is explicitly requested. QA artifacts are for private inspection only and do not prove live-browser behavior or authenticated backend access.
