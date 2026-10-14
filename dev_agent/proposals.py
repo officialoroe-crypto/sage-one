@@ -31,7 +31,7 @@ def _ignore(directory: str, names: list[str]) -> set[str]:
     ignored = set()
     for name in names:
         lowered = name.lower()
-        if name in IGNORED_DIRS or lowered in FORBIDDEN_NAMES:
+        if name in IGNORED_DIRS or lowered.startswith(".env") or lowered in FORBIDDEN_NAMES or lowered.endswith((".pem", ".key", ".p12", ".pfx")):
             ignored.add(name)
         elif lowered.endswith((".pem", ".key", ".p12", ".pfx")):
             ignored.add(name)
@@ -50,7 +50,7 @@ def _snapshot(root: Path) -> dict[str, bytes]:
         relative = path.relative_to(root).as_posix()
         if any(part in IGNORED_DIRS for part in Path(relative).parts):
             continue
-        if Path(relative).name.lower() in FORBIDDEN_NAMES:
+        if Path(relative).name.lower().startswith(".env") or Path(relative).name.lower() in FORBIDDEN_NAMES:
             continue
         if Path(relative).name.lower().endswith((".pem", ".key", ".p12", ".pfx")):
             continue
