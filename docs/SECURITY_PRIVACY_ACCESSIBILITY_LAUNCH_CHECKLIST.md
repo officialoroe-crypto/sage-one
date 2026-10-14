@@ -31,6 +31,40 @@ These are observed from repository source, not from a live penetration test. Fin
 - [ ] Convert policy drafts into accessible public pages only after operator details, data flows, and legal review are complete.
 - [ ] Verify actual hosted environment values and settings; this cannot be done from repository source alone.
 
+## Deferred website polish and legal-compliance backlog — owner-requested (2026-10-15)
+
+**Priority rule:** finish the real core work first (authenticated backend Chat, persistence/account isolation, Google sign-in, real device voice, core security and test verification). Keep the following tasks queued for the later website polish/accessibility/legal phase. Do not deploy or publicly release until the owner explicitly approves.
+
+### Later legal, privacy and compliance work
+- [ ] Review applicability and implement the legally appropriate requirements for Nepal, including the Privacy Act, 2075; E-Commerce Act, 2081; Electronic Transactions Act, 2063; and Consumer Protection Act, 2075, with qualified local legal advice.
+- [ ] Complete and legally review Privacy Policy, Terms and Conditions, Cookie Policy, Refund/Cancellation Policy, and form-consent notices before publication.
+- [ ] Determine whether cookie consent is required from actual cookies, local storage, analytics, embeds and third-party requests; implement consent controls where required.
+- [ ] Minimize collected data, verify analytics and third-party embeds, remove fake reviews and unsupported claims, verify business/operator details, and check image/font/media copyright and licensing.
+- [ ] Check security, privacy, accessibility and consumer-law obligations for the actual deployed site/app and the jurisdictions served.
+
+### Later website usability, SEO, assets and responsive design work
+- [ ] Add/verify vertical scrolling where content requires it and horizontal scrolling only for intentional, usable overflow areas; prevent accidental page-level horizontal overflow.
+- [ ] Find and fix broken internal/external links and verify every footer link.
+- [ ] Add a functional mobile navigation menu.
+- [ ] Add a correct favicon and app/site icons.
+- [ ] Fix unique, accurate page titles and add useful meta descriptions to each relevant page.
+- [ ] Add an approved custom photo/hero image to the appropriate page; confirm ownership/licensing and add suitable alternative text.
+- [ ] Update copyright year to the correct current year and verified business/operator details.
+- [ ] Compress/resize images and use appropriate modern formats without visibly damaging quality.
+- [ ] Find and fix every broken or inert button; add truthful success and error messages for real outcomes and failures.
+- [ ] Remove placeholder copy, unfinished demo text, fake reviews, unsupported claims, and unused/dead navigation items.
+- [ ] Fix mobile overflow and layout problems, including narrow screens and landscape; optimize every page for mobile and desktop.
+- [ ] Make the logo clickable and route it to the intended home page.
+- [ ] Make phone numbers clickable with tel: links and email addresses clickable with mailto: links only when verified contact details are available.
+- [ ] Check keyboard operation, visible focus, semantic labels, contrast, alt text, clear button names, and accessible error/success announcements.
+- [ ] Test responsive layouts and interactions on desktop browsers and actual mobile devices, not only screenshots or builds.
+
+### Completion evidence required
+- [ ] Record each item as Specified, Implemented, Connected, Tested, Verified, or Deferred/blocked.
+- [ ] Attach link-check, responsive-browser, accessibility, image-size, and interaction test evidence.
+- [ ] Do not mark a task complete because its markup or code merely exists.
+- [ ] Keep this backlog in the repository and carry it into future SAGE ONE work sessions; do not ask the owner to repeat this list.
+
 ## 0. Safety and working rules
 - [ ] Preserve existing user changes and data; inspect before modifying.
 - [ ] Never print, commit, or expose secret values. Report secret names and locations only, with values redacted.
