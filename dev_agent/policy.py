@@ -52,7 +52,11 @@ class AgentPolicy:
             raise PermissionError(f"Reading '{relative_path}' is not permitted by the agent policy.")
 
     def can_write(self, relative_path: str) -> bool:
-        path = relative_path.replace("\\", "/").lstrip("/")
+        normalized = relative_path.replace("\\", "/")
+        candidate = Path(normalized)
+        if candidate.is_absolute() or any(part in {".", ".."} for part in candidate.parts):
+            return False
+        path = normalized
         if self._is_forbidden(path):
             return False
         return any(path == root or path.startswith(root + "/") for root in self.writable_roots)
