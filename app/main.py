@@ -145,6 +145,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Apply baseline browser security headers to every API response.
+
+    Content Security Policy for the static website must be configured at its
+    hosting layer; applying a restrictive CSP to API/Swagger responses here
+    could break the API documentation UI.
+    """
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(self), microphone=(self), geolocation=()",
+    )
+    # Only emit HSTS when the ASGI request is known to be HTTPS. Configure the
+    # reverse proxy to preserve trusted HTTPS scheme information in production.
+    if request.url.scheme == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    return response
+
+
 # Ensure newly introduced durable tables exist when the API starts.
 Base.metadata.create_all(bind=engine)
 
@@ -164,11 +190,12 @@ app.include_router(learning_api_router)
 # ============================================================
 
 class ChatRequest(BaseModel):
-    message: str
-    session_id: Optional[str] = None
-    goal: Optional[str] = None
-    task: Optional[str] = None
-    project: Optional[str] = None
+    # Bound user-controlled payloads to reduce accidental memory/compute abuse.
+    message: str = Field(min_length=1, max_length=20000)
+    session_id: Optional[str] = Field(default=None, max_length=200)
+    goal: Optional[str] = Field(default=None, max_length=2000)
+    task: Optional[str] = Field(default=None, max_length=2000)
+    project: Optional[str] = Field(default=None, max_length=2000)
     context: Optional[dict[str, Any]] = None
 
 
