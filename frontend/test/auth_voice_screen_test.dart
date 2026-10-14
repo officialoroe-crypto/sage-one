@@ -76,6 +76,35 @@ class _ApiClient extends http.BaseClient {
   }
 }
 
+class _VoiceFlowClient extends http.BaseClient {
+  final List<String> requestPaths = <String>[];
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    requestPaths.add(request.url.path);
+    final Map<String, dynamic> body = switch (request.url.path) {
+      '/command' => {
+          'success': true,
+          'status': 'queued',
+          'session_id': 'voice-session-1',
+          'task': {'id': 'voice-task-1', 'status': 'queued'},
+        },
+      '/tasks/voice-task-1' => {
+          'id': 'voice-task-1',
+          'status': 'completed',
+          'result': 'The voice pipeline works.',
+        },
+      _ => {'success': true},
+    };
+    return http.StreamedResponse(
+      Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(body)))),
+      200,
+      headers: {'content-type': 'application/json'},
+      request: request,
+    );
+  }
+}
+
 SageApi _api() => SageApi(
   client: _ApiClient(),
   baseUrl: 'http://test',
@@ -154,6 +183,35 @@ void main() {
 
     expect(find.byType(Scaffold), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Voice mode exposes language selection and sends confirmed text through durable command API', (tester) async {
+    final client = _VoiceFlowClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: SageVoiceScreen(api: api)));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('English'), findsOneWidget);
+    expect(find.text('नेपाली'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'Explain SAGE voice status');
+    await tester.tap(find.text('CONFIRM & EXECUTE'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+
+    expect(client.requestPaths, contains('/command'));
+    expect(client.requestPaths, contains('/tasks/voice-task-1'));
+    expect(client.requestPaths, isNot(contains('/execute/background')));
+    expect(find.text('The voice pipeline works.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
 
   testWidgets('Saving a memory calls the identity API', (tester) async {
