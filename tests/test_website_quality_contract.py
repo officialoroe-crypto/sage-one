@@ -155,6 +155,7 @@ def test_mobile_menu_is_connected_and_copyright_is_dynamic() -> None:
     assert ".topbar nav.is-open" in css and "@media (max-width: 760px)" in css
     assert "function setMenuOpen" in js and "event.key === 'Escape'" in js
     assert 'id="copyrightYear"' in html and "new Date().getFullYear()" in js
+    assert 'class="hero-logo-link" href="#top"' in html
     assert "243 backend tests passing" not in html
     assert "Implemented in code (verification varies)" in html
     assert "being built as a personal AI mentor" in html
