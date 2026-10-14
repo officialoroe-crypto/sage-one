@@ -158,6 +158,10 @@ jobs:
               raise SystemExit("Identity config endpoint did not return success=true.")
           if not str(identity.get("google_client_id", "")).strip():
               raise SystemExit("Google sign-in is not configured: backend returned an empty google_client_id.")
+          if identity.get("developer_mode") is not False:
+              raise SystemExit("Hosted backend must explicitly disable Developer Mode.")
+          if identity.get("owner_mode_available") is not True:
+              raise SystemExit("Hosted backend must have the configured owner identity available.")
 
           # Confirm the live Chat endpoint rejects unauthenticated callers.
           # This request must not create a session or invoke a model.
