@@ -128,3 +128,32 @@ This section is a foundational product requirement. Future chats and implementat
 - Screen access must be visible, stop/revoke-able, truthful about failure, and privacy-preserving. “SAGE, stop” must interrupt the relevant activity.
 - Detailed behavior and acceptance checklist: [SCREEN_AWARE_ASSISTANT.md](./product/SCREEN_AWARE_ASSISTANT.md).
 - **Phase rule:** “Deferred” means postponed and still open—not done. “Specified” means documentation exists—not code. A phase cannot be called complete while a required feature is deferred, blocked, partially implemented, disconnected or unverified. Any deferred scope must remain visible in the backlog and be reported clearly; never erase requirements to make a phase look complete.
+
+
+## Owner-requested deferred website polish and Nepal compliance queue (2026-10-15)
+
+Priority order: finish real core product work first—authenticated live backend Chat, durable conversations and Activity Center with correct account isolation, Google sign-in on the Huawei device, real microphone/speech/text-to-speech/voice-command testing, and security hardening. This queue is deferred until those critical tasks are complete. No public website/app deployment without explicit owner approval.
+
+Later website checklist:
+- Vertical scrolling for long content; intentional horizontal scrolling only where appropriate, and prevent accidental horizontal overflow.
+- Find and repair broken links; verify all footer links.
+- Functional mobile menu; correct favicon/app icons.
+- Accurate page titles and meta descriptions.
+- Approved custom page/hero photo with verified rights and alt text.
+- Correct copyright year and verified business/operator details.
+- Compress/resize images appropriately.
+- Fix broken/inert buttons; truthful success and error messages.
+- Remove placeholder text, fake reviews, unsupported claims, and unused navigation.
+- Fix mobile overflow; optimize every page for mobile and desktop, including narrow screens and landscape.
+- Clickable logo to the intended home page; clickable verified phone and email using tel: and mailto:.
+- Keyboard/focus, form labels, color contrast, accessible alt text, clear button labels and announced success/error states.
+- Test actual links, buttons, scrolling, responsive layouts and interactions in browser/device; do not count code presence or a green build as verification.
+
+Later legal/privacy/compliance queue:
+- Have qualified Nepal counsel assess applicability of the Privacy Act, 2075; E-Commerce Act, 2081; Electronic Transactions Act, 2063; Consumer Protection Act, 2075; and other applicable law.
+- Finish and review Privacy Policy, Terms and Conditions, Cookie Policy, Refund/Cancellation Policy, and form consent before publication.
+- Inspect actual cookies, browser storage, analytics, embeds and third-party requests; determine whether consent is required and enforce consent where applicable.
+- Minimize data collection; verify third-party data sharing and retention; remove fake reviews/unsupported claims; verify business details and image/font/media copyright.
+- Ensure policy wording matches real production behavior and does not promise unimplemented rights or security controls.
+
+Track every item as Specified, Implemented, Connected, Tested, Verified, or Deferred/blocked. These are future requirements, not completed features. Keep this queue in future SAGE ONE sessions; do not ask the owner to repeat it.
