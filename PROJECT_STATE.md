@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-10-09
-Current main at incident-fix branch creation: 133c5a5f9c8d051e31e9a5d6e7f4aa5e15b99c19
+Last updated: 2026-10-14
+Current main at product-rebuild batch start: 5721647a308760b7e16eede03cd085f6d3d1ddc4
 
 ## Identity
 - Project: SAGE ONE
@@ -18,6 +18,20 @@ Current main at incident-fix branch creation: 133c5a5f9c8d051e31e9a5d6e7f4aa5e15
 - Never call a feature complete until success, failure, refresh/restart behavior and regression coverage are checked where practical.
 - For work spanning separate AI accounts/sessions, update this file and the relevant task/PR handoff in GitHub; chat memory alone is not synchronization.
 - Before resuming, inspect the current main SHA, this file, TODO.md, AI_COLLABORATION.md, coordination/ACTIVE_WORK.yaml, relevant open PRs, and workflow results. Do not rely on older chat summaries when live GitHub state is available.
+
+## Current owner-directed product rebuild — 2026-10-14
+
+**Status: ACTIVE — PR #254 is under CI. No public website deployment or app release is authorized.**
+
+- Owner explicitly redirected work toward a fast, bulk product repair: visible voice command, real backend wiring, Google sign-in, truthful phone/KYC verification, Spark/economy integration, intended animation, and end-to-end QA. This supersedes the older “defer product features until P0/P1” ordering for this scope, while preserving all security, test, and permission safeguards.
+- Current repair PR: https://github.com/officialoroe-crypto/sage-one/pull/254 — `feat(rebuild): restore workspace QA and repair voice command safety`.
+- Root cause found: the current main website entry page had been replaced with a marketing-only page, leaving the imported Freebuff workspace modules under website/css and website/js disconnected from the root entry page. The PR restores the workspace entry page for QA and removes Pages package/deploy jobs from the workflow. This does not publish the restored workspace.
+- Voice changes: route the primary command-center and More-menu entry points to one Flutter voice screen; show the captured transcript and require explicit confirmation before task execution; keep wake mode from submitting unrelated speech; show a visible VOICE control on the web workspace; select Nepali/English recognition from the app language; add regression tests.
+- Automated evidence on head `5cc92b0ad5b4711139035599e52d52a5a4dcd346`: SAGE CI passed; workspace validation and asset upload passed; Flutter web QA build and upload passed. Android APK build was still running at the last check. Do not mark the whole PR green until all checks on the final head complete.
+- QA artifacts from run https://github.com/officialoroe-crypto/sage-one/actions/runs/38509880233 are private inspection artifacts, not releases. The workspace artifact expires after seven days.
+- Live backend smoke test previously passed `/health` and `/identity/config`; a Google client ID is configured. This is not proof of a successful Google sign-in on the physical phone.
+- Phone OTP UI correctly reports when SMS delivery is not configured. Formal KYC provider integration is still unavailable. Spark ledger reads exist; external payment processing remains unavailable until a real provider is configured. Never simulate verified identity, cash, payment, or task completion.
+- Next after PR #254: review and merge only when all final-head checks pass; inspect the QA artifacts locally; then continue with physical-device Google sign-in, the full dead-button/API map, verification-provider decision, Spark ledger/idempotency tests, and animation polish. Do not deploy or publish.
 
 ## Current active handoff — physical Android Google Sign-In
 
