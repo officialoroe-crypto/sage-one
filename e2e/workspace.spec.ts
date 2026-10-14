@@ -142,9 +142,9 @@ test('bulk action wiring audit across every primary screen', async ({ page }) =>
     const appSource = source['app.js'] || '';
     const backendSource = source['backend.js'] || '';
     const known = new Set<string>();
-    for (const match of appSource.matchAll(/case\\s+['"]([^'"]+)['"]\\s*:/g)) known.add(match[1]);
-    for (const match of backendSource.matchAll(/name\\s*===\\s*['"]([^'"]+)['"]/g)) known.add(match[1]);
-    const demo = backendSource.match(/const DEMO_ONLY\\s*=\\s*new Set\\(\\[([\\s\\S]*?)\\]\\);/);
+    for (const match of appSource.matchAll(/case\s+['"]([^'"]+)['"]\s*:/g)) known.add(match[1]);
+    for (const match of backendSource.matchAll(/name\s*===\s*['"]([^'"]+)['"]/g)) known.add(match[1]);
+    const demo = backendSource.match(/const DEMO_ONLY\s*=\s*new Set\(\[([\s\S]*?)\]\);/);
     if (demo) for (const match of demo[1].matchAll(/['"]([^'"]+)['"]/g)) known.add(match[1]);
     for (const name of (window.SAGE?.AG_ACT_KNOWN || [])) known.add(name);
     const perScreen: Array<{route:string; controls:number; actions:string[]; noAction:string[]}> = [];
