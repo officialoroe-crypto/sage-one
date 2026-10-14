@@ -13,7 +13,9 @@ window.SAGE = window.SAGE || {};
     { id: 'aistudio', name: 'AI Studio', sub: 'Create with AI', ic: 'i-sparkles', g: 'linear-gradient(135deg,#0aa6c9,#083448)' },
     { id: 'files', name: 'Files', sub: 'Your documents', ic: 'i-folder', g: 'linear-gradient(135deg,#d98324,#4a2708)' },
     { id: 'logostates', name: 'Logo States', sub: '9 animations', ic: 'i-orbit', g: 'linear-gradient(135deg,#2e86ff,#0b1b3f)' },
-    { id: 'premium', name: 'Premium', sub: 'Unlock more. Do more.', ic: 'i-crown', g: 'linear-gradient(135deg,#6d4dff,#2a1060)' }
+    { id: 'premium', name: 'Premium', sub: 'Unlock more. Do more.', ic: 'i-crown', g: 'linear-gradient(135deg,#6d4dff,#2a1060)' },
+    { id: 'history', name: 'Chat History', sub: 'Saved conversations', ic: 'i-clock', g: 'linear-gradient(135deg,#2e86ff,#0b1b3f)' },
+    { id: 'activity', name: 'Activity Center', sub: 'Tasks and notifications', ic: 'i-bell', g: 'linear-gradient(135deg,#00a86b,#073a28)' }
   ];
   S.APPS = APPS;
 
@@ -96,32 +98,27 @@ window.SAGE = window.SAGE || {};
         <div class="quick" data-act="nav" data-arg="premium"><div class="qi">${S.icon('i-crown')}</div><span>Premium</span></div>
       </div>
 
-      <!-- Earnings strip -->
-      <div class="sect-label">Earnings <span class="link" data-act="nav" data-arg="earn">Details →</span></div>
-      <div class="card glow row between" data-act="nav" data-arg="earn" style="cursor:pointer">
-        <div><div class="tiny muted">Total Earnings</div><div style="font-size:19px;font-weight:800">${S.npr(st.lifetimeEarned)}</div></div>
-        <span class="pill green">${S.icon('i-trend')} +12%</span>
+      <!-- Earnings status: do not present local prototype values as real money -->
+      <div class="sect-label">Earnings</div>
+      <div class="card row between">
+        <div><div class="tiny muted">Verified real earnings</div><div style="font-size:19px;font-weight:800">—</div><div class="tiny muted">Real earning and payout providers are not connected yet.</div></div>
+        <span class="pill">Unavailable</span>
       </div>
 
-      <!-- Live Activity + Recent (board 2) -->
+      <!-- Activity Center uses real backend records after owner sign-in -->
       <div class="home-panels">
-        <div class="sect-label">Live Activity</div>
+        <div class="sect-label">Activity Center</div>
         <div class="card">
-          ${S.DATA.LIVE_ACTIVITY.map(a => `
-          <div class="la-row" data-act="rs-start">
-            <span class="src-badge" style="background:${a.c};color:${a.dark ? '#111' : '#fff'}">${a.g}</span>
-            <div class="grow"><b class="small">${a.n}</b><div class="tiny muted">Found ${a.s} sources</div></div>
-            <span class="tiny muted">${a.when}</span>${S.icon('i-arrow-r')}
-          </div>`).join('')}
+          <div class="tiny muted">Task results and notifications appear here after the Core connection is authenticated.</div>
+          <button class="btn soft mt8" data-act="nav" data-arg="activity">Open Activity Center</button>
         </div>
-        <div class="sect-label">Recent</div>
+        <div class="sect-label">Recent conversations <span class="link" data-act="nav" data-arg="history">View history →</span></div>
         <div class="card">
-          ${S.DATA.RECENT.map(r => `
-          <div class="la-row" data-act="chat">
-            <span class="iconbox" style="width:32px;height:32px">${S.icon(r.ic)}</span>
-            <div class="grow"><b class="small ellipsis">${r.n}</b><div class="tiny muted">${r.when}</div></div>
+          <div class="la-row" data-act="nav" data-arg="history">
+            <span class="iconbox" style="width:32px;height:32px">${S.icon('i-clock')}</span>
+            <div class="grow"><b class="small">Open saved conversations</b><div class="tiny muted">Restore a previous chat or manage your archive</div></div>
             ${S.icon('i-arrow-r')}
-          </div>`).join('')}
+          </div>
         </div>
       </div>
 
@@ -180,8 +177,9 @@ window.SAGE = window.SAGE || {};
           <button class="backbtn" style="position:static;width:34px;height:34px" data-act="back">${S.icon('i-arrow-l')}</button>
           <div class="sage-ava" id="chatOrb">${S.stateOrb(S._chatBusy ? 'thinking' : 'idle', 38)}</div>
           <div class="grow"><div style="font-weight:700;font-size:14px">SAGE</div>
-            <div class="tiny" style="color:#4fe39b;display:flex;gap:5px;align-items:center"><span class="dot"></span>${S.t('chat.online')} · AI Mentor</div></div>
-          <div class="iconbox" style="width:34px;height:34px" data-act="nav" data-arg="evolution">${S.icon('i-diamond')}</div>
+            <div class="tiny muted">AI Mentor · connection status shown below</div></div>
+          <button class="iconbox" style="width:34px;height:34px" data-act="nav" data-arg="history" aria-label="Open chat history" title="Chat history">${S.icon('i-clock')}</button>
+          <button class="iconbox" style="width:34px;height:34px" data-act="nav" data-arg="evolution" aria-label="Open evolution" title="Evolution">${S.icon('i-diamond')}</button>
         </div>
         <div class="chat-body" id="chatBody">${renderChat()}</div>
         <div class="chat-input">
@@ -382,6 +380,116 @@ window.SAGE = window.SAGE || {};
       setTimeout(() => { S.go(dest); S.toast('SAGE routed you to ' + dest); }, 250);
     }
     S.render();
+  };
+
+
+  /* ===== SAVED CHAT HISTORY ===== */
+  let historyArchived = false;
+  S.setHistoryFilter = function (value) {
+    historyArchived = value === 'archived';
+    S.render();
+  };
+
+  async function loadSavedSessions() {
+    const root = document.getElementById('sageHistoryList');
+    if (!root) return;
+    if (!S.backend || !S.backend.isOwnerAuthenticated()) {
+      root.innerHTML = '<div class="card"><b>Sign in required</b><p class="tiny muted">Sign in with the configured SAGE owner account to load saved conversations from Core.</p><button class="btn primary mt8" data-act="nav" data-arg="auth">Sign in</button></div>';
+      return;
+    }
+    root.innerHTML = '<div class="card tiny muted">Loading saved conversations…</div>';
+    try {
+      const response = await S.backend.listSessions(historyArchived);
+      if (!document.getElementById('sageHistoryList')) return;
+      const sessions = response.sessions || [];
+      if (!sessions.length) {
+        root.innerHTML = '<div class="card tiny muted">No conversations in this list yet.</div>';
+        return;
+      }
+      root.innerHTML = sessions.map(session => {
+        const title = session.preview || 'Conversation without messages';
+        const when = session.created_at ? new Date(session.created_at).toLocaleString() : 'Date unavailable';
+        const id = S.esc(session.id);
+        return `<div class="card mt8">
+          <div class="small" style="font-weight:700;overflow-wrap:anywhere">${S.esc(title.slice(0, 120))}</div>
+          <div class="tiny muted mt8">${S.esc(when)} · ${Number(session.message_count || 0)} messages</div>
+          <div class="row mt12" style="gap:8px;flex-wrap:wrap">
+            <button class="btn primary xs" data-act="history-open" data-arg="${id}">Open conversation</button>
+            ${historyArchived
+              ? `<button class="btn soft xs" data-act="history-restore" data-arg="${id}">Restore</button>`
+              : `<button class="btn soft xs" data-act="history-archive" data-arg="${id}">Archive</button>`}
+          </div>
+        </div>`;
+      }).join('');
+    } catch (error) {
+      root.innerHTML = '<div class="card"><b>History could not load</b><p class="tiny muted">' + S.esc(String(error.message || error)) + '</p><button class="btn soft mt8" data-act="history-refresh">Retry</button></div>';
+    }
+  }
+
+  R.history = {
+    view: () => `
+      <div class="top-nav"><button class="backbtn" style="position:static" data-act="back">${S.icon('i-arrow-l')}</button>
+        <div><h2>Chat History</h2><div class="tiny muted">Saved conversations stored in SAGE Core</div></div>
+        <button class="btn primary xs" data-act="chat-new">New chat</button>
+      </div>
+      <div class="chiprow">
+        <button class="chip ${!historyArchived ? 'active' : ''}" data-act="history-filter" data-arg="active">Conversations</button>
+        <button class="chip ${historyArchived ? 'active' : ''}" data-act="history-filter" data-arg="archived">Archive</button>
+      </div>
+      <div id="sageHistoryList"><div class="card tiny muted">Loading saved conversations…</div></div>`,
+    mount: loadSavedSessions
+  };
+
+  /* ===== ACTIVITY CENTER ===== */
+  async function loadActivityCenter() {
+    const root = document.getElementById('sageActivityContent');
+    if (!root) return;
+    if (!S.backend || !S.backend.isOwnerAuthenticated()) {
+      root.innerHTML = '<div class="card"><b>Sign in required</b><p class="tiny muted">Tasks and notifications are private and load after owner sign-in.</p><button class="btn primary mt8" data-act="nav" data-arg="auth">Sign in</button></div>';
+      return;
+    }
+    root.innerHTML = '<div class="card tiny muted">Loading task and notification history…</div>';
+    try {
+      const [taskResponse, notificationResponse] = await Promise.all([
+        S.backend.listTasks(), S.backend.listNotifications()
+      ]);
+      if (!document.getElementById('sageActivityContent')) return;
+      const tasks = taskResponse.tasks || [];
+      const notifications = notificationResponse.notifications || [];
+      const taskHtml = tasks.length ? tasks.map(task => {
+        const title = task.title || task.goal || task.task || task.id || 'SAGE task';
+        const status = String(task.status || 'unknown');
+        const detail = task.error || task.result || task.output || '';
+        return `<div class="list-item">
+          <span class="iconbox">${S.icon(status === 'failed' ? 'i-alert' : status === 'completed' ? 'i-check' : 'i-clock')}</span>
+          <div class="grow"><b class="small">${S.esc(title)}</b><div class="tiny muted">${S.esc(status)} · ${S.esc(task.created_at || task.updated_at || '')}</div>
+          ${detail ? `<div class="tiny muted mt8">${S.esc(String(detail).slice(0, 240))}</div>` : ''}</div>
+        </div>`;
+      }).join('') : '<div class="tiny muted">No tasks recorded yet.</div>';
+      const notificationHtml = notifications.length ? notifications.map(item => `
+        <div class="list-item">
+          <span class="iconbox">${S.icon(item.read ? 'i-check' : 'i-bell')}</span>
+          <div class="grow"><b class="small">${S.esc(item.title || 'SAGE notification')}</b><div class="tiny muted">${S.esc(item.body || '')}</div><div class="tiny muted mt8">${S.esc(item.created_at || '')} · ${item.read ? 'Read' : 'Unread'}</div></div>
+          ${item.read ? '' : `<button class="btn soft xs" data-act="activity-read" data-arg="${S.esc(item.id)}">Mark read</button>`}
+        </div>`).join('') : '<div class="tiny muted">No notifications recorded yet.</div>';
+      root.innerHTML = `
+        <div class="sect-label">Task history <span class="tiny">${tasks.length} records</span></div>
+        <div class="card">${taskHtml}</div>
+        <div class="sect-label mt16">Notifications <span class="tiny">${notifications.length} records</span></div>
+        <div class="card">${notificationHtml}</div>`;
+    } catch (error) {
+      root.innerHTML = '<div class="card"><b>Activity could not load</b><p class="tiny muted">' + S.esc(String(error.message || error)) + '</p><button class="btn soft mt8" data-act="activity-refresh">Retry</button></div>';
+    }
+  }
+
+  R.activity = {
+    view: () => `
+      <div class="top-nav"><button class="backbtn" style="position:static" data-act="back">${S.icon('i-arrow-l')}</button>
+        <div><h2>Activity Center</h2><div class="tiny muted">Your tasks, outcomes and notifications</div></div>
+        <button class="btn soft xs" data-act="activity-refresh">Refresh</button>
+      </div>
+      <div id="sageActivityContent"><div class="card tiny muted">Loading activity…</div></div>`,
+    mount: loadActivityCenter
   };
 
 })(window.SAGE);
