@@ -137,7 +137,7 @@ test('bulk action wiring audit across every primary screen', async ({ page }) =>
   const audit = await page.evaluate(async () => {
     const routes = ['home', 'apps', 'chat', 'research', 'jobs', 'marketplace', 'learning', 'community', 'aistudio', 'files', 'logostates', 'premium', 'profile', 'settings', 'wallet', 'spark', 'earn', 'evolution', 'agents', 'workflow', 'integrations', 'memory', 'aisettings'];
     const scripts = Array.from(document.scripts).map(script => script.src).filter(src => src && src.startsWith(location.origin + '/js/'));
-    const sourcePairs = await Promise.all(scripts.map(async src => [src.split('/').pop() || '', await (await fetch(src)).text()] as const));
+    const sourcePairs = await Promise.all(scripts.map(async src => [new URL(src).pathname.split('/').pop() || '', await (await fetch(src)).text()] as const));
     const source = Object.fromEntries(sourcePairs) as Record<string, string>;
     const appSource = source['app.js'] || '';
     const backendSource = source['backend.js'] || '';
