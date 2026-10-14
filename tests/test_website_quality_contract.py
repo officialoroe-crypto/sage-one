@@ -136,7 +136,6 @@ def test_buttons_and_form_controls_have_accessible_names() -> None:
                 f"Unnamed button in {page.relative_to(ROOT)}"
             )
         label_ids = {str(label.get("for")) for label in parser.labels if label.get("for")}
-        input_ids = {str(item.get("id")) for item in parser.inputs if item.get("id")}
         for item in parser.inputs:
             if item.get("type") == "hidden":
                 continue
