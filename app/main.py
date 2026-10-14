@@ -42,7 +42,7 @@ from app.worker_service import worker_service
 from config.settings import settings
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from workflows.repository import repository as workflow_repository
-from dev_agent.agent import DevelopmentAgent
+from dev_agent.proposals import prepare_developer_preview, apply_developer_preview, StaleDeveloperProposal
 
 
 # ============================================================
@@ -851,8 +851,9 @@ def developer_preview(
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
     workspace = _developer_workspace(request.workspace)
-    result = DevelopmentAgent(str(workspace), apply_changes=False).plan(request.task)
+    result = prepare_developer_preview(str(workspace), request.task)
     proposal_id = str(uuid.uuid4())
+    status = "preview" if result.get("success") and result.get("changes") else "failed"
     with SessionLocal() as db:
         proposal = DeveloperProposal(
             id=proposal_id,
@@ -860,15 +861,15 @@ def developer_preview(
             task=request.task,
             workspace=str(workspace),
             preview_json=json.dumps(result, default=str),
-            status="preview",
+            status=status,
         )
         db.add(proposal)
         db.commit()
     return {
-        "success": True,
-        "proposal_id": proposal_id,
-        "status": "preview",
-        "requires_approval": True,
+        "success": status == "preview",
+        "proposal_id": proposal_id if status == "preview" else None,
+        "status": status,
+        "requires_approval": status == "preview",
         "proposal": result,
     }
 
@@ -901,13 +902,14 @@ def developer_apply(
     request: DeveloperApplyRequest,
     claims: dict[str, Any] = Depends(_require_owner),
 ):
-    """Apply exactly one owner-scoped preview after explicit approval."""
+    """Apply the exact stored preview after explicit approval; never rerun the coding agent."""
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
     if not request.approved:
         raise HTTPException(status_code=400, detail="Explicit approval is required.")
 
     owner_key = _developer_owner_key(claims)
+    now = datetime.now(timezone.utc)
     with SessionLocal() as db:
         proposal = db.query(DeveloperProposal).filter(
             DeveloperProposal.id == request.proposal_id,
@@ -918,10 +920,23 @@ def developer_apply(
         if proposal.status != "preview":
             raise HTTPException(status_code=409, detail="Developer proposal is no longer applicable.")
         workspace = proposal.workspace
-        task = proposal.task
+        preview = json.loads(proposal.preview_json)
+        if not preview.get("success") or not preview.get("changes"):
+            raise HTTPException(status_code=409, detail="Proposal has no validated file changes.")
+        proposal.status = "applying"
+        proposal.approved_at = now
+        db.commit()
 
-    result = DevelopmentAgent(workspace, apply_changes=True).apply(task)
-    now = datetime.now(timezone.utc)
+    try:
+        result = apply_developer_preview(workspace, preview)
+        final_status = "applied"
+    except StaleDeveloperProposal as exc:
+        result = {"success": False, "error": str(exc), "repreview_required": True}
+        final_status = "stale"
+    except (PermissionError, ValueError, OSError) as exc:
+        result = {"success": False, "error": str(exc)}
+        final_status = "failed"
+
     with SessionLocal() as db:
         proposal = db.query(DeveloperProposal).filter(
             DeveloperProposal.id == request.proposal_id,
@@ -929,16 +944,19 @@ def developer_apply(
         ).first()
         if proposal is None:
             raise HTTPException(status_code=404, detail="Developer proposal disappeared.")
-        proposal.approved_at = now
-        proposal.applied_at = now
+        proposal.applied_at = datetime.now(timezone.utc)
         proposal.result_json = json.dumps(result, default=str)
-        proposal.status = "applied" if result.get("success") else "failed"
+        proposal.status = final_status
         db.commit()
 
+    if final_status == "stale":
+        raise HTTPException(status_code=409, detail=result["error"])
+    if final_status == "failed":
+        raise HTTPException(status_code=409, detail=result["error"])
     return {
-        "success": bool(result.get("success")),
+        "success": True,
         "proposal_id": request.proposal_id,
-        "status": "applied" if result.get("success") else "failed",
+        "status": "applied",
         "result": result,
     }
 

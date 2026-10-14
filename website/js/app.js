@@ -199,7 +199,7 @@ window.SAGE = window.SAGE || {};
 
       /* --- earning animation (board 3) --- */
       case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;
-      case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Project Payment' }); break;
+      case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Reward Animation Preview', preview: true, noCredit: true }); break;
 
       /* --- premium (board 2) --- */
       case 'premium-upgrade': {
@@ -278,59 +278,31 @@ window.SAGE = window.SAGE || {};
       case 'chat-quick': S.sendChat(arg); break;
       case 'chat-action': S.chatAction(arg); break;
 
-      /* --- marketplace --- */
+      /* --- marketplace and jobs: never claim an external action without a provider --- */
       case 'mkt-cat': S.setMktCat(arg); break;
       case 'listing': S.go('listing-detail', arg); break;
-      case 'buy-listing': {
-        const l = S.DATA.LISTINGS.find(x => x.id === arg);
-        if (!l) break;
-        const fee = Math.round(l.price * S.marketFeePct(l.price) / 100);
+      case 'buy-listing':
+      case 'buy-confirm':
         S.sheet(`
-          <h3>Confirm Purchase</h3>
-          <div class="sub">${S.esc(l.title)} · ${S.esc(l.loc)}</div>
-          <div class="card" style="margin-bottom:12px">
-            <div class="row between small"><span class="muted">Item</span><span>${S.npr(l.price)}</span></div>
-            <div class="row between small mt8"><span class="muted">Marketplace fee (${S.marketFeePct(l.price)}%)</span><span>${S.npr(fee)}</span></div>
-            <div class="divider"></div>
-            <div class="row between"><b>Total</b><b style="color:var(--electric-2)">${S.npr(l.price + fee)}</b></div>
-          </div>
-          <div class="tiny muted mb12">Pay with ${S.DATA.PAYMENTS.find(p => p.id === st.payMethod).name} · KYC verified</div>
-          <button class="btn primary" data-act="buy-confirm" data-arg="${l.id}">${S.icon('i-lock')} Pay ${S.npr(l.price + fee)}</button>`);
+          <h3>Marketplace checkout is not connected</h3>
+          <div class="sub">No live marketplace, payment provider, or verified order flow is connected. No purchase was made and no Spark or cash balance changed.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'buy-confirm': {
-        const l = S.DATA.LISTINGS.find(x => x.id === arg);
-        S.closeSheet();
-        S.toast('Purchase complete ✓ ' + (l ? l.title : ''));
-        const lvl = S.addProgress(5, 'Marketplace trade');
-        if (lvl) S.handleLevelUp(lvl);
+      case 'sell-submit':
+        S.sheet(`
+          <h3>Marketplace publishing is not connected</h3>
+          <div class="sub">This workspace cannot publish a real listing yet. Nothing was listed and no reward or earning was credited.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'sell-submit': {
-        const t = ((S.$('#sell-title') || {}).value || '').trim();
-        const p = parseInt(((S.$('#sell-price') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!t || !p) { S.toast('Add a title and price first'); break; }
-        const reward = Math.round(p * 0.02);
-        st.earnings.marketplace += reward;
-        st.lifetimeEarned += reward;
-        S.save();
-        S.toast('Listing published! Fee ' + S.npr(Math.round(p * S.marketFeePct(p) / 100)));
-        const lvl = S.addProgress(6, 'Item listed for sale');
-        if (lvl) S.handleLevelUp(lvl);
-        S.go('marketplace');
-        break;
-      }
-
-      /* --- jobs --- */
       case 'job-filter': S.setJobFilter(arg); break;
-      case 'apply-job': {
-        if (!st.appliedJobs.includes(arg)) st.appliedJobs.push(arg);
-        S.save(); S.render();
-        S.toast('Application sent ✓ Evidence added to Evolution');
-        const lvl = S.addProgress(7, 'Job application sent');
-        if (lvl) S.handleLevelUp(lvl);
+      case 'apply-job':
+        S.sheet(`
+          <h3>Job application was not sent</h3>
+          <div class="sub">A verified job-provider connection is not available. SAGE will not claim that an employer was contacted or add a completion reward.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
+
+      case 'files-tab': S.setFilesTab(arg); break;
 
       /* --- learning --- */
       case 'learn-tab': S.setLearnTab(arg); break;
@@ -353,112 +325,51 @@ window.SAGE = window.SAGE || {};
 
       /* --- community --- */
       case 'comm-tab': S.setCommTab(arg); break;
-      case 'files-tab': S.setFilesTab(arg); break;
 
-      /* --- AI studio --- */
+      /* --- AI studio: never fabricate generated files or charge local prototype credits --- */
       case 'ai-tool': {
         if (arg === 'image') S.go('ai-image');
         else if (arg === 'video') S.go('ai-video');
-        else S.toast('Code Generation — coming soon ⏳');
+        else S.toast('Code Generation is not connected yet.');
         break;
       }
-      case 'gen-image': {
-        if (st.spark < 5) { S.toast('Not enough Spark — buy more first'); S.go('spark'); break; }
-        const prompt = ((S.$('#gen-prompt') || {}).value || '').trim();
-        S.addSpark(-5, 'Image generated');
-        S.drawGenerated(prompt);
-        st.ownedFiles.push({ name: 'AI_Image_' + (st.ownedFiles.length + 1) + '.png', size: '2.1 MB', when: 'Just now' });
-        S.save();
-        S.toast('Image generated · −5 Spark');
-        const lvl = S.addProgress(4, 'AI image created');
-        if (lvl) S.handleLevelUp(lvl);
+      case 'gen-image':
+      case 'gen-video':
+        S.sheet(`
+          <h3>AI generation provider is not connected</h3>
+          <div class="sub">SAGE has not generated or saved a real image/video from this action. No Spark was deducted and no earning was credited.</div>
+          <div class="notice">Connect and verify an image/video provider before enabling generation.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'gen-video': {
-        const secs = S.$('#vlen') ? +S.$('#vlen').value : 8;
-        const cost = 25 + Math.max(0, secs - 4) * 2;
-        if (st.spark < cost) { S.toast('Not enough Spark — need ' + cost); S.go('spark'); break; }
-        S.addSpark(-cost, 'Video rendered');
-        st.ownedFiles.push({ name: 'AI_Video_' + secs + 's.mp4', size: (secs * 1.4).toFixed(1) + ' MB', when: 'Just now' });
-        st.earnings.content += 15; st.lifetimeEarned += 15; S.save();
-        S.toast('Video rendered ✓ −' + cost + ' Spark · +NPR 15 content reward');
-        const lvl = S.addProgress(8, 'AI video rendered');
-        if (lvl) S.handleLevelUp(lvl);
-        S.go('files');
-        break;
-      }
 
-      /* --- spark & money --- */
+      /* --- Spark and cash: never mutate local prototype state as a payment --- */
       case 'pay-method':
-        st.payMethod = arg; S.save(); S.render();
-        S.toast(S.DATA.PAYMENTS.find(p => p.id === arg).name + ' selected'); break;
-      case 'buy-spark': {
-        const pm = S.DATA.PAYMENTS.find(p => p.id === st.payMethod);
+      case 'buy-spark':
+      case 'buy-spark-amount':
+      case 'buy-spark-custom':
         S.sheet(`
-          <h3>Buy Spark</h3>
-          <div class="sub">1 Spark = NPR 1 · KYC verified &amp; secure</div>
-          <div class="grid2" style="margin-bottom:12px">
-            ${[100, 500, 1250, 5000].map(v => `
-            <button class="btn soft" data-act="buy-spark-amount" data-arg="${v}" style="flex-direction:column;gap:2px;padding:12px">
-              <b>${S.fmtSpark(v)}</b><span class="tiny muted">Spark · ${S.npr(v)}</span></button>`).join('')}
-          </div>
-          <div class="field"><label>Custom amount</label><input class="input" id="spark-custom" inputmode="numeric" placeholder="e.g. 2500"></div>
-          <button class="btn primary mt8" data-act="buy-spark-custom">${S.icon('i-bolt')} Purchase with ${pm.name}</button>
-          <div class="notice">Payment flow: Choose ${pm.name} → Secure payment (KYC verified) → Instant Spark credited</div>`);
+          <h3>Purchases are not connected yet</h3>
+          <div class="sub">No payment provider is configured for live SAGE Spark purchases. This screen will not charge you or add a balance.</div>
+          <div class="notice">Your real Spark balance and ledger are shown in the authenticated Spark Wallet. Do not treat prototype balances as money.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'buy-spark-amount': S.addSpark(+arg, 'Purchased'); S.closeSheet(); S.render(); break;
-      case 'buy-spark-custom': {
-        const v = parseInt(((S.$('#spark-custom') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!v) { S.toast('Enter an amount'); break; }
-        S.addSpark(v, 'Purchased'); S.closeSheet(); S.render(); break;
-      }
-      case 'send-spark': {
+      case 'send-spark':
+      case 'send-spark-go':
         S.sheet(`
-          <h3>Send Spark</h3>
-          <div class="sub">Instant transfer to any SAGE user · balance ${S.fmtSpark(st.spark)}</div>
-          <div class="field"><label>Recipient (phone or SAGE ID)</label><input class="input" placeholder="+977 98XXXXXXXX"></div>
-          <div class="field"><label>Amount</label><input class="input" id="send-amt" inputmode="numeric" placeholder="e.g. 250"></div>
-          <button class="btn primary mt8" data-act="send-spark-go">${S.icon('i-share')} Send Spark</button>`);
+          <h3>Spark transfers are not available yet</h3>
+          <div class="sub">A verified backend transfer flow is required before SAGE can move Spark between accounts. No balance has been changed.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'send-spark-go': {
-        const v = parseInt(((S.$('#send-amt') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!v || v > st.spark) { S.toast('Check the amount (balance ' + S.fmtSpark(st.spark) + ')'); break; }
-        S.addSpark(-v, 'Sent'); S.closeSheet(); S.render();
-        const lvl = S.addProgress(2, 'Sent Spark to a peer');
-        if (lvl) S.handleLevelUp(lvl);
-        break;
-      }
 
-      /* --- earn & withdraw --- */
+      /* --- earnings and withdrawals --- */
       case 'earn-range': S.setEarnRange(arg); break;
-      case 'withdraw': {
+      case 'withdraw':
+      case 'withdraw-go':
         S.sheet(`
-          <h3>Withdraw to Bank</h3>
-          <div class="sub">Only through approved &amp; regulated partners</div>
-          <div class="field"><label>Amount (NPR)</label><input class="input" id="wd-amt" inputmode="numeric" placeholder="e.g. 5000"></div>
-          <div class="fee-box" style="margin-bottom:12px">
-            <div class="row between small"><span class="muted">Withdrawal fee</span><b id="wd-fee">—</b></div>
-            <div class="tiny muted mt8">Evolution is lifetime achievement — withdrawal never reduces it.</div>
-          </div>
-          <button class="btn primary" data-act="withdraw-go">${S.icon('i-bank')} Confirm Withdrawal</button>`);
-        const inp = S.$('#wd-amt');
-        if (inp) inp.addEventListener('input', () => {
-          const v = parseInt(inp.value.replace(/\D/g, ''), 10) || 0;
-          S.$('#wd-fee').textContent = v ? S.npr(Math.round(v * S.txFeePct(v) / 100)) + ' (' + S.txFeePct(v) + '%)' : '—';
-        });
+          <h3>Cash payouts are not connected yet</h3>
+          <div class="sub">No payout provider or verified withdrawal flow is connected. SAGE will not claim that a withdrawal was initiated.</div>
+          <button class="btn primary mt12" data-act="close-sheet">Understood</button>`);
         break;
-      }
-      case 'withdraw-go': {
-        const v = parseInt(((S.$('#wd-amt') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!v) { S.toast('Enter an amount'); break; }
-        S.closeSheet();
-        S.toast('Withdrawal of ' + S.npr(v) + ' initiated ✓ (fee ' + S.txFeePct(v) + '%)');
-        const lvl = S.addProgress(3, 'Funds withdrawn');
-        if (lvl) S.handleLevelUp(lvl);
-        break;
-      }
 
       /* --- evolution --- */
       case 'evo-preview': S.evoPreview(+arg); break;
