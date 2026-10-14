@@ -198,62 +198,30 @@ window.SAGE = window.SAGE || {};
       case 'logo-preview': S.previewState(arg); break;
       case 'src-detail': S.srcDetail(arg); break;
       case 'src-tab': S.srcTab(arg); break;
-      case 'src-all': S.toast('12 sources · 7 verified · 2 rejected'); break;
+      case 'src-all': S.toast('Live source verification is not connected. No source counts are being claimed.'); break;
 
       /* --- earning animation (board 3) --- */
       case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;
-      case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Project Payment' }); break;
+      case 'earn-tier': S.toast('Real earnings are not connected. This preview will not credit Spark or cash.'); break;
 
-      /* --- premium (board 2) --- */
-      case 'premium-upgrade': {
-        const pm = S.DATA.PAYMENTS.find(p => p.id === st.payMethod);
-        S.sheet(`
-          <h3>Upgrade to SAGE Premium</h3>
-          <div class="sub">Unlock more. Do more. · NPR 999/month</div>
-          <div class="card mb12">
-            ${S.DATA.PREMIUM_FEATURES.map(f => `<div class="row small" style="padding:5px 0"><span style="color:#34d399">✓</span> ${f}</div>`).join('')}
-          </div>
-          <div class="tiny muted mb12">Pay with ${pm.name} · cancel anytime</div>
-          <button class="btn primary" data-act="premium-confirm" style="background:linear-gradient(135deg,#6d4dff,#9d7bff)">${S.icon('i-crown')} Upgrade Now</button>`);
-        break;
-      }
+      /* --- premium (not connected) --- */
+      case 'premium-upgrade':
       case 'premium-confirm':
-        st.premium = true; S.save(); S.closeSheet(); S.render();
-        S.toast('SAGE Premium active ✓ Full power unlocked');
-        if (S.previewState) S.previewState('premium');
-        break;
       case 'premium-cancel':
-        st.premium = false; S.save(); S.render(); S.toast('Premium plan ended · basics stay free'); break;
-
-      /* --- onboarding --- */
-      case 'lang': S.setLang(arg); S.render(); break;
-      case 'auth-continue': {
-        const n = ((S.$('#au-name') || {}).value || '').trim();
-        const p = ((S.$('#au-phone') || {}).value || '').trim();
-        const e = ((S.$('#au-email') || {}).value || '').trim();
-        st.user.name = n || 'Ramesh Shrestha';
-        st.user.phone = p || '+977 9800000000';
-        st.user.email = e;
-        S.save(); S.toast('Account created · OTP verified ✓');
-        S.go('kyc'); break;
-      }
-      case 'auth-google':
-        st.user.name = st.user.name || 'Ramesh Shrestha'; S.save();
-        S.toast('Signed in with Google ✓'); S.go('kyc'); break;
-      case 'kyc-start': {
-        if (st.kyc.face && st.kyc.nid) { S.go('profile-create'); break; }
-        S.sheet(`
-          <h3>Verification in progress</h3>
-          <div class="sub">Face scan + NID check — simulated in this preview</div>
-          <div class="tl-step on"><div class="tl-dot">1</div><div><b class="small">Capturing face geometry</b><div class="tiny muted">3D liveness check…</div></div></div>
-          <div class="tl-step on"><div class="tl-dot">2</div><div><b class="small">Reading NID chip</b><div class="tiny muted">Verifying with Nepal DoT…</div></div></div>
-          <div class="tl-step on"><div class="tl-dot">3</div><div><b class="small">Matching identity</b><div class="tiny muted">Confidence 99.2%…</div></div></div>
-          <button class="btn primary mt12" data-act="kyc-done">Complete Verification</button>`);
+        S.closeSheet();
+        S.toast('Premium billing is not connected. No subscription was started or changed.');
         break;
-      }
+
+      /* --- onboarding: real identity provider required --- */
+      case 'auth-continue':
+      case 'auth-google':
+        S.toast('Use the secure Google sign-in connected to SAGE Core. Local/demo account creation is disabled.');
+        S.go('auth');
+        break;
+      case 'kyc-start':
       case 'kyc-done':
-        st.kyc.face = true; st.kyc.nid = true; S.save(); S.closeSheet();
-        S.toast('KYC verified ✓ Full access unlocked'); S.go('profile-create'); break;
+        S.toast('KYC provider is not configured. Identity has not been verified and access was not unlocked.');
+        break;
       case 'pick-avatar': {
         const avatars = ['🧘', '🦅', '🏔️', '🦁', '🐺', '🪔'];
         st.user.avatar = avatars[Math.floor(Math.random() * avatars.length)];
@@ -284,75 +252,29 @@ window.SAGE = window.SAGE || {};
       /* --- marketplace --- */
       case 'mkt-cat': S.setMktCat(arg); break;
       case 'listing': S.go('listing-detail', arg); break;
-      case 'buy-listing': {
-        const l = S.DATA.LISTINGS.find(x => x.id === arg);
-        if (!l) break;
-        const fee = Math.round(l.price * S.marketFeePct(l.price) / 100);
-        S.sheet(`
-          <h3>Confirm Purchase</h3>
-          <div class="sub">${S.esc(l.title)} · ${S.esc(l.loc)}</div>
-          <div class="card" style="margin-bottom:12px">
-            <div class="row between small"><span class="muted">Item</span><span>${S.npr(l.price)}</span></div>
-            <div class="row between small mt8"><span class="muted">Marketplace fee (${S.marketFeePct(l.price)}%)</span><span>${S.npr(fee)}</span></div>
-            <div class="divider"></div>
-            <div class="row between"><b>Total</b><b style="color:var(--electric-2)">${S.npr(l.price + fee)}</b></div>
-          </div>
-          <div class="tiny muted mb12">Pay with ${S.DATA.PAYMENTS.find(p => p.id === st.payMethod).name} · KYC verified</div>
-          <button class="btn primary" data-act="buy-confirm" data-arg="${l.id}">${S.icon('i-lock')} Pay ${S.npr(l.price + fee)}</button>`);
-        break;
-      }
-      case 'buy-confirm': {
-        const l = S.DATA.LISTINGS.find(x => x.id === arg);
+      case 'buy-listing':
+      case 'buy-confirm':
         S.closeSheet();
-        S.toast('Purchase complete ✓ ' + (l ? l.title : ''));
-        const lvl = S.addProgress(5, 'Marketplace trade');
-        if (lvl) S.handleLevelUp(lvl);
+        S.toast('Marketplace checkout is not connected. No purchase or Spark movement occurred.');
         break;
-      }
-      case 'sell-submit': {
-        const t = ((S.$('#sell-title') || {}).value || '').trim();
-        const p = parseInt(((S.$('#sell-price') || {}).value || '').replace(/\D/g, ''), 10);
-        if (!t || !p) { S.toast('Add a title and price first'); break; }
-        const reward = Math.round(p * 0.02);
-        st.earnings.marketplace += reward;
-        st.lifetimeEarned += reward;
-        S.save();
-        S.toast('Listing published! Fee ' + S.npr(Math.round(p * S.marketFeePct(p) / 100)));
-        const lvl = S.addProgress(6, 'Item listed for sale');
-        if (lvl) S.handleLevelUp(lvl);
-        S.go('marketplace');
+      case 'sell-submit':
+        S.closeSheet();
+        S.toast('Marketplace publishing is not connected. No listing was published and no earnings were credited.');
         break;
-      }
 
       /* --- jobs --- */
       case 'job-filter': S.setJobFilter(arg); break;
-      case 'apply-job': {
-        if (!st.appliedJobs.includes(arg)) st.appliedJobs.push(arg);
-        S.save(); S.render();
-        S.toast('Application sent ✓ Evidence added to Evolution');
-        const lvl = S.addProgress(7, 'Job application sent');
-        if (lvl) S.handleLevelUp(lvl);
+      case 'apply-job':
+        S.toast('Job application delivery is not connected. No application was sent.');
         break;
-      }
 
       /* --- learning --- */
       case 'learn-tab': S.setLearnTab(arg); break;
       case 'course': S.go('course-detail', arg); break;
-      case 'enroll': {
-        if (!st.enrolled.includes(arg)) st.enrolled.push(arg);
-        S.save(); S.render(); S.toast('Enrolled ✓ Your learning path is ready');
-        const lvl = S.addProgress(4, 'Course enrolled');
-        if (lvl) S.handleLevelUp(lvl);
+      case 'enroll':
+      case 'course-complete':
+        S.toast('Course enrollment and completion tracking are not connected to a learning provider. No progress reward was granted.');
         break;
-      }
-      case 'course-complete': {
-        const parts = arg.split('|');
-        const c = S.DATA.COURSES.find(x => x.id === parts[0]);
-        S.toast('Module ' + (+parts[1] + 1) + ' complete ✓ · ' + (c ? c.title : ''));
-        const lvl = S.addProgress(9, 'Module completed');
-        if (lvl) S.handleLevelUp(lvl);
-        break;
-      }
 
       /* --- community --- */
       case 'comm-tab': S.setCommTab(arg); break;
