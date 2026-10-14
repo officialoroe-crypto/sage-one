@@ -116,7 +116,7 @@ jobs:
       - name: Package and validate the public landing page
         run: |
           mkdir -p public_site
-          cp -R website/. public_site/
+          cp website/index.html website/styles.css website/app.js website/favicon.svg public_site/
           test -s public_site/index.html
           test -s public_site/styles.css
           test -s public_site/app.js
