@@ -13,18 +13,19 @@ class _FakeApiClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    if (request.url.path == '/execute/background') commandRequests++;
+    if (request.url.path == '/execute/background' || request.url.path == '/command') commandRequests++;
     if (request.url.path == '/notifications/read-all') {
       markAllReadRequests++;
     }
     final body = switch (request.url.path) {
       '/brain/routing' => jsonEncode({'provider': 'test-provider'}),
       '/execute/background' => jsonEncode({'task_id': 'test-task'}),
+      '/command' => jsonEncode({'success': true, 'status': 'queued', 'session_id': 'voice-session', 'task': {'id': 'test-task'}}),
       '/tasks/test-task' => jsonEncode({'id': 'test-task', 'status': 'completed', 'result': 'Command complete'}),
       _ => jsonEncode({'error': 'not found'}),
     };
     final status = request.url.path == '/brain/routing' ||
-            (request.url.path == '/execute/background' || request.url.path == '/tasks/test-task')
+            (request.url.path == '/execute/background' || request.url.path == '/command' || request.url.path == '/tasks/test-task')
         ? 200
         : 404;
     return http.StreamedResponse(
