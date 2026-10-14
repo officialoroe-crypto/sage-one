@@ -1,6 +1,7 @@
 import hashlib
 
 import pytest
+from pathlib import Path
 
 from dev_agent import proposals
 from dev_agent.policy import AgentPolicy
@@ -18,7 +19,7 @@ def test_preview_runs_in_sandbox_and_returns_exact_patch_without_touching_worksp
 
         def apply(self, task):
             assert task == "Improve the button"
-            candidate = __import__("pathlib").Path(self.workspace) / "website" / "index.html"
+            candidate = Path(self.workspace) / "website" / "index.html"
             candidate.write_text("<button>New</button>", encoding="utf-8")
             return {"success": True, "response": "One file changed", "provider": "test", "model": "fake"}
 
