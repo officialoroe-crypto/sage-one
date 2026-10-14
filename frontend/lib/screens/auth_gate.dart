@@ -93,12 +93,20 @@ class _AuthGateState extends State<AuthGate> {
 
   void _signedIn(Map<String, dynamic> result) {
     final profile = result['profile'];
+    final identity = result['identity'];
+    final identityClaims = identity is Map
+        ? Map<String, dynamic>.from(identity)
+        : <String, dynamic>{};
     setState(() {
       _profile = profile is Map
           ? Map<String, dynamic>.from(profile)
           : <String, dynamic>{};
-      _developerMode = result['developer_mode'] == true;
-      _ownerMode = result['owner_mode'] == true;
+      _developerMode = result['developer_mode'] == true ||
+          identityClaims['developer_mode'] == true;
+      // Support the legacy Google response shape, where owner_mode is nested
+      // under identity, while preferring the canonical top-level flag.
+      _ownerMode = result['owner_mode'] == true ||
+          identityClaims['owner_mode'] == true;
       _loading = false;
     });
   }

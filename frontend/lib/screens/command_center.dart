@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,8 +31,8 @@ class _CommandCenterState extends State<CommandCenter>
     super.initState();
     _orbController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
-    )..repeat(reverse: true);
+      duration: const Duration(milliseconds: 5200),
+    )..repeat();
     _loadWorker();
   }
 
@@ -174,27 +175,100 @@ class _CommandCenterState extends State<CommandCenter>
   }
 
   Widget _orbSection() {
-    final glow = .55 + (_orbController.value * .45);
-    return SizedBox(
-      height: 390,
-      child: Center(
-        child: SizedBox(
-          width: 300,
-          height: 300,
-          child: CustomPaint(
-            painter: _SageOrbPainter(intensity: glow),
-            child: const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('S', style: TextStyle(fontSize: 104, height: .9, fontWeight: FontWeight.w800, color: SageTheme.textPrimary)),
-                  SizedBox(height: 14),
-                  Text('READY', style: TextStyle(fontSize: 9, letterSpacing: 3, color: SageTheme.cyan, fontWeight: FontWeight.w700)),
-                ],
+    final glow = .72 + (math.sin(_orbController.value * math.pi * 2) * .18);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 34, 22, 8),
+      child: Column(
+        children: [
+          const Text(
+            'YOUR IDEAS. IN MOTION.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: SageTheme.cyan,
+              fontSize: 10,
+              letterSpacing: 3.2,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Good to see you, Nishant.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: -.6,
+            ),
+          ),
+          const SizedBox(height: 7),
+          const Text(
+            'What would you like SAGE to help you accomplish?',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: SageTheme.textSecondary, fontSize: 13, height: 1.5),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: 320,
+            height: 320,
+            child: CustomPaint(
+              painter: _SageOrbPainter(
+                intensity: glow,
+                orbitAngle: _orbController.value * math.pi * 2,
+              ),
+              child: Center(
+                child: Container(
+                  width: 126,
+                  height: 126,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const RadialGradient(
+                      center: Alignment(-.35, -.42),
+                      radius: .95,
+                      colors: [
+                        Color(0xFFB7F4FF),
+                        Color(0xFF319BFF),
+                        Color(0xFF1553D8),
+                        Color(0xFF071A50),
+                      ],
+                      stops: [0, .25, .68, 1],
+                    ),
+                    border: Border.all(color: const Color(0xFF9BEFFF).withValues(alpha: .85), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(color: SageTheme.cyan.withValues(alpha: .24 * glow), blurRadius: 42, spreadRadius: 3),
+                    ],
+                  ),
+                  child: const Text(
+                    'S',
+                    style: TextStyle(
+                      fontSize: 88,
+                      height: 1,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                      shadows: [Shadow(color: Color(0xFF0A6BFF), blurRadius: 18)],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+          const SizedBox(height: 2),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+            decoration: BoxDecoration(
+              color: SageTheme.cyan.withValues(alpha: .07),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: SageTheme.cyan.withValues(alpha: .18)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.circle, size: 6, color: SageTheme.success),
+                SizedBox(width: 8),
+                Text('SAGE CORE READY', style: TextStyle(fontSize: 9, letterSpacing: 1.8, color: SageTheme.textSecondary, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -277,38 +351,79 @@ class _CommandCenterState extends State<CommandCenter>
 }
 
 class _SageOrbPainter extends CustomPainter {
-  const _SageOrbPainter({required this.intensity});
+  const _SageOrbPainter({required this.intensity, required this.orbitAngle});
   final double intensity;
+  final double orbitAngle;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    final radius = size.shortestSide * .38;
+    final shortest = size.shortestSide;
+    final radius = shortest * .235;
+
     final halo = Paint()
       ..shader = RadialGradient(
         colors: [
-          SageTheme.cyan.withValues(alpha: .22 * intensity),
+          SageTheme.cyan.withValues(alpha: .19 * intensity),
           SageTheme.blue.withValues(alpha: .10 * intensity),
           Colors.transparent,
         ],
-      ).createShader(Rect.fromCircle(center: center, radius: size.shortestSide * .49));
-    canvas.drawCircle(center, size.shortestSide * .49, halo);
+      ).createShader(Rect.fromCircle(center: center, radius: shortest * .49));
+    canvas.drawCircle(center, shortest * .49, halo);
 
-    final orb = Paint()
+    // Fine orbital track: the signature SAGE ONE ring.
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(-.28);
+    final orbitRect = Rect.fromCenter(
+      center: Offset.zero,
+      width: shortest * .91,
+      height: shortest * .48,
+    );
+    final orbitPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.15
+      ..color = SageTheme.cyan.withValues(alpha: .66 * intensity);
+    canvas.drawOval(orbitRect, orbitPaint);
+    final secondaryOrbit = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .7
+      ..color = Colors.white.withValues(alpha: .12);
+    canvas.drawOval(orbitRect.inflate(7), secondaryOrbit);
+
+    // A single golden coin moves around the orbit.
+    final coinAngle = orbitAngle - math.pi / 2;
+    final coinPosition = Offset(
+      math.cos(coinAngle) * orbitRect.width / 2,
+      math.sin(coinAngle) * orbitRect.height / 2,
+    );
+    final coinGlow = Paint()
+      ..color = SageTheme.gold.withValues(alpha: .28)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9);
+    canvas.drawCircle(coinPosition, 13, coinGlow);
+    final coinPaint = Paint()
       ..shader = const RadialGradient(
-        center: Alignment(-.25, -.3),
-        radius: 1,
-        colors: [SageTheme.surfaceRaised, SageTheme.surface, SageTheme.voidBlack],
-      ).createShader(Rect.fromCircle(center: center, radius: radius));
-    canvas.drawCircle(center, radius, orb);
+        colors: [Color(0xFFFFF0A6), Color(0xFFFFC247), Color(0xFFB86A12)],
+      ).createShader(Rect.fromCircle(center: coinPosition, radius: 9));
+    canvas.drawCircle(coinPosition, 9, coinPaint);
+    canvas.drawCircle(
+      coinPosition,
+      6,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF8D4C0B),
+    );
+    canvas.restore();
 
-    final softGlow = Paint()
-      ..style = PaintingStyle.fill
-      ..color = SageTheme.cyan.withValues(alpha: .045 * intensity)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
-    canvas.drawCircle(center, radius * .96, softGlow);
+    final sphereOutline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = SageTheme.cyan.withValues(alpha: .38);
+    canvas.drawCircle(center, radius + 2, sphereOutline);
   }
 
   @override
-  bool shouldRepaint(covariant _SageOrbPainter oldDelegate) => oldDelegate.intensity != intensity;
+  bool shouldRepaint(covariant _SageOrbPainter oldDelegate) =>
+      oldDelegate.intensity != intensity || oldDelegate.orbitAngle != orbitAngle;
 }
