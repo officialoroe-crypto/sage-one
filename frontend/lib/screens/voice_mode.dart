@@ -98,14 +98,11 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
         if (mounted) setState(() => _speaking = true);
       });
       _tts.setCompletionHandler(() {
-        if (mounted) setState(() => _speaking = false);
-      });
-      _tts.setCancelHandler(() {
         if (!mounted) return;
         setState(() => _speaking = false);
         if (_wakeMode && !_processing) _restartWakeListening();
       });
-      _tts.setCompletionHandler(() {
+      _tts.setCancelHandler(() {
         if (!mounted) return;
         setState(() => _speaking = false);
         if (_wakeMode && !_processing) _restartWakeListening();
@@ -184,8 +181,11 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
     if (!result.finalResult) return;
 
     if (_wakeMode) {
-      final normalized = transcript.toLowerCase();
-      final wakeIndex = normalized.indexOf('sage');
+      // Match SAGE as a separate word, not the "sage" suffix inside
+      // unrelated words such as "message".
+      final wakeMatch = RegExp(r'\\bsage\\b', caseSensitive: false)
+          .firstMatch(transcript);
+      final wakeIndex = wakeMatch?.start ?? -1;
       if (wakeIndex < 0) {
         _command.clear();
         _speech.stop();
