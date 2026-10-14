@@ -220,7 +220,7 @@ class _SageOneShellState extends State<SageOneShell> {
           ? FloatingActionButton.extended(
               heroTag: 'sage-voice-command-entry',
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => VoiceCommandScreen(api: _api)),
+                MaterialPageRoute(builder: (_) => SageVoiceScreen(api: _api)),
               ),
               icon: const Icon(Icons.mic_none),
               label: const Text('Voice command'),
