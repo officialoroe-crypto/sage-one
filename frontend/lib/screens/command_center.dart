@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
+import 'voice_mode.dart';
 class CommandCenter extends StatefulWidget {
   const CommandCenter({required this.api, this.onCreate, super.key});
   final SageApi api;
@@ -300,6 +301,24 @@ class _CommandCenterState extends State<CommandCenter>
               label: Text(_sending ? 'Working' : 'Execute'),
             ),
           ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SageVoiceScreen(api: widget.api),
+              ),
+            ),
+            icon: const Icon(Icons.mic_none),
+            label: const Text('VOICE COMMAND  ·  TAP TO SPEAK'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: SageTheme.cyan,
+              side: BorderSide(color: SageTheme.cyan.withValues(alpha: .55)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
         ),
         const SizedBox(height: 8),
         Center(

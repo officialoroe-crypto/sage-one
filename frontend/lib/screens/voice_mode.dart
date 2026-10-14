@@ -26,7 +26,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
   bool _listening = false;
   bool _processing = false;
   bool _speaking = false;
-  bool _wakeMode = true;
+  bool _wakeMode = false;
   String _status = 'INITIALIZING';
   String _localeId = 'en_US';
   String? _taskId;
@@ -175,6 +175,21 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
 
     _speech.stop();
     _submit();
+  }
+
+  Future<void> _toggleListening() async {
+    if (_processing) return;
+    if (_speech.isListening || _listening) {
+      await _speech.stop();
+      if (mounted) {
+        setState(() {
+          _listening = false;
+          _status = 'READY';
+        });
+      }
+      return;
+    }
+    await _startListening();
   }
 
   Future<void> _toggleWakeMode() async {
@@ -393,6 +408,19 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
             ),
           ),
           const SizedBox(height: 18),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _listening ? 'LISTENING — WORDS APPEAR BELOW' : 'COMMAND / TRANSCRIPT',
+              style: const TextStyle(
+                color: SageTheme.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _command,
             minLines: 3,
@@ -411,9 +439,9 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
           ),
           const SizedBox(height: 9),
           OutlinedButton.icon(
-            onPressed: _processing ? null : _startListening,
-            icon: const Icon(Icons.mic),
-            label: const Text('START LISTENING'),
+            onPressed: _processing ? null : _toggleListening,
+            icon: Icon(_listening ? Icons.stop_circle_outlined : Icons.mic),
+            label: Text(_listening ? 'STOP LISTENING' : 'START LISTENING'),
           ),
           const SizedBox(height: 14),
           Card(
