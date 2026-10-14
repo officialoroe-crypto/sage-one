@@ -191,3 +191,8 @@ This snapshot tracks the current implementation branch, not a release. Status wo
 | Privacy, Terms, Cookies, Refund and form consent for public use | Deferred/blocked | Internal drafts only; confirm real data flows/cookies and obtain qualified Nepal legal review before publication |
 | Full link/button sweep, color-contrast audit, real-device mobile/desktop/landscape QA | Deferred/blocked | Automated checks are not a substitute for browser and physical-device verification |
 | Release/deployment | Deferred/blocked by owner instruction | No production release authorized |
+
+
+### Limited website data-flow scan
+
+On the current website branch, a source-text scan of `website/app.js`, `website/chat/chat.js`, and `website/app-preview/app.js` found no direct `document.cookie`, Web Storage, analytics SDK, iframe, or browser network-call references. The three HTML pages load Google Fonts from Google-hosted domains. This is a limited source scan only: it does **not** establish what the hosting layer, future integrations, backend, browser extensions, or third-party requests do on the deployed site. Do not decide cookie-consent obligations from this scan alone; confirm the actual deployed network/storage behavior and obtain qualified local advice before publishing final policy text.
