@@ -43,3 +43,18 @@ def test_every_reward_animation_entry_is_preview_only():
     source = APP_CONTROLLER.read_text(encoding="utf-8")
     assert "case 'sim-earn': S.closeSheet(); S.playEarning(5000, { source: 'Animation Preview', preview: true, noCredit: true }); break;" in source
     assert "case 'earn-tier': S.closeSheet(); S.playEarning(+arg, { source: 'Reward Animation Preview', preview: true, noCredit: true }); break;" in source
+
+
+
+def test_unconnected_marketplace_jobs_and_generation_never_claim_success():
+    source = APP_CONTROLLER.read_text(encoding="utf-8")
+    assert "Marketplace checkout is not connected" in source
+    assert "Marketplace publishing is not connected" in source
+    assert "Job application was not sent" in source
+    assert "AI generation provider is not connected" in source
+    assert "Purchase complete ✓" not in source
+    assert "Listing published!" not in source
+    assert "Application sent ✓" not in source
+    assert "Video rendered ✓" not in source
+    assert "S.addSpark(-5, 'Image generated')" not in source
+    assert "st.earnings.content += 15" not in source
