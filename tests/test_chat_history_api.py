@@ -113,3 +113,43 @@ def test_chat_history_routes_require_owner_authentication():
             app.dependency_overrides[_require_owner] = previous_owner_override
         if had_auth_override:
             app.dependency_overrides[authenticate_request] = previous_auth_override
+
+def test_chat_endpoint_returns_core_reply_and_reuses_owner_session(monkeypatch):
+    engine, session_factory = _test_database(monkeypatch)
+    owner_key = "google:qa-owner"
+    claims = {
+        "auth_provider": "google",
+        "auth_subject": "qa-owner",
+        "owner_mode": True,
+    }
+    app.dependency_overrides.pop(_require_owner, None)
+    monkeypatch.setitem(app.dependency_overrides, _require_owner, lambda: claims)
+    monkeypatch.setattr(main_module, "get_or_create_authenticated_profile", lambda _claims: {"id": "qa-profile"})
+    calls = []
+
+    def fake_handle(**kwargs):
+        calls.append(kwargs)
+        return {"text": "SAGE Core route test reply"}
+
+    monkeypatch.setattr(main_module.sage, "handle", fake_handle)
+    try:
+        first = client.post("/chat", json={"message": "Please reply with a test result."})
+        assert first.status_code == 200
+        first_body = first.json()
+        assert first_body["success"] is True
+        assert first_body["response"]["text"] == "SAGE Core route test reply"
+        session_id = first_body["session_id"]
+        assert session_id
+        assert calls[0]["user_message"] == "Please reply with a test result."
+        assert calls[0]["owner_authorized"] is True
+
+        second = client.post("/chat", json={"message": "Continue the same conversation.", "session_id": session_id})
+        assert second.status_code == 200
+        assert second.json()["session_id"] == session_id
+        assert calls[1]["session_id"] == session_id
+
+        with session_factory() as db:
+            saved = repository.get_session(db, session_id, owner_key=owner_key)
+            assert saved is not None
+    finally:
+        engine.dispose()
