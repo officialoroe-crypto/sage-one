@@ -28,7 +28,7 @@ def test_workflow_actions_use_current_compatible_majors():
     assert "deploy-marketing-site:" not in pages
     assert "actions/upload-pages-artifact@" not in pages
     assert "actions/deploy-pages@" not in pages
-    assert "Upload workspace source for private QA" in pages
+    assert "Upload workspace source for QA" in pages
     assert "retention-days: 7" in pages
     assert "deploy-website:" not in pages
 
