@@ -1,4 +1,4 @@
-name: SAGE ONE Website and Flutter Web QA
+name: SAGE ONE Website and Flutter QA (No Deployment)
 
 on:
   workflow_dispatch:
@@ -9,14 +9,6 @@ on:
       - "website/**"
       - "frontend/**"
       - ".github/workflows/sage-one-god-mode-pages.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "website/**"
-      - "frontend/**"
-      - ".github/workflows/sage-one-god-mode-pages.yml"
-
 permissions:
   contents: read
 
@@ -111,56 +103,3 @@ jobs:
           path: frontend/build/web
           if-no-files-found: error
           retention-days: 7
-
-  package-website:
-    if: github.event_name != 'pull_request'
-    name: Package the current Freebuff website only
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pages: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Package and validate website-only Pages output
-        run: |
-          test -s website/index.html
-          test -s website/css/styles.css
-          test -s website/js/app.js
-          test -s website/js/backend.js
-          test -s website/img/sage-mark.png
-          mkdir -p public_site
-          cp -R website/. public_site/
-          test -s public_site/index.html
-          test -s public_site/css/styles.css
-          test -s public_site/js/app.js
-          test -s public_site/js/backend.js
-          test -s public_site/img/sage-mark.png
-          test ! -e public_site/app/index.html
-
-      - name: Upload website-only Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: public_site
-
-  deploy-website:
-    if: github.event_name != 'pull_request'
-    name: Deploy the current website
-    needs:
-      - validate
-      - package-website
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy website to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
