@@ -87,7 +87,7 @@ jobs:
               exit 1
               ;;
           esac
-          flutter build web --release --base-href /sage-one/app/ --dart-define="SAGE_API_URL=$SAGE_API_URL"
+          flutter build web --release --base-href / --dart-define="SAGE_API_URL=$SAGE_API_URL"
       - name: Upload web QA build artifact
         uses: actions/upload-artifact@v7
         with:
