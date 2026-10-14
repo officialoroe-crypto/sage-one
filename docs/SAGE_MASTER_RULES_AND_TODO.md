@@ -6,6 +6,12 @@ Baseline main SHA for this cleanup: `5524f23283f5979f06e497048ae7f6b63eabb87b`
 
 This file is the single operational source for priority order, working rules, current tasks, and future backlog. Detailed product/design/architecture specs remain linked from [Start Here](00_START_HERE.md); they define their own subject, while this file controls what we do next.
 
+## Owner reprioritization — 2026-10-14
+
+The owner explicitly reprioritized the work. The active scope is now a fast, reviewable product-rebuild sequence: (1) restore the intended web workspace in a QA artifact and make voice commands visible/safe; (2) verify Google identity and backend flows; (3) map and connect real frontend controls to backend APIs; (4) truthfully handle phone OTP/formal KYC provider readiness; (5) harden Spark ledger/economy and payment readiness; (6) refine animation and run end-to-end QA. This overrides the previous instruction to defer all product features until the cleanup/self-repair gates, for this owner-directed scope only. Preserve cleanup evidence, permission gates, testing, and rollback safeguards.
+
+**Release freeze:** no website deployment, public app exposure, APK publication, or production publishing during this rebuild. CI and short-retention QA artifacts are allowed. Never call a feature complete based on source code or CI alone when it requires a real provider/device test.
+
 ## 1. Current priorities — do not reorder without an explicit owner decision
 
 ### P0 — Clean and stabilize the repository (NOW)

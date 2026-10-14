@@ -622,7 +622,7 @@ html[data-theme="light"] .sheet{background:linear-gradient(180deg,#ffffff,#eef3f
 .hh-ask input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);font-size:13px}
 .hh-ask input::placeholder{color:var(--muted-2)}
 .hh-mic,.hh-send{width:34px;height:34px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.hh-mic{background:rgba(47,134,255,.12);border:1px solid var(--stroke);color:var(--electric-2)}
+.hh-mic{width:auto;min-width:72px;padding:0 10px;gap:5px;border-radius:18px;background:rgba(47,134,255,.12);border:1px solid var(--stroke);color:var(--electric-2);font-size:10px;font-weight:800;letter-spacing:.7px}.hh-mic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
 .hh-send{background:var(--grad-btn);color:#fff;box-shadow:0 4px 14px rgba(27,92,255,.45)}
 .hh-actions{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;width:100%}
 .hh-act{display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 2px 9px;border-radius:14px;background:rgba(9,19,44,.82);border:1px solid var(--stroke);color:var(--muted);font-size:9.5px;letter-spacing:.4px;transition:.2s}

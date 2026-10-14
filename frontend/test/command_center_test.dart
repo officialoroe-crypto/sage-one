@@ -94,4 +94,42 @@ void main() {
 
     expect(client.markAllReadRequests, 0);
   });
+
+  testWidgets('Voice command captures a transcript and waits for explicit confirmation', (tester) async {
+    final client = _FakeApiClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: CommandCenter(api: api)));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final voiceEntry = find.text('VOICE COMMAND  ·  TAP TO SPEAK');
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -420));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.ensureVisible(voiceEntry);
+    await tester.tap(voiceEntry);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('SAGE VOICE'), findsOneWidget);
+    expect(find.text('CONFIRM & EXECUTE'), findsOneWidget);
+    expect(client.commandRequests, 0);
+
+    await tester.enterText(find.byType(TextField).last, 'Run a safe test command');
+    await tester.pump();
+    expect(client.commandRequests, 0, reason: 'Editing a transcript must not execute it.');
+
+    await tester.tap(find.text('CONFIRM & EXECUTE'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(client.commandRequests, 1);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
 }

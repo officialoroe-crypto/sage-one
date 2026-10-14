@@ -1,32 +1,36 @@
-# SAGE ONE Website
+# SAGE ONE Website Workspace
 
-The `website/` directory is the public-facing SAGE ONE landing surface.
+The Freebuff-exported workspace is the intended SAGE ONE website experience. Its source lives in this directory:
+- `index.html` — workspace entry point
+- `css/` — responsive visual system and animation
+- `js/` — screens, navigation, voice capture, and the authenticated SAGE Core bridge
+- `img/` — workspace imagery and brand assets
 
-## Boundaries
+The Flutter mobile app remains in `frontend/`; FastAPI remains the canonical backend.
 
-- This site explains SAGE ONE, SAGE WORKFLOW, Intelligence, Spark and Evolution.
-- It does not expose authenticated workspace data.
-- It does not pretend that publishing, social connections, research or execution are available from the public landing page.
-- The authenticated product remains the Flutter application and SAGE Core APIs.
+## Preview locally without publishing
 
-## Local preview
+1. Download the latest successful **SAGE ONE Marketing Website and Web App QA** run from GitHub Actions.
+2. Download the artifact named `sage-one-website-workspace-qa-<commit>` and extract it to a folder, for example `C:\\SageOne\\website-qa`.
+3. Open Command Prompt in that extracted folder and run:
 
-Serve this directory with any static HTTP server. For example:
-
-```text
-python -m http.server 8080 --directory website
+```bat
+py -m http.server 8080
 ```
 
-Then open `http://127.0.0.1:8080`.
+4. Open `http://127.0.0.1:8080` in Chrome or Opera. Keep the server window open while testing.
 
-## Deployment and release boundary
+Microphone input requires a supported browser and microphone permission. Voice recognition shows a transcript and waits for you to review and send it. Google sign-in from a local preview also requires `http://localhost:8080` or `http://127.0.0.1:8080` to be an authorized origin in the Google OAuth configuration. Do not paste OAuth secrets or tokens into chat.
 
-`.github/workflows/sage-one-god-mode-pages.yml` validates the marketing page, runs Flutter analysis/tests, and builds a Flutter web QA artifact on relevant pull requests and main pushes. **The Flutter app build is not published to GitHub Pages during QA.**
+## Current backend boundaries
 
-The public Pages artifact contains only the static marketing site. Publishing it requires a deliberate manual workflow dispatch. Do not add `frontend/build/web` to the public Pages artifact until the owner approves public app release after both web and mobile QA pass. Repository Pages must be configured to use GitHub Actions.
+- Google owner sign-in, chat, and explicitly queued tasks are connected in code but still require real browser end-to-end verification.
+- Phone verification depends on an actual configured SMS provider.
+- Formal KYC, external payments, research, and media-generation providers are not to be marked complete unless the real provider is connected and verified.
+- Prototype-only actions must clearly say they are unavailable and must not fake a transaction, verification, generated file, or completed task.
 
-The web QA build is uploaded separately as a GitHub Actions artifact for inspection. Artifact availability does not prove live-browser behavior or authenticated backend access.
+## Release boundary
 
-## Design direction
+**Publishing is paused during the current rebuild.** The GitHub Actions workflow validates the workspace, runs Flutter analysis/tests, builds the Flutter web app for QA, and uploads short-retention QA artifacts. It has no Pages package/deploy job. Pushes to main, pull requests, and manual workflow dispatch do not publish the website or app.
 
-The website follows the SAGE ONE cinematic system: near-black foundation, cyan/blue/violet intelligence accents, gold for economy/premium signals, orbital-core motifs, restrained motion and responsive layouts. The landing page describes the product direction without claiming that unfinished integrations are already live.
+The currently deployed public website remains unchanged until a later release is explicitly requested. Because this repository is public, Actions artifacts may be downloadable by other repository visitors; they are not private storage. Do not put credentials, tokens, private user data, or real identity documents in them. QA artifacts do not prove live-browser behavior or authenticated backend access.
