@@ -562,8 +562,8 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
               title: Text(_language == 'ne' ? 'नेपाली आवाज चयन गरिएको' : 'English voice selected'),
               subtitle: Text(
                 _language == 'ne'
-                    ? 'Speech recognition uses ${_localeId}. Spoken responses will request Nepali TTS.'
-                    : 'Speech recognition uses ${_localeId}. Select Nepali if the device provides a Nepali recognizer.',
+                    ? 'Speech recognition uses $_localeId. Spoken responses will request Nepali TTS.'
+                    : 'Speech recognition uses $_localeId. Select Nepali if the device provides a Nepali recognizer.',
                 style: const TextStyle(
                   fontSize: 10,
                   color: SageTheme.textSecondary,
