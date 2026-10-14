@@ -75,7 +75,7 @@ test.describe('SAGE ONE public website browser interactions', () => {
     await expect(ranks).toHaveCount(13);
     for (let i = 0; i < 13; i++) {
       const rank = ranks.nth(i);
-      const label = (await rank.innerText()).replace(/^\\d+\\s*/, '');
+      const label = (await rank.innerText()).replace(/^\d+\s*/, '');
       await rank.click();
       await expect(page.locator('#rankTitle')).toContainText(label);
       await expect(rank).toHaveAttribute('aria-pressed', 'true');
