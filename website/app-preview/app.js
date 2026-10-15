@@ -75,9 +75,8 @@
   $('evoBar').style.width = evo.progress + '%';
   $('evoBar').parentNode.setAttribute('aria-valuenow', String(evo.progress));
 
-  $('moneyLevel').textContent = lim.level;
-  $('moneyText').textContent = fmt(lim.locked) + ' Spark is locked as savings. SAGE may propose up to ' + fmt(lim.limit) +
-    ' Spark in one spend, and you approve every spend.';
+  $('moneyLevel').textContent = lim.level || 'Not active';
+  $('moneyText').textContent = 'SS spend limits are not active. No payment or spending is enabled in this preview.';
   $('balance').textContent = fmt(wallet.balance);
   $('balanceNpr').textContent = 'No exchange rate or payment is active.';
 
