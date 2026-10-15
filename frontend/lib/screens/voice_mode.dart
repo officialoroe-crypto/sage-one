@@ -596,7 +596,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
             controller: _command,
             minLines: 3,
             maxLines: 6,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: _conversationMode ? 'Message to SAGE' : 'Voice command',
               hintText: _conversationMode ? 'Speak or type a message…' : 'Say what you want SAGE to do…',
               alignLabelWithHint: true,
@@ -605,7 +605,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: _processing ? null : _submit,
-            icon: const Icon(Icons.play_arrow),
+            icon: Icon(_conversationMode ? Icons.send : Icons.play_arrow),
             label: Text(_conversationMode ? 'SEND TO SAGE' : 'CONFIRM & EXECUTE'),
           ),
           const SizedBox(height: 9),
