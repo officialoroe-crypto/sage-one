@@ -45,8 +45,8 @@ def test_failed_provider_call_clears_request_scoped_owner_context():
             owner_authorized=True,
         )
 
-    assert core._active_session_id is None
-    assert core._active_owner_authorized is False
+    assert core._active_session_id.get() is None
+    assert core._active_owner_authorized.get() is False
     assert core.state.messages == [
         ("session-1", "user", "A message that triggers a provider failure")
     ]
