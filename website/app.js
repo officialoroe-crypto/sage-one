@@ -5,11 +5,6 @@
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $ = function (id) { return document.getElementById(id); };
-  function wholeNumber(value) {
-    var n = Math.floor(Number(value));
-    if (!isFinite(n) || n < 0) return 0;
-    return Math.min(n, 1e12);
-  }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
 
   /* ------------------------------------------------------ Evolution explorer */
