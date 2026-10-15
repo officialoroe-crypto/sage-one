@@ -23,16 +23,24 @@ test.describe('SAGE Core live API smoke checks', () => {
     await api.dispose();
   });
 
-  test('published website origin receives the expected CORS headers', async () => {
+  test('published website origin can preflight authenticated Chat requests', async () => {
     const origin = 'https://officialoroe-crypto.github.io';
     const api = await playwrightRequest.newContext();
-    const response = await api.get(`${apiBase}/identity/config`, {
+    const response = await api.fetch(`${apiBase}/chat`, {
+      method: 'OPTIONS',
       timeout: 30_000,
-      headers: { Origin: origin }
+      headers: {
+        Origin: origin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,content-type'
+      }
     });
-    expect(response.ok(), `CORS probe returned HTTP ${response.status()}`).toBeTruthy();
+    expect([200, 204]).toContain(response.status());
     expect(response.headers()['access-control-allow-origin']).toBe(origin);
-    expect(response.headers()['access-control-allow-credentials']).toBe('true');
+    expect((response.headers()['access-control-allow-methods'] || '').toUpperCase()).toContain('POST');
+    const allowedHeaders = (response.headers()['access-control-allow-headers'] || '').toLowerCase();
+    expect(allowedHeaders).toContain('authorization');
+    expect(allowedHeaders).toContain('content-type');
     await api.dispose();
   });
 });
