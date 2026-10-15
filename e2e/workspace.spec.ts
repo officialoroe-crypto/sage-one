@@ -26,6 +26,20 @@ test.describe('SAGE Core live API smoke checks', () => {
 
 test.describe('SAGE ONE actual browser interactions', () => {
   test.beforeEach(async ({ page }) => {
+    // The separate API smoke tests above exercise the live service. Keep browser
+    // UI checks deterministic when the hosted service's CORS deployment lags code.
+    await page.route('**/identity/config', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          google_client_id: 'qa-client-id.apps.googleusercontent.com',
+          developer_mode: false,
+          owner_mode_available: true
+        })
+      });
+    });
     // Use a disposable QA-only account state. No production identity or stored token.
     await page.addInitScript(() => {
       localStorage.setItem('sage-one-state-v1', JSON.stringify({
