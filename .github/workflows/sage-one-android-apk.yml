@@ -120,8 +120,8 @@ jobs:
           "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-hosted-qa.apk | tee /tmp/sage-qa-cert.txt
           {
             echo "### Hosted Android QA APK identity"
-            echo "- Application ID: `com.sageone.sage_one`"
-            awk '/Signer #1 certificate SHA-1 digest:/ { print "- Signing certificate SHA-1: `" $NF "`" }' /tmp/sage-qa-cert.txt
+            printf '%s\n' '- Application ID: `com.sageone.sage_one`'
+            awk '/certificate SHA-1 digest:/ { print "- Signing certificate SHA-1: `" $NF "`" }' /tmp/sage-qa-cert.txt
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload release artifacts
