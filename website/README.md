@@ -1,17 +1,18 @@
 # SAGE ONE Website
 
-The `website/` directory is the public-facing SAGE ONE landing surface.
+The `website/` directory contains the SAGE ONE landing page and explicitly labelled interactive previews.
 
 ## Boundaries
 
-- This site explains SAGE ONE, SAGE WORKFLOW, Intelligence, Spark and Evolution.
-- It does not expose authenticated workspace data.
-- It does not pretend that publishing, social connections, research or execution are available from the public landing page.
+- The landing page explains the SAGE ONE product direction.
+- The Chat and phone-app pages are previews. Sign-in, balances, notifications and chat replies shown there are simulated unless a page explicitly says otherwise.
+- Do not enter private, personal, or sensitive information into a preview.
 - The authenticated product remains the Flutter application and SAGE Core APIs.
+- Do not present draft policy documents as legal advice or proof of compliance.
 
 ## Local preview
 
-Serve this directory with any static HTTP server. For example:
+From the repository root, run:
 
 ```text
 python -m http.server 8080 --directory website
@@ -19,14 +20,16 @@ python -m http.server 8080 --directory website
 
 Then open `http://127.0.0.1:8080`.
 
-## Deployment
+## Quality checks
 
-`.github/workflows/sage-one-god-mode-pages.yml` builds the Flutter app and publishes one combined Pages artifact: the marketing site at `/sage-one/` and the app at `/sage-one/app/`. Pushes to `main` that change `website/**` or `frontend/**` trigger deployment; a manual workflow dispatch is also available. Repository Pages must be configured to use GitHub Actions.
+The `.github/workflows/sage-one-god-mode-pages.yml` workflow checks page metadata, favicons, local links and assets, image alt attributes, accessible button/input names, mobile-menu wiring, JavaScript syntax, and the Flutter web app. It uploads a short-lived QA artifact only.
 
-## Contents
+**This workflow does not publish or deploy the website or app.** Public release requires a separate, explicit owner decision after legal, privacy, accessibility, image-rights, real-device, and functional verification.
 
-Hero with the canonical logo, the Learn-to-Evolution flow, the two progression paths, an Evolution explorer (13 ranks, Low/Mid/High, transition preview), the Spark converter (1 Spark = NPR 1), a spend-limit calculator that mirrors `economy/spend_ladder.py`, and the roadmap from `docs/SAGE_MASTER_BLUEPRINT.md`. Images in `assets/` are web-sized copies of the owner's design assets in `docs/design/`. The calculator numbers are provisional until the owner confirms them.
+## Contents and claims
+
+The landing page includes an Evolution explorer, Spark converter, spend-limit calculator and roadmap. Spark rate and spend rules are provisional product rules, not a promise that cash-out or real-money payments are available. Confirm the business/operator details, public claims, rate and calculator rules before public release.
 
 ## Design direction
 
-The website follows the SAGE ONE cinematic system: near-black foundation, cyan/blue/violet intelligence accents, gold for economy/premium signals, orbital-core motifs, restrained motion and responsive layouts. The landing page describes the product direction without claiming that unfinished integrations are already live.
+Near-black foundation, cyan/blue/violet intelligence accents, gold for economy signals, orbital-core motifs, restrained motion, and responsive layouts. The site should clearly distinguish implemented and verified functionality from roadmap items and scripted previews.
