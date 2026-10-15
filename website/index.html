@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#04060c">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="SAGE ONE is a personal AI mentor and execution partner built in Nepal. SAGE Spark is its currency: 1 Spark = NPR 1.">
+  <meta name="description" content="SAGE ONE is a personal AI mentor and execution partner in development. SP are non-cash points; SS payments are not active.">
   <meta name="robots" content="index,follow">
   <meta property="og:type" content="website">
   <meta property="og:title" content="SAGE ONE">
@@ -66,11 +66,11 @@
           <li><b>Evidence</b><span>Keep proof of the result</span></li>
           <li><b>Skill</b><span>Verified capability</span></li>
           <li><b>Opportunity</b><span>Work worth doing</span></li>
-          <li><b>Work and earn</b><span>Paid in Spark</span></li>
+          <li><b>Work and earn</b><span>Future rewards; not live yet</span></li>
           <li><b>Lifetime achievement</b><span>Never reduced</span></li>
           <li><b>Evolution</b><span>The next rank</span></li>
         </ol>
-        <p class="flow-note">Evolution is a lifetime achievement. Spending or withdrawing Spark never lowers it.</p>
+        <p class="flow-note">Evolution is a lifetime achievement. Spending SS should never lower it.</p>
       </div>
     </section>
 
@@ -106,7 +106,7 @@
           <h3>Five rules that do not change</h3>
           <ol>
             <li>Evolution is lifetime achievement. Withdrawal does not reduce it.</li>
-            <li>Spark is separate from Evolution. It is the platform currency.</li>
+            <li>SP are internal, non-cash points. SS is intended to represent real-money value.</li>
             <li>Money supports the journey. Skill and achievement define Evolution.</li>
             <li>The interface stays the same. Only visual layers evolve.</li>
             <li>The SAGE blue and black identity never disappears.</li>
@@ -156,35 +156,20 @@
 
     <section id="spark">
       <div class="wrap split">
-        <div style="display:flex;flex-direction:column;gap:1.25rem">
+        <div>
           <h2>SAGE Spark</h2>
-          <p class="rate">1 Spark = NPR 1</p>
-          <p class="muted">Spark is the platform currency. It is paid for verified work and spent on premium work. Every account, including the owner's, starts at 0 with no hidden welcome balance.</p>
+          <p class="lede">Two separate systems. No live payments.</p>
           <ul class="facts">
-            <li>Spark amounts are whole numbers. Converting rupees to Spark rounds down.</li>
-            <li>Spending Spark never lowers your Evolution.</li>
-            <li>Rewards are checked by the server and recorded once, so a one-time reward cannot be repeated.</li>
+            <li><strong>SAGE Spark Points (SP)</strong> are internal, non-cash points for achievements and progress.</li>
+            <li><strong>SAGE Spark (SS)</strong> is intended to represent real-money value, but payments, exchange rates and cash-out are not enabled.</li>
+            <li>Do not treat preview balances or example prices as money, an offer, or a usable wallet.</li>
           </ul>
-          <span class="pill off" id="cashPill">Cash-out to rupees is not available yet</span>
-          <p class="fine">Paying out real rupees needs a payment provider, an owner switch and a legal review first. Until then, Spark stays inside SAGE.</p>
+          <p class="fine">A live money system requires owner-approved rules, secure payment integration and qualified Nepal legal review first.</p>
         </div>
         <div class="panel">
-          <div class="field-row">
-            <div class="field"><label for="sparkIn">Spark</label><input id="sparkIn" type="number" inputmode="numeric" min="0" step="1" value="1250"></div>
-            <div class="field"><label for="nprIn">Nepali rupees (NPR)</label><input id="nprIn" type="number" inputmode="numeric" min="0" step="1" value="1250"></div>
-          </div>
-          <div class="scroll-x">
-            <table>
-              <thead><tr><th>Premium work</th><th class="r">Spark</th><th class="r">NPR</th></tr></thead>
-              <tbody>
-                <tr><td>Enhanced Verification</td><td class="r">15</td><td class="r">15</td></tr>
-                <tr><td>Premium Content Work</td><td class="r">20</td><td class="r">20</td></tr>
-                <tr><td>Deep Research</td><td class="r">25</td><td class="r">25</td></tr>
-                <tr><td>Heavy Mission</td><td class="r">50</td><td class="r">50</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="fine">Prices come from the SAGE cost catalogue. A quote does not charge a wallet.</p>
+          <h3>Wallet status</h3>
+          <p class="rate">Not active</p>
+          <p class="muted">No conversion rate or premium-work price is published here. A preview cannot charge, transfer or withdraw money.</p>
         </div>
       </div>
     </section>
@@ -192,31 +177,11 @@
     <section id="ladder">
       <div class="wrap">
         <div class="section-head">
-          <h2>How much SAGE may spend</h2>
-          <p>SAGE earns first and the owner never funds it. Part of what it earns is locked as savings. One spend can only be a small share of lifetime earnings, and a hard ceiling applies at any size. SAGE can only propose a spend. You approve every one.</p>
+          <h2>Spend limits are not active</h2>
+          <p>The final SS earning, savings and spending limits have not been approved or verified. This website cannot authorize or execute spending.</p>
         </div>
-        <div class="split">
-          <div class="panel">
-            <div class="field-row">
-              <div class="field"><label for="lifeIn">Lifetime earned (Spark)</label><input id="lifeIn" type="number" inputmode="numeric" min="0" step="1" value="60"></div>
-              <div class="field"><label for="balIn">Balance now (Spark)</label><input id="balIn" type="number" inputmode="numeric" min="0" step="1" value="60"></div>
-            </div>
-            <div class="field"><label for="askIn">Amount SAGE wants to spend (Spark)</label><input id="askIn" type="number" inputmode="numeric" min="0" step="1" value="5"></div>
-            <div class="readouts" id="ladderBars" aria-live="polite"></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:1.1rem;min-width:0">
-            <div class="verdict" id="verdict" aria-live="polite"></div>
-            <p class="muted" id="levelLine"></p>
-            <div class="provisional">
-              <h3>Draft numbers, waiting for the owner</h3>
-              <ol>
-                <li>Bronze Low, Mid and High start at 1, 10 and 50. They were first spoken in dollars and are read here as Spark.</li>
-                <li>Silver and Gold are not set yet, so limits stay at Bronze High.</li>
-                <li>The ceiling is 200 Spark, the safer end of the 200 to 500 range.</li>
-                <li>The share of earnings per spend is 10% up to 100, 5% up to 1,000, 2% up to 10,000 and 1% above.</li>
-              </ol>
-            </div>
-          </div>
+        <div class="panel">
+          <p class="muted">When the rules are finalized, SAGE will show the permitted amount, explain the reason, and wait for your approval before any eligible action. No live wallet or payment provider is connected to this preview.</p>
         </div>
       </div>
     </section>
@@ -245,7 +210,7 @@
               <li>Permission checks separating capability from authorization</li>
               <li>Developer-mode preview/apply workflow; end-to-end owner approval still needs verification</li>
               <li>Sales workflow code designed to require approval before outreach</li>
-              <li>Spark ledger and 1 Spark = NPR 1 rule implemented in code; live payment/cash-out is not available</li>
+              <li>SP/SS distinction is a product requirement; live money, payment and cash-out remain unavailable pending implementation and review</li>
               <li>Flutter screens for chat, voice, research, tasks, memory and evolution; real-device behavior still needs verification</li>
               <li>Automated tests exist; the current result is shown in GitHub Actions</li>
             </ul>
@@ -280,7 +245,7 @@
   <footer>
     <div class="wrap footer-wrap">
       <span>© <span id="copyrightYear">2026</span> SAGE ONE · Built in Nepal.</span>
-      <span>Spark is platform currency, not a cryptocurrency or an investment.</span>
+      <span>SP are non-cash points. SS payments and cash-out are not active.</span>
       <nav class="footer-links" aria-label="Footer"><a href="#top">Back to top</a><a href="chat/">Chat preview</a><a href="app-preview/">Phone app preview</a></nav>
     </div>
   </footer>
