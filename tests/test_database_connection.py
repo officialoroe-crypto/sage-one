@@ -42,3 +42,11 @@ def test_postgresql_scheme_uses_psycopg_driver():
         "postgresql://qa-user:qa-password@example.invalid/sage",
     )
     assert url.startswith("postgresql+psycopg://")
+
+def test_blank_sage_database_url_falls_back_to_database_url():
+    url = resolve_database_url(
+        "production",
+        "   ",
+        "postgresql://qa-user:qa-password@example.invalid/sage",
+    )
+    assert url.startswith("postgresql+psycopg://")
