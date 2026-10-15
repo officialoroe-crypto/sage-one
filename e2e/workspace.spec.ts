@@ -4,6 +4,8 @@ const apiBase = (process.env.SAGE_API_URL || 'https://sage-one-api.onrender.com'
 
 test.describe('SAGE Core live API smoke checks', () => {
   test('health endpoint reports healthy', async () => {
+    // The hosted API can cold-start; allow the bounded three-attempt retry budget.
+    test.setTimeout(90_000);
     const api = await playwrightRequest.newContext();
     const failures: string[] = [];
     try {
