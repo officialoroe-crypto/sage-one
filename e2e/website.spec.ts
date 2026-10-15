@@ -117,6 +117,6 @@ test.describe('SAGE ONE website interactions', () => {
     await page.locator('#msg').fill('show my Spark balance');
     await page.locator('#send').click();
     await expect(page.locator('#transcript')).toContainText('SS');
-    await expect(page.locator('#transcript')).toContainText('not active');
+    await expect(page.locator('#transcript')).toContainText('No live wallet');
   });
 });
