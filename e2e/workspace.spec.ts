@@ -5,11 +5,28 @@ const apiBase = (process.env.SAGE_API_URL || 'https://sage-one-api.onrender.com'
 test.describe('SAGE Core live API smoke checks', () => {
   test('health endpoint reports healthy', async () => {
     const api = await playwrightRequest.newContext();
-    const response = await api.get(`${apiBase}/health`, { timeout: 30_000 });
-    expect(response.ok(), `GET ${apiBase}/health returned HTTP ${response.status()}`).toBeTruthy();
-    const body = await response.json();
-    expect(body.status).toBe('healthy');
-    await api.dispose();
+    const failures: string[] = [];
+    try {
+      // Hosted free-tier services may be waking from idle. Retry transient transport
+      // failures, but still fail the smoke test if the health endpoint never responds
+      // or returns an unhealthy/non-2xx result. This is not a health-check bypass.
+      let response: Awaited<ReturnType<typeof api.get>> | undefined;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          response = await api.get(`${apiBase}/health`, { timeout: 20_000 });
+          if (response.ok()) break;
+          failures.push(`attempt ${attempt}: HTTP ${response.status()}`);
+        } catch (error) {
+          failures.push(`attempt ${attempt}: ${String(error)}`);
+        }
+        if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 2_000));
+      }
+      expect(response?.ok(), `GET ${apiBase}/health did not return 2xx after 3 attempts. ${failures.join(' | ')}`).toBeTruthy();
+      const body = await response!.json();
+      expect(body.status, `GET ${apiBase}/health returned an unexpected body: ${JSON.stringify(body)}`).toBe('healthy');
+    } finally {
+      await api.dispose();
+    }
   });
 
   test('production CORS allows the published site but not the ephemeral localhost QA origin', async () => {
