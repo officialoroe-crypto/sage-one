@@ -33,7 +33,7 @@ class _ChatClient extends http.BaseClient {
         status = 503;
         payload = {'detail': 'SAGE could not generate a reply. Retry.'};
       } else {
-        final body = jsonDecode(await request.finalize().bytesToString())
+        final body = jsonDecode((request as http.Request).body)
             as Map<String, dynamic>;
         final sessionId = body['session_id']?.toString() ?? 'session-1';
         payload = {
