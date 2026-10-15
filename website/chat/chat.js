@@ -202,7 +202,6 @@
         tasks: 'Here are your tasks. Each one shows its state: pending, running, completed or failed.',
         projects: 'Here are your projects.',
         memory: 'These are things I may have learned. I only keep what you approve.',
-        market: 'Marketplace and jobs are not connected in this preview.',
         learning: 'Opening Learning.',
         settings: 'Opening Settings.',
         research: 'Opening Research.'
