@@ -93,6 +93,18 @@ class SageApi {
 
   Future<Map<String, dynamic>> createSession() async => _authorizedPost('/session', <String, dynamic>{});
 
+  Future<List<dynamic>> chatSessions({bool archived = false, int limit = 50}) async {
+    final data = await _authorizedGet('/sessions?archived=$archived&limit=$limit');
+    final items = data['sessions'] ?? data['items'] ?? <dynamic>[];
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> archiveChatSession(String sessionId) async =>
+      _authorizedPost('/session/$sessionId/archive', <String, dynamic>{});
+
+  Future<Map<String, dynamic>> restoreChatSession(String sessionId) async =>
+      _authorizedPost('/session/$sessionId/restore', <String, dynamic>{});
+
   Future<Map<String, dynamic>> workerHealth() async => _authorizedGet('/worker/health');
   Future<Map<String, dynamic>> brainHealth() async => _authorizedGet('/brain/health');
 
