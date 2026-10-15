@@ -16,7 +16,7 @@ def resolve_database_url(
     SQLite remains convenient for local development and tests, but Render Free's
     ephemeral filesystem must never silently become the production history store.
     """
-    configured = (sage_database_url or database_url or "").strip()
+    configured = (sage_database_url or "").strip() or (database_url or "").strip()
     production = (environment or "development").strip().lower() in {"prod", "production"} or hosted
     if not configured:
         if production:
