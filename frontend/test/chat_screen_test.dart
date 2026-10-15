@@ -42,6 +42,19 @@ class _ChatClient extends http.BaseClient {
           'response': {'response': 'Hello from live SAGE.'},
         };
       }
+    } else if (key == 'GET /sessions') {
+      final archived = request.url.queryParameters['archived'] == 'true';
+      payload = {
+        'success': true,
+        'sessions': archived
+            ? <dynamic>[]
+            : [
+                {'id': 'session-1', 'preview': 'Saved chat preview', 'message_count': 2},
+              ],
+      };
+    } else if (key == 'POST /session/session-1/archive' ||
+        key == 'POST /session/session-1/restore') {
+      payload = {'success': true, 'session_id': 'session-1'};
     } else if (key.startsWith('GET /session/') &&
         key.endsWith('/messages')) {
       payload = {
@@ -146,6 +159,27 @@ class _RecoverableChatClient extends http.BaseClient {
 }
 
 void main() {
+  testWidgets('Chat archive opens a saved conversation', (tester) async {
+    final client = _ChatClient();
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Open chat archive'));
+    await tester.pumpAndSettle();
+    expect(find.text('Chat archive'), findsOneWidget);
+    expect(find.text('Saved chat preview'), findsOneWidget);
+
+    await tester.tap(find.text('Saved chat preview'));
+    await tester.pumpAndSettle();
+    expect(client.requests, contains('GET /sessions'));
+    expect(client.requests, contains('GET /session/session-1/messages'));
+    expect(find.text('Hello from live SAGE.'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
   testWidgets('Chat calls the live chat endpoint and displays the model reply',
       (tester) async {
     final client = _ChatClient();
