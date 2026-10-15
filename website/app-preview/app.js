@@ -1,5 +1,5 @@
 /* SAGE app home (phone layout preview). Numbers and replies are examples: nothing is sent anywhere.
-   Rules mirrored from the repo: Spark rate (economy/currency.py), spend limits (economy/spend_ladder.py). */
+   SP are non-cash points; SS payment features are not active. */
 (function () {
   'use strict';
 
@@ -13,8 +13,7 @@
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
 
   /* ---------------------------------------------------------- example data */
-  var NPR_PER_SPARK = 1;
-  var wallet = { balance: 1250, earned: 1250, spent: 0 };
+  var wallet = { balance: 0, earned: 0, spent: 0 };
   var RANKS = [
     ['Bronze', '#c7803f'], ['Silver', '#cfd6e4'], ['Gold', '#e9b949'], ['Platinum', '#b4dcf2'],
     ['Jade', '#35c88a'], ['Ruby', '#e0314b'], ['Sapphire', '#3a73ff'], ['Emerald', '#19c26b'],
@@ -80,7 +79,7 @@
   $('moneyText').textContent = fmt(lim.locked) + ' Spark is locked as savings. SAGE may propose up to ' + fmt(lim.limit) +
     ' Spark in one spend, and you approve every spend.';
   $('balance').textContent = fmt(wallet.balance);
-  $('balanceNpr').textContent = '= NPR ' + fmt(wallet.balance * NPR_PER_SPARK);
+  $('balanceNpr').textContent = 'No exchange rate or payment is active.';
 
   function flashCard(id) {
     var el = $(id);
@@ -137,7 +136,7 @@
       };
     }
     if (/spark|balance|wallet|credit|rupee|npr|money|earn/.test(t)) {
-      return { text: 'You have ' + fmt(wallet.balance) + ' Spark, worth NPR ' + fmt(wallet.balance * NPR_PER_SPARK) + '. 1 Spark is NPR 1. Cash-out to rupees is not available yet.', focus: 'balanceCard' };
+      return { text: 'This preview shows ' + fmt(wallet.balance) + ' SS. No live wallet, exchange rate, payment or cash-out is active.', focus: 'balanceCard' };
     }
     if (/limit|ladder|money level|tier/.test(t)) {
       return { text: 'Your money level is ' + lim.level + '. I may propose up to ' + fmt(lim.limit) + ' Spark in one spend, and you approve each one.', focus: 'moneyCard' };
@@ -163,7 +162,7 @@
   function approvalHtml(a) {
     return '<div class="approval" data-amount="' + a.amount + '"><h4>Approval needed</h4><dl>' +
       '<dt>Action</dt><dd>' + esc(a.what) + '</dd>' +
-      '<dt>Cost</dt><dd>' + fmt(a.amount) + ' Spark (NPR ' + fmt(a.amount * NPR_PER_SPARK) + ')</dd>' +
+      '<dt>Example cost</dt><dd>' + fmt(a.amount) + ' SS (illustrative only; prices are not approved)</dd>' +
       '<dt>Your limit</dt><dd>' + fmt(lim.limit) + ' Spark per spend</dd></dl>' +
       '<div class="row">' + (a.within ? '<button type="button" class="btn primary" data-act="approve">Approve</button>' : '') +
       '<button type="button" class="btn" data-act="decline">Decline</button></div>' +
