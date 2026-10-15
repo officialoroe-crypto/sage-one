@@ -54,7 +54,6 @@
     memory: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
     evolution: '<path d="M12 3l7 9-7 9-7-9z"/>',
     wallet: '<path d="M13 3L5 13h6l-1 8 8-10h-6z"/>',
-    market: '<path d="M4 9l2-5h12l2 5v2H4z"/><path d="M5 11v9h14v-9"/>',
     learning: '<path d="M4 5h7v14H4zM13 5h7v14h-7z"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'
   };
@@ -66,7 +65,6 @@
     { id: 'memory', label: 'Memory', keys: ['memory', 'remember', 'know about me'] },
     { id: 'evolution', label: 'Evolution', keys: ['evolution', 'rank', 'tier', 'level'] },
     { id: 'wallet', label: 'Spark wallet', keys: ['spark', 'balance', 'wallet', 'credit', 'rupee', 'npr', 'money', 'earn'] },
-    { id: 'market', label: 'Marketplace and jobs', keys: ['market', 'jobs', 'job', 'vacanc', 'rent', 'land', 'property'] },
     { id: 'learning', label: 'Learning', keys: ['learn', 'course', 'study', 'lesson'] },
     { id: 'settings', label: 'Settings', keys: ['setting', 'theme', 'privacy', 'preferences'] }
   ];
@@ -98,7 +96,7 @@
   function renderNav() {
     $('nav').innerHTML = FEATURES.map(function (f) {
       return '<li><button type="button" data-feature="' + f.id + '"><svg viewBox="0 0 24 24" aria-hidden="true">' +
-        ICONS[f.id === 'market' ? 'market' : f.id] + '</svg><span>' + esc(f.label) + '</span></button></li>';
+        ICONS[f.id] + '</svg><span>' + esc(f.label) + '</span></button></li>';
     }).join('');
     $('history').innerHTML = HISTORY.map(function (h, i) {
       return '<li><button type="button" data-history="' + i + '" title="' + esc(h.title) + '">' + esc(h.title) + '</button></li>';
