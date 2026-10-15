@@ -12,9 +12,9 @@ def test_production_fails_closed_without_explicit_database_url():
         resolve_database_url("production", None, None)
 
 
-def test_production_accepts_explicit_sage_database_url():
-    url = resolve_database_url("production", "sqlite:///./explicit.db", None)
-    assert url == "sqlite:///./explicit.db"
+def test_production_rejects_explicit_sqlite_history_store():
+    with pytest.raises(RuntimeError, match="SQLite is not allowed"):
+        resolve_database_url("production", "sqlite:///./explicit.db", None)
 
 
 def test_database_url_fallback_is_supported_and_postgres_driver_is_normalized():
