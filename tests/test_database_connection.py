@@ -16,6 +16,15 @@ def test_production_rejects_explicit_sqlite_history_store():
     with pytest.raises(RuntimeError, match="SQLite is not allowed"):
         resolve_database_url("production", "sqlite:///./explicit.db", None)
 
+def test_hosted_environment_fails_closed_even_if_sage_env_is_missing():
+    with pytest.raises(RuntimeError, match="Production requires SAGE_DATABASE_URL or DATABASE_URL"):
+        resolve_database_url(None, None, None, hosted=True)
+
+
+def test_hosted_environment_rejects_sqlite_even_if_sage_env_is_development():
+    with pytest.raises(RuntimeError, match="SQLite is not allowed"):
+        resolve_database_url("development", "sqlite:///./explicit.db", None, hosted=True)
+
 
 def test_database_url_fallback_is_supported_and_postgres_driver_is_normalized():
     url = resolve_database_url(
