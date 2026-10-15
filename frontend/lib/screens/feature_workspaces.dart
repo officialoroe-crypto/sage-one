@@ -220,6 +220,128 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Future<void> _openSession(String sessionId) async {
+    final generation = ++_sessionGeneration;
+    _poller?.cancel();
+    _pollFailures = 0;
+    setState(() {
+      _sessionId = sessionId;
+      _taskId = null;
+      _messages.clear();
+      _sending = true;
+      _status = 'Loading saved conversation…';
+      _chatError = null;
+      _recoveryAction = null;
+    });
+    await _loadHistory(generation: generation, sessionId: sessionId);
+    if (!mounted || generation != _sessionGeneration) return;
+    setState(() {
+      _sending = false;
+      if (_chatError == null) _status = 'Saved conversation loaded';
+    });
+  }
+
+  Future<void> _openHistory() async {
+    try {
+      final activeRaw = await widget.api.chatSessions();
+      final archivedRaw = await widget.api.chatSessions(archived: true);
+      if (!mounted) return;
+      final active = activeRaw.whereType<Map>().map((item) =>
+          Map<String, dynamic>.from(item)).toList();
+      final archived = archivedRaw.whereType<Map>().map((item) =>
+          Map<String, dynamic>.from(item)).toList();
+      var showArchived = false;
+      final selected = await showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final items = showArchived ? archived : active;
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.of(sheetContext).size.height * .72,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 12, 12),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text('Chat archive',
+                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                          ),
+                          TextButton(
+                            onPressed: () => setSheetState(() => showArchived = !showArchived),
+                            child: Text(showArchived ? 'Active chats' : 'Archived'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: items.isEmpty
+                          ? Center(child: Text(showArchived
+                              ? 'No archived conversations yet.'
+                              : 'No saved conversations yet.'))
+                          : ListView.builder(
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                final id = item['id']?.toString() ?? '';
+                                final preview = item['preview']?.toString().trim() ?? '';
+                                final count = item['message_count'] ?? 0;
+                                return ListTile(
+                                  leading: const Icon(Icons.chat_bubble_outline),
+                                  title: Text(preview.isEmpty ? 'Conversation' : preview,
+                                      maxLines: 2, overflow: TextOverflow.ellipsis),
+                                  subtitle: Text('$count messages'),
+                                  onTap: id.isEmpty ? null : () => Navigator.of(sheetContext).pop(id),
+                                  trailing: IconButton(
+                                    tooltip: showArchived ? 'Restore conversation' : 'Archive conversation',
+                                    icon: Icon(showArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
+                                    onPressed: id.isEmpty ? null : () async {
+                                      try {
+                                        if (showArchived) {
+                                          await widget.api.restoreChatSession(id);
+                                          archived.removeWhere((entry) => entry['id']?.toString() == id);
+                                          active.insert(0, item);
+                                        } else {
+                                          await widget.api.archiveChatSession(id);
+                                          active.removeWhere((entry) => entry['id']?.toString() == id);
+                                          archived.insert(0, item);
+                                        }
+                                        setSheetState(() {});
+                                      } catch (error) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Could not update archive: $error')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      );
+      if (selected != null && selected.isNotEmpty && mounted) {
+        await _openSession(selected);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Chat archive could not load: $error')),
+      );
+    }
+  }
+
   void _retryRecovery() {
     switch (_recoveryAction) {
       case _ChatRecoveryAction.session:
@@ -408,6 +530,11 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Text('SAGE Chat'),
         backgroundColor: Colors.transparent,
         actions: [
+          IconButton(
+            tooltip: 'Open chat archive',
+            onPressed: _sending ? null : _openHistory,
+            icon: const Icon(Icons.history),
+          ),
           IconButton(
             tooltip: 'Refresh chat history',
             onPressed: _sessionId == null || _sending ? null : _refreshHistory,
