@@ -1,5 +1,5 @@
-/* SAGE ONE website: Evolution explorer, Spark converter, spend-limit calculator.
-   The Spark rate and the spend-limit rules mirror economy/currency.py and economy/spend_ladder.py. */
+/* SAGE ONE website: Evolution explorer.
+   SP are internal non-cash points; SS payment features are not active. */
 (function () {
   'use strict';
 
@@ -11,101 +11,6 @@
     return Math.min(n, 1e12);
   }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
-
-  /* ------------------------------------------------------------------ Spark */
-  var NPR_PER_SPARK = 1;
-  var sparkIn = $('sparkIn');
-  var nprIn = $('nprIn');
-  if (sparkIn && nprIn) {
-    sparkIn.addEventListener('input', function () {
-      nprIn.value = wholeNumber(sparkIn.value) * NPR_PER_SPARK;
-    });
-    nprIn.addEventListener('input', function () {
-      sparkIn.value = Math.floor(wholeNumber(nprIn.value) / NPR_PER_SPARK);
-    });
-  }
-
-  /* ----------------------------------------------------------- Spend limits */
-  var LADDER = [['Bronze', 'Low', 1], ['Bronze', 'Mid', 10], ['Bronze', 'High', 50]];
-  var PERCENT_BANDS = [[100, 10], [1000, 5], [10000, 2]];
-  var PERCENT_ABOVE = 1;
-  var CEILING = 200;
-
-  function levelFor(life) {
-    var reached = null;
-    LADDER.forEach(function (row) { if (life >= row[2]) reached = row; });
-    return reached;
-  }
-  function percentFor(life) {
-    for (var i = 0; i < PERCENT_BANDS.length; i++) {
-      if (life <= PERCENT_BANDS[i][0]) return PERCENT_BANDS[i][1];
-    }
-    return PERCENT_ABOVE;
-  }
-  function spendLimit(balance, life) {
-    var reached = levelFor(life);
-    if (!reached) return { level: null, locked: 0, pool: 0, percent: 0, percentCap: 0, limit: 0 };
-    var threshold = reached[2];
-    var pool = Math.max(0, balance - threshold);
-    var percent = percentFor(life);
-    var percentCap = Math.floor(life * percent / 100);
-    return {
-      level: reached[0] + ' ' + reached[1],
-      locked: Math.min(balance, threshold),
-      pool: pool,
-      percent: percent,
-      percentCap: percentCap,
-      limit: Math.min(pool, percentCap, CEILING)
-    };
-  }
-  window.sageSpendLimit = spendLimit;
-
-  var lifeIn = $('lifeIn'), balIn = $('balIn'), askIn = $('askIn');
-  function renderLadder() {
-    if (!lifeIn) return;
-    var life = wholeNumber(lifeIn.value);
-    var bal = wholeNumber(balIn.value);
-    var ask = wholeNumber(askIn.value);
-    var r = spendLimit(bal, life);
-
-    var rows = [
-      { name: 'Above locked savings', value: r.pool },
-      { name: 'Share of earnings' + (r.level ? ' (' + r.percent + '%)' : ''), value: r.percentCap },
-      { name: 'Ceiling', value: CEILING }
-    ];
-    var smallest = Math.min(rows[0].value, rows[1].value, rows[2].value);
-    var top = Math.max(rows[0].value, rows[1].value, rows[2].value, 1);
-    var minTaken = false;
-    $('ladderBars').innerHTML = rows.map(function (row) {
-      var isMin = !minTaken && row.value === smallest;
-      if (isMin) minTaken = true;
-      return '<div class="bar-row' + (isMin ? ' min' : '') + '"><span>' + row.name +
-        '</span><span class="track"><span class="fill" style="width:' + Math.round(row.value / top * 100) +
-        '%"></span></span><b>' + fmt(row.value) + '</b></div>';
-    }).join('');
-
-    var verdict = $('verdict');
-    var head = '<div class="limit-big">' + fmt(r.limit) + ' Spark</div>' +
-      '<div class="muted">Most SAGE may propose in one spend (NPR ' + fmt(r.limit * NPR_PER_SPARK) + '). The smallest of the three lines above.</div>';
-    var line;
-    verdict.className = 'verdict';
-    if (ask <= 0) {
-      line = 'Enter an amount above 0 to test a spend.';
-    } else if (ask > r.limit) {
-      verdict.className = 'verdict no';
-      line = 'SAGE cannot propose ' + fmt(ask) + ' Spark. It is above the limit.';
-    } else {
-      verdict.className = 'verdict ok';
-      line = 'SAGE may show you a ' + fmt(ask) + ' Spark spend. It happens only if you approve it.';
-    }
-    verdict.innerHTML = head + '<p style="margin-top:.6rem"><b>' + line + '</b></p>';
-
-    $('levelLine').textContent = r.level
-      ? 'Level reached: ' + r.level + '. ' + fmt(r.locked) + ' Spark is locked as savings and cannot be spent. Every spend needs your approval.'
-      : 'Nothing earned yet, so nothing can be spent. Every spend will still need your approval.';
-  }
-  [lifeIn, balIn, askIn].forEach(function (el) { if (el) el.addEventListener('input', renderLadder); });
-  renderLadder();
 
   /* ------------------------------------------------------ Evolution explorer */
   var RANKS = [
