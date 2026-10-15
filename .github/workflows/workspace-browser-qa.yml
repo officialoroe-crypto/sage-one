@@ -1,0 +1,82 @@
+name: SAGE Workspace Browser QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "test/**", "fix/**", "feature/**"]
+    paths:
+      - "website/**"
+      - "app/**"
+      - "database/**"
+      - "tasks/**"
+      - "notifications/**"
+      - "tests/**"
+      - "e2e/**"
+      - "playwright.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/workspace-browser-qa.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "app/**"
+      - "database/**"
+      - "tasks/**"
+      - "notifications/**"
+      - "tests/**"
+      - "e2e/**"
+      - "playwright.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/workspace-browser-qa.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sage-workspace-browser-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-and-live-api:
+    name: Browser interactions + live Core smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: "true"
+      SAGE_API_URL: ${{ vars.SAGE_API_URL || 'https://sage-one-api.onrender.com' }}
+    steps:
+      - name: Check out QA source
+        uses: actions/checkout@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Install browser test dependencies
+        run: npm install
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local QA-only website server
+        run: |
+          python3 -m http.server 8080 --directory website > /tmp/sage-qa-server.log 2>&1 &
+          echo $! > /tmp/sage-qa-server.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/sage-qa-server.log
+          exit 1
+      - name: Run real browser interactions and live API smoke tests
+        run: npx playwright test
+      - name: Upload test report and failure evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: sage-one-browser-qa-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
