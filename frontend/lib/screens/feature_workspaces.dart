@@ -255,7 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _sending = true;
-      _status = 'Queued';
+      _status = 'Sending to SAGE…';
       _chatError = null;
       _recoveryAction = null;
       _messages.add({'role': 'user', 'content': text});
@@ -263,16 +263,32 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      final response = await widget.api.submitCommand(text, sessionId: sessionId);
+      final response = await widget.api.chat(text, sessionId: sessionId);
       if (!mounted || generation != _sessionGeneration) return;
-      final task = response['task'];
-      _taskId = task is Map
-          ? (task['id'] ?? task['task_id'])?.toString()
-          : response['task_id']?.toString();
-      if (_taskId == null || _taskId!.isEmpty) {
-        throw Exception('SAGE did not return a task id.');
+      if (response['success'] != true) {
+        throw Exception(response['error'] ?? 'SAGE could not complete the reply.');
       }
-      _startPolling(generation: generation, sessionId: sessionId);
+
+      final raw = response['response'];
+      String reply = '';
+      if (raw is Map) {
+        reply = (raw['response'] ?? raw['text'] ?? raw['content'] ?? '').toString();
+      } else if (raw is String) {
+        reply = raw;
+      }
+      if (reply.trim().isEmpty) {
+        throw Exception('SAGE returned an empty reply. Please retry.');
+      }
+
+      setState(() {
+        _sessionId = response['session_id']?.toString() ?? sessionId;
+        _messages.add({'role': 'assistant', 'content': reply.trim()});
+        _sending = false;
+        _status = 'Response received';
+        _chatError = null;
+        _recoveryAction = null;
+      });
+      await _loadHistory(generation: generation, sessionId: _sessionId!);
     } catch (error) {
       if (!mounted || generation != _sessionGeneration) return;
       setState(() {
@@ -286,8 +302,8 @@ class _ChatScreenState extends State<ChatScreen> {
           selection: TextSelection.collapsed(offset: text.length),
         );
         _sending = false;
-        _status = 'Could not queue command';
-        _chatError = 'Command was not queued. Your message has been restored so you can retry. Details: $error';
+        _status = 'Chat failed';
+        _chatError = 'SAGE could not reply. Your message has been restored so you can retry. Details: $error';
         _recoveryAction = _ChatRecoveryAction.command;
       });
     }
