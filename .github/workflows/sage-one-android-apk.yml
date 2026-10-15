@@ -112,6 +112,18 @@ jobs:
       - name: Build release App Bundle
         run: flutter build appbundle --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
 
+      - name: Report hosted QA APK signing fingerprint
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-hosted-qa.apk | tee /tmp/sage-qa-cert.txt
+          {
+            echo "### Hosted Android QA APK identity"
+            echo "- Application ID: `com.sageone.sage_one`"
+            awk '/Signer #1 certificate SHA-1 digest:/ { print "- Signing certificate SHA-1: `" $NF "`" }' /tmp/sage-qa-cert.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7
         with:
