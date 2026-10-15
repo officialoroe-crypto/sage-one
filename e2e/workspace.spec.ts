@@ -22,6 +22,19 @@ test.describe('SAGE Core live API smoke checks', () => {
     expect(body.google_client_id.length).toBeGreaterThan(10);
     await api.dispose();
   });
+
+  test('published website origin receives the expected CORS headers', async () => {
+    const origin = 'https://officialoroe-crypto.github.io';
+    const api = await playwrightRequest.newContext();
+    const response = await api.get(`${apiBase}/identity/config`, {
+      timeout: 30_000,
+      headers: { Origin: origin }
+    });
+    expect(response.ok(), `CORS probe returned HTTP ${response.status()}`).toBeTruthy();
+    expect(response.headers()['access-control-allow-origin']).toBe(origin);
+    expect(response.headers()['access-control-allow-credentials']).toBe('true');
+    await api.dispose();
+  });
 });
 
 test.describe('SAGE ONE actual browser interactions', () => {
