@@ -77,6 +77,18 @@ test.describe('SAGE ONE website interactions', () => {
     }
   });
 
+  test('Evolution rank, intensity and Evolve controls update the preview', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await page.locator('#levelSeg button[data-level="2"]').click();
+    await expect(page.locator('#badgeLevel')).toHaveText('High');
+    await page.locator('#rankChips button[data-rank="1"]').click();
+    await expect(page.locator('#badgeRank')).toContainText('Silver');
+    await page.locator('#evolveBtn').click();
+    await expect(page.locator('#badgeRank')).toContainText('Gold');
+    await expect(page.locator('#badgeLevel')).toHaveText('Low');
+  });
+
   test('buttons and form controls have accessible names on all preview pages', async ({ page }) => {
     for (const route of ['/', '/chat/', '/app-preview/']) {
       await page.goto(route);
