@@ -204,7 +204,7 @@
         tasks: 'Here are your tasks. Each one shows its state: pending, running, completed or failed.',
         projects: 'Here are your projects.',
         memory: 'These are things I may have learned. I only keep what you approve.',
-        market: 'Opening Marketplace and jobs.',
+        market: 'Marketplace and jobs are not connected in this preview.',
         learning: 'Opening Learning.',
         settings: 'Opening Settings.',
         research: 'Opening Research.'
@@ -212,9 +212,9 @@
       return { text: intro, open: feat, label: f.label };
     }
     if (/^(hi|hello|hey|namaste)\b/.test(t)) {
-      return { text: 'Namaste. Tell me what you want to get done, or say where you want to go: research, tasks, projects, memory, Evolution, Spark wallet, marketplace, learning or settings.' };
+      return { text: 'Namaste. Tell me what you want to get done, or say where you want to go: research, tasks, projects, memory, Evolution, Spark wallet, learning or settings.' };
     }
-    return { text: 'This page shows the interface with scripted replies, so I cannot answer that yet. In the live SAGE this goes to the research and command engine.\n\nTry: "open research", "show my Spark balance", "what is my Evolution rank?" or "run an ad for 15 Spark".' };
+    return { text: 'This page shows the interface with scripted replies, so I cannot answer that yet. In the live SAGE this goes to the research and command engine.\n\nTry: "open research", "show my Spark balance" or "what is my Evolution rank?".' };
   }
 
   function approvalHtml(a) {
@@ -326,7 +326,6 @@
     shell.classList.add('with-pane');
     paneBody.scrollTop = 0;
     syncNav();
-    if (id === 'market') bindMarket();
   }
   function closePane() {
     current = null;
@@ -380,21 +379,9 @@
         '<div class="card"><h3>Two paths</h3><p class="muted"><b>Skill</b> changes how SAGE looks and who it is. <b>Money</b> changes what it is allowed to do.</p></div>' + EX;
     },
     wallet: function () {
-      var lim = spendLimit(wallet.balance, wallet.earned);
-      return '<div class="card"><span class="fine">Spark balance</span><div class="big-gold num">' + fmt(wallet.balance) + '</div>' +
-        '<p class="muted">= NPR ' + fmt(wallet.balance * NPR_PER_SPARK) + ' (1 Spark = NPR 1)</p>' +
-        '<div class="row-between"><span class="fine">Earned ' + fmt(wallet.earned) + '</span><span class="fine">Spent ' + fmt(wallet.spent) + '</span></div></div>' +
-        '<div class="card"><h3>Spend limit</h3><p class="muted">Money level: ' + esc(lim.level) + '. ' + fmt(lim.locked) + ' Spark is locked as savings. SAGE may propose up to <b class="num">' + fmt(lim.limit) + ' Spark</b> in one spend, and you approve each one.</p></div>' +
-        '<div class="card"><h3>Premium work</h3><ul class="list">' +
-        '<li><span>Enhanced Verification</span><b class="num">15 Spark</b></li><li><span>Premium Content Work</span><b class="num">20 Spark</b></li>' +
-        '<li><span>Deep Research</span><b class="num">25 Spark</b></li><li><span>Heavy Mission</span><b class="num">50 Spark</b></li></ul></div>' +
-        '<div class="card"><span class="tag fail" style="width:max-content">Cash-out is not available yet</span><p class="fine">Paying out rupees needs a payment provider, an owner switch and a legal review.</p></div>' + EX;
-    },
-    market: function () {
-      return '<div class="chips" id="mkChips" role="group" aria-label="Category">' +
-        ['Buy', 'Sell', 'Jobs', 'Rent', 'Land'].map(function (c, i) {
-          return '<button type="button" class="chip-link" data-mk="' + c + '" aria-pressed="' + (i === 2) + '">' + c + '</button>';
-        }).join('') + '</div><ul class="list" id="mkList"></ul>' + EX;
+      return '<div class="card"><span class="fine">SS balance (example preview)</span><div class="big-gold num">0</div>' +
+        '<p class="muted">No live wallet, exchange rate, payment or cash-out is active.</p></div>' +
+        '<div class="card"><h3>SP and SS are separate</h3><p class="muted">SP are internal non-cash points. SS is intended to represent real-money value, but the money system is not enabled. Preview prices are not approved.</p></div>' + EX;
     },
     learning: function () {
       return '<ul class="list">' +
@@ -410,23 +397,6 @@
     }
   };
 
-  var LISTINGS = {
-    Buy: [['Honda Dio scooter', 'NPR 125,000', 'Kathmandu'], ['iPhone 14', 'NPR 65,000', 'Lalitpur']],
-    Sell: [['Sell something', 'Add a photo and a price', 'Takes a minute']],
-    Jobs: [['Frontend developer', 'NPR 60K to 80K a month', 'Kathmandu, full-time'], ['Graphic designer', 'NPR 30K to 45K a month', 'Lalitpur, hybrid'], ['IT support specialist', 'NPR 35K to 50K a month', 'Pokhara']],
-    Rent: [['2 bedroom flat', 'NPR 28,000 a month', 'Baneshwor']],
-    Land: [['5 aana plot', 'NPR 6,500,000', 'Pokhara']]
-  };
-  function bindMarket() {
-    function show(cat) {
-      Array.prototype.forEach.call($('mkChips').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.mk === cat)); });
-      $('mkList').innerHTML = LISTINGS[cat].map(function (r) {
-        return '<li><span>' + esc(r[0]) + '<small>' + esc(r[2]) + '</small></span><b class="num">' + esc(r[1]) + '</b></li>';
-      }).join('');
-    }
-    $('mkChips').addEventListener('click', function (e) { var b = e.target.closest('button[data-mk]'); if (b) show(b.dataset.mk); });
-    show('Jobs');
-  }
   paneBody.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-mem]');
     if (!b) return;
