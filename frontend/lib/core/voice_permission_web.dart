@@ -1,3 +1,6 @@
+// The conditional import ensures this file is compiled only for Flutter Web.
+// ignore_for_file: avoid_web_libraries_in_flutter
+
 import 'dart:html' as html;
 
 /// Called only from the user's click on the SAGE login permission control.
