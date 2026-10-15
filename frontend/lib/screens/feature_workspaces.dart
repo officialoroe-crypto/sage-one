@@ -312,8 +312,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                         }
                                         setSheetState(() {});
                                       } catch (error) {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                        if (sheetContext.mounted) {
+                                          ScaffoldMessenger.of(sheetContext).showSnackBar(
                                             SnackBar(content: Text('Could not update archive: $error')),
                                           );
                                         }
