@@ -8,6 +8,8 @@ def resolve_database_url(
     environment: str | None,
     sage_database_url: str | None,
     database_url: str | None,
+    *,
+    hosted: bool = False,
 ) -> str:
     """Resolve the configured database, failing closed for production.
 
@@ -15,7 +17,7 @@ def resolve_database_url(
     ephemeral filesystem must never silently become the production history store.
     """
     configured = (sage_database_url or database_url or "").strip()
-    production = (environment or "development").strip().lower() == "production"
+    production = (environment or "development").strip().lower() in {"prod", "production"} or hosted
     if not configured:
         if production:
             raise RuntimeError(
@@ -43,6 +45,10 @@ DATABASE_URL = resolve_database_url(
     os.getenv("SAGE_ENV", "development"),
     os.getenv("SAGE_DATABASE_URL"),
     os.getenv("DATABASE_URL"),
+    hosted=(
+        os.getenv("RENDER", "").strip().lower() in {"1", "true", "yes"}
+        or bool(os.getenv("RENDER_SERVICE_ID"))
+    ),
 )
 
 
