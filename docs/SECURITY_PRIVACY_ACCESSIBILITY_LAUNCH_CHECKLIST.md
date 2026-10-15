@@ -31,6 +31,34 @@ These are observed from repository source, not from a live penetration test. Fin
 - [ ] Convert policy drafts into accessible public pages only after operator details, data flows, and legal review are complete.
 - [ ] Verify actual hosted environment values and settings; this cannot be done from repository source alone.
 
+## Website bulk-work status snapshot — 2026-10-15
+
+**Evidence on revision `755daed22cee0ebcdb59ae7a59430fdd96e57bf8`:**
+- [SAGE CI](https://github.com/officialoroe-crypto/sage-one/actions/runs/38683484135): passed.
+- [SAGE Workspace Browser QA](https://github.com/officialoroe-crypto/sage-one/actions/runs/38683484147): passed, including live read-only Core health/identity smoke and browser interactions.
+- [Website and Web App QA — no deployment](https://github.com/officialoroe-crypto/sage-one/actions/runs/38683484150): passed, including website contract, JavaScript syntax, Flutter analysis/tests, and QA-only web build. Android release validation was still running when this snapshot was recorded.
+- These are CI Chromium/source checks, **not** physical-device, legal, image-rights, full WCAG, or production verification.
+
+| Item | Status | Evidence / remaining blocker |
+|---|---|---|
+| Responsive layout, vertical flow, accidental horizontal overflow | **Tested** | Playwright checks 320, 360, 390, 768, 1024 and 1280 px; real landscape/device testing remains. |
+| Working mobile menu and keyboard Escape handling | **Tested** | Playwright click/navigation/Escape assertions passed. |
+| Clickable logo, favicon, page titles and descriptions | **Tested** | Static contract and browser checks passed on landing, Chat preview and phone preview. |
+| Local links, footer navigation and local assets | **Tested** | Static local-target checks and same-origin browser request checks passed; external-link uptime is not verified. |
+| Buttons and form-control accessible names | **Tested** | Browser checks cover names across pages and interactions for menu, Evolution, Chat send and phone Talk; not every control has a full end-to-end action test. |
+| Truthful preview success/error claims | **Implemented** | Sign-in and replies are labelled simulated; wallet balances start at zero; no transaction success is claimed. |
+| Remove fake marketplace and unapproved money claims | **Implemented** | Removed fake marketplace navigation/listings and public `1 Spark = NPR 1` claims; website distinguishes non-cash SP from intended SS money. Backend economy code in this PR still contains a single-rate rule and must be reconciled before merge. |
+| SEO titles/meta descriptions and dynamic copyright | **Tested** | All three pages pass the metadata contract; copyright year is set at runtime. |
+| Web image compression/format | **Implemented** | Existing WebP assets are approximately 23 KB and 44 KB; visual quality and source licensing have not been independently verified. |
+| Approved custom hero photo and image rights | **Deferred/blocked** | Everest/Buddha artwork is present with alt text, but owner approval and usage rights are not confirmed. |
+| Verified phone/email links and public operator details | **Deferred/blocked** | No verified public contact/operator details are available to publish. |
+| Privacy, Terms, Cookie and Refund policy pages | **Deferred/blocked** | Internal drafts only; operator identity, real data flows, consent behavior and qualified Nepal legal review are prerequisites. |
+| Form/cookie consent and data minimization | **Deferred/blocked** | Final storage, analytics and third-party request inventory is not complete; Google-hosted fonts remain a third-party request. |
+| Fake reviews and unsupported claims | **Implemented** | No review carousel is present; social-preview copy is qualified for a product still in development. Full public-claims review remains. |
+| Alt text, keyboard use, visible focus and control names | **Tested** | Image-alt and accessible-name checks plus keyboard menu/Evolution interaction tests passed. Full contrast/WCAG audit remains. |
+| Real desktop and physical mobile-device verification | **Deferred/blocked** | CI browser is not a substitute for testing actual phones/tablets and landscape layouts. |
+| Public release | **Deferred/blocked** | No deployment is configured in this PR's website workflow. Do not merge/release until SP/SS backend conflict and remaining review blockers are resolved. |
+
 ## Deferred website polish and legal-compliance backlog — owner-requested (2026-10-15)
 
 **Priority rule:** finish the real core work first (authenticated backend Chat, persistence/account isolation, Google sign-in, real device voice, core security and test verification). Keep the following tasks queued for the later website polish/accessibility/legal phase. Do not deploy or publicly release until the owner explicitly approves.
