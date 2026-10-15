@@ -83,6 +83,11 @@ class _VoiceFlowClient extends http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     requestPaths.add(request.url.path);
     final Map<String, dynamic> body = switch (request.url.path) {
+      '/chat' => {
+          'success': true,
+          'session_id': 'voice-session-1',
+          'response': {'response': 'The voice pipeline works.'},
+        },
       '/command' => {
           'success': true,
           'status': 'queued',
@@ -185,7 +190,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Voice mode exposes language selection and sends confirmed text through durable command API', (tester) async {
+  testWidgets('Voice mode sends a conversational reply to speech output', (tester) async {
     final client = _VoiceFlowClient();
     final api = SageApi(
       client: client,
@@ -197,8 +202,39 @@ void main() {
 
     expect(find.text('English'), findsOneWidget);
     expect(find.text('नेपाली'), findsOneWidget);
+    expect(find.text('Conversation'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).first, 'Explain SAGE voice status');
+    await tester.tap(find.text('SEND TO SAGE'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+
+    expect(client.requestPaths, contains('/chat'));
+    expect(client.requestPaths, isNot(contains('/command')));
+    await tester.drag(find.byType(ListView), const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.text('SAGE REPLY'), findsOneWidget);
+    expect(find.text('The voice pipeline works.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('Voice mode keeps explicit task execution available', (tester) async {
+    final client = _VoiceFlowClient();
+    final api = SageApi(
+      client: client,
+      baseUrl: 'http://test',
+      authToken: 'test-token',
+    );
+    await tester.pumpWidget(MaterialApp(home: SageVoiceScreen(api: api)));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    await tester.tap(find.text('Execute task'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Execute a safe test task');
     await tester.tap(find.text('CONFIRM & EXECUTE'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
@@ -207,12 +243,9 @@ void main() {
     expect(client.requestPaths, contains('/command'));
     expect(client.requestPaths, contains('/tasks/voice-task-1'));
     expect(client.requestPaths, isNot(contains('/execute/background')));
-
-    // The result card is below the initial viewport in the compact test device.
     await tester.drag(find.byType(ListView), const Offset(0, -900));
     await tester.pumpAndSettle();
     expect(find.text('YOUR TASK IS COMPLETE'), findsOneWidget);
-    expect(find.text('The voice pipeline works.'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
