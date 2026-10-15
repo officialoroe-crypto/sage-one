@@ -99,8 +99,15 @@ jobs:
           print(f"Validated Android API endpoint: {parsed.scheme}://{parsed.netloc}")
           PY
 
-      - name: Build release APK
-        run: flutter build apk --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
+      - name: Build local-backend QA APK
+        run: |
+          flutter build apk --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-local-qa.apk
+
+      - name: Build hosted-backend QA APK for Google sign-in testing
+        run: |
+          flutter build apk --release --dart-define=SAGE_API_URL="https://sage-one-api.onrender.com"
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-hosted-qa.apk
 
       - name: Build release App Bundle
         run: flutter build appbundle --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
@@ -108,9 +115,10 @@ jobs:
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: sage-one-android-release
+          name: sage-one-android-qa-builds
           retention-days: 14
           if-no-files-found: error
           path: |
-            frontend/build/app/outputs/flutter-apk/app-release.apk
+            frontend/build/app/outputs/flutter-apk/app-local-qa.apk
+            frontend/build/app/outputs/flutter-apk/app-hosted-qa.apk
             frontend/build/app/outputs/bundle/release/app-release.aab
