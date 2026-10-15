@@ -1,5 +1,5 @@
 /* SAGE web interface (preview). Replies are scripted examples: there is no backend call on this page.
-   Rules mirrored from the repo: Spark rate (economy/currency.py), spend limits (economy/spend_ladder.py). */
+   SP are non-cash points; SS payment features are not active. */
 (function () {
   'use strict';
 
@@ -13,8 +13,7 @@
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
 
   /* ------------------------------------------------------------ example data */
-  var NPR_PER_SPARK = 1;
-  var wallet = { balance: 1250, earned: 1250, spent: 0 };
+  var wallet = { balance: 0, earned: 0, spent: 0 };
   var RANKS = [
     ['Bronze', '#c7803f'], ['Silver', '#cfd6e4'], ['Gold', '#e9b949'], ['Platinum', '#b4dcf2'],
     ['Jade', '#35c88a'], ['Ruby', '#e0314b'], ['Sapphire', '#3a73ff'], ['Emerald', '#19c26b'],
@@ -200,7 +199,7 @@
     if (feat) {
       var f = featureById(feat);
       var intro = {
-        wallet: 'Here is your Spark wallet. 1 Spark is NPR 1.',
+        wallet: 'This preview has no live wallet or exchange rate. SP are non-cash points; SS payments are not active.',
         evolution: 'You are on Evolution 01, Bronze, at Mid intensity. The workspace shows the 13 ranks.',
         tasks: 'Here are your tasks. Each one shows its state: pending, running, completed or failed.',
         projects: 'Here are your projects.',
@@ -225,7 +224,7 @@
     return '<div class="approval" id="' + id + '" data-amount="' + a.amount + '">' +
       '<h4>Approval needed</h4>' +
       '<dl><dt>Action</dt><dd>' + esc(a.what) + '</dd>' +
-      '<dt>Cost</dt><dd>' + fmt(a.amount) + ' Spark (NPR ' + fmt(a.amount * NPR_PER_SPARK) + ')</dd>' +
+      '<dt>Example cost</dt><dd>' + fmt(a.amount) + ' SS (illustrative only; prices are not approved)</dd>' +
       '<dt>Your limit per spend</dt><dd>' + fmt(lim.limit) + ' Spark</dd>' +
       '<dt>Check</dt><dd>' + (within ? 'Within your limit' : 'Above your limit, SAGE cannot propose this') + '</dd></dl>' +
       '<div class="row">' +
