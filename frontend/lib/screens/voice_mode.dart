@@ -583,7 +583,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
               ),
             ],
             selected: <bool>{_conversationMode},
-            onSelectionChanged: _ready && !_processing
+            onSelectionChanged: !_processing
                 ? (selection) => setState(() {
                     _conversationMode = selection.first;
                     _result = null;
