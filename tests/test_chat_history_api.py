@@ -153,3 +153,33 @@ def test_chat_endpoint_returns_core_reply_and_reuses_owner_session(monkeypatch):
             assert saved is not None
     finally:
         engine.dispose()
+
+
+def test_chat_provider_failure_returns_non_success_without_leaking_internal_error(monkeypatch):
+    engine, _session_factory = _test_database(monkeypatch)
+    claims = {
+        "auth_provider": "google",
+        "auth_subject": "qa-owner",
+        "owner_mode": True,
+    }
+    monkeypatch.setitem(app.dependency_overrides, _require_owner, lambda: claims)
+    monkeypatch.setattr(
+        main_module,
+        "get_or_create_authenticated_profile",
+        lambda _claims: {"id": "qa-profile"},
+    )
+
+    def failed_handle(**_kwargs):
+        raise RuntimeError("private-provider-detail-and-secret")
+
+    monkeypatch.setattr(main_module.sage, "handle", failed_handle)
+    try:
+        response = client.post("/chat", json={"message": "Please answer."})
+        assert response.status_code == 503
+        assert response.json()["detail"] == (
+            "SAGE could not generate a reply. Check the configured AI providers and retry."
+        )
+        assert "private-provider-detail-and-secret" not in response.text
+    finally:
+        app.dependency_overrides.pop(_require_owner, None)
+        engine.dispose()
