@@ -267,37 +267,26 @@ class SageCore:
 
         tools = registry.schemas()
 
-        result = self.router.think_with_tools(
-
-            system_instruction=
-                SAGE_SYSTEM,
-
-            user_message=
-                prompt,
-
-            tools=
-                tools,
-
-            tool_executor=
-                self._execute_tool,
-
-            conversation=
-                conversation,
-
-            max_iterations=
-                8
-        )
-
-        self.state.add_message(
-            session_id,
-            "assistant",
-            result.response
-        )
-
-        self._active_session_id = None
-        self._active_owner_authorized = False
-
-        return result
+        try:
+            result = self.router.think_with_tools(
+                system_instruction=SAGE_SYSTEM,
+                user_message=prompt,
+                tools=tools,
+                tool_executor=self._execute_tool,
+                conversation=conversation,
+                max_iterations=8,
+            )
+            self.state.add_message(
+                session_id,
+                "assistant",
+                result.response,
+            )
+            return result
+        finally:
+            # Never leak request-specific authority/session context into the
+            # next request if a provider or tool raises unexpectedly.
+            self._active_session_id = None
+            self._active_owner_authorized = False
 
 
 sage = SageCore()
