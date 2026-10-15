@@ -121,7 +121,7 @@ void main() {
     final identity = IdentityClient(client: _ConfigClient());
     final api = SageApi(client: _ApiClient());
 
-    expect(identity.baseUrl, 'http://10.0.2.2:8010');
+    expect(identity.baseUrl, 'http://10.0.2.2:8000');
     expect(api.baseUrl, identity.baseUrl);
 
     identity.dispose();
