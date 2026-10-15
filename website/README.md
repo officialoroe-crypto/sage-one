@@ -28,7 +28,7 @@ The `.github/workflows/sage-one-god-mode-pages.yml` workflow checks page metadat
 
 ## Contents and claims
 
-The landing page includes an Evolution explorer, Spark converter, spend-limit calculator and roadmap. Spark rate and spend rules are provisional product rules, not a promise that cash-out or real-money payments are available. Confirm the business/operator details, public claims, rate and calculator rules before public release.
+The landing page includes an Evolution explorer, the SP/SS distinction and a roadmap. SP are internal non-cash points; SS payment features are not active. No exchange rate or spend limit is published as approved. Confirm business/operator details, public claims and money rules before public release.
 
 ## Design direction
 
