@@ -18,7 +18,7 @@ class IdentityClient {
     // Android emulators reach the host machine through 10.0.2.2. Physical
     // devices must pass SAGE_API_URL explicitly (for example localhost with
     // adb reverse, or a reachable HTTPS backend URL).
-    return 'http://10.0.2.2:8010';
+    return 'http://10.0.2.2:8000';
   }
 
   static const _tokenKey = 'sage.identity.token';
