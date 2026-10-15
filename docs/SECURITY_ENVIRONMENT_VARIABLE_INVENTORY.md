@@ -29,7 +29,7 @@ Do not put these values in browser code, HTML, source maps, logs, screenshots, p
 
 ## Findings requiring remediation/verification
 1. `config/settings.py` falls back to `SAGE_ENV=development` when missing and derives private/developer-mode defaults from it. Add production startup validation and explicit deployment configuration.
-2. `database/connection.py` falls back to `sqlite:///./sage_one.db` if `SAGE_DATABASE_URL` is absent. Require a durable database configuration in hosted production; test migrations, backup and restore.
+2. `database/connection.py` previously fell back to `sqlite:///./sage_one.db` if `SAGE_DATABASE_URL` was absent. The proposed hardening now requires `SAGE_DATABASE_URL` or `DATABASE_URL` in production and rejects SQLite there; the host must provision a persistent server database before this PR can safely be merged/deployed. Test migrations, backup and restore.
 3. `config/settings.py` attempts a legacy local path `C:/SageOne/Backend/.env` when the configured/default env file is missing. Remove or strictly limit this workstation-specific fallback for hosted production.
 4. Current source checks do not reveal whether any required variable is actually set in Render or GitHub. Inspect those dashboards directly with values masked; verify names, environment scope, and last-rotation date.
 5. Perform a full Git-history secret scan and dependency scan. The limited pattern search of selected current files is not a historical scan and does not clear the repository of secrets.
