@@ -15,13 +15,18 @@ def resolve_database_url(
     ephemeral filesystem must never silently become the production history store.
     """
     configured = (sage_database_url or database_url or "").strip()
+    production = (environment or "development").strip().lower() == "production"
     if not configured:
-        if (environment or "development").strip().lower() == "production":
+        if production:
             raise RuntimeError(
                 "Production requires SAGE_DATABASE_URL or DATABASE_URL. "
                 "SQLite fallback is disabled because it cannot guarantee durable history."
             )
         return "sqlite:///./sage_one.db"
+    if production and configured.startswith("sqlite"):
+        raise RuntimeError(
+            "Production requires a persistent server database; SQLite is not allowed."
+        )
 
     # Render and several Postgres providers still supply the legacy postgres://
     # scheme. Use psycopg 3 explicitly so the supported driver is deterministic.
