@@ -139,8 +139,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
     if (_nameController.text.trim().isEmpty ||
-        _addressController.text.trim().isEmpty) {
-      setState(() => _error = 'Complete your name and address.');
+        _addressController.text.trim().isEmpty ||
+        _intentController.text.trim().isEmpty) {
+      setState(() => _error = 'Complete your name, address and help intent.');
       return;
     }
 

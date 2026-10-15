@@ -84,86 +84,15 @@ class _DeveloperModeScreenState extends State<DeveloperModeScreen> {
       if (!mounted) return;
       setState(() {
         _status = response['success'] == true
-            ? 'Applied the exact approved preview successfully.'
+            ? 'Applied successfully.'
             : 'Apply finished with a failure.';
         _proposal = response;
-        _proposalId = null;
       });
     } catch (error) {
       if (mounted) setState(() => _status = 'Apply failed: $error');
     } finally {
       if (mounted) setState(() => _applying = false);
     }
-  }
-
-  Widget _proposalDetails() {
-    final proposal = _proposal ?? const <String, dynamic>{};
-    final rawChanges = proposal['changes'];
-    if (rawChanges is! List || rawChanges.isEmpty) {
-      return SelectableText(
-        const JsonEncoder.withIndent('  ').convert(proposal),
-        style: const TextStyle(color: SageTheme.textPrimary, fontSize: 12, height: 1.4),
-      );
-    }
-
-    String excerpt(dynamic value) {
-      final text = value?.toString() ?? '(new file)';
-      return text.length > 6000
-          ? '${text.substring(0, 6000)}\n… preview truncated for readability …'
-          : text;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          proposal['response']?.toString() ?? 'Proposed file changes',
-          style: const TextStyle(color: SageTheme.textPrimary, height: 1.4),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          '${rawChanges.length} file change(s) · isolated preview · nothing applied yet',
-          style: const TextStyle(color: SageTheme.cyan, fontSize: 12, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        for (final raw in rawChanges)
-          if (raw is Map) ...[
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: SageTheme.voidBlack,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: SageTheme.cyan.withValues(alpha: .16)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SelectableText(
-                    raw['path']?.toString() ?? 'Unknown file',
-                    style: const TextStyle(color: SageTheme.cyan, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text('BEFORE', style: TextStyle(color: SageTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    excerpt(raw['before_content']),
-                    style: const TextStyle(color: SageTheme.textSecondary, fontFamily: 'monospace', fontSize: 11, height: 1.35),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text('PROPOSED', style: TextStyle(color: SageTheme.cyan, fontSize: 10, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    excerpt(raw['content']),
-                    style: const TextStyle(color: SageTheme.textPrimary, fontFamily: 'monospace', fontSize: 11, height: 1.35),
-                  ),
-                ],
-              ),
-            ),
-          ],
-      ],
-    );
   }
 
   @override
@@ -247,8 +176,10 @@ class _DeveloperModeScreenState extends State<DeveloperModeScreen> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: SageTheme.cyan.withValues(alpha: .14)),
               ),
-              child: _proposalDetails(),
-
+              child: SelectableText(
+                const JsonEncoder.withIndent('  ').convert(_proposal),
+                style: const TextStyle(color: SageTheme.textPrimary, fontSize: 12, height: 1.4),
+              ),
             ),
             if (_proposalId != null) ...[
               const SizedBox(height: 14),

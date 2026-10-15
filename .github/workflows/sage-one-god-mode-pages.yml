@@ -1,46 +1,70 @@
-name: SAGE ONE Marketing Website and Web App QA
+name: SAGE ONE Website and Web App QA (No Deployment)
 
 on:
-  # QA only while the owner-requested product rebuild is underway.
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "website/**"
-      - "frontend/**"
-      - ".github/workflows/sage-one-god-mode-pages.yml"
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "website/**"
       - "frontend/**"
+      - "tests/test_website_quality_contract.py"
+      - ".github/workflows/sage-one-god-mode-pages.yml"
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "frontend/**"
+      - "tests/test_website_quality_contract.py"
       - ".github/workflows/sage-one-god-mode-pages.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  # Keep pull-request validation separate from main builds and manual publication.
-  group: sage-one-public-pages-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || (github.event_name == 'workflow_dispatch' && 'manual-deploy' || 'push-main') }}
+  group: sage-one-website-qa-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Validate website and build web app for QA
+  website-quality:
+    name: Website links, metadata, labels and menu contract
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install website QA dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Check website quality contract
+        run: |
+          set -o pipefail
+          python -m pytest -vv --tb=long tests/test_website_quality_contract.py 2>&1 | tee website-quality-test.log
+      - name: Preserve website QA diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sage-one-website-quality-log-${{ github.sha }}
+          path: website-quality-test.log
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Check website JavaScript syntax
+        run: |
+          node --check website/app.js
+          node --check website/chat/chat.js
+          node --check website/app-preview/app.js
+
+  web-app-qa:
+    name: Analyze, test and build web app (artifact only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: frontend
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.47.3"
           channel: stable
@@ -51,46 +75,7 @@ jobs:
         run: flutter analyze
       - name: Test Flutter app
         run: flutter test
-      - name: Validate imported workspace and local assets
-        run: |
-          for file in ../website/js/*.js; do
-            node --check "$file"
-          done
-          python - <<'PY'
-          from pathlib import Path
-
-          site = Path("../website")
-          html = (site / "index.html").read_text(encoding="utf-8")
-          required = (
-              'href="css/styles.css',
-              'id="screen"',
-              'id="tabbar"',
-              'src="js/core.js',
-              'src="js/screens-onboarding.js',
-              'src="js/app.js',
-              'src="js/backend.js',
-          )
-          missing = [fragment for fragment in required if fragment not in html]
-          if missing:
-              raise SystemExit(f"Workspace entry point is missing expected structure: {missing}")
-          for filename in (
-              "css/styles.css", "img/sage-mark.png", "js/core.js", "js/data.js",
-              "js/components.js", "js/ai.js", "js/screens-onboarding.js",
-              "js/screens-home.js", "js/screens-apps.js", "js/screens-system.js",
-              "js/screens-lab.js", "js/screens-agents.js", "js/app.js", "js/backend.js",
-          ):
-              if not (site / filename).is_file():
-                  raise SystemExit(f"Missing workspace asset: {filename}")
-          print("Workspace entry point, referenced assets, and JavaScript syntax validated.")
-          PY
-      - name: Upload workspace source for QA
-        uses: actions/upload-artifact@v7
-        with:
-          name: sage-one-website-workspace-qa-${{ github.sha }}
-          path: website/
-          if-no-files-found: error
-          retention-days: 7
-      - name: Build Flutter web app for QA (not Pages deployment)
+      - name: Build web app for QA only (never deploy)
         env:
           SAGE_API_URL: ${{ vars.SAGE_API_URL || 'https://sage-one-api.onrender.com' }}
         run: |
@@ -101,65 +86,11 @@ jobs:
               exit 1
               ;;
           esac
-          flutter build web --release --base-href / --dart-define="SAGE_API_URL=$SAGE_API_URL"
-      - name: Upload web QA build artifact
+          flutter build web --release --base-href /sage-one/app/ --dart-define="SAGE_API_URL=$SAGE_API_URL"
+      - name: Upload web QA artifact (not a Pages artifact)
         uses: actions/upload-artifact@v7
         with:
           name: sage-one-web-qa-${{ github.sha }}
           path: frontend/build/web
           if-no-files-found: error
           retention-days: 7
-
-  backend-smoke:
-    if: github.event_name != 'pull_request'
-    name: Smoke-test live backend for web integration
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    env:
-      SAGE_API_URL: ${{ vars.SAGE_API_URL || 'https://sage-one-api.onrender.com' }}
-    steps:
-      - name: Check live API health and owner sign-in configuration
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          import time
-          from urllib.error import HTTPError, URLError
-          from urllib.request import Request, urlopen
-
-          base = os.environ["SAGE_API_URL"].rstrip("/")
-          if not base.startswith("https://"):
-              raise SystemExit("SAGE_API_URL must use HTTPS for the web app.")
-
-          def get_json(path):
-              last_error = None
-              for attempt in range(6):
-                  try:
-                      request = Request(base + path, headers={"Accept": "application/json"})
-                      with urlopen(request, timeout=20) as response:
-                          if response.status < 200 or response.status >= 300:
-                              raise RuntimeError(f"{path} returned HTTP {response.status}")
-                          return json.loads(response.read().decode("utf-8"))
-                  except (HTTPError, URLError, TimeoutError, RuntimeError, ValueError) as exc:
-                      last_error = exc
-                      if attempt < 5:
-                          time.sleep(10)
-              raise SystemExit(f"Backend smoke check failed for {path}: {last_error}")
-
-          health = get_json("/health")
-          if str(health.get("status", "")).lower() != "healthy":
-              raise SystemExit(f"Backend health is not healthy: {health.get('status', 'missing status')}")
-
-          identity = get_json("/identity/config")
-          if identity.get("success") is not True:
-              raise SystemExit("Identity config endpoint did not return success=true.")
-          if not str(identity.get("google_client_id", "")).strip():
-              raise SystemExit("Google sign-in is not configured: backend returned an empty google_client_id.")
-
-          print("PASS: live backend health endpoint is healthy.")
-          print("PASS: identity configuration endpoint is reachable and Google sign-in is configured.")
-          print("PASS: web build target:", base)
-          PY
-

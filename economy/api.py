@@ -9,11 +9,13 @@ from config.settings import settings
 from database.connection import SessionLocal
 from economy.achievements import record_verified_achievement
 from economy.costs import cost_catalog
+from economy.currency import cash_out_quote, currency_info
 from economy.owner import owner_audit, reset_evolution, reset_spark, set_evolution, set_spark
 from economy.service import (
-    EVOLUTION_TIERS, evolution_simulation, get_evolution, grant_sparks, premium_transaction,
+    EVOLUTION_TIERS, evolution_simulation, get_evolution, get_wallet, grant_sparks, premium_transaction,
     refund_premium_sparks, reserve_premium_work, settle_premium_sparks, snapshot, spend_sparks,
 )
+from economy.spend_ladder import ladder_description, spend_limit
 from identity.auth import authenticate_request
 
 router = APIRouter(prefix="/economy", tags=["economy"])
@@ -113,6 +115,32 @@ def payment_status(claims: dict = Depends(authenticate_request)):
             else "Payment provider is not configured; no payment action is available."
         ),
     }
+
+
+@router.get("/currency")
+def economy_currency(claims: dict = Depends(authenticate_request)):
+    """The locked Spark/NPR rule plus whether real-rupee payout is possible."""
+    _owner(claims)
+    return {"success": True, "currency": currency_info()}
+
+
+@router.get("/cash-out/quote")
+def economy_cash_out_quote(spark: int, claims: dict = Depends(authenticate_request)):
+    """Quote only. This never moves money."""
+    _owner(claims)
+    if spark < 0 or spark > 1_000_000_000:
+        raise HTTPException(status_code=422, detail="Spark amount is out of range")
+    return {"success": True, "quote": cash_out_quote(spark)}
+
+
+@router.get("/spend-limit")
+def economy_spend_limit(claims: dict = Depends(authenticate_request)):
+    """How much SAGE may propose to spend. The owner still approves every spend."""
+    owner_key = _owner(claims)
+    with SessionLocal() as db:
+        wallet = get_wallet(db, owner_key)
+        limit = spend_limit(wallet.balance, wallet.lifetime_earned)
+    return {"success": True, "spend_limit": limit.to_dict(), "ladder": ladder_description()}
 
 
 @router.get("/costs")

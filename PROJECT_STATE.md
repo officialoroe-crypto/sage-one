@@ -1,7 +1,7 @@
 # SAGE ONE — PROJECT STATE
 
-Last updated: 2026-10-14
-Current main at product-rebuild batch start: 5721647a308760b7e16eede03cd085f6d3d1ddc4
+Last updated: 2026-10-09
+Current main at incident-fix branch creation: 133c5a5f9c8d051e31e9a5d6e7f4aa5e15b99c19
 
 ## Identity
 - Project: SAGE ONE
@@ -18,18 +18,6 @@ Current main at product-rebuild batch start: 5721647a308760b7e16eede03cd085f6d3d
 - Never call a feature complete until success, failure, refresh/restart behavior and regression coverage are checked where practical.
 - For work spanning separate AI accounts/sessions, update this file and the relevant task/PR handoff in GitHub; chat memory alone is not synchronization.
 - Before resuming, inspect the current main SHA, this file, TODO.md, AI_COLLABORATION.md, coordination/ACTIVE_WORK.yaml, relevant open PRs, and workflow results. Do not rely on older chat summaries when live GitHub state is available.
-
-## Current owner-directed product rebuild — 2026-10-14
-
-**Status: ACTIVE — PR #254 and voice PR #257 are merged. PR #260 is the current integrated QA/economy/developer-preview batch. No public website deployment or app release is authorized.**
-
-- Owner explicitly requires bulk implementation, automated interaction testing, no repeated permission prompts, and no public deployment during this rebuild. Standing merge authorization applies to safe changes when final-head checks pass.
-- Merged PR #254 restored the intended workspace entry point for QA, removed public Pages deployment jobs, and made voice commands confirmation-gated.
-- Merged PR #257 connects Flutter voice commands to the authenticated durable `/command` path, adds English/Nepali recognition selection and spoken responses, and adds a browser-workspace voice response/stop control. CI, browser workspace build, and Android APK validation passed on its final head. Physical microphone, Nepali voice availability, and phone connectivity still require real-device verification.
-- Current PR #260: https://github.com/officialoroe-crypto/sage-one/pull/260. It removes fabricated earnings/payment claims, blocks fake local Spark purchase/transfer/withdrawal mutations, adds real Chromium interaction tests, and strengthens Developer Mode so preview changes are prepared in an isolated workspace and approval applies the exact stored patch only if source hashes still match.
-- Developer Mode is owner-only and approval-gated. Proposed changes are bounded to approved writable source roots, reject secret files and symlink/traversal targets, and refuse stale previews instead of overwriting newer edits. The isolated preview is not itself proof that all platform-specific checks passed; CI and relevant tests remain required.
-- Live backend smoke tests previously passed `/health` and `/identity/config`; a Google client ID is configured. This is not proof of successful physical-device Google sign-in. OTP delivery remains unconfigured, formal KYC provider integration is unavailable, and external payment processing remains disabled until real providers are connected. Never simulate identity verification, cash, payment, or task completion.
-- No website deployment, public Pages exposure, APK publication, or production publishing. Continue automated CI/Chromium tests, fix failures on the latest head, and merge only when checks pass. Keep the user out of repetitive manual testing until the integrated QA package is ready.
 
 ## Current active handoff — physical Android Google Sign-In
 
@@ -145,7 +133,7 @@ Main contains the real private-first execution core:
 - World Intelligence cannot self-modify production code.
 
 ## Economy / Evolution
-- Spark is an internal platform credit, not cash.
+- Spark is the SAGE platform currency: 1 Spark = NPR 1 (owner decision 2026-10-11; see docs/SAGE_MASTER_BLUEPRINT.md). Cash-out is off until a payment provider is configured and the owner opts in.
 - Premium work uses a canonical cost catalogue with reservation → settle/refund lifecycle and owner-scoped idempotency.
 - Terminal failure/cancellation refunds exactly once; crash reconciliation exists.
 - Verified mission-task results settle lifetime Evolution achievement atomically and idempotently.

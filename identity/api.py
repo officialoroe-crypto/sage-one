@@ -13,7 +13,7 @@ from identity.auth import authenticate_request, create_developer_session, get_or
 from identity.memory import add_memory, delete_memory, list_memory, update_memory
 from identity.memory_learning import learn_memory_candidates
 from identity.onboarding import capability_catalog, validate_capabilities
-from identity.otp import otp_manager
+from identity.otp import OTPRateLimited, otp_manager
 from identity.profile import SessionLocal, UserProfile, mark_phone_verified, upsert_profile
 
 router = APIRouter(prefix="/identity", tags=["identity"])
@@ -37,7 +37,7 @@ class OnboardingRequest(BaseModel):
     address: str = Field(min_length=1, max_length=1000)
     age: int = Field(ge=1, le=120)
     basic_info: dict[str, Any] = Field(default_factory=dict)
-    help_intent: str = Field(default="", max_length=2000)
+    help_intent: str = Field(min_length=1, max_length=2000)
     capabilities: list[str] = Field(default_factory=list, max_length=20)
     memory_consent: bool = False
 
@@ -108,21 +108,7 @@ def google_login(request: GoogleLoginRequest):
     from identity.auth import verify_google_id_token
     claims = verify_google_id_token(request.id_token)
     profile = _profile_from_claims(claims)
-    return {
-        "success": True,
-        "identity": {
-            "provider": "google",
-            "subject": claims["auth_subject"],
-            "email": claims.get("email"),
-            "email_verified": claims.get("email_verified", False),
-            "owner_mode": claims.get("owner_mode", False),
-        },
-        # Keep flags at the top level for the Flutter AuthGate contract.
-        "owner_mode": claims.get("owner_mode", False),
-        "developer_mode": claims.get("developer_mode", False),
-        "profile": profile,
-        "onboarding_required": not profile["onboarding_completed"],
-    }
+    return {"success": True, "identity": {"provider": "google", "subject": claims["auth_subject"], "email": claims.get("email"), "email_verified": claims.get("email_verified", False), "owner_mode": claims.get("owner_mode", False)}, "profile": profile, "onboarding_required": not profile["onboarding_completed"]}
 
 @router.get("/me")
 def get_me(claims: dict[str, Any] = Depends(authenticate_request)):
@@ -180,7 +166,10 @@ def complete_onboarding(request: OnboardingRequest, claims: dict[str, Any] = Dep
 @router.post("/phone/send")
 def send_phone_otp(request: PhoneRequest, claims: dict[str, Any] = Depends(authenticate_request)):
     owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
-    challenge = otp_manager.create_challenge(owner_key, request.phone)
+    try:
+        challenge = otp_manager.create_challenge(owner_key, request.phone)
+    except OTPRateLimited as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
     upsert_profile(auth_provider=claims["auth_provider"], auth_subject=claims["auth_subject"], phone=request.phone)
     return {"success": True, "challenge_id": challenge.challenge_id, "expires_at": challenge.expires_at, "delivery": "sms_provider" if otp_manager.provider is not None else "not_configured"}
 

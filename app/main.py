@@ -18,7 +18,7 @@ from agentic.models import ActionRequest
 from brain.router import router
 from database.connection import SessionLocal, Base, engine
 from database import repository
-from database.models import ArchivedSession, DeveloperProposal, Message
+from database.models import DeveloperProposal
 from sales.models import SalesActivity, SalesLead
 
 from missions.engine import mission_engine
@@ -42,7 +42,13 @@ from app.worker_service import worker_service
 from config.settings import settings
 from identity.auth import authenticate_request, get_or_create_authenticated_profile
 from workflows.repository import repository as workflow_repository
-from dev_agent.proposals import prepare_developer_preview, apply_developer_preview, StaleDeveloperProposal
+from dev_agent.agent import DevelopmentAgent
+from app.security import (
+    BodySizeLimitMiddleware,
+    RateLimitMiddleware,
+    SecurityHeadersMiddleware,
+    validate_production_config,
+)
 
 
 # ============================================================
@@ -99,51 +105,66 @@ async def _lifespan(_app: FastAPI):
         worker_service.stop()
 
 
+# Interactive docs and the OpenAPI schema map the whole API for an attacker, and
+# FastAPI serves them outside the auth dependency, so they are off in production.
 app = FastAPI(
     dependencies=[Depends(_require_api_access)],
     title="SAGE ONE",
     version="6.0.0",
     description="SAGE ONE personal AI execution core",
     lifespan=_lifespan,
+    debug=False,
+    docs_url=None if settings.IS_PRODUCTION else "/docs",
+    redoc_url=None if settings.IS_PRODUCTION else "/redoc",
+    openapi_url=None if settings.IS_PRODUCTION else "/openapi.json",
 )
 
 
-def _cors_origins() -> list[str]:
-    """Return explicit CORS allowlist plus the canonical public web-app origin.
+@app.exception_handler(Exception)
+async def _unhandled_error(_request: Request, exc: Exception):
+    """Never leak stack traces or internals to clients."""
+    import logging
+    from fastapi.responses import JSONResponse
+    logging.getLogger("sage.error").exception("Unhandled error", exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error."})
 
-    Render environment overrides used to replace the defaults completely. If
-    SAGE_CORS_ORIGINS was configured without the GitHub Pages origin, browser
-    requests from the deployed frontend failed CORS preflight even though the
-    default configuration included it. Keep the public production frontend
-    allowed while still supporting extra deployment-specific origins.
-    """
-    canonical = [
-        "https://officialoroe-crypto.github.io",
-    ]
-    defaults = [
+
+def _cors_origins() -> list[str]:
+    configured = os.getenv("SAGE_CORS_ORIGINS", "")
+    if configured.strip():
+        return [origin.strip().rstrip("/") for origin in configured.split(",") if origin.strip()]
+    return [
         "http://localhost:8080",
         "http://127.0.0.1:8080",
         "http://localhost:7357",
         "http://127.0.0.1:7357",
+        "https://officialoroe-crypto.github.io",
     ]
-    configured = os.getenv("SAGE_CORS_ORIGINS", "")
-    supplied = [
-        origin.strip().rstrip("/")
-        for origin in configured.split(",")
-        if origin.strip()
-    ]
-    # De-duplicate while preserving order. Configured origins extend, rather
-    # than accidentally remove, the canonical public frontend origin.
-    return list(dict.fromkeys(canonical + defaults + supplied))
 
+
+_startup_problems = validate_production_config(_cors_origins())
+if _startup_problems:
+    # Refuse to boot an insecure production deployment rather than run it.
+    raise RuntimeError("Unsafe production configuration: " + " ".join(_startup_problems))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+    max_age=600,
 )
+# Added after CORS so they wrap it (last added = outermost): limits and headers
+# apply to every response, including CORS preflights and error responses.
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.MAX_BODY_BYTES)
+app.add_middleware(
+    RateLimitMiddleware,
+    per_minute=settings.RATE_LIMIT_PER_MINUTE,
+    auth_per_minute=settings.AUTH_RATE_LIMIT_PER_MINUTE,
+    trust_proxy=settings.TRUST_PROXY_HEADERS,
+)
+app.add_middleware(SecurityHeadersMiddleware, hsts=settings.IS_PRODUCTION)
 
 # Ensure newly introduced durable tables exist when the API starts.
 Base.metadata.create_all(bind=engine)
@@ -164,7 +185,7 @@ app.include_router(learning_api_router)
 # ============================================================
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=20000)
     session_id: Optional[str] = None
     goal: Optional[str] = None
     task: Optional[str] = None
@@ -173,16 +194,16 @@ class ChatRequest(BaseModel):
 
 
 class ExecuteRequest(BaseModel):
-    goal: str
+    goal: str = Field(min_length=1, max_length=20000)
     project_id: Optional[str] = None
     session_id: Optional[str] = None
     max_steps: int = Field(default=20, ge=1, le=100)
 
 
 class AutomationCreateRequest(BaseModel):
-    name: str
-    goal: str
-    schedule_type: str = "once"
+    name: str = Field(min_length=1, max_length=200)
+    goal: str = Field(min_length=1, max_length=20000)
+    schedule_type: str = Field(default="once", max_length=50)
     run_at: Optional[datetime] = None
     interval_seconds: Optional[int] = Field(default=None, ge=60)
     session_id: Optional[str] = None
@@ -191,26 +212,26 @@ class AutomationCreateRequest(BaseModel):
 
 
 class MemoryRequest(BaseModel):
-    content: str
-    memory_type: str = "general"
+    content: str = Field(min_length=1, max_length=5000)
+    memory_type: str = Field(default="general", max_length=100)
     importance: int = Field(default=5, ge=1, le=10)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     source: str = "user"
 
 
 class PermissionRequest(BaseModel):
-    permission: str
+    permission: str = Field(min_length=1, max_length=200)
     allowed: bool
 
 
 class MissionCreateRequest(BaseModel):
-    goal: str
+    goal: str = Field(min_length=1, max_length=20000)
     priority: int = Field(default=3, ge=1, le=5)
     session_id: Optional[str] = None
 
 
 class MissionPlanRequest(BaseModel):
-    goal: str
+    goal: str = Field(min_length=1, max_length=20000)
     session_id: Optional[str] = None
     priority: int = Field(default=3, ge=1, le=5)
 
@@ -252,9 +273,9 @@ class DeveloperApplyRequest(BaseModel):
 
 class SalesRunRequest(BaseModel):
     business_name: str = Field(min_length=1, max_length=200)
-    website: Optional[str] = None
-    instagram: Optional[str] = None
-    notes: Optional[str] = None
+    website: Optional[str] = Field(default=None, max_length=2000)
+    instagram: Optional[str] = Field(default=None, max_length=200)
+    notes: Optional[str] = Field(default=None, max_length=5000)
     project_id: Optional[str] = None
     session_id: Optional[str] = None
 
@@ -572,64 +593,6 @@ def get_session_messages(
         }
 
 
-@app.get("/sessions")
-def list_chat_sessions(
-    archived: bool = False,
-    limit: int = 50,
-    claims: dict[str, Any] = Depends(_require_owner),
-):
-    """List the authenticated owner's saved conversations, including archived ones on request."""
-    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
-    with SessionLocal() as db:
-        sessions = repository.list_sessions(
-            db,
-            owner_key=owner_key,
-            archived=archived,
-            limit=max(1, min(limit, 100)),
-        )
-        items = []
-        for session in sessions:
-            latest = repository.get_messages(db, session.id, limit=1)
-            item = _serialize(session)
-            item["preview"] = (latest[0].content if latest else "")[:180]
-            item["message_count"] = db.query(Message).filter(Message.session_id == session.id).count()
-            item["archived"] = archived
-            items.append(item)
-        return {"success": True, "sessions": items, "archived": archived}
-
-
-@app.post("/session/{session_id}/archive")
-def archive_chat_session(session_id: str, claims: dict[str, Any] = Depends(_require_owner)):
-    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
-    with SessionLocal() as db:
-        session = repository.get_session(db, session_id, owner_key=owner_key)
-        if session is None:
-            raise HTTPException(status_code=404, detail="Session not found.")
-        marker = db.query(ArchivedSession).filter(
-            ArchivedSession.session_id == session_id,
-            ArchivedSession.owner_key == owner_key,
-        ).first()
-        if marker is None:
-            db.add(ArchivedSession(session_id=session_id, owner_key=owner_key))
-            db.commit()
-    return {"success": True, "session_id": session_id, "archived": True}
-
-
-@app.post("/session/{session_id}/restore")
-def restore_chat_session(session_id: str, claims: dict[str, Any] = Depends(_require_owner)):
-    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
-    with SessionLocal() as db:
-        session = repository.get_session(db, session_id, owner_key=owner_key)
-        if session is None:
-            raise HTTPException(status_code=404, detail="Session not found.")
-        db.query(ArchivedSession).filter(
-            ArchivedSession.session_id == session_id,
-            ArchivedSession.owner_key == owner_key,
-        ).delete(synchronize_session=False)
-        db.commit()
-    return {"success": True, "session_id": session_id, "archived": False}
-
-
 # ============================================================
 # CHAT
 # ============================================================
@@ -909,7 +872,7 @@ def developer_preview(
     if not settings.DEVELOPER_MODE:
         raise HTTPException(status_code=403, detail="Developer Mode is disabled.")
     workspace = _developer_workspace(request.workspace)
-    result = prepare_developer_preview(str(workspace), request.task)
+    result = DevelopmentAgent(str(workspace), apply_changes=False).plan(request.task)
     proposal_id = str(uuid.uuid4())
     with SessionLocal() as db:
         proposal = DeveloperProposal(
@@ -976,23 +939,9 @@ def developer_apply(
         if proposal.status != "preview":
             raise HTTPException(status_code=409, detail="Developer proposal is no longer applicable.")
         workspace = proposal.workspace
-        preview = json.loads(proposal.preview_json)
+        task = proposal.task
 
-    try:
-        result = apply_developer_preview(workspace, preview)
-    except StaleDeveloperProposal as exc:
-        with SessionLocal() as db:
-            stale = db.query(DeveloperProposal).filter(
-                DeveloperProposal.id == request.proposal_id,
-                DeveloperProposal.owner_key == owner_key,
-            ).first()
-            if stale is not None:
-                stale.status = "stale"
-                db.commit()
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except (ValueError, PermissionError) as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
+    result = DevelopmentAgent(workspace, apply_changes=True).apply(task)
     now = datetime.now(timezone.utc)
     with SessionLocal() as db:
         proposal = db.query(DeveloperProposal).filter(
@@ -1208,11 +1157,13 @@ def execute_tool(
             "error": result.get("error", "Tool execution failed."),
         }
 
-    except Exception as exc:
+    except Exception:
+        import logging
+        logging.getLogger("sage.error").exception("tool execution failed")
         return {
             "success": False,
             "tool": tool_name,
-            "error": str(exc),
+            "error": "Tool execution failed.",
         }
 
 # ============================================================
@@ -1337,22 +1288,16 @@ def get_tasks(
     if status is not None and status not in tasks.VALID_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid task status")
 
-    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
     return {
         "success": True,
-        "tasks": tasks.list(status=status, owner_key=owner_key),
+        "tasks": tasks.list(status=status),
     }
 
 
 @app.get("/tasks/{task_id}")
-def get_task(
-    task_id: str,
-    claims: dict[str, Any] = Depends(_require_owner),
-):
-    owner_key = f"{claims['auth_provider']}:{claims['auth_subject']}"
-    task = tasks.get(task_id, owner_key=owner_key)
+def get_task(task_id: str):
+    task = tasks.get(task_id)
     if task is None:
-        # Do not reveal whether another owner has a task with this identifier.
         raise HTTPException(status_code=404, detail="Task not found")
     return {
         "success": True,

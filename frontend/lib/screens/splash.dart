@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -22,10 +21,9 @@ class SageSplashScreen extends StatefulWidget {
 }
 
 class _SageSplashScreenState extends State<SageSplashScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fade;
-  late final AnimationController _orbitController;
   Timer? _timer;
   bool _complete = false;
 
@@ -37,10 +35,6 @@ class _SageSplashScreenState extends State<SageSplashScreen>
       duration: const Duration(milliseconds: 1400),
     )..forward();
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
-    _orbitController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
     _timer = Timer(widget.duration, () {
       if (mounted) setState(() => _complete = true);
     });
@@ -50,7 +44,6 @@ class _SageSplashScreenState extends State<SageSplashScreen>
   void dispose() {
     _timer?.cancel();
     _controller.dispose();
-    _orbitController.dispose();
     super.dispose();
   }
 
@@ -66,7 +59,7 @@ class _SageSplashScreenState extends State<SageSplashScreen>
             center: Alignment(0, -.22),
             radius: 1.15,
             colors: [
-              Color(0xFF1B2457),
+              Color(0xFF102C58),
               Color(0xFF061326),
               Color(0xFF020306),
             ],
@@ -91,14 +84,9 @@ class _SageSplashScreenState extends State<SageSplashScreen>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        AnimatedBuilder(
-                          animation: _orbitController,
-                          builder: (context, _) => CustomPaint(
-                            size: const Size(156, 156),
-                            painter: _SplashOrbitPainter(
-                              progress: _orbitController.value,
-                            ),
-                          ),
+                        const CustomPaint(
+                          size: Size(156, 156),
+                          painter: _SplashOrbitPainter(),
                         ),
                         Container(
                           width: 98,
@@ -187,8 +175,7 @@ class _SageSplashScreenState extends State<SageSplashScreen>
 
  
 class _SplashOrbitPainter extends CustomPainter {
-  const _SplashOrbitPainter({required this.progress});
-  final double progress;
+  const _SplashOrbitPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -215,11 +202,7 @@ class _SplashOrbitPainter extends CustomPainter {
         ..strokeWidth = .65
         ..color = Colors.white.withValues(alpha: .22),
     );
-    final angle = progress * math.pi * 2;
-    final coin = Offset(
-      math.cos(angle) * orbit.width / 2,
-      math.sin(angle) * orbit.height / 2,
-    );
+    final coin = Offset(orbit.width * .37, -orbit.height * .33);
     canvas.drawCircle(
       coin,
       12,
@@ -247,6 +230,5 @@ class _SplashOrbitPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _SplashOrbitPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _SplashOrbitPainter oldDelegate) => false;
 }

@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from economy.costs import cost_for
+from economy.currency import spark_to_npr
 from economy.models import EvolutionProfile, PremiumSparkTransaction, SparkLedgerEntry, SparkWallet
 from events.service import event_store
 
@@ -458,6 +459,9 @@ def snapshot(db: Session, owner_key: str) -> dict:
             "balance": wallet.balance,
             "lifetime_earned": wallet.lifetime_earned,
             "lifetime_spent": wallet.lifetime_spent,
+            "npr_value": spark_to_npr(wallet.balance),
+            "currency": "NPR",
+            "rule": "1 Spark = NPR 1",
         },
         "evolution": {
             "lifetime_achievement": evolution.lifetime_achievement,

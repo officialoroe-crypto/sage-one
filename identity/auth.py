@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+import time
 from typing import Any
 
 from fastapi import HTTPException, Request
@@ -14,6 +15,7 @@ from config.settings import settings
 from identity.profile import get_profile, upsert_profile
 
 _DEV_SESSIONS: dict[str, dict[str, Any]] = {}
+_DEV_SESSION_TTL_SECONDS = 12 * 3600
 
 
 def _is_local_request(request: Request) -> bool:
@@ -41,7 +43,10 @@ def create_developer_session(label: str = "local-owner") -> tuple[str, dict[str,
         "owner_mode": True,
     }
     token = f"sage-dev-{secrets.token_urlsafe(32)}"
-    _DEV_SESSIONS[token] = claims
+    now = time.time()
+    for stale in [t for t, c in _DEV_SESSIONS.items() if c.get("_expires_at", 0) <= now]:
+        del _DEV_SESSIONS[stale]
+    _DEV_SESSIONS[token] = {**claims, "_expires_at": now + _DEV_SESSION_TTL_SECONDS}
     return token, claims
 
 
@@ -57,6 +62,8 @@ def verify_google_id_token(raw_token: str) -> dict[str, Any]:
         )
     except ValueError as exc:
         raise HTTPException(status_code=401, detail="Invalid Google ID token.") from exc
+    except Exception as exc:  # e.g. Google's key endpoint unreachable
+        raise HTTPException(status_code=503, detail="Identity provider unavailable. Try again.") from exc
 
     subject = claims.get("sub")
     issuer = claims.get("iss")
@@ -95,10 +102,11 @@ def authenticate_request(request: Request) -> dict[str, Any]:
     if token.startswith("sage-dev-"):
         if not settings.DEVELOPER_MODE or not _is_local_request(request):
             raise HTTPException(status_code=401, detail="Developer session is not available here.")
-        claims = _DEV_SESSIONS.get(token)
-        if claims is None:
+        stored = _DEV_SESSIONS.get(token)
+        if stored is None or stored.get("_expires_at", 0) <= time.time():
+            _DEV_SESSIONS.pop(token, None)
             raise HTTPException(status_code=401, detail="Developer session expired. Sign in again.")
-        return claims
+        return {k: v for k, v in stored.items() if not k.startswith("_")}
 
     return verify_google_id_token(token)
 

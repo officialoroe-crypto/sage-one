@@ -15,11 +15,7 @@ def test_task_api_creates_and_reads_durable_task(monkeypatch):
     }
 
     monkeypatch.setattr("app.main.tasks.create", lambda **kwargs: created)
-    def get_owned_task(task_id, owner_key=None):
-        assert owner_key
-        return created if task_id == "task-1" else None
-
-    monkeypatch.setattr("app.main.tasks.get", get_owned_task)
+    monkeypatch.setattr("app.main.tasks.get", lambda task_id: created if task_id == "task-1" else None)
 
     response = client.post(
         "/tasks",

@@ -1,36 +1,35 @@
-# SAGE ONE Website Workspace
+# SAGE ONE Website
 
-The Freebuff-exported workspace is the intended SAGE ONE website experience. Its source lives in this directory:
-- `index.html` — workspace entry point
-- `css/` — responsive visual system and animation
-- `js/` — screens, navigation, voice capture, and the authenticated SAGE Core bridge
-- `img/` — workspace imagery and brand assets
+The `website/` directory contains the SAGE ONE landing page and explicitly labelled interactive previews.
 
-The Flutter mobile app remains in `frontend/`; FastAPI remains the canonical backend.
+## Boundaries
 
-## Preview locally without publishing
+- The landing page explains the SAGE ONE product direction.
+- The Chat and phone-app pages are previews. Sign-in, balances, notifications and chat replies shown there are simulated unless a page explicitly says otherwise.
+- Do not enter private, personal, or sensitive information into a preview.
+- The authenticated product remains the Flutter application and SAGE Core APIs.
+- Do not present draft policy documents as legal advice or proof of compliance.
 
-1. Download the latest successful **SAGE ONE Marketing Website and Web App QA** run from GitHub Actions.
-2. Download the artifact named `sage-one-website-workspace-qa-<commit>` and extract it to a folder, for example `C:\\SageOne\\website-qa`.
-3. Open Command Prompt in that extracted folder and run:
+## Local preview
 
-```bat
-py -m http.server 8080
+From the repository root, run:
+
+```text
+python -m http.server 8080 --directory website
 ```
 
-4. Open `http://127.0.0.1:8080` in Chrome or Opera. Keep the server window open while testing.
+Then open `http://127.0.0.1:8080`.
 
-Microphone input requires a supported browser and microphone permission. Voice recognition shows a transcript and waits for you to review and send it. Google sign-in from a local preview also requires `http://localhost:8080` or `http://127.0.0.1:8080` to be an authorized origin in the Google OAuth configuration. Do not paste OAuth secrets or tokens into chat.
+## Quality checks
 
-## Current backend boundaries
+The `.github/workflows/sage-one-god-mode-pages.yml` workflow checks page metadata, favicons, local links and assets, image alt attributes, accessible button/input names, mobile-menu wiring, JavaScript syntax, and the Flutter web app. It uploads a short-lived QA artifact only.
 
-- Google owner sign-in, chat, and explicitly queued tasks are connected in code but still require real browser end-to-end verification.
-- Phone verification depends on an actual configured SMS provider.
-- Formal KYC, external payments, research, and media-generation providers are not to be marked complete unless the real provider is connected and verified.
-- Prototype-only actions must clearly say they are unavailable and must not fake a transaction, verification, generated file, or completed task.
+**This workflow does not publish or deploy the website or app.** Public release requires a separate, explicit owner decision after legal, privacy, accessibility, image-rights, real-device, and functional verification.
 
-## Release boundary
+## Contents and claims
 
-**Publishing is paused during the current rebuild.** The GitHub Actions workflow validates the workspace, runs Flutter analysis/tests, builds the Flutter web app for QA, and uploads short-retention QA artifacts. It has no Pages package/deploy job. Pushes to main, pull requests, and manual workflow dispatch do not publish the website or app.
+The landing page includes an Evolution explorer, the SP/SS distinction and a roadmap. SP are internal non-cash points; SS payment features are not active. No exchange rate or spend limit is published as approved. Confirm business/operator details, public claims and money rules before public release.
 
-The currently deployed public website remains unchanged until a later release is explicitly requested. Because this repository is public, Actions artifacts may be downloadable by other repository visitors; they are not private storage. Do not put credentials, tokens, private user data, or real identity documents in them. QA artifacts do not prove live-browser behavior or authenticated backend access.
+## Design direction
+
+Near-black foundation, cyan/blue/violet intelligence accents, gold for economy signals, orbital-core motifs, restrained motion, and responsive layouts. The site should clearly distinguish implemented and verified functionality from roadmap items and scripted previews.

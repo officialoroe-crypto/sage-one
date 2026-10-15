@@ -2,11 +2,9 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../core/sage_api.dart';
 import '../theme/sage_theme.dart';
-import 'voice_mode.dart';
 class CommandCenter extends StatefulWidget {
   const CommandCenter({required this.api, this.onCreate, super.key});
   final SageApi api;
@@ -100,19 +98,10 @@ class _CommandCenterState extends State<CommandCenter>
       final value = task['result'] ?? task['error'];
       final terminal = {'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
 
-      final statusLabel = switch (status) {
-        'completed' => 'Task completed',
-        'failed' => 'Task failed',
-        'cancelled' || 'canceled' => 'Task cancelled',
-        'queued' || 'pending' => 'Task queued',
-        'running' || 'processing' || 'in_progress' => 'SAGE is working…',
-        _ => 'Task status: $status',
-      };
-
       setState(() {
-        _status = statusLabel;
+        _status = terminal ? 'Task complete' : 'SAGE is working…';
         _result = value?.toString();
-        _sending = !terminal;
+        _sending = !{'completed', 'failed', 'cancelled', 'canceled'}.contains(status);
       });
 
       if (!_sending) {
@@ -287,42 +276,18 @@ class _CommandCenterState extends State<CommandCenter>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Focus(
-          onKeyEvent: (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.enter) {
-              if (HardwareKeyboard.instance.isControlPressed) {
-                final selection = _prompt.selection;
-                final text = _prompt.text;
-                final start = selection.isValid ? selection.start : text.length;
-                final end = selection.isValid ? selection.end : text.length;
-                _prompt.value = TextEditingValue(
-                  text: text.replaceRange(start, end, '\n'),
-                  selection: TextSelection.collapsed(offset: start + 1),
-                );
-                return KeyEventResult.handled;
-              }
-              _send();
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: TextField(
-            controller: _prompt,
-            minLines: 3,
-            maxLines: 6,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _send(),
-            decoration: const InputDecoration(
-              hintText: 'Tell SAGE what you want done…',
-              prefixIcon: Padding(
-                padding: EdgeInsets.only(left: 14, right: 6),
-                child: Icon(Icons.bolt, color: SageTheme.cyan),
-              ),
-              prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-              contentPadding: EdgeInsets.all(18),
+        TextField(
+          controller: _prompt,
+          minLines: 3,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            hintText: 'Tell SAGE what you want done…',
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(left: 14, right: 6),
+              child: Icon(Icons.bolt, color: SageTheme.cyan),
             ),
+            prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+            contentPadding: EdgeInsets.all(18),
           ),
         ),
         const SizedBox(height: 10),
@@ -335,24 +300,6 @@ class _CommandCenterState extends State<CommandCenter>
               label: Text(_sending ? 'Working' : 'Execute'),
             ),
           ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => SageVoiceScreen(api: widget.api),
-              ),
-            ),
-            icon: const Icon(Icons.mic_none),
-            label: const Text('VOICE COMMAND  ·  TAP TO SPEAK'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: SageTheme.cyan,
-              side: BorderSide(color: SageTheme.cyan.withValues(alpha: .55)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
         ),
         const SizedBox(height: 8),
         Center(

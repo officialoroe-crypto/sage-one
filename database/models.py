@@ -17,15 +17,6 @@ class Session(Base):
     owner_key: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-class ArchivedSession(Base):
-    """Owner-scoped archive marker; conversation messages remain in the sessions table."""
-    __tablename__ = "archived_sessions"
-    session_id: Mapped[str] = mapped_column(String, primary_key=True)
-    owner_key: Mapped[str] = mapped_column(String, primary_key=True, index=True)
-    archived_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-
-
-
 
 # ============================================================
 # MESSAGES

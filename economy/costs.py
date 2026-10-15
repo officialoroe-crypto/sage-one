@@ -1,7 +1,7 @@
 """SAGE Spark cost catalog for premium platform work.
 
-Spark is an internal platform credit. These prices are quotes/catalog metadata,
-not cash prices and do not themselves charge a wallet.
+Spark is the SAGE platform currency: 1 Spark = NPR 1 (see economy/currency.py).
+These prices are quotes/catalog metadata and do not themselves charge a wallet.
 """
 
 from __future__ import annotations
