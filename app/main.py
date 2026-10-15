@@ -109,41 +109,64 @@ app = FastAPI(
 
 
 def _cors_origins() -> list[str]:
-    """Return explicit CORS allowlist plus the canonical public web-app origin.
+    """Return the production frontend and explicitly configured origins.
 
-    Render environment overrides used to replace the defaults completely. If
-    SAGE_CORS_ORIGINS was configured without the GitHub Pages origin, browser
-    requests from the deployed frontend failed CORS preflight even though the
-    default configuration included it. Keep the public production frontend
-    allowed while still supporting extra deployment-specific origins.
+    Local development origins are added only outside production. Production
+    operators can add a staging origin deliberately via SAGE_CORS_ORIGINS.
     """
-    canonical = [
-        "https://officialoroe-crypto.github.io",
-    ]
-    defaults = [
+    canonical = ["https://officialoroe-crypto.github.io"]
+    local_development = [
         "http://localhost:8080",
         "http://127.0.0.1:8080",
         "http://localhost:7357",
         "http://127.0.0.1:7357",
+        "http://localhost:8099",
+        "http://127.0.0.1:8099",
     ]
+    defaults = canonical if settings.ENVIRONMENT.strip().lower() == "production" else canonical + local_development
     configured = os.getenv("SAGE_CORS_ORIGINS", "")
     supplied = [
         origin.strip().rstrip("/")
         for origin in configured.split(",")
         if origin.strip()
     ]
-    # De-duplicate while preserving order. Configured origins extend, rather
-    # than accidentally remove, the canonical public frontend origin.
-    return list(dict.fromkeys(canonical + defaults + supplied))
+    # Explicit deployment configuration extends the canonical origin.
+    return list(dict.fromkeys(defaults + supplied))
 
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # SAGE browser clients use Authorization bearer tokens, not cross-site cookies.
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Accept", "Authorization", "Content-Type", "X-Request-ID"],
 )
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Apply baseline browser security headers to every API response.
+
+    Content Security Policy for the static website must be configured at its
+    hosting layer; applying a restrictive CSP to API/Swagger responses here
+    could break the API documentation UI.
+    """
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(self), microphone=(self), geolocation=()",
+    )
+    # Only emit HSTS when the ASGI request is known to be HTTPS. Configure the
+    # reverse proxy to preserve trusted HTTPS scheme information in production.
+    if request.url.scheme == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    return response
+
 
 # Ensure newly introduced durable tables exist when the API starts.
 Base.metadata.create_all(bind=engine)
@@ -164,11 +187,12 @@ app.include_router(learning_api_router)
 # ============================================================
 
 class ChatRequest(BaseModel):
-    message: str
-    session_id: Optional[str] = None
-    goal: Optional[str] = None
-    task: Optional[str] = None
-    project: Optional[str] = None
+    # Bound user-controlled payloads to reduce accidental memory/compute abuse.
+    message: str = Field(min_length=1, max_length=20000)
+    session_id: Optional[str] = Field(default=None, max_length=200)
+    goal: Optional[str] = Field(default=None, max_length=2000)
+    task: Optional[str] = Field(default=None, max_length=2000)
+    project: Optional[str] = Field(default=None, max_length=2000)
     context: Optional[dict[str, Any]] = None
 
 
