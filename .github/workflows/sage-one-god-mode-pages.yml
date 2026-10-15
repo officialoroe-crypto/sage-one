@@ -36,7 +36,7 @@ jobs:
           python-version: "3.13"
           cache: pip
       - name: Install website QA dependencies
-        run: python -m pip install pytest
+        run: python -m pip install -r requirements-dev.txt
       - name: Check website quality contract
         run: |
           set -o pipefail
