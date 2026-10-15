@@ -25,5 +25,8 @@ def test_android_release_workflow_has_endpoint_override_and_release_outputs():
     assert "flutter build apk --release" in text
     assert "flutter build appbundle --release" in text
     assert "app-release.apk" in text
+    assert "app-local-qa.apk" in text
+    assert "app-hosted-qa.apk" in text
+    assert 'SAGE_API_URL="https://sage-one-api.onrender.com"' in text
     assert "app-release.aab" in text
     assert "retention-days: 14" in text
