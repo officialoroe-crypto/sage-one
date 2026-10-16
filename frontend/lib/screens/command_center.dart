@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -361,7 +360,7 @@ class _CommandCenterState extends State<CommandCenter>
   }) {
     final width = (MediaQuery.sizeOf(context).width - 54) / 2;
     return SizedBox(
-      width: width.clamp(132.0, 220.0),
+      width: width.clamp(132.0, 220.0).toDouble(),
       child: Material(
         color: SageTheme.surface,
         borderRadius: BorderRadius.circular(18),
