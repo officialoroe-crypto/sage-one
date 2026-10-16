@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 import uuid
@@ -711,11 +712,16 @@ def chat(
             "response": _serialize(result),
         }
 
+    except HTTPException:
+        raise
     except Exception as exc:
-        return {
-            "success": False,
-            "error": str(exc),
-        }
+        # Keep provider/internal errors out of the public response while
+        # returning a non-2xx status that the client can handle truthfully.
+        logging.getLogger(__name__).exception("SAGE chat generation failed")
+        raise HTTPException(
+            status_code=503,
+            detail="SAGE could not generate a reply. Check the configured AI providers and retry.",
+        ) from exc
 
 
 # ============================================================

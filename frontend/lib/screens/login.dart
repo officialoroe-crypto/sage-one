@@ -6,6 +6,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../core/google_web_button.dart';
 import '../core/identity_client.dart';
+import '../core/voice_permission.dart';
+import '../widgets/sage_brand_mark.dart';
 import '../theme/sage_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,13 +24,21 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _webReady = false;
   bool _developerMode = false;
-    String? _error;
+  String _microphoneStatus = 'not_checked';
+  String? _error;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadIdentityConfig();
+  }
+
+  Future<void> _requestMicrophoneAccess() async {
+    setState(() => _microphoneStatus = 'requesting');
+    final result = await requestSageMicrophonePermission();
+    if (!mounted) return;
+    setState(() => _microphoneStatus = result);
   }
 
   Future<void> _loadIdentityConfig() async {
@@ -123,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   constraints: const BoxConstraints(maxWidth: 440),
                   child: Column(
                     children: [
-                      const _SageLoginMark(),
+                      const SageBrandMark(size: 124),
                       const SizedBox(height: 22),
                       const Text(
                         'SAGE ONE',
@@ -131,8 +141,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 7),
                       const Text(
-                        'YOUR PERSONAL AI MENTOR',
-                        style: TextStyle(color: SageTheme.cyan, fontSize: 9, letterSpacing: 2.2, fontWeight: FontWeight.w800),
+                        'YOUR PERSONAL AI MENTOR & EXECUTION PARTNER',
+                        style: TextStyle(color: SageTheme.cyan, fontSize: 8, letterSpacing: 1.7, fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 18),
                       const Text(
@@ -141,6 +151,69 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: SageTheme.textSecondary, fontSize: 13, height: 1.5),
                       ),
                       const SizedBox(height: 34),
+                      if (kIsWeb && !_developerMode) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: SageTheme.cyan.withValues(alpha: .06),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: SageTheme.cyan.withValues(alpha: .24)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Set up SAGE Voice',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Allow microphone access if you want to speak with SAGE. Your browser will ask after you tap Enable microphone. You can continue without voice; camera and location are not needed for sign-in.',
+                                style: TextStyle(color: SageTheme.textSecondary, fontSize: 11, height: 1.5),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _microphoneStatus == 'requesting'
+                                      ? null
+                                      : _requestMicrophoneAccess,
+                                  icon: Icon(
+                                    _microphoneStatus == 'granted'
+                                        ? Icons.check_circle_outline
+                                        : Icons.mic_none,
+                                  ),
+                                  label: Text(switch (_microphoneStatus) {
+                                    'granted' => 'Microphone enabled',
+                                    'denied' => 'Permission denied — try again',
+                                    'unavailable' => 'Microphone unavailable',
+                                    'requesting' => 'Waiting for browser permission…',
+                                    _ => 'Enable microphone',
+                                  }),
+                                ),
+                              ),
+                              if (_microphoneStatus == 'denied')
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'Check this site’s microphone permission in your browser settings. Sign-in remains available.',
+                                    style: TextStyle(color: SageTheme.textSecondary, fontSize: 10, height: 1.4),
+                                  ),
+                                ),
+                              if (_microphoneStatus == 'granted')
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'Permission granted. SAGE only captures speech when you activate Voice.',
+                                    style: TextStyle(color: SageTheme.textSecondary, fontSize: 10, height: 1.4),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                      ],
                       if (_developerMode)
                         _LoginAction(
                           icon: Icons.bolt,
@@ -223,28 +296,6 @@ class _LoginAction extends StatelessWidget {
       icon: onPressed == null ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(icon, size: 22),
       label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     ),
-  );
-}
-
-class _SageLoginMark extends StatelessWidget {
-  const _SageLoginMark();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 92,
-    height: 92,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: const RadialGradient(
-        center: Alignment(-.35, -.4),
-        colors: [Color(0xFF61E9FF), Color(0xFF1265D7), Color(0xFF020306)],
-        stops: [0, .34, 1],
-      ),
-      border: Border.all(color: SageTheme.cyan.withValues(alpha: .65)),
-      boxShadow: [BoxShadow(color: SageTheme.cyan.withValues(alpha: .22), blurRadius: 34)],
-    ),
-    child: const Text('S', style: TextStyle(fontSize: 54, fontWeight: FontWeight.w300, color: Colors.white)),
   );
 }
 

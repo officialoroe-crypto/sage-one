@@ -146,6 +146,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('SAGE VOICE'), findsOneWidget);
+    await tester.tap(find.text('Execute task'));
+    await tester.pumpAndSettle();
     expect(find.text('CONFIRM & EXECUTE'), findsOneWidget);
     expect(client.commandRequests, 0);
 

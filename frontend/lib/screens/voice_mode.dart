@@ -27,6 +27,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
   bool _processing = false;
   bool _speaking = false;
   bool _wakeMode = false;
+  bool _conversationMode = true;
   String _status = 'INITIALIZING';
   String _localeId = 'en_US';
   String _language = 'en';
@@ -141,7 +142,9 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
         setState(() {
           _status = _command.text.trim().isEmpty
               ? (_wakeMode ? 'SAY SAGE TO WAKE' : 'READY')
-              : 'COMMAND CAPTURED — REVIEW THEN EXECUTE';
+              : (_conversationMode
+                  ? 'MESSAGE CAPTURED — REVIEW THEN SEND'
+                  : 'COMMAND CAPTURED — REVIEW THEN EXECUTE');
         });
       }
     }
@@ -214,7 +217,9 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
         _listening = false;
         _status = _command.text.trim().isEmpty
             ? 'READY'
-            : 'COMMAND CAPTURED — REVIEW THEN EXECUTE';
+            : (_conversationMode
+                ? 'MESSAGE CAPTURED — REVIEW THEN SEND'
+                : 'COMMAND CAPTURED — REVIEW THEN EXECUTE');
       });
     }
   }
@@ -260,8 +265,37 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
     });
 
     try {
-      // Use the same authenticated /command endpoint as typed chat so voice
-      // commands share SAGE's durable session, planning and execution path.
+      if (_conversationMode) {
+        final response = await widget.api.chat(prompt, sessionId: _sessionId);
+        if (response['success'] != true) {
+          throw Exception(response['error'] ?? 'SAGE could not reply.');
+        }
+        final raw = response['response'];
+        String reply = '';
+        if (raw is Map) {
+          reply = (raw['response'] ?? raw['text'] ?? raw['content'] ?? '').toString();
+        } else if (raw is String) {
+          reply = raw;
+        }
+        if (reply.trim().isEmpty) {
+          throw Exception('SAGE returned an empty reply. Please retry.');
+        }
+        _sessionId = response['session_id']?.toString() ?? _sessionId;
+        if (mounted) {
+          setState(() {
+            _processing = false;
+            _status = 'COMPLETE';
+            _result = reply.trim();
+            _command.clear();
+          });
+        }
+        await _speak(reply.trim());
+        if (_wakeMode && mounted) await _restartWakeListening();
+        return;
+      }
+
+      // Execution mode deliberately queues an action rather than pretending
+      // that a conversational response means the task was completed.
       final response = await widget.api.submitCommand(
         prompt,
         sessionId: _sessionId,
@@ -290,7 +324,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
         _processing = false;
         _status = 'ERROR';
       });
-      await _speak('I could not execute that command. Please try again.');
+      await _speak('I could not get a response from SAGE. Please try again.');
       _snack(error.toString());
       if (_wakeMode) await _restartWakeListening();
     }
@@ -489,8 +523,10 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
                 const SizedBox(height: 7),
                 Text(
                   _wakeMode
-                      ? 'SAGE is listening for its name. Say “Hey SAGE”, “SAGE”, or “Hello SAGE”, then your command.'
-                      : 'Speak naturally. SAGE shows the transcript first; review it and tap Confirm & Execute.',
+                      ? 'SAGE is listening for its name. Say “Hey SAGE”, “SAGE”, or “Hello SAGE”, then your message or command.'
+                      : (_conversationMode
+                          ? 'Speak naturally. SAGE shows your transcript first, then replies aloud.'
+                          : 'Speak naturally. Review the transcript before confirming a task to execute.'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: SageTheme.textSecondary,
@@ -505,7 +541,7 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              _listening ? 'LISTENING — WORDS APPEAR BELOW' : 'COMMAND / TRANSCRIPT',
+              _listening ? 'LISTENING — WORDS APPEAR BELOW' : (_conversationMode ? 'MESSAGE / TRANSCRIPT' : 'COMMAND / TRANSCRIPT'),
               style: const TextStyle(
                 color: SageTheme.textSecondary,
                 fontSize: 10,
@@ -532,22 +568,45 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
                 ? (selection) => _selectLanguage(selection.first)
                 : null,
           ),
+          const SizedBox(height: 14),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment<bool>(
+                value: true,
+                label: Text('Conversation'),
+                icon: Icon(Icons.chat_bubble_outline),
+              ),
+              ButtonSegment<bool>(
+                value: false,
+                label: Text('Execute task'),
+                icon: Icon(Icons.play_arrow),
+              ),
+            ],
+            selected: <bool>{_conversationMode},
+            onSelectionChanged: !_processing
+                ? (selection) => setState(() {
+                    _conversationMode = selection.first;
+                    _result = null;
+                    _status = 'READY';
+                  })
+                : null,
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _command,
             minLines: 3,
             maxLines: 6,
-            decoration: const InputDecoration(
-              labelText: 'Voice command',
-              hintText: 'Say what you want SAGE to do…',
+            decoration: InputDecoration(
+              labelText: _conversationMode ? 'Message to SAGE' : 'Voice command',
+              hintText: _conversationMode ? 'Speak or type a message…' : 'Say what you want SAGE to do…',
               alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: _processing ? null : _submit,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('CONFIRM & EXECUTE'),
+            icon: Icon(_conversationMode ? Icons.send : Icons.play_arrow),
+            label: Text(_conversationMode ? 'SEND TO SAGE' : 'CONFIRM & EXECUTE'),
           ),
           const SizedBox(height: 9),
           OutlinedButton.icon(
@@ -584,9 +643,9 @@ class _SageVoiceScreenState extends State<SageVoiceScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _status == 'COMPLETE'
-                        ? 'YOUR TASK IS COMPLETE'
-                        : 'TASK RESULT',
+                    _conversationMode
+                        ? 'SAGE REPLY'
+                        : (_status == 'COMPLETE' ? 'YOUR TASK IS COMPLETE' : 'TASK RESULT'),
                     style: TextStyle(
                       color: accent,
                       fontSize: 10,

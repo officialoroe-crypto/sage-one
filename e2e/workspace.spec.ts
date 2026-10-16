@@ -59,10 +59,45 @@ test.describe('SAGE Core live API smoke checks', () => {
     expect(body.google_client_id.length).toBeGreaterThan(10);
     await api.dispose();
   });
+
+  test('published website origin can preflight authenticated Chat requests', async () => {
+    const origin = 'https://officialoroe-crypto.github.io';
+    const api = await playwrightRequest.newContext();
+    const response = await api.fetch(`${apiBase}/chat`, {
+      method: 'OPTIONS',
+      timeout: 30_000,
+      headers: {
+        Origin: origin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,content-type'
+      }
+    });
+    expect([200, 204]).toContain(response.status());
+    expect(response.headers()['access-control-allow-origin']).toBe(origin);
+    expect((response.headers()['access-control-allow-methods'] || '').toUpperCase()).toContain('POST');
+    const allowedHeaders = (response.headers()['access-control-allow-headers'] || '').toLowerCase();
+    expect(allowedHeaders).toContain('authorization');
+    expect(allowedHeaders).toContain('content-type');
+    await api.dispose();
+  });
 });
 
 test.describe('SAGE ONE actual browser interactions', () => {
   test.beforeEach(async ({ page }) => {
+    // The separate API smoke tests above exercise the live service. Keep browser
+    // UI checks deterministic when the hosted service's CORS deployment lags code.
+    await page.route('**/identity/config', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          google_client_id: 'qa-client-id.apps.googleusercontent.com',
+          developer_mode: false,
+          owner_mode_available: true
+        })
+      });
+    });
     // Use a disposable QA-only account state. No production identity or stored token.
     await page.addInitScript(() => {
       localStorage.setItem('sage-one-state-v1', JSON.stringify({

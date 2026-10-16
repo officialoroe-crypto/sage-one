@@ -19,8 +19,8 @@ class SageApi {
   static String _defaultBaseUrl() {
     const configured = String.fromEnvironment('SAGE_API_URL');
     if (configured.isNotEmpty) return configured;
-    if (kIsWeb) return 'http://localhost:8010';
-    return 'http://10.0.2.2:8010';
+    if (kIsWeb) return 'http://localhost:8000';
+    return 'http://10.0.2.2:8000';
   }
 
   final http.Client _client;
@@ -66,6 +66,25 @@ class SageApi {
         'priority': priority,
       });
 
+  /// Send a conversational message and receive SAGE's actual model response.
+  /// This is distinct from submitCommand, which queues an execution task.
+  Future<Map<String, dynamic>> chat(
+    String message, {
+    String? sessionId,
+    String? goal,
+    String? task,
+    String? project,
+    Map<String, dynamic>? context,
+  }) async =>
+      _authorizedPost('/chat', {
+        'message': message,
+        if (sessionId case final id?) 'session_id': id,
+        if (goal case final value?) 'goal': value,
+        if (task case final value?) 'task': value,
+        if (project case final value?) 'project': value,
+        if (context case final value?) 'context': value,
+      });
+
   Future<List<dynamic>> sessionMessages(String sessionId, {int limit = 50}) async {
     final data = await _authorizedGet('/session/$sessionId/messages?limit=$limit');
     final items = data['messages'] ?? data['items'] ?? data;
@@ -73,6 +92,18 @@ class SageApi {
   }
 
   Future<Map<String, dynamic>> createSession() async => _authorizedPost('/session', <String, dynamic>{});
+
+  Future<List<dynamic>> chatSessions({bool archived = false, int limit = 50}) async {
+    final data = await _authorizedGet('/sessions?archived=$archived&limit=$limit');
+    final items = data['sessions'] ?? data['items'] ?? <dynamic>[];
+    return items is List ? items : <dynamic>[];
+  }
+
+  Future<Map<String, dynamic>> archiveChatSession(String sessionId) async =>
+      _authorizedPost('/session/$sessionId/archive', <String, dynamic>{});
+
+  Future<Map<String, dynamic>> restoreChatSession(String sessionId) async =>
+      _authorizedPost('/session/$sessionId/restore', <String, dynamic>{});
 
   Future<Map<String, dynamic>> workerHealth() async => _authorizedGet('/worker/health');
   Future<Map<String, dynamic>> brainHealth() async => _authorizedGet('/brain/health');
