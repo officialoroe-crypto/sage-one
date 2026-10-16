@@ -1,0 +1,184 @@
+{
+  "name": "SAGE ONE Autonomous QA Launcher",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sage-one-qa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d8f3d4b0-61b7-49d6-86f3-7f2e0c5c0011",
+      "name": "QA Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "sage-one-autonomous-qa"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $input.first().json.body ?? $input.first().json ?? {};\nconst ref = String(payload.ref ?? 'main').trim();\nif (!/^[A-Za-z0-9._/-]{1,120}$/.test(ref) || ref.includes('..') || ref.startsWith('/') || ref.endsWith('/')) {\n  throw new Error('Invalid Git ref. Use a branch name such as main or redesign/flutter-app-brand-dashboard-20261016.');\n}\nreturn [{ json: { ref, request_id: `n8n-${new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)}-${Math.random().toString(36).slice(2, 7)}` } }];"
+      },
+      "id": "d8f3d4b0-61b7-49d6-86f3-7f2e0c5c0012",
+      "name": "Validate QA Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/officialoroe-crypto/sage-one/actions/workflows/workspace-browser-qa.yml/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ ref: $('Validate QA Request').first().json.ref, inputs: { request_id: $('Validate QA Request').first().json.request_id } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": false
+            }
+          }
+        }
+      },
+      "id": "d8f3d4b0-61b7-49d6-86f3-7f2e0c5c0013",
+      "name": "Start Website Browser QA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        180
+      ],
+      "notes": "Before activation, set GitHub API authentication on this node. Use a fine-grained token limited to this repository with Actions: write and Contents: read. Do not paste the token into workflow JSON."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/officialoroe-crypto/sage-one/actions/workflows/sage-one-android-apk.yml/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ ref: $('Validate QA Request').first().json.ref, inputs: { request_id: $('Validate QA Request').first().json.request_id, api_url: 'https://sage-one-api.onrender.com' } }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": false
+            }
+          }
+        }
+      },
+      "id": "d8f3d4b0-61b7-49d6-86f3-7f2e0c5c0014",
+      "name": "Start Android Build QA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        300
+      ],
+      "notes": "Before activation, set the same GitHub API authentication on this node. This builds QA APKs and runs Flutter checks; it does not install on the physical Huawei phone."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, message: 'SAGE QA workflows were dispatched to GitHub Actions. This launch response confirms dispatch only, not test success.', request_id: $('Validate QA Request').first().json.request_id, ref: $('Validate QA Request').first().json.ref, browser_run_url: 'https://github.com/officialoroe-crypto/sage-one/actions/workflows/workspace-browser-qa.yml', android_run_url: 'https://github.com/officialoroe-crypto/sage-one/actions/workflows/sage-one-android-apk.yml', next_step: 'Open both Actions links and inspect the run with the matching request_id.' } }}",
+        "options": {}
+      },
+      "id": "d8f3d4b0-61b7-49d6-86f3-7f2e0c5c0015",
+      "name": "Return Run Links",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "QA Request Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate QA Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate QA Request": {
+      "main": [
+        [
+          {
+            "node": "Start Website Browser QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Website Browser QA": {
+      "main": [
+        [
+          {
+            "node": "Start Android Build QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Android Build QA": {
+      "main": [
+        [
+          {
+            "node": "Return Run Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5bfa8d29-7dc7-4cc1-8ad2-fb32fef91b8c",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
