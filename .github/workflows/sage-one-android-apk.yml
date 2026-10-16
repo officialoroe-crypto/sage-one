@@ -1,8 +1,14 @@
-name: SAGE ONE Android Release
+name: SAGE ONE Android QA Build
+
+run-name: SAGE Android QA ${{ inputs.request_id || github.run_id }}
 
 on:
   workflow_dispatch:
     inputs:
+      request_id:
+        description: "Correlation ID supplied by the n8n QA launcher"
+        required: false
+        type: string
       api_url:
         description: "SAGE backend URL reachable from the Android device"
         required: false
