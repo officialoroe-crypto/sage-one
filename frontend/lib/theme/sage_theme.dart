@@ -29,8 +29,8 @@ class SageTheme {
   }
 
   static const voidBlack = Color(0xFF020306);
-  static const surface = Color(0xFF06101A);
-  static const surfaceRaised = Color(0xFF0A1624);
+  static const surface = Color(0xFF07121F);
+  static const surfaceRaised = Color(0xFF0B1B2D);
   static const cyan = Color(0xFF17D8FF);
   static const blue = Color(0xFF3E66FF);
   static const violet = Color(0xFF8F4DFF);
@@ -143,10 +143,34 @@ class SageTheme {
         color: surface,
         margin: EdgeInsets.zero,
         elevation: 0,
+        clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: Color(0x2617D8FF)),
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: Color(0x2417D8FF)),
         ),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: voidBlack,
+        foregroundColor: textPrimary,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -.35,
+        ),
+      ),
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, letterSpacing: -1.1),
+        headlineMedium: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, letterSpacing: -.8),
+        headlineSmall: TextStyle(color: textPrimary, fontWeight: FontWeight.w800, letterSpacing: -.6),
+        titleLarge: TextStyle(color: textPrimary, fontWeight: FontWeight.w800),
+        titleMedium: TextStyle(color: textPrimary, fontWeight: FontWeight.w700),
+        titleSmall: TextStyle(color: textPrimary, fontWeight: FontWeight.w700),
+        bodyLarge: TextStyle(color: textPrimary, height: 1.45),
+        bodyMedium: TextStyle(color: textPrimary, height: 1.4),
+        bodySmall: TextStyle(color: textSecondary, height: 1.4),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -181,6 +205,19 @@ class SageTheme {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: cyan,
+          side: const BorderSide(color: Color(0x6652DFFF)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: cyan,
+        foregroundColor: voidBlack,
+        elevation: 4,
       ),
       dividerTheme: const DividerThemeData(color: Color(0x1AFFFFFF)),
     );
