@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../core/google_web_button.dart';
 import '../core/identity_client.dart';
 import '../core/voice_permission.dart';
+import '../widgets/sage_brand_mark.dart';
 import '../theme/sage_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -132,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   constraints: const BoxConstraints(maxWidth: 440),
                   child: Column(
                     children: [
-                      const _SageLoginMark(),
+                      const SageBrandMark(size: 124),
                       const SizedBox(height: 22),
                       const Text(
                         'SAGE ONE',
@@ -140,8 +141,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 7),
                       const Text(
-                        'YOUR PERSONAL AI MENTOR',
-                        style: TextStyle(color: SageTheme.cyan, fontSize: 9, letterSpacing: 2.2, fontWeight: FontWeight.w800),
+                        'YOUR PERSONAL AI MENTOR & EXECUTION PARTNER',
+                        style: TextStyle(color: SageTheme.cyan, fontSize: 8, letterSpacing: 1.7, fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 18),
                       const Text(
@@ -295,28 +296,6 @@ class _LoginAction extends StatelessWidget {
       icon: onPressed == null ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(icon, size: 22),
       label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
     ),
-  );
-}
-
-class _SageLoginMark extends StatelessWidget {
-  const _SageLoginMark();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 92,
-    height: 92,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: const RadialGradient(
-        center: Alignment(-.35, -.4),
-        colors: [Color(0xFF61E9FF), Color(0xFF1265D7), Color(0xFF020306)],
-        stops: [0, .34, 1],
-      ),
-      border: Border.all(color: SageTheme.cyan.withValues(alpha: .65)),
-      boxShadow: [BoxShadow(color: SageTheme.cyan.withValues(alpha: .22), blurRadius: 34)],
-    ),
-    child: const Text('S', style: TextStyle(fontSize: 54, fontWeight: FontWeight.w300, color: Colors.white)),
   );
 }
 
