@@ -1,3 +1,15 @@
 version: 1
-updated_at: 2026-10-08T04:03:00Z
-claims: []
+updated_at: 2026-10-15T15:45:00Z
+claims:
+  - id: cloud-agent-gemini-review-20261015
+    agent: chatgpt
+    branch: feat/cloud-agent-qa-gemini-review-20261015
+    base_sha: ab1bcc54620ffe445aabe2f851985bb01d2e76e3
+    scope:
+      - .github/workflows/gemini-review.yml
+      - docs/CLOUD_AGENT_SYSTEM.md
+      - coordination/ACTIVE_WORK.yaml
+    objective: Add a manual, read-only, cost-guarded Gemini PR review workflow and document the cloud-only SAGE QA/repair loop.
+    status: ready_for_review
+    started_at: 2026-10-15T15:20:00Z
+    updated_at: 2026-10-15T15:45:00Z
