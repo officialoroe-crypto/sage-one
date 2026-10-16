@@ -51,8 +51,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('SAGE ONE'), findsOneWidget);
-    expect(find.text('STAGE'), findsOneWidget);
-    expect(find.text('EVOLUTION'), findsOneWidget);
+    expect(find.text('YOUR PERSONAL AI PARTNER'), findsOneWidget);
+    expect(find.text('YOUR WORKSPACE'), findsOneWidget);
+    expect(find.text('Chat with SAGE'), findsOneWidget);
+    expect(find.text('My tasks'), findsOneWidget);
     expect(find.text('Search + verify'), findsNothing);
     expect(find.text('Build content'), findsNothing);
   });
