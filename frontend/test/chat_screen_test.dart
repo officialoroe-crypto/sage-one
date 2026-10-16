@@ -8,16 +8,67 @@ import 'package:http/http.dart' as http;
 import 'package:sage_one/core/sage_api.dart';
 import 'package:sage_one/screens/feature_workspaces.dart';
 
-class _MissingTaskIdClient extends http.BaseClient {
+class _ChatClient extends http.BaseClient {
+  _ChatClient({this.failChat = false});
+
+  final bool failChat;
+  final List<String> requests = <String>[];
+  int sessionCount = 0;
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final path = request.url.path;
-    final dynamic payload = switch ('${request.method} $path') {
-      'POST /session' => {'success': true, 'session': {'id': 'session-1'}},
-      'POST /command' => {'success': true, 'status': 'queued'},
-      _ => {'error': 'not found'},
-    };
-    final status = path == '/session' || path == '/command' ? 200 : 404;
+    final key = '${request.method} ${request.url.path}';
+    requests.add(key);
+    var status = 200;
+    dynamic payload;
+
+    if (key == 'POST /session') {
+      sessionCount++;
+      payload = {
+        'success': true,
+        'session': {'id': 'session-$sessionCount'},
+      };
+    } else if (key == 'POST /chat') {
+      if (failChat) {
+        status = 503;
+        payload = {'detail': 'SAGE could not generate a reply. Retry.'};
+      } else {
+        final body = jsonDecode((request as http.Request).body)
+            as Map<String, dynamic>;
+        final sessionId = body['session_id']?.toString() ?? 'session-1';
+        payload = {
+          'success': true,
+          'session_id': sessionId,
+          'response': {'response': 'Hello from live SAGE.'},
+        };
+      }
+    } else if (key == 'GET /sessions') {
+      final archived = request.url.queryParameters['archived'] == 'true';
+      payload = {
+        'success': true,
+        'sessions': archived
+            ? <dynamic>[]
+            : [
+                {'id': 'session-1', 'preview': 'Saved chat preview', 'message_count': 2},
+              ],
+      };
+    } else if (key == 'POST /session/session-1/archive' ||
+        key == 'POST /session/session-1/restore') {
+      payload = {'success': true, 'session_id': 'session-1'};
+    } else if (key.startsWith('GET /session/') &&
+        key.endsWith('/messages')) {
+      payload = {
+        'success': true,
+        'messages': [
+          {'role': 'user', 'content': 'Say hello'},
+          {'role': 'assistant', 'content': 'Hello from live SAGE.'},
+        ],
+      };
+    } else {
+      status = 404;
+      payload = {'detail': 'not found'};
+    }
+
     return http.StreamedResponse(
       Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(payload)))),
       status,
@@ -27,47 +78,37 @@ class _MissingTaskIdClient extends http.BaseClient {
   }
 }
 
-
-class _DeferredCommandClient extends http.BaseClient {
-  final Completer<http.StreamedResponse> commandResponse =
+class _DeferredChatClient extends http.BaseClient {
+  final Completer<http.StreamedResponse> chatResponse =
       Completer<http.StreamedResponse>();
-  final List<String> requestPaths = <String>[];
+  final List<String> requests = <String>[];
   int sessionCount = 0;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final path = request.url.path;
-    requestPaths.add('${request.method} $path');
+    final key = '${request.method} ${request.url.path}';
+    requests.add(key);
+    if (key == 'POST /chat') return chatResponse.future;
 
-    if (request.method == 'POST' && path == '/command') {
-      return commandResponse.future;
-    }
-
-    if (request.method == 'POST' && path == '/session') {
+    if (key == 'POST /session') {
       sessionCount++;
-      final payload = {
-        'success': true,
-        'session': {'id': 'session-$sessionCount'},
-      };
       return http.StreamedResponse(
-        Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(payload)))),
+        Stream.value(Uint8List.fromList(utf8.encode(jsonEncode({
+          'success': true,
+          'session': {'id': 'session-$sessionCount'},
+        })))),
         200,
         headers: {'content-type': 'application/json'},
         request: request,
       );
     }
 
-    final dynamic payload = switch ('${request.method} $path') {
-      'GET /tasks/task-1' => {
-          'success': true,
-          'task': {'id': 'task-1', 'status': 'running'},
-        },
-      _ => {'error': 'not found'},
-    };
-    final status = path == '/tasks/task-1' ? 200 : 404;
     return http.StreamedResponse(
-      Stream.value(Uint8List.fromList(utf8.encode(jsonEncode(payload)))),
-      status,
+      Stream.value(Uint8List.fromList(utf8.encode(jsonEncode({
+        'success': true,
+        'messages': <dynamic>[],
+      })))),
+      200,
       headers: {'content-type': 'application/json'},
       request: request,
     );
@@ -118,33 +159,70 @@ class _RecoverableChatClient extends http.BaseClient {
 }
 
 void main() {
-  testWidgets('Chat reports a missing task ID instead of remaining stuck', (tester) async {
-    final api = SageApi(
-      client: _MissingTaskIdClient(),
-      baseUrl: 'http://test',
-      authToken: 'test-token',
-    );
+  testWidgets('Chat archive opens a saved conversation', (tester) async {
+    final client = _ChatClient();
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
     await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), 'Check SAGE status');
+    await tester.tap(find.byTooltip('Open chat archive'));
+    await tester.pumpAndSettle();
+    expect(find.text('Chat archive'), findsOneWidget);
+    expect(find.text('Saved chat preview'), findsOneWidget);
+
+    await tester.tap(find.text('Saved chat preview'));
+    await tester.pumpAndSettle();
+    expect(client.requests, contains('GET /sessions'));
+    expect(client.requests, contains('GET /session/session-1/messages'));
+    expect(find.text('Hello from live SAGE.'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('Chat calls the live chat endpoint and displays the model reply',
+      (tester) async {
+    final client = _ChatClient();
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Say hello');
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pumpAndSettle();
 
-    expect(find.text('Could not queue command'), findsOneWidget);
-    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
-    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
-        'Check SAGE status');
-    expect(find.text('Retry'), findsOneWidget);
+    expect(client.requests, contains('POST /chat'));
+    expect(client.requests, isNot(contains('POST /command')));
+    expect(find.text('Hello from live SAGE.'), findsOneWidget);
+    expect(find.text('Response received'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
   });
 
-  testWidgets('Chat offers retry for session startup and history failures', (tester) async {
+  testWidgets('Chat restores the message and reports a real API failure',
+      (tester) async {
+    final client = _ChatClient(failChat: true);
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Say hello');
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chat failed'), findsOneWidget);
+    expect(find.textContaining('SAGE could not reply.'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Say hello');
+    expect(client.requests, contains('POST /chat'));
+    await tester.pumpWidget(const SizedBox.shrink());
+    api.dispose();
+  });
+
+  testWidgets('Chat offers retry for session startup and history failures',
+      (tester) async {
     final client = _RecoverableChatClient();
-    final api = SageApi(
-      client: client,
-      baseUrl: 'http://test',
-      authToken: 'test-token',
-    );
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
     await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
     await tester.pumpAndSettle();
 
@@ -166,85 +244,38 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
   });
-  
-  testWidgets('Chat does not poll a task when a command returns after disposal',
+
+  testWidgets('Chat ignores a pending reply after a new session starts',
       (tester) async {
-    final client = _DeferredCommandClient();
-    final api = SageApi(
-      client: client,
-      baseUrl: 'http://test',
-      authToken: 'test-token',
-    );
+    final client = _DeferredChatClient();
+    final api = SageApi(client: client, baseUrl: 'http://test', authToken: 'test-token');
     await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), 'Queue a command');
+    await tester.enterText(find.byType(TextField), 'Old message');
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pump();
+    expect(client.requests, contains('POST /chat'));
 
-    expect(client.requestPaths, contains('POST /command'));
+    await tester.tap(find.byIcon(Icons.add_comment_outlined));
+    await tester.pumpAndSettle();
+    expect(client.sessionCount, 2);
 
-    // Simulate leaving the screen while submitCommand is still awaiting HTTP.
-    await tester.pumpWidget(const SizedBox.shrink());
-    client.commandResponse.complete(http.StreamedResponse(
+    client.chatResponse.complete(http.StreamedResponse(
       Stream.value(Uint8List.fromList(utf8.encode(jsonEncode({
         'success': true,
-        'task': {'id': 'task-1', 'status': 'queued'},
+        'session_id': 'session-1',
+        'response': {'response': 'Stale reply'},
       })))),
       200,
       headers: {'content-type': 'application/json'},
     ));
-
     await tester.pump();
-    await tester.pump(const Duration(seconds: 3));
-    expect(client.requestPaths, isNot(contains('GET /tasks/task-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stale reply'), findsNothing);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
     api.dispose();
   });
-
-  testWidgets(
-    'Chat ignores a pending command after the user starts a new session',
-    (tester) async {
-      final client = _DeferredCommandClient();
-      final api = SageApi(
-        client: client,
-        baseUrl: 'http://test',
-        authToken: 'test-token',
-      );
-      await tester.pumpWidget(MaterialApp(home: ChatScreen(api: api)));
-      await tester.pumpAndSettle();
-      expect(client.sessionCount, 1);
-
-      await tester.enterText(find.byType(TextField), 'Queue a command');
-      await tester.tap(find.byIcon(Icons.arrow_upward));
-      await tester.pump();
-      expect(client.requestPaths, contains('POST /command'));
-
-      // Start another conversation before the first command response arrives.
-      await tester.tap(find.byIcon(Icons.add_comment_outlined));
-      await tester.pumpAndSettle();
-      expect(client.sessionCount, 2);
-      expect(find.text('Queue a command'), findsNothing);
-
-      client.commandResponse.complete(http.StreamedResponse(
-        Stream.value(Uint8List.fromList(utf8.encode(jsonEncode({
-          'success': true,
-          'task': {'id': 'task-1', 'status': 'queued'},
-        })))),
-        200,
-        headers: {'content-type': 'application/json'},
-      ));
-
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 3));
-      expect(client.requestPaths, isNot(contains('GET /tasks/task-1')));
-      expect(find.text('Queue a command'), findsNothing);
-      expect(tester.takeException(), isNull);
-
-      await tester.pumpWidget(const SizedBox.shrink());
-      api.dispose();
-    },
-  );
-
-
 }

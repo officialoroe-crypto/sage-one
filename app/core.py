@@ -1,3 +1,5 @@
+from contextvars import ContextVar
+
 from brain.router import router
 
 from memory.manager import memory
@@ -102,8 +104,12 @@ class SageCore:
         self.memory = memory
 
         self.state = state
-        self._active_session_id = None
-        self._active_owner_authorized = False
+        self._active_session_id: ContextVar[str | None] = ContextVar(
+            'sage_active_session_id', default=None
+        )
+        self._active_owner_authorized: ContextVar[bool] = ContextVar(
+            'sage_active_owner_authorized', default=False
+        )
 
         register_builtin_tools()
 
@@ -122,8 +128,8 @@ class SageCore:
             ActionRequest(
                 tool_name=tool_name,
                 arguments=arguments,
-                session_id=self._active_session_id,
-                owner_authorized=self._active_owner_authorized,
+                session_id=self._active_session_id.get(),
+                owner_authorized=self._active_owner_authorized.get(),
                 verify=True,
                 source="sage_core",
             )
@@ -256,48 +262,34 @@ class SageCore:
             prompt_parts
         )
 
-        self._active_session_id = session_id
-        self._active_owner_authorized = bool(owner_authorized)
-
-        self.state.add_message(
-            session_id,
-            "user",
-            user_message
-        )
-
-        tools = registry.schemas()
-
-        result = self.router.think_with_tools(
-
-            system_instruction=
-                SAGE_SYSTEM,
-
-            user_message=
-                prompt,
-
-            tools=
-                tools,
-
-            tool_executor=
-                self._execute_tool,
-
-            conversation=
-                conversation,
-
-            max_iterations=
-                8
-        )
-
-        self.state.add_message(
-            session_id,
-            "assistant",
-            result.response
-        )
-
-        self._active_session_id = None
-        self._active_owner_authorized = False
-
-        return result
+        session_context_token = self._active_session_id.set(session_id)
+        owner_context_token = self._active_owner_authorized.set(bool(owner_authorized))
+        try:
+            self.state.add_message(
+                session_id,
+                "user",
+                user_message,
+            )
+            tools = registry.schemas()
+            result = self.router.think_with_tools(
+                system_instruction=SAGE_SYSTEM,
+                user_message=prompt,
+                tools=tools,
+                tool_executor=self._execute_tool,
+                conversation=conversation,
+                max_iterations=8,
+            )
+            self.state.add_message(
+                session_id,
+                "assistant",
+                result.response,
+            )
+            return result
+        finally:
+            # Context-local authority prevents concurrent requests from
+            # borrowing another request's session or owner permissions.
+            self._active_session_id.reset(session_context_token)
+            self._active_owner_authorized.reset(owner_context_token)
 
 
 sage = SageCore()

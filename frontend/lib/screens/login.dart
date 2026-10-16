@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../core/google_web_button.dart';
 import '../core/identity_client.dart';
+import '../core/voice_permission.dart';
 import '../theme/sage_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,13 +23,21 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _webReady = false;
   bool _developerMode = false;
-    String? _error;
+  String _microphoneStatus = 'not_checked';
+  String? _error;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadIdentityConfig();
+  }
+
+  Future<void> _requestMicrophoneAccess() async {
+    setState(() => _microphoneStatus = 'requesting');
+    final result = await requestSageMicrophonePermission();
+    if (!mounted) return;
+    setState(() => _microphoneStatus = result);
   }
 
   Future<void> _loadIdentityConfig() async {
@@ -141,6 +150,69 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: SageTheme.textSecondary, fontSize: 13, height: 1.5),
                       ),
                       const SizedBox(height: 34),
+                      if (kIsWeb && !_developerMode) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: SageTheme.cyan.withValues(alpha: .06),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: SageTheme.cyan.withValues(alpha: .24)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Set up SAGE Voice',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Allow microphone access if you want to speak with SAGE. Your browser will ask after you tap Enable microphone. You can continue without voice; camera and location are not needed for sign-in.',
+                                style: TextStyle(color: SageTheme.textSecondary, fontSize: 11, height: 1.5),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _microphoneStatus == 'requesting'
+                                      ? null
+                                      : _requestMicrophoneAccess,
+                                  icon: Icon(
+                                    _microphoneStatus == 'granted'
+                                        ? Icons.check_circle_outline
+                                        : Icons.mic_none,
+                                  ),
+                                  label: Text(switch (_microphoneStatus) {
+                                    'granted' => 'Microphone enabled',
+                                    'denied' => 'Permission denied — try again',
+                                    'unavailable' => 'Microphone unavailable',
+                                    'requesting' => 'Waiting for browser permission…',
+                                    _ => 'Enable microphone',
+                                  }),
+                                ),
+                              ),
+                              if (_microphoneStatus == 'denied')
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'Check this site’s microphone permission in your browser settings. Sign-in remains available.',
+                                    style: TextStyle(color: SageTheme.textSecondary, fontSize: 10, height: 1.4),
+                                  ),
+                                ),
+                              if (_microphoneStatus == 'granted')
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'Permission granted. SAGE only captures speech when you activate Voice.',
+                                    style: TextStyle(color: SageTheme.textSecondary, fontSize: 10, height: 1.4),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                      ],
                       if (_developerMode)
                         _LoginAction(
                           icon: Icons.bolt,

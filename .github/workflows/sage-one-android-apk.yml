@@ -6,7 +6,7 @@ on:
       api_url:
         description: "SAGE backend URL reachable from the Android device"
         required: false
-        default: "http://127.0.0.1:8010"
+        default: "http://127.0.0.1:8000"
         type: string
   pull_request:
     branches: [main]
@@ -25,7 +25,7 @@ jobs:
       run:
         working-directory: frontend
     env:
-      SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://127.0.0.1:8010' }}
+      SAGE_ANDROID_API_URL: ${{ inputs.api_url || vars.SAGE_ANDROID_API_URL || 'http://127.0.0.1:8000' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -99,18 +99,38 @@ jobs:
           print(f"Validated Android API endpoint: {parsed.scheme}://{parsed.netloc}")
           PY
 
-      - name: Build release APK
-        run: flutter build apk --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
+      - name: Build local-backend QA APK
+        run: |
+          flutter build apk --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-local-qa.apk
+
+      - name: Build hosted-backend QA APK for Google sign-in testing
+        run: |
+          flutter build apk --release --dart-define=SAGE_API_URL="https://sage-one-api.onrender.com"
+          cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-hosted-qa.apk
 
       - name: Build release App Bundle
         run: flutter build appbundle --release --dart-define=SAGE_API_URL="$SAGE_ANDROID_API_URL"
 
+      - name: Report hosted QA APK signing fingerprint
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-hosted-qa.apk | tee /tmp/sage-qa-cert.txt
+          {
+            echo "### Hosted Android QA APK identity"
+            printf '%s\n' '- Application ID: `com.sageone.sage_one`'
+            awk '/certificate SHA-1 digest:/ { print "- Signing certificate SHA-1: `" $NF "`" }' /tmp/sage-qa-cert.txt
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: sage-one-android-release
+          name: sage-one-android-qa-builds
           retention-days: 14
           if-no-files-found: error
           path: |
-            frontend/build/app/outputs/flutter-apk/app-release.apk
+            frontend/build/app/outputs/flutter-apk/app-local-qa.apk
+            frontend/build/app/outputs/flutter-apk/app-hosted-qa.apk
             frontend/build/app/outputs/bundle/release/app-release.aab
