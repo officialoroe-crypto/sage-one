@@ -56,16 +56,14 @@ test.describe('SAGE ONE public website browser interactions', () => {
     await expect(nav).toBeHidden();
   });
 
-  test('Spark converter and spend-limit calculator respond to input', async ({ page }) => {
+  test('SP and SS are clearly separate and money features stay inactive', async ({ page }) => {
     await page.goto('/');
-    await page.locator('#sparkIn').fill('123');
-    await expect(page.locator('#nprIn')).toHaveValue('123');
-    await page.locator('#nprIn').fill('456');
-    await expect(page.locator('#sparkIn')).toHaveValue('456');
-    await page.locator('#lifeIn').fill('60');
-    await page.locator('#balIn').fill('60');
-    await page.locator('#askIn').fill('5');
-    await expect(page.locator('#verdict')).toContainText('may show you a 5 Spark spend');
+    await expect(page.locator('#spark')).toContainText('internal, non-cash points');
+    await expect(page.locator('#spark')).toContainText('SS');
+    await expect(page.locator('#spark')).toContainText('payments, exchange rates and cash-out are not enabled');
+    await expect(page.locator('#sparkIn')).toHaveCount(0);
+    await expect(page.locator('#nprIn')).toHaveCount(0);
+    await expect(page.locator('#ladder')).toContainText('not active');
   });
 
   test('all 13 Evolution ranks, all intensities and the Evolve action work', async ({ page }) => {
