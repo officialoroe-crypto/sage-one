@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 /// SAGE ONE's app mark: an open S-shaped orbit around a blue sphere.
