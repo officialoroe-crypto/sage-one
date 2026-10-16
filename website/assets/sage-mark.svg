@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">SAGE ONE mark</title>
+  <desc id="desc">A luminous S-shaped orbit around a blue sphere.</desc>
+  <defs>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#167bff" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#061326" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sStroke" x1="40" y1="30" x2="218" y2="226" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#eafcff"/>
+      <stop offset=".52" stop-color="#69dfff"/>
+      <stop offset="1" stop-color="#4a80ff"/>
+    </linearGradient>
+    <radialGradient id="sphere" cx="32%" cy="27%" r="78%">
+      <stop offset="0" stop-color="#bdf7ff"/>
+      <stop offset=".24" stop-color="#4cb9ff"/>
+      <stop offset=".66" stop-color="#176cff"/>
+      <stop offset="1" stop-color="#07318f"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <circle cx="128" cy="128" r="120" fill="url(#halo)"/>
+  <ellipse cx="128" cy="128" rx="116" ry="54" transform="rotate(-16 128 128)" fill="none" stroke="#52dfff" stroke-opacity=".72" stroke-width="2"/>
+  <path d="M191 52C161 25 94 24 69 60C39 104 100 108 139 125C181 143 211 158 188 197C162 242 89 239 57 205" fill="none" stroke="#087dff" stroke-opacity=".42" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <path d="M191 52C161 25 94 24 69 60C39 104 100 108 139 125C181 143 211 158 188 197C162 242 89 239 57 205" fill="none" stroke="url(#sStroke)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="128" cy="126" r="31" fill="#1689ff" fill-opacity=".42" filter="url(#glow)"/>
+  <circle cx="128" cy="126" r="25" fill="url(#sphere)" stroke="#b6f5ff" stroke-opacity=".95" stroke-width="2"/>
+  <circle cx="120" cy="117" r="5" fill="#fff" fill-opacity=".85"/>
+</svg>
