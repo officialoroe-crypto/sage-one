@@ -1,17 +1,18 @@
 # SAGE ONE Website
 
-The `website/` directory is the public-facing SAGE ONE landing surface.
+The `website/` directory contains the public-facing SAGE ONE landing page and clearly labelled interactive previews.
 
 ## Boundaries
 
-- This site explains SAGE ONE, SAGE WORKFLOW, Intelligence, Spark and Evolution.
-- It does not expose authenticated workspace data.
-- It does not pretend that publishing, social connections, research or execution are available from the public landing page.
+- This site explains the SAGE ONE vision, workflow, intelligence and Evolution.
+- The chat and phone pages are previews; their replies are scripted and their example controls do not call the live backend.
+- SP (SAGE Spark Points) are internal non-cash points. SS is a separate intended money unit; live payments, exchange rates, wallet transactions and cash-out are not enabled.
+- The website does not expose authenticated workspace data or claim that preview actions have executed.
 - The authenticated product remains the Flutter application and SAGE Core APIs.
 
 ## Local preview
 
-Serve this directory with any static HTTP server. For example:
+From the repository root, serve the website directory:
 
 ```text
 python -m http.server 8080 --directory website
@@ -21,12 +22,8 @@ Then open `http://127.0.0.1:8080`.
 
 ## Deployment
 
-`.github/workflows/sage-one-god-mode-pages.yml` builds the Flutter app and publishes one combined Pages artifact: the marketing site at `/sage-one/` and the app at `/sage-one/app/`. Pushes to `main` that change `website/**` or `frontend/**` trigger deployment; a manual workflow dispatch is also available. Repository Pages must be configured to use GitHub Actions.
+No deployment or public release is authorized during the current QA work. The Pages workflow may publish the site when a future release is explicitly approved. Legal pages and publication review remain deferred until the end.
 
 ## Contents
 
-Hero with the canonical logo, the Learn-to-Evolution flow, the two progression paths, an Evolution explorer (13 ranks, Low/Mid/High, transition preview), the Spark converter (1 Spark = NPR 1), a spend-limit calculator that mirrors `economy/spend_ladder.py`, and the roadmap from `docs/SAGE_MASTER_BLUEPRINT.md`. Images in `assets/` are web-sized copies of the owner's design assets in `docs/design/`. The calculator numbers are provisional until the owner confirms them.
-
-## Design direction
-
-The website follows the SAGE ONE cinematic system: near-black foundation, cyan/blue/violet intelligence accents, gold for economy/premium signals, orbital-core motifs, restrained motion and responsive layouts. The landing page describes the product direction without claiming that unfinished integrations are already live.
+The landing page includes the SAGE ONE brand, Learn-to-Evolution progression, 13-rank Evolution explorer, separate SP/SS status, a roadmap and project status. The phone and chat pages demonstrate visual interactions only; they must not be treated as live authentication, AI, payments, or account balances.
