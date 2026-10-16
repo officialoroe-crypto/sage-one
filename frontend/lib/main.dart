@@ -17,6 +17,7 @@ import 'screens/owner_console.dart';
 import 'screens/memory.dart';
 import 'screens/evolution.dart';
 import 'theme/sage_theme.dart';
+import 'widgets/sage_brand_mark.dart';
 import 'screens/feature_workspaces.dart';
 import 'screens/jobs_marketplace.dart';
 import 'screens/learning.dart';
@@ -245,7 +246,7 @@ class _SageOneShellState extends State<SageOneShell> {
               }
             },
             destinations: const [
-              NavigationDestination(icon: Icon(Icons.auto_awesome), label: 'Sage'),
+              NavigationDestination(icon: SageBrandMark(size: 23), label: 'Sage'),
               NavigationDestination(icon: Icon(Icons.search), label: 'Research'),
               NavigationDestination(icon: Icon(Icons.task_alt), label: 'Tasks'),
               NavigationDestination(icon: Icon(Icons.auto_awesome_motion), label: 'Create'),
