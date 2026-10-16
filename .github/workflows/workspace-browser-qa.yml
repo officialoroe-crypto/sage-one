@@ -1,7 +1,14 @@
 name: SAGE Workspace Browser QA
 
+run-name: SAGE Browser QA ${{ inputs.request_id || github.run_id }}
+
 on:
   workflow_dispatch:
+    inputs:
+      request_id:
+        description: "Correlation ID supplied by the n8n QA launcher"
+        required: false
+        type: string
   push:
     branches: [main, "test/**", "fix/**", "feature/**"]
     paths:
