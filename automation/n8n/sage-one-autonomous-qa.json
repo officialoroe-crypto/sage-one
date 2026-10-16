@@ -6,7 +6,8 @@
         "httpMethod": "POST",
         "path": "sage-one-qa",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {},
+        "authentication": "headerAuth"
       },
       "id": "d8f3d4b0-61b7-49d6-86f3-7f2e0c5c0011",
       "name": "QA Request Webhook",
@@ -16,7 +17,12 @@
         0,
         300
       ],
-      "webhookId": "sage-one-autonomous-qa"
+      "webhookId": "sage-one-autonomous-qa",
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "SAGE QA Webhook Header"
+        }
+      }
     },
     {
       "parameters": {
