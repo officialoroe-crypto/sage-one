@@ -220,28 +220,46 @@ class _SplashOrbitPainter extends CustomPainter {
       math.cos(angle) * orbit.width / 2,
       math.sin(angle) * orbit.height / 2,
     );
+    // The orbiting token is a miniature blue S sphere, not a gold coin.
     canvas.drawCircle(
       coin,
       12,
       Paint()
-        ..color = SageTheme.gold.withValues(alpha: .3)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+        ..color = const Color(0xFF65DFFF).withValues(alpha: .55)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
     canvas.drawCircle(
       coin,
       8,
       Paint()
         ..shader = const RadialGradient(
-          colors: [Color(0xFFFFF3B0), Color(0xFFFFC247), Color(0xFFB86A12)],
+          center: Alignment(-.3, -.35),
+          colors: [Color(0xFFEAFBFF), Color(0xFF4CBFFF), Color(0xFF1455C8)],
         ).createShader(Rect.fromCircle(center: coin, radius: 8)),
     );
     canvas.drawCircle(
       coin,
-      5,
+      8,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = const Color(0xFF8D4C0B),
+        ..color = Colors.white.withValues(alpha: .9),
+    );
+    final tokenLetter = TextPainter(
+      text: const TextSpan(
+        text: 'S',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          height: 1,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tokenLetter.paint(
+      canvas,
+      Offset(coin.dx - tokenLetter.width / 2, coin.dy - tokenLetter.height / 2),
     );
     canvas.restore();
   }
